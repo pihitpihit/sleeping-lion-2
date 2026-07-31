@@ -28,18 +28,26 @@ import './WelcomePage.css'
  * 한 번 더 읽어야 하고, 간판은 한 번에 읽혀야 한다.
  */
 
+/**
+ * `href`가 있으면 카드 전체가 링크가 되고, 없으면 아직 열리지 않은 카드다.
+ *
+ * 두 카드는 바닥에 반드시 무언가를 놓는다. 바닥 요소가 `margin-top: auto`로
+ * 카드 높이를 맞추고 있어서, 한쪽만 비우면 정렬이 어긋난다.
+ */
 const PILLARS = [
   {
     ordinal: 'I',
     title: '일지',
     body: '모험을 기록한다. 금화와 경험치, 레벨과 퍽, 손에 넣은 물건, 도시의 번영과 우리 명성까지.',
+    href: null,
   },
   {
     ordinal: 'II',
     title: '행낭',
     body: '원소와 보정 덱, 주도권 순서. 싸움이 붙으면 꺼내 쓴다.',
+    href: '#/satchel',
   },
-]
+] as const
 
 export function WelcomePage() {
   return (
@@ -68,16 +76,38 @@ export function WelcomePage() {
         </p>
 
         <ul className="welcome__pillars">
-          {PILLARS.map((pillar) => (
-            <li key={pillar.ordinal} className="welcome__pillar">
-              <span className="welcome__pillar-ordinal" aria-hidden="true">
-                {pillar.ordinal}
-              </span>
-              <h2 className="welcome__pillar-title">{pillar.title}</h2>
-              <p className="welcome__pillar-body">{pillar.body}</p>
-              <span className="welcome__pillar-status">채비 중</span>
-            </li>
-          ))}
+          {PILLARS.map((pillar) => {
+            const inner = (
+              <>
+                <span className="welcome__pillar-ordinal" aria-hidden="true">
+                  {pillar.ordinal}
+                </span>
+                <h2 className="welcome__pillar-title">{pillar.title}</h2>
+                <p className="welcome__pillar-body">{pillar.body}</p>
+                {pillar.href ? (
+                  <span className="welcome__pillar-enter">
+                    열기<span aria-hidden="true"> →</span>
+                  </span>
+                ) : (
+                  <span className="welcome__pillar-status">채비 중</span>
+                )}
+              </>
+            )
+
+            return (
+              <li key={pillar.ordinal} className="welcome__pillar-slot">
+                {/* 카드 전체가 누르는 영역이어야 한다. 제목 글자만 누르게 하면
+                    폰에서 쓸 수 없다. */}
+                {pillar.href ? (
+                  <a className="welcome__pillar welcome__pillar--open" href={pillar.href}>
+                    {inner}
+                  </a>
+                ) : (
+                  <div className="welcome__pillar">{inner}</div>
+                )}
+              </li>
+            )
+          })}
         </ul>
       </main>
 

@@ -1,0 +1,85 @@
+/* ==========================================================================
+   행낭 — 위젯 보드
+   --------------------------------------------------------------------------
+   웰컴이 '간판'이라면 이쪽은 '연장을 늘어놓은 작업대'다. 같은 팔레트를 쓰되
+   장식을 덜고 보드에 자리를 내준다. 마감은 M7에서 한다.
+
+   레이아웃 기준
+   - 높이는 100dvh 고정. 보드는 스크롤되지 않으므로 넘칠 곳이 없어야 한다.
+   - 안전 영역은 바깥 컨테이너가 흡수한다. 안쪽 보드는 순수한 사각형이어야
+     격자 계산이 단순해진다.
+   ========================================================================== */
+
+.satchel {
+  height: 100dvh;
+  display: flex;
+  /* M5에서 툴바를 좌측으로 돌릴 때 이 방향만 바꾸면 되도록 잡아둔다. */
+  flex-direction: column;
+  overflow: hidden;
+  padding: var(--sl-safe-top) var(--sl-safe-right) var(--sl-safe-bottom) var(--sl-safe-left);
+  background: linear-gradient(180deg, var(--sl-bg) 0%, var(--sl-void) 100%);
+}
+
+/* --------------------------------------------------------------------------
+   툴바 자리
+   -------------------------------------------------------------------------- */
+
+.satchel__bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem clamp(0.75rem, 3vw, 1.25rem);
+  border-bottom: 1px solid var(--sl-border);
+  background: var(--sl-raised);
+}
+
+.satchel__back {
+  /* 플레이 중 급하게 누르는 화면이므로 터치 목표를 확보한다. */
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0 0.5rem;
+  margin-left: -0.5rem;
+  font-family: var(--sl-font-ko-display);
+  font-size: 0.9rem;
+  color: var(--sl-text-muted);
+  text-decoration: none;
+  border-radius: 3px;
+  transition: color 0.15s ease;
+}
+
+.satchel__back:hover,
+.satchel__back:focus-visible {
+  color: var(--sl-gold);
+}
+
+.satchel__back:focus-visible {
+  outline: 2px solid var(--sl-gold);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   보드
+   -------------------------------------------------------------------------- */
+
+.satchel__board {
+  flex: 1;
+  /* flex 아이템의 기본 min-height는 auto라 내용이 크면 밀려난다. 0으로 눌러야
+     남은 공간에 정확히 맞고, 그래야 격자 계산의 입력이 화면과 일치한다. */
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.satchel__empty {
+  margin: 0;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(0.85rem, 3vw, 0.95rem);
+  color: var(--sl-text-faint);
+}

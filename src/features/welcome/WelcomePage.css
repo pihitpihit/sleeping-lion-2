@@ -170,15 +170,25 @@
   }
 }
 
+/* li는 자리만 잡는다. 실제 카드는 안쪽의 a 또는 div이며, 링크 여부에 따라
+   태그가 달라지므로 껍데기를 한 겹 두어 그리드 규칙을 단순하게 유지한다. */
+.welcome__pillar-slot {
+  display: flex;
+}
+
 .welcome__pillar {
+  flex: 1;
   position: relative;
   overflow: hidden;
-  /* 본문 길이가 카드마다 달라도 상태 칩은 같은 높이에 놓이도록 세로로 쌓고
-     칩을 바닥에 붙인다. 그리드가 카드 높이는 이미 맞춰준다. */
+  /* 본문 길이가 카드마다 달라도 바닥 요소가 같은 높이에 놓이도록 세로로 쌓고
+     바닥에 붙인다. 그리드가 카드 높이는 이미 맞춰준다. */
   display: flex;
   flex-direction: column;
   padding: clamp(1.15rem, 4vw, 1.75rem);
   text-align: left;
+  /* a로 렌더될 때를 대비한다 */
+  color: inherit;
+  text-decoration: none;
   border: 1px solid var(--sl-border);
   border-radius: 3px;
   background: linear-gradient(160deg, rgba(201, 162, 39, 0.05), transparent 55%), var(--sl-panel);
@@ -233,7 +243,10 @@
   text-wrap: pretty;
 }
 
-.welcome__pillar-status {
+/* 바닥 요소 공통 — 카드 높이를 맞추는 것은 이 둘의 `margin-top: auto`다.
+   한쪽 카드에서 이걸 빼면 두 카드의 정렬이 어긋난다. */
+.welcome__pillar-status,
+.welcome__pillar-enter {
   position: relative;
   display: inline-block;
   /* flex 아이템이므로 가로로 늘어나지 않게 잡고, 남는 공간을 위로 밀어 바닥에 붙인다 */
@@ -244,7 +257,63 @@
   border-radius: 999px;
   font-size: 0.72rem;
   letter-spacing: 0.14em;
+}
+
+/* 아직 열리지 않은 카드 */
+.welcome__pillar-status {
   color: var(--sl-text-faint);
+}
+
+/* 열리는 카드 */
+.welcome__pillar-enter {
+  border-color: var(--sl-gold-dim);
+  color: var(--sl-gold);
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+/* --------------------------------------------------------------------------
+   열리는 카드 — 누를 수 있다는 것이 보여야 한다
+   -------------------------------------------------------------------------- */
+
+.welcome__pillar--open {
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.welcome__pillar--open:hover,
+.welcome__pillar--open:focus-visible {
+  border-color: var(--sl-border-strong);
+  box-shadow:
+    inset 0 1px 0 rgba(232, 205, 114, 0.12),
+    0 16px 32px -18px rgba(0, 0, 0, 0.95);
+}
+
+.welcome__pillar--open:hover .welcome__pillar-enter,
+.welcome__pillar--open:focus-visible .welcome__pillar-enter {
+  border-color: var(--sl-gold);
+  color: var(--sl-gold-bright);
+  background-color: rgba(201, 162, 39, 0.1);
+}
+
+.welcome__pillar--open:hover .welcome__pillar-title,
+.welcome__pillar--open:focus-visible .welcome__pillar-title {
+  color: var(--sl-gold-bright);
+}
+
+/* 키보드 초점은 어두운 테마에서 기본 링이 잘 안 보인다. 직접 그린다. */
+.welcome__pillar--open:focus-visible {
+  outline: 2px solid var(--sl-gold);
+  outline-offset: 2px;
+}
+
+.welcome__pillar--open:active {
+  transform: translateY(1px);
 }
 
 /* --------------------------------------------------------------------------
