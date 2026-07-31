@@ -87,10 +87,7 @@ export function WelcomePage() {
             SIL OFL 1.1
           </a>
           {') · '}
-          <a
-            href="https://github.com/pihitpihit/sleeping-lion-2/blob/main/NOTICE.md"
-            className="welcome__link"
-          >
+          <a href="#/notice" className="welcome__link">
             출처와 라이선스
           </a>
         </p>

@@ -1,0 +1,197 @@
+/* ==========================================================================
+   출처와 라이선스 페이지
+   --------------------------------------------------------------------------
+   웰컴 페이지가 '간판'이라면 이쪽은 '벽에 붙은 게시문'이다. 같은 가죽·놋쇠
+   팔레트를 쓰되 장식을 걷고 가독성을 우선한다. 긴 글이므로 행간을 넉넉히.
+   ========================================================================== */
+
+.notice {
+  min-height: 100dvh;
+  padding:
+    calc(var(--sl-safe-top) + clamp(1.5rem, 5vh, 3rem))
+    calc(var(--sl-safe-right) + clamp(1rem, 5vw, 2rem))
+    calc(var(--sl-safe-bottom) + clamp(3rem, 8vh, 5rem))
+    calc(var(--sl-safe-left) + clamp(1rem, 5vw, 2rem));
+  background:
+    radial-gradient(ellipse 120% 60% at 50% 0%, rgba(201, 162, 39, 0.08), transparent 60%),
+    linear-gradient(180deg, var(--sl-bg) 0%, var(--sl-void) 100%);
+}
+
+.notice__sheet {
+  max-width: 46rem;
+  margin: 0 auto;
+}
+
+.notice__nav {
+  margin-bottom: clamp(1.5rem, 4vh, 2.5rem);
+}
+
+.notice__back {
+  font-family: var(--sl-font-ko-display);
+  font-size: 0.95rem;
+  color: var(--sl-text-muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.notice__back:hover,
+.notice__back:focus-visible {
+  color: var(--sl-gold);
+}
+
+/* --------------------------------------------------------------------------
+   본문 — marked가 뱉는 순수 HTML을 태그 선택자로 직접 꾸민다
+   -------------------------------------------------------------------------- */
+
+.notice__prose {
+  color: var(--sl-text-muted);
+  font-size: clamp(0.88rem, 2.9vw, 0.95rem);
+  line-height: 1.85;
+  /* 표·코드가 넘칠 때 페이지 전체가 가로로 밀리지 않게 가둔다 */
+  min-width: 0;
+}
+
+.notice__prose h1 {
+  margin: 0 0 1.5rem;
+  font-family: var(--sl-font-ko-display);
+  font-size: clamp(1.5rem, 5.5vw, 2rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--sl-gold-bright);
+}
+
+.notice__prose h2 {
+  margin: 2.75rem 0 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--sl-border);
+  font-family: var(--sl-font-ko-display);
+  font-size: clamp(1.15rem, 4vw, 1.35rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--sl-gold);
+}
+
+.notice__prose h3 {
+  margin: 2rem 0 0.75rem;
+  font-size: clamp(1rem, 3.5vw, 1.1rem);
+  font-weight: 700;
+  color: var(--sl-text);
+}
+
+.notice__prose p {
+  margin: 0 0 1rem;
+  text-wrap: pretty;
+}
+
+.notice__prose strong {
+  color: var(--sl-text);
+  font-weight: 700;
+}
+
+.notice__prose em {
+  color: var(--sl-text-faint);
+}
+
+.notice__prose a {
+  color: var(--sl-gold);
+  text-decoration: underline;
+  text-decoration-color: var(--sl-gold-dim);
+  text-underline-offset: 0.2em;
+  /* 긴 URL이 문서를 넓히지 못하게 */
+  overflow-wrap: anywhere;
+}
+
+.notice__prose a:hover,
+.notice__prose a:focus-visible {
+  color: var(--sl-gold-bright);
+}
+
+/* 링크 글자가 코드로 감싸인 경우(`[`경로`](주소)`) 코드 색이 이겨서
+   눌리는 줄 모르고 지나친다. 링크 색을 되살린다. */
+.notice__prose a code {
+  color: var(--sl-gold);
+  border-color: var(--sl-gold-dim);
+}
+
+.notice__prose ul,
+.notice__prose ol {
+  margin: 0 0 1rem;
+  padding-left: 1.35rem;
+}
+
+.notice__prose li {
+  margin-bottom: 0.4rem;
+}
+
+.notice__prose li::marker {
+  color: var(--sl-gold-dim);
+}
+
+.notice__prose hr {
+  margin: 2.5rem 0;
+  border: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--sl-border-strong), transparent);
+}
+
+.notice__prose code {
+  padding: 0.1em 0.35em;
+  border: 1px solid var(--sl-border);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.35);
+  font-size: 0.88em;
+  color: var(--sl-text);
+  overflow-wrap: anywhere;
+}
+
+/* 표 — 좁은 화면에서 표만 가로 스크롤되고 페이지는 밀리지 않게 감싼다 */
+.notice__prose table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin: 0 0 1.25rem;
+  font-size: 0.92em;
+}
+
+.notice__prose thead {
+  background: rgba(201, 162, 39, 0.07);
+}
+
+.notice__prose th,
+.notice__prose td {
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--sl-border);
+  text-align: left;
+  vertical-align: top;
+  /* 표 안에서 문장이 한 줄로 늘어나지 않도록 */
+  min-width: 6rem;
+}
+
+.notice__prose th {
+  color: var(--sl-gold);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.notice__prose blockquote {
+  margin: 0 0 1rem;
+  padding-left: 1rem;
+  border-left: 2px solid var(--sl-border-strong);
+  color: var(--sl-text-faint);
+}
+
+/* MIT 전문 — 원문 그대로 보여야 하므로 줄바꿈을 보존하되 넘치면 접는다 */
+.notice__license-text {
+  margin: 0;
+  padding: 1rem;
+  border: 1px solid var(--sl-border);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.35);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: var(--sl-text-faint);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
