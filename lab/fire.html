@@ -524,6 +524,21 @@
         font-variant-numeric: tabular-nums;
       }
 
+      .diag {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.15rem 0.7rem;
+        width: 100%;
+        padding-top: 0.4rem;
+        border-top: 1px dashed var(--sl-border);
+        font-size: 0.74rem;
+      }
+      .diag strong {
+        color: var(--sl-gold);
+        font-weight: 500;
+      }
+
       .dump {
         position: fixed;
         inset: 8% 15%;
@@ -748,6 +763,22 @@
       <button class="solo-btn" type="button" id="all">둘 다 보기</button>
       <button class="solo-btn" type="button" id="dump-btn">값 내보내기</button>
       <span class="fps" id="fps">— fps</span>
+
+      <!--
+        사파리 진단.
+
+        브라우저마다 뭉침이 다르게 나온다는 이야기가 나왔는데, 헤드리스 WebKit
+        에서는 재현되지 않았다. 진짜 사파리에는 애플의 합성 경로가 따로 있어
+        여기서 흉내 낼 수 없다. 그래서 기기에서 직접 하나씩 꺼 보며 범인을
+        가려내는 스위치를 둔다. 어느 것을 껐을 때 나아지는지가 곧 답이다.
+      -->
+      <span class="diag">
+        <strong>사파리 진단</strong>
+        <label class="check"><input id="d-srgb" type="checkbox" /> sRGB 보간</label>
+        <label class="check"><input id="d-noblend" type="checkbox" /> 섞기 끄기</label>
+        <label class="check"><input id="d-noheat" type="checkbox" /> 달굼 끄기</label>
+        <label class="check"><input id="d-css" type="checkbox" /> CSS 뭉침</label>
+      </span>
     </div>
 
     <pre class="dump" id="dump"></pre>
@@ -844,6 +875,8 @@
         // 방울 반지름의 절반쯤이 알맞다. 더 흐리면 문턱을 못 넘어 다 사라진다.
         $(`goo${key}-blur`).setAttribute('stdDeviation', (iconPx() * v * 0.004).toFixed(2))
         out(key.toLowerCase() + '-goo', v)
+        // CSS 뭉침을 쓰는 중이면 흐림 값이 바뀔 때 같이 따라와야 한다.
+        applyDiag()
       }
 
       /* ---------------- 재 ---------------- */
@@ -978,6 +1011,47 @@
         }),
       )
 
+      /* ---------------- 사파리 진단 ----------------
+
+         네 스위치를 하나씩 켜 보며 어느 것이 뭉침을 되살리는지 본다.
+         - sRGB 보간: 필터를 sRGB에서 계산한다. 규격 기본값은 linearRGB이고,
+           엔진마다 알파를 미리 곱해 두느냐에서 갈린다.
+         - 섞기 끄기: screen 섞기가 무엇을 배경으로 삼느냐가 엔진마다 다르다.
+         - 달굼 끄기: 석판의 큰 발광이 코로나를 덮어 문턱을 가릴 수 있다.
+         - CSS 뭉침: SVG 필터 대신 CSS blur+contrast로 같은 일을 시킨다.
+           사파리가 CSS 필터는 합성기에서 처리하므로 다르게 나올 수 있다.
+         ------------------------------------------------------------------- */
+
+      function applyDiag() {
+        const srgb = $('d-srgb').checked
+        const noblend = $('d-noblend').checked
+        const noheat = $('d-noheat').checked
+        const css = $('d-css').checked
+
+        for (const key of ['B', 'E']) {
+          const f = $('goo' + key)
+          if (srgb) f.setAttribute('color-interpolation-filters', 'sRGB')
+          else f.removeAttribute('color-interpolation-filters')
+
+          const layer = $('fx' + key)
+          layer.style.mixBlendMode = noblend ? 'normal' : ''
+          // CSS 뭉침은 SVG와 같은 잣대로 맞춘다 — 흐림은 그대로, 대비로 문턱을 세운다.
+          const blur = +$(`goo${key}-blur`).getAttribute('stdDeviation')
+          layer.style.filter = css ? `blur(${blur.toFixed(1)}px) contrast(18)` : ''
+        }
+
+        // 달굼은 뿌리 변수로 끈다. 막대 자리는 그대로 두어 되돌리기 쉽게.
+        if (noheat) {
+          root.style.setProperty('--heat', '0')
+          root.style.setProperty('--rim', '0')
+        } else {
+          applyHeat()
+        }
+      }
+      ;['d-srgb', 'd-noblend', 'd-noheat', 'd-css'].forEach((id) =>
+        $(id).addEventListener('change', applyDiag),
+      )
+
       /* ---------------- 값 내보내기 ---------------- */
 
       $('dump-btn').addEventListener('click', () => {
@@ -989,6 +1063,17 @@
             : '둘 다 보는 중',
           `불꽃 위치: ${$('front').checked ? '아이콘 앞' : '아이콘 뒤'}`,
           `측정: ${$('fps').textContent}`,
+          `브라우저: ${navigator.userAgent}`,
+          `진단: ${
+            [
+              $('d-srgb').checked && 'sRGB 보간',
+              $('d-noblend').checked && '섞기 끄기',
+              $('d-noheat').checked && '달굼 끄기',
+              $('d-css').checked && 'CSS 뭉침',
+            ]
+              .filter(Boolean)
+              .join(', ') || '전부 끔(기본)'
+          }`,
           '',
           ...[...document.querySelectorAll('input[type=range]')].map(
             (el) => `${el.id.padEnd(11)} = ${el.value}`,
@@ -1032,6 +1117,7 @@
       buildAsh($('ashB'), 'b', false)
       buildAsh($('ashE'), 'e', true)
       applyRunning()
+      applyDiag()
       requestAnimationFrame(loop)
     </script>
   </body>
