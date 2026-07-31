@@ -14,6 +14,12 @@
       │ 브라우저로 이 파일을 직접 열면 된다. 서버도 빌드도 필요 없다.        │
       │ 값을 만져 마음에 드는 조합을 찾은 뒤, 그 값만 앱에 옮긴다.           │
       └──────────────────────────────────────────────────────────────────────┘
+
+      메타볼 두 갈래만 남겼다. 레이어드 물방울·난류 일그러짐·캔버스 입자는
+      견줘 본 뒤 걷어냈다.
+
+        B — 아래에서 위로 타오른다 (모닥불)
+        E — 가운데에서 사방으로 퍼진다 (해·불꽃놀이)
     -->
     <style>
       /* 앱과 같은 팔레트. 실제 보드 위에서 어떻게 보이는지 판단해야 하므로
@@ -29,7 +35,13 @@
         --sl-text: #ece2cd;
         --sl-text-muted: #a2917a;
         --sl-text-faint: #6f624f;
+
         --icon: 88px;
+        /* 원판 달굼 — 아래 '달아오른 원판' 참고 */
+        --heat: 0.55;
+        --rim: 0.55;
+        --pulse: 1.5s;
+
         color-scheme: dark;
       }
 
@@ -39,7 +51,7 @@
 
       body {
         margin: 0;
-        padding: 1.25rem 1.25rem 5.5rem;
+        padding: 1.25rem 1.25rem 6.5rem;
         background: linear-gradient(180deg, var(--sl-bg), var(--sl-void));
         color: var(--sl-text-muted);
         font-family:
@@ -63,11 +75,11 @@
 
       .grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
         gap: 0.9rem;
       }
 
-      /* 한 기법만 남겨 비용과 모양을 따로 본다. 넷이 같이 돌면 fps가 뭉개져
+      /* 한쪽만 남겨 비용과 모양을 따로 본다. 둘이 같이 돌면 fps가 뭉개져
          어느 것이 비싼지 알 수 없다. */
       body.solo .card {
         display: none;
@@ -77,7 +89,7 @@
         grid-column: 1 / -1;
       }
       body.solo .card.is-solo .stage {
-        height: 460px;
+        height: 520px;
       }
 
       .card {
@@ -126,10 +138,9 @@
         border-color: var(--sl-gold);
       }
 
-      /* 효과가 놓이는 무대 */
       .stage {
         position: relative;
-        height: 320px;
+        height: 380px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -137,20 +148,6 @@
           radial-gradient(ellipse 80% 55% at 50% 100%, rgba(0, 0, 0, 0.55), transparent 70%),
           var(--sl-bg);
         overflow: hidden;
-      }
-
-      /* 원소 아이콘 — 앱과 같은 것. 효과가 아이콘을 삼키지 않는지 봐야 한다. */
-      .stone {
-        position: relative;
-        z-index: 2;
-        width: var(--icon);
-        height: var(--icon);
-        border-radius: 50%;
-        background: url('../public/assets/creator-pack/elements/fire.svg') center / contain no-repeat;
-      }
-      /* 앱에서는 불꽃을 아이콘 뒤에 깐다. 앞이 나은지는 눈으로 견줘 봐야 안다. */
-      body.front .stone {
-        z-index: 0;
       }
 
       .fx {
@@ -161,7 +158,302 @@
         z-index: 1;
       }
 
+      /* ======================================================================
+         달아오른 원판
+
+         세 겹을 겹친다. 하나만으로는 '뜨겁다'가 아니라 '주황색이다'가 된다.
+
+         1. 아이콘 자체를 밝히고 채도를 올린다 — 원본 그림이 달궈진 것처럼.
+            에셋 파일은 건드리지 않는다. 화면에 그릴 때만 거는 필터라
+            Creator Pack 사본을 고쳐 커밋하는 것과는 다르다(SPEC 13.1).
+         2. 속에서 배어 나오는 열 — screen으로 얹어 어두운 부분까지 들어올린다.
+            어두운 데가 그대로면 '겉만 칠한 것'으로 보인다.
+         3. 달군 쇠의 테 — 안쪽 그림자와 바깥 발광을 같이 준다.
+
+         셋의 맥박 주기를 어긋나게 둔다. 같이 뛰면 기계적으로 깜빡인다.
+         ====================================================================== */
+
+      .stone {
+        position: relative;
+        z-index: 2;
+        width: var(--icon);
+        height: var(--icon);
+        border-radius: 50%;
+        background: url('../public/assets/creator-pack/elements/fire.svg') center / contain no-repeat;
+        filter: brightness(calc(1 + var(--heat) * 0.5)) saturate(calc(1 + var(--heat) * 0.7));
+      }
+      /* 속열 */
+      .stone::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 50% 56%,
+          rgba(255, 244, 206, 0.95) 0 14%,
+          rgba(255, 168, 48, 0.8) 40%,
+          rgba(255, 74, 10, 0.45) 66%,
+          rgba(190, 40, 0, 0) 84%
+        );
+        mix-blend-mode: screen;
+        opacity: var(--heat);
+        animation: heat-core var(--pulse) ease-in-out infinite;
+        /* 의사요소는 JS로 style을 못 건다. 상속되는 변수로 멈춘다. */
+        animation-play-state: var(--play, running);
+      }
+      @keyframes heat-core {
+        0%,
+        100% {
+          opacity: calc(var(--heat) * 0.55);
+        }
+        50% {
+          opacity: var(--heat);
+        }
+      }
+      /* 달군 쇠의 테 */
+      .stone::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        box-shadow:
+          inset 0 0 calc(var(--icon) * 0.14) rgba(255, 132, 24, 0.95),
+          inset 0 0 calc(var(--icon) * 0.05) rgba(255, 226, 160, 0.8),
+          0 0 calc(var(--icon) * 0.4) rgba(255, 108, 16, 0.85),
+          0 0 calc(var(--icon) * 0.9) rgba(226, 66, 12, 0.45);
+        opacity: var(--rim);
+        /* 테는 속열보다 살짝 빠르게 뛴다. 어긋나야 살아 있는 것처럼 보인다. */
+        animation: heat-rim calc(var(--pulse) * 0.73) ease-in-out infinite;
+        animation-play-state: var(--play, running);
+      }
+      @keyframes heat-rim {
+        0%,
+        100% {
+          opacity: calc(var(--rim) * 0.6);
+        }
+        50% {
+          opacity: var(--rim);
+        }
+      }
+      /* 앱에서는 불꽃을 아이콘 뒤에 깐다. 앞이 나은지는 눈으로 견줘 봐야 안다. */
+      body.front .stone {
+        z-index: 0;
+      }
+
+      /* ======================================================================
+         메타볼 — 흐린 방울을 필터로 뭉친다
+
+         흐림으로 방울을 번지게 한 뒤 알파 대비를 극단으로 세우면, 서로 닿은
+         방울들이 하나의 덩어리로 이어지고 가장자리가 다시 또렷해진다. 불길이
+         갈라지고 합쳐지는 결이 여기서 나온다.
+
+         색은 나아가는 동안 흰빛 → 노랑 → 주황 → 붉은빛으로 식힌다. 한 색으로
+         두면 뭉친 덩어리가 물감처럼 보인다.
+
+         불투명도는 건드리지 않는다. 알파를 낮추면 뭉침 문턱 아래로 떨어져
+         방울이 툭 잘려 나간다. 대신 크기를 줄인다 — 작아진 방울은 흐림에
+         묻혀 저절로 문턱 아래가 된다.
+         ====================================================================== */
+
+      .goo {
+        mix-blend-mode: screen;
+      }
+      .goo .blob {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: calc(var(--icon) * var(--r));
+        height: calc(var(--icon) * var(--r));
+        margin: calc(var(--icon) * var(--r) * -0.5) 0 0 calc(var(--icon) * var(--r) * -0.5);
+        border-radius: 50%;
+        background: #fff6da;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+      }
+
+      /* ---- B · 위로 타오름 ---- */
+
+      .fxB {
+        width: calc(var(--icon) * 3);
+        height: calc(var(--icon) * 3.6);
+        transform: translate(-50%, -58%);
+        filter: url(#gooB);
+      }
+      .fxB .blob {
+        top: auto;
+        bottom: 18%;
+        margin-top: 0;
+        animation-name: B-rise;
+      }
+      @keyframes B-rise {
+        0% {
+          transform: translate(calc(var(--icon) * var(--x) * 0.15), 0) scale(0.35);
+          background-color: #fff6da;
+        }
+        35% {
+          background-color: #ffd257;
+        }
+        62% {
+          transform: translate(
+              calc(var(--icon) * var(--x) * 0.8),
+              calc(var(--icon) * var(--reach) * -0.45)
+            )
+            scale(1);
+          background-color: #ff7d1a;
+        }
+        100% {
+          transform: translate(
+              calc(var(--icon) * var(--x) * 1.5),
+              calc(var(--icon) * var(--reach) * -1)
+            )
+            scale(0.15);
+          background-color: #c9280c;
+        }
+      }
+
+      /* ---- E · 사방으로 퍼짐 ----
+
+         방울을 각도별로 뿌리고 바깥으로 밀어낸다. rotate로 방향을 잡고
+         translateY로 밀면 어느 각도로든 같은 식이 쓰인다.
+
+         가운데에 붙박이 심지를 둔다. 없으면 방울이 흩어질 때마다 한가운데가
+         뚫려 도넛이 된다. 심지가 있어야 코로나가 몸통에 이어진다.
+
+         나아가는 동안 각도를 조금씩 틀어 소용돌이를 준다. 곧게만 뻗으면
+         불이 아니라 별 모양 도형이 된다. */
+
+      .fxE {
+        width: calc(var(--icon) * 4);
+        height: calc(var(--icon) * 4);
+        transform: translate(-50%, -50%);
+        filter: url(#gooE);
+      }
+      .fxE .core {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: calc(var(--icon) * var(--core));
+        height: calc(var(--icon) * var(--core));
+        margin: calc(var(--icon) * var(--core) * -0.5) 0 0 calc(var(--icon) * var(--core) * -0.5);
+        border-radius: 50%;
+        background: #ffe9ab;
+        animation: E-core calc(var(--pulse) * 1.1) ease-in-out infinite;
+      }
+      @keyframes E-core {
+        0%,
+        100% {
+          transform: scale(0.94);
+        }
+        50% {
+          transform: scale(1.06);
+        }
+      }
+      .fxE .blob {
+        animation-name: E-burst;
+      }
+      @keyframes E-burst {
+        0% {
+          transform: rotate(var(--a)) translateY(calc(var(--icon) * -0.06)) scale(0.35);
+          background-color: #fff6da;
+        }
+        35% {
+          background-color: #ffd257;
+        }
+        62% {
+          transform: rotate(calc(var(--a) + var(--swirl) * 0.55))
+            translateY(calc(var(--icon) * var(--reach) * -0.6)) scale(1);
+          background-color: #ff7d1a;
+        }
+        100% {
+          transform: rotate(calc(var(--a) + var(--swirl)))
+            translateY(calc(var(--icon) * var(--reach) * -1)) scale(0.12);
+          background-color: #c9280c;
+        }
+      }
+
+      /* ======================================================================
+         재 — 흩날리는 검부러기
+
+         뭉침 필터 바깥에 둔다. 재까지 뭉치면 불덩이에 달라붙어 재로 안 보인다.
+
+         모양을 일부러 어그러뜨리고 나는 동안 제자리 회전을 준다. 완전한 원이
+         빙글 돌면 도는 것이 보이지 않는다.
+         ====================================================================== */
+
+      .ashes {
+        width: 0;
+        height: 0;
+        overflow: visible;
+      }
+      .ash {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: calc(var(--icon) * var(--ar));
+        height: calc(var(--icon) * var(--ar) * 0.72);
+        margin: calc(var(--icon) * var(--ar) * -0.36) 0 0 calc(var(--icon) * var(--ar) * -0.5);
+        border-radius: 46% 54% 38% 62% / 56% 44% 60% 40%;
+        background: radial-gradient(
+          circle at 34% 30%,
+          rgba(255, 186, 92, 0.95) 0 26%,
+          rgba(152, 62, 26, 0.85) 58%,
+          rgba(46, 30, 22, 0.75) 100%
+        );
+        opacity: 0;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+      }
+      .ashB {
+        animation-name: ash-up;
+      }
+      @keyframes ash-up {
+        0% {
+          transform: translate(calc(var(--icon) * var(--x) * 0.3), calc(var(--icon) * 0.55))
+            rotate(0deg) scale(1);
+          opacity: 0;
+        }
+        10% {
+          opacity: 0.95;
+        }
+        55% {
+          opacity: 0.7;
+        }
+        100% {
+          transform: translate(
+              calc(var(--icon) * var(--x) * 2.4),
+              calc(var(--icon) * var(--afar) * -1)
+            )
+            rotate(var(--spin)) scale(0.45);
+          opacity: 0;
+        }
+      }
+      .ashE {
+        animation-name: ash-out;
+      }
+      @keyframes ash-out {
+        0% {
+          transform: rotate(var(--a)) translateY(calc(var(--icon) * -0.4)) rotate(0deg) scale(0.95);
+          opacity: 0;
+        }
+        10% {
+          opacity: 0.95;
+        }
+        55% {
+          opacity: 0.7;
+        }
+        100% {
+          transform: rotate(calc(var(--a) + var(--drift)))
+            translateY(calc(var(--icon) * var(--afar) * -1)) rotate(var(--spin)) scale(0.4);
+          opacity: 0;
+        }
+      }
+
+      /* ---------------------------------------------------------------- */
+
       .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0 1rem;
         padding: 0.5rem 0.85rem 0.75rem;
         border-top: 1px solid var(--sl-border);
         font-size: 0.74rem;
@@ -173,19 +465,16 @@
         gap: 0.5rem;
         margin-top: 0.28rem;
       }
-
       .row label {
         flex: none;
-        width: 5.2rem;
+        width: 4.6rem;
         color: var(--sl-text-faint);
       }
-
       .row input[type='range'] {
         flex: 1;
         min-width: 0;
         accent-color: var(--sl-gold);
       }
-
       .row output {
         flex: none;
         width: 3.1rem;
@@ -202,8 +491,8 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 0.9rem;
-        padding: 0.55rem 1.25rem;
+        gap: 0.5rem 0.9rem;
+        padding: 0.5rem 1.25rem;
         border-top: 1px solid var(--sl-border);
         background: rgba(20, 16, 11, 0.97);
         backdrop-filter: blur(6px);
@@ -211,7 +500,7 @@
       }
       .toolbar .row {
         margin: 0;
-        min-width: 15rem;
+        width: 15rem;
       }
       .toolbar .check {
         display: flex;
@@ -231,7 +520,7 @@
 
       .dump {
         position: fixed;
-        inset: 10% 15%;
+        inset: 8% 15%;
         z-index: 20;
         display: none;
         padding: 1rem;
@@ -247,238 +536,6 @@
       }
       .dump.open {
         display: block;
-      }
-
-      /* ======================================================================
-         A · 레이어드 물방울 — 지금 앱에 들어간 방식
-
-         물방울을 여럿 띄워 저마다 솟게 한다. 가장 싸고 가장 덜 사실적이다.
-         ====================================================================== */
-
-      .fxA {
-        width: var(--icon);
-        height: var(--icon);
-        transform: translate(-50%, -50%);
-      }
-      .fxA > span {
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        border-radius: 50%;
-      }
-      .fxA .scorch {
-        width: calc(var(--icon) * 1.62);
-        height: calc(var(--icon) * 1.62);
-        margin: calc(var(--icon) * -0.81) 0 0 calc(var(--icon) * -0.81);
-        background:
-          radial-gradient(circle at 40% 36%, rgba(170, 58, 14, 0.5) 0 22%, transparent 46%),
-          radial-gradient(circle at 64% 68%, rgba(150, 46, 10, 0.45) 0 20%, transparent 44%),
-          radial-gradient(
-            circle at 50% 50%,
-            transparent 0 40%,
-            rgba(96, 30, 6, 0.85) 50%,
-            rgba(34, 10, 2, 0.7) 62%,
-            transparent 78%
-          );
-        filter: blur(calc(var(--icon) * 0.045));
-        animation: A-scorch 9s linear infinite;
-      }
-      @keyframes A-scorch {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-      .fxA .ember {
-        width: calc(var(--icon) * 1.3);
-        height: calc(var(--icon) * 1.3);
-        margin: calc(var(--icon) * -0.65) 0 0 calc(var(--icon) * -0.65);
-        background: radial-gradient(
-          circle,
-          rgba(255, 186, 84, 0.7) 0 22%,
-          rgba(238, 92, 34, 0.5) 42%,
-          transparent 70%
-        );
-        animation: A-ember 1.6s ease-in-out infinite;
-      }
-      @keyframes A-ember {
-        0%,
-        100% {
-          transform: scale(1);
-          opacity: 0.75;
-        }
-        50% {
-          transform: scale(1.14);
-          opacity: 1;
-        }
-      }
-      .fxA .flame {
-        width: calc(var(--icon) * 0.3);
-        height: calc(var(--icon) * 0.62);
-        margin: calc(var(--icon) * -0.31) 0 0 calc(var(--icon) * -0.15);
-        border-radius: 50% 50% 46% 46% / 74% 74% 26% 26%;
-        background: linear-gradient(
-          to top,
-          rgba(255, 244, 214, 0.98) 0%,
-          rgba(255, 206, 92, 0.98) 22%,
-          rgba(255, 128, 26, 0.92) 52%,
-          rgba(214, 48, 16, 0.6) 78%,
-          rgba(140, 24, 8, 0) 100%
-        );
-        mix-blend-mode: screen;
-        opacity: 0;
-        animation-name: A-rise;
-        animation-timing-function: ease-out;
-        animation-iteration-count: infinite;
-      }
-      @keyframes A-rise {
-        0% {
-          transform: translate(calc(var(--icon) * var(--x)), calc(var(--icon) * 0.3))
-            scale(0.4, 0.32);
-          opacity: 0;
-        }
-        14% {
-          opacity: 1;
-        }
-        55% {
-          transform: translate(calc(var(--icon) * var(--x) * 1.15), calc(var(--icon) * -0.34))
-            scale(1, 1.05) rotate(-7deg);
-          opacity: 0.92;
-        }
-        100% {
-          transform: translate(calc(var(--icon) * var(--x) * 1.5), calc(var(--icon) * -1.02))
-            scale(0.34, 0.5) rotate(9deg);
-          opacity: 0;
-        }
-      }
-
-      /* ======================================================================
-         B · 메타볼 — 흐린 방울을 필터로 뭉친다
-
-         흐림으로 방울을 번지게 한 뒤 알파 대비를 극단으로 세우면, 서로 닿은
-         방울들이 하나의 덩어리로 이어지고 가장자리가 다시 또렷해진다. 불길이
-         갈라지고 합쳐지는 결이 여기서 나온다.
-
-         색은 올라가는 동안 흰빛 → 노랑 → 주황 → 붉은빛으로 식힌다. 한 색으로
-         두면 뭉친 덩어리가 물감처럼 보인다.
-         ====================================================================== */
-
-      .fxB {
-        width: calc(var(--icon) * 2.6);
-        height: calc(var(--icon) * 3.2);
-        transform: translate(-50%, -58%);
-        filter: url(#goo);
-        mix-blend-mode: screen;
-      }
-      .fxB .blob {
-        position: absolute;
-        left: 50%;
-        bottom: 18%;
-        width: calc(var(--icon) * var(--r));
-        height: calc(var(--icon) * var(--r));
-        margin-left: calc(var(--icon) * var(--r) * -0.5);
-        border-radius: 50%;
-        background: #fff6da;
-        animation-name: B-rise;
-        animation-timing-function: linear;
-        animation-iteration-count: infinite;
-      }
-      /*
-        불투명도를 건드리지 않는다. 알파를 낮추면 뭉침 문턱 아래로 떨어져
-        방울이 툭 사라진다 — 서서히 스러지는 것이 아니라 잘려 나간다.
-        대신 크기를 줄인다. 작아진 방울은 흐림에 묻혀 저절로 문턱 아래가 된다.
-      */
-      @keyframes B-rise {
-        0% {
-          transform: translate(calc(var(--icon) * var(--x) * 0.15), 0) scale(0.35);
-          background-color: #fff6da;
-        }
-        35% {
-          background-color: #ffd257;
-        }
-        62% {
-          transform: translate(calc(var(--icon) * var(--x) * 0.8), calc(var(--icon) * -0.8))
-            scale(1);
-          background-color: #ff7d1a;
-        }
-        100% {
-          transform: translate(calc(var(--icon) * var(--x) * 1.5), calc(var(--icon) * -1.7))
-            scale(0.15);
-          background-color: #c9280c;
-        }
-      }
-
-      /* ======================================================================
-         C · 난류 일그러짐 — feTurbulence + feDisplacementMap
-
-         불길 모양을 그리는 대신, 매끈한 그라디언트 덩어리를 난수 지형으로 밀어
-         일그러뜨린다. 사람이 그린 곡선이 아니라 난수가 만든 가장자리라 같은
-         모양이 두 번 나오지 않는다.
-
-         대가가 있다. baseFrequency가 바뀔 때마다 난수 지형을 통째로 다시
-         만들므로 CPU를 많이 쓴다. 여기서는 일부러 매 프레임 흔들어 최악의
-         비용을 보여 준다.
-         ====================================================================== */
-
-      .fxC {
-        width: calc(var(--icon) * 1.9);
-        height: calc(var(--icon) * 2.7);
-        transform: translate(-50%, -62%);
-        mix-blend-mode: screen;
-      }
-      .fxC svg {
-        width: 100%;
-        height: 100%;
-        overflow: visible;
-      }
-      /* 불길이 위로 핥아 올라가는 움직임. 난수 지형은 제자리에 있고 형태가 그
-         위를 지나가므로, 지나가는 동안 일그러짐이 흘러 보인다.
-
-         혀마다 주기를 어긋나게 둔다. 한 덩어리로 움직이면 불이 아니라
-         출렁이는 젤리로 보인다. */
-      .fxC path {
-        transform-origin: 50% 96%;
-        animation-name: C-lick;
-        animation-timing-function: ease-in-out;
-        animation-iteration-count: infinite;
-        animation-direction: alternate;
-      }
-      #c-mid {
-        animation-duration: 2.3s;
-      }
-      #c-left {
-        animation-duration: 1.6s;
-        animation-delay: -0.7s;
-      }
-      #c-right {
-        animation-duration: 1.9s;
-        animation-delay: -1.2s;
-      }
-      #c-core {
-        animation-duration: 1.3s;
-        animation-delay: -0.4s;
-      }
-      @keyframes C-lick {
-        from {
-          transform: translateY(3%) scale(0.9, 0.9);
-        }
-        to {
-          transform: translateY(-5%) scale(1.08, 1.12);
-        }
-      }
-
-      /* ======================================================================
-         D · 캔버스 입자
-
-         입자를 직접 그린다. 부력으로 위로 밀리고, 옆으로 흔들리고, 오르면서
-         커졌다가 식으며 스러진다. 실제 불꽃이 하는 일을 그대로 시킨다.
-
-         개수를 묶으면 비용이 예측되고, 값 하나하나가 물리량이라 조절이 가장
-         직관적이다. 다만 캔버스라 CSS처럼 공짜로 합성되지는 않는다.
-         ====================================================================== */
-
-      .fxD {
-        transform: translate(-50%, -50%);
-        mix-blend-mode: screen;
       }
 
       @media (prefers-reduced-motion: reduce) {
@@ -500,9 +557,10 @@
   <body>
     <h1>불 효과 실험실</h1>
     <p class="intro">
-      네 기법을 나란히 두고 고른다. 아래 막대로 아이콘을 실제 위젯 범위(75~120px)에서 움직여
-      보고, 카드마다 값을 만져 조정한다. <strong>홀로</strong>를 누르면 그 기법만 크게 남아 fps로
-      비용을 잴 수 있다 — 넷이 같이 돌면 어느 것이 비싼지 알 수 없다. 마음에 드는 조합을 찾으면
+      메타볼 두 갈래를 견준다. <strong>B</strong>는 아래에서 위로 타오르고,
+      <strong>E</strong>는 가운데에서 사방으로 퍼진다. 아래 띠의
+      <strong>달굼·맥박·테</strong>가 원판 자체를 달아오르게 한다. <strong>홀로</strong>를 누르면
+      한쪽만 크게 남아 fps로 비용을 잴 수 있다. 마음에 드는 조합을 찾으면
       <strong>값 내보내기</strong>를 눌러 그 숫자를 알려주면 앱에 옮긴다.
     </p>
     <p class="warn">
@@ -511,195 +569,143 @@
     </p>
 
     <div class="grid">
-      <!-- ================= A ================= -->
-      <section class="card" data-key="A">
-        <div class="card__head">
-          <div>
-            <h2 class="card__name">A · 레이어드 물방울</h2>
-            <p class="card__note">지금 앱에 들어간 방식. 가장 싸다.</p>
-          </div>
-          <button class="solo-btn" type="button">홀로</button>
-        </div>
-        <div class="stage">
-          <div class="fx fxA" id="fxA"></div>
-          <div class="stone"></div>
-        </div>
-        <div class="controls">
-          <div class="row">
-            <label for="a-count">불꽃 수</label>
-            <input id="a-count" type="range" min="3" max="16" value="6" />
-            <output>6</output>
-          </div>
-          <div class="row">
-            <label for="a-blur">흐림</label>
-            <input id="a-blur" type="range" min="0" max="60" value="14" />
-            <output>0.014</output>
-          </div>
-          <div class="row">
-            <label for="a-speed">속도</label>
-            <input id="a-speed" type="range" min="40" max="250" value="100" />
-            <output>1.00×</output>
-          </div>
-        </div>
-      </section>
-
       <!-- ================= B ================= -->
       <section class="card" data-key="B">
         <div class="card__head">
           <div>
-            <h2 class="card__name">B · 메타볼</h2>
-            <p class="card__note">방울이 서로 이어져 갈라지고 합쳐진다.</p>
+            <h2 class="card__name">B · 위로 타오름</h2>
+            <p class="card__note">모닥불. 아래에서 솟아 위로 흩어진다.</p>
           </div>
           <button class="solo-btn" type="button">홀로</button>
         </div>
         <div class="stage">
-          <div class="fx fxB" id="fxB"></div>
+          <div class="fx goo fxB" id="fxB"></div>
+          <div class="fx ashes" id="ashB"></div>
           <div class="stone"></div>
         </div>
         <div class="controls">
           <div class="row">
             <label for="b-count">방울 수</label>
-            <input id="b-count" type="range" min="6" max="60" value="28" />
+            <input id="b-count" type="range" min="2" max="140" value="28" />
             <output>28</output>
           </div>
           <div class="row">
             <label for="b-goo">뭉침</label>
-            <input id="b-goo" type="range" min="4" max="40" value="22" />
+            <input id="b-goo" type="range" min="1" max="90" value="22" />
             <output>22</output>
           </div>
           <div class="row">
+            <label for="b-size">방울 크기</label>
+            <input id="b-size" type="range" min="5" max="150" value="45" />
+            <output>0.45</output>
+          </div>
+          <div class="row">
+            <label for="b-reach">높이</label>
+            <input id="b-reach" type="range" min="20" max="400" value="170" />
+            <output>1.70</output>
+          </div>
+          <div class="row">
             <label for="b-spread">퍼짐</label>
-            <input id="b-spread" type="range" min="10" max="120" value="34" />
+            <input id="b-spread" type="range" min="0" max="300" value="34" />
             <output>0.34</output>
           </div>
           <div class="row">
             <label for="b-speed">속도</label>
-            <input id="b-speed" type="range" min="40" max="250" value="100" />
+            <input id="b-speed" type="range" min="15" max="500" value="100" />
             <output>1.00×</output>
+          </div>
+          <div class="row">
+            <label for="b-ash">재 개수</label>
+            <input id="b-ash" type="range" min="0" max="60" value="10" />
+            <output>10</output>
+          </div>
+          <div class="row">
+            <label for="b-ashsize">재 크기</label>
+            <input id="b-ashsize" type="range" min="2" max="40" value="9" />
+            <output>0.09</output>
+          </div>
+          <div class="row">
+            <label for="b-ashfar">재 거리</label>
+            <input id="b-ashfar" type="range" min="50" max="600" value="260" />
+            <output>2.60</output>
+          </div>
+          <div class="row">
+            <label for="b-ashspeed">재 속도</label>
+            <input id="b-ashspeed" type="range" min="10" max="400" value="60" />
+            <output>0.60×</output>
           </div>
         </div>
       </section>
 
-      <!-- ================= C ================= -->
-      <section class="card" data-key="C">
+      <!-- ================= E ================= -->
+      <section class="card" data-key="E">
         <div class="card__head">
           <div>
-            <h2 class="card__name">C · 난류 일그러짐</h2>
-            <p class="card__note">난수가 가장자리를 만든다. 가장 비싸다.</p>
+            <h2 class="card__name">E · 사방으로 퍼짐</h2>
+            <p class="card__note">해·불꽃놀이. 가운데에서 밖으로 뻗는다.</p>
           </div>
           <button class="solo-btn" type="button">홀로</button>
         </div>
         <div class="stage">
-          <div class="fx fxC" id="fxC">
-            <svg viewBox="0 0 120 200" preserveAspectRatio="none" aria-hidden="true">
-              <defs>
-                <linearGradient id="c-grad" x1="0" y1="1" x2="0" y2="0">
-                  <stop offset="0%" stop-color="#ff5a12" stop-opacity="0.55" />
-                  <stop offset="14%" stop-color="#ff8a1e" stop-opacity="0.92" />
-                  <stop offset="38%" stop-color="#ffbe3e" stop-opacity="0.95" />
-                  <stop offset="62%" stop-color="#ff7d1a" stop-opacity="0.85" />
-                  <stop offset="84%" stop-color="#d6300f" stop-opacity="0.45" />
-                  <stop offset="100%" stop-color="#7e1606" stop-opacity="0" />
-                </linearGradient>
-                <linearGradient id="c-hot" x1="0" y1="1" x2="0" y2="0">
-                  <stop offset="0%" stop-color="#fff3cf" stop-opacity="0.95" />
-                  <stop offset="45%" stop-color="#ffe08c" stop-opacity="0.9" />
-                  <stop offset="100%" stop-color="#ffab2e" stop-opacity="0" />
-                </linearGradient>
-              </defs>
-              <!--
-                혀 셋과 속불 하나. 하나짜리는 촛불로 보인다 — 여럿이 서로 다른
-                높이에서 흔들려야 '활활'이 된다.
-              -->
-              <g filter="url(#turb)">
-                <path
-                  id="c-left"
-                  fill="url(#c-grad)"
-                  d="M38 70 C44 100 54 116 54 142 C54 172 46 192 38 192 C30 192 22 172 22 142 C22 116 32 100 38 70 Z"
-                />
-                <path
-                  id="c-right"
-                  fill="url(#c-grad)"
-                  d="M82 62 C88 94 98 112 98 138 C98 170 90 192 82 192 C74 192 66 170 66 138 C66 112 76 94 82 62 Z"
-                />
-                <path
-                  id="c-mid"
-                  fill="url(#c-grad)"
-                  d="M60 18 C66 62 82 88 82 126 C82 164 72 192 60 192 C48 192 38 164 38 126 C38 88 54 62 60 18 Z"
-                />
-                <!-- 속불: 더 밝고 좁다. 겹쳐야 깊이가 생긴다 -->
-                <path
-                  id="c-core"
-                  fill="url(#c-hot)"
-                  d="M60 96 C65 118 73 130 73 150 C73 174 67 190 60 190 C53 190 47 174 47 150 C47 130 55 118 60 96 Z"
-                />
-              </g>
-            </svg>
-          </div>
+          <div class="fx goo fxE" id="fxE"></div>
+          <div class="fx ashes" id="ashE"></div>
           <div class="stone"></div>
         </div>
         <div class="controls">
           <div class="row">
-            <label for="c-scale">일그러짐</label>
-            <input id="c-scale" type="range" min="0" max="50" value="13" />
+            <label for="e-count">방울 수</label>
+            <input id="e-count" type="range" min="2" max="200" value="70" />
+            <output>70</output>
+          </div>
+          <div class="row">
+            <label for="e-goo">뭉침</label>
+            <input id="e-goo" type="range" min="1" max="90" value="13" />
             <output>13</output>
           </div>
           <div class="row">
-            <label for="c-freq">결 크기</label>
-            <input id="c-freq" type="range" min="8" max="140" value="48" />
-            <output>0.048</output>
+            <label for="e-size">방울 크기</label>
+            <input id="e-size" type="range" min="5" max="150" value="28" />
+            <output>0.28</output>
           </div>
           <div class="row">
-            <label for="c-oct">결 겹</label>
-            <input id="c-oct" type="range" min="1" max="4" value="3" />
-            <output>3</output>
+            <label for="e-core">심지</label>
+            <input id="e-core" type="range" min="0" max="200" value="78" />
+            <output>0.78</output>
           </div>
           <div class="row">
-            <label for="c-speed">끓는 속도</label>
-            <input id="c-speed" type="range" min="0" max="200" value="100" />
+            <label for="e-reach">뻗음</label>
+            <input id="e-reach" type="range" min="20" max="400" value="125" />
+            <output>1.25</output>
+          </div>
+          <div class="row">
+            <label for="e-swirl">소용돌이</label>
+            <input id="e-swirl" type="range" min="-240" max="240" value="45" />
+            <output>45°</output>
+          </div>
+          <div class="row">
+            <label for="e-speed">속도</label>
+            <input id="e-speed" type="range" min="15" max="500" value="100" />
             <output>1.00×</output>
           </div>
-        </div>
-      </section>
-
-      <!-- ================= D ================= -->
-      <section class="card" data-key="D">
-        <div class="card__head">
-          <div>
-            <h2 class="card__name">D · 캔버스 입자</h2>
-            <p class="card__note">부력·흔들림·식음을 직접 계산한다.</p>
-          </div>
-          <button class="solo-btn" type="button">홀로</button>
-        </div>
-        <div class="stage">
-          <canvas class="fx fxD" id="fxD"></canvas>
-          <div class="stone"></div>
-        </div>
-        <div class="controls">
           <div class="row">
-            <label for="d-rate">초당 입자</label>
-            <input id="d-rate" type="range" min="20" max="500" value="220" />
-            <output>220</output>
+            <label for="e-ash">재 개수</label>
+            <input id="e-ash" type="range" min="0" max="60" value="14" />
+            <output>14</output>
           </div>
           <div class="row">
-            <label for="d-life">수명</label>
-            <input id="d-life" type="range" min="30" max="250" value="115" />
-            <output>1.15s</output>
+            <label for="e-ashsize">재 크기</label>
+            <input id="e-ashsize" type="range" min="2" max="40" value="9" />
+            <output>0.09</output>
           </div>
           <div class="row">
-            <label for="d-spread">퍼짐</label>
-            <input id="d-spread" type="range" min="0" max="120" value="52" />
-            <output>0.52</output>
+            <label for="e-ashfar">재 거리</label>
+            <input id="e-ashfar" type="range" min="50" max="600" value="240" />
+            <output>2.40</output>
           </div>
           <div class="row">
-            <label for="d-buoy">부력</label>
-            <input id="d-buoy" type="range" min="0" max="600" value="270" />
-            <output>2.70</output>
-          </div>
-          <div class="row">
-            <label for="d-wobble">흔들림</label>
-            <input id="d-wobble" type="range" min="0" max="200" value="70" />
-            <output>0.70</output>
+            <label for="e-ashspeed">재 속도</label>
+            <input id="e-ashspeed" type="range" min="10" max="400" value="55" />
+            <output>0.55×</output>
           </div>
         </div>
       </section>
@@ -708,54 +714,50 @@
     <div class="toolbar">
       <div class="row">
         <label for="size">아이콘</label>
-        <input id="size" type="range" min="50" max="140" value="88" />
+        <input id="size" type="range" min="40" max="220" value="88" />
         <output>88px</output>
+      </div>
+      <div class="row">
+        <label for="heat">달굼</label>
+        <input id="heat" type="range" min="0" max="150" value="55" />
+        <output>0.55</output>
+      </div>
+      <div class="row">
+        <label for="rim">테</label>
+        <input id="rim" type="range" min="0" max="150" value="55" />
+        <output>0.55</output>
+      </div>
+      <div class="row">
+        <label for="pulse">맥박</label>
+        <input id="pulse" type="range" min="20" max="600" value="150" />
+        <output>1.50s</output>
       </div>
       <label class="check"><input id="front" type="checkbox" /> 불꽃을 아이콘 앞에</label>
       <label class="check"><input id="running" type="checkbox" checked /> 돌리기</label>
-      <button class="solo-btn" type="button" id="all">전부 보기</button>
+      <button class="solo-btn" type="button" id="all">둘 다 보기</button>
       <button class="solo-btn" type="button" id="dump-btn">값 내보내기</button>
       <span class="fps" id="fps">— fps</span>
     </div>
 
     <pre class="dump" id="dump"></pre>
 
-    <!-- SVG 필터. 화면에 보이지 않지만 위 카드들이 이름으로 끌어다 쓴다. -->
+    <!--
+      뭉침 필터. 흐린 뒤 알파를 급격히 세워 방울을 뭉친다.
+      행렬 마지막 줄이 알파를 늘리고(×20) 끌어내려(−8), 옅게 번진 가장자리는
+      잘려 나가고 진한 가운데만 남아 덩어리가 이어진다.
+
+      B와 E가 각자 필터를 쓴다. 하나를 나눠 쓰면 한쪽 뭉침을 만질 때 다른 쪽도
+      따라 바뀌어 견줄 수가 없다.
+    -->
     <svg width="0" height="0" style="position: absolute" aria-hidden="true">
       <defs>
-        <!--
-          메타볼: 흐린 뒤 알파를 급격히 세워 방울을 뭉친다.
-          행렬의 마지막 줄이 알파를 늘리고(×k) 끌어내려(−b), 옅게 번진 가장자리는
-          잘려 나가고 진한 가운데만 남아 덩어리가 이어진다.
-        -->
-        <filter id="goo" x="-30%" y="-30%" width="160%" height="160%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="b" id="goo-blur" />
-          <feColorMatrix
-            in="b"
-            mode="matrix"
-            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8"
-            id="goo-matrix"
-          />
+        <filter id="gooB" x="-35%" y="-35%" width="170%" height="170%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="s" id="gooB-blur" />
+          <feColorMatrix in="s" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8" />
         </filter>
-
-        <!-- 난류 일그러짐 -->
-        <filter id="turb" x="-60%" y="-40%" width="220%" height="180%">
-          <feTurbulence
-            id="turb-noise"
-            type="fractalNoise"
-            baseFrequency="0.048 0.0216"
-            numOctaves="3"
-            seed="7"
-            result="n"
-          />
-          <feDisplacementMap
-            id="turb-disp"
-            in="SourceGraphic"
-            in2="n"
-            scale="38"
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
+        <filter id="gooE" x="-35%" y="-35%" width="170%" height="170%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="s" id="gooE-blur" />
+          <feColorMatrix in="s" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8" />
         </filter>
       </defs>
     </svg>
@@ -766,18 +768,27 @@
       /** 막대 옆의 숫자칸. output이 바로 뒤에 온다는 마크업 약속에 기댄다. */
       const out = (id, text) => ($(id).nextElementSibling.value = text)
       const val = (id) => +$(id).value
+      const iconPx = () => parseFloat(getComputedStyle(root).getPropertyValue('--icon'))
+
+      /* ---------------- 원판 달굼 ---------------- */
+
+      function applyHeat() {
+        root.style.setProperty('--heat', (val('heat') / 100).toFixed(2))
+        root.style.setProperty('--rim', (val('rim') / 100).toFixed(2))
+        root.style.setProperty('--pulse', (val('pulse') / 100).toFixed(2) + 's')
+        out('heat', (val('heat') / 100).toFixed(2))
+        out('rim', (val('rim') / 100).toFixed(2))
+        out('pulse', (val('pulse') / 100).toFixed(2) + 's')
+      }
+      ;['heat', 'rim', 'pulse'].forEach((id) => $(id).addEventListener('input', applyHeat))
 
       /* ---------------- 공통 ---------------- */
-
-      function iconPx() {
-        return parseFloat(getComputedStyle(root).getPropertyValue('--icon'))
-      }
 
       $('size').addEventListener('input', () => {
         root.style.setProperty('--icon', val('size') + 'px')
         out('size', val('size') + 'px')
-        applyGoo()
-        sizeD()
+        applyGoo('B')
+        applyGoo('E')
       })
 
       $('front').addEventListener('change', () =>
@@ -787,9 +798,11 @@
       const running = $('running')
       function applyRunning() {
         const s = running.checked ? 'running' : 'paused'
-        document.querySelectorAll('.fxA > span, .fxB > span, .fxC path').forEach((el) => {
+        document.querySelectorAll('.blob, .core, .ash, .stone').forEach((el) => {
           el.style.animationPlayState = s
         })
+        // 의사요소는 style로 못 건드린다. 부모에 상속시켜 같이 멈춘다.
+        document.body.style.setProperty('--play', s)
       }
       running.addEventListener('change', applyRunning)
 
@@ -800,248 +813,149 @@
             .querySelectorAll('.card')
             .forEach((c) => c.classList.toggle('is-solo', c === card))
           document.body.classList.add('solo')
-          sizeD()
         })
       })
-      $('all').addEventListener('click', () => {
-        document.body.classList.remove('solo')
-        sizeD()
-      })
+      $('all').addEventListener('click', () => document.body.classList.remove('solo'))
 
-      /* ---------------- A · 레이어드 물방울 ---------------- */
+      /* ---------------- 뭉침 ---------------- */
 
-      function buildA() {
-        const host = $('fxA')
-        const n = val('a-count')
-        const blur = val('a-blur') / 1000
-        const speed = val('a-speed') / 100
-        host.innerHTML = '<span class="scorch"></span><span class="ember"></span>'
+      function applyGoo(key) {
+        const v = val(key.toLowerCase() + '-goo')
+        // 흐림은 아이콘에 비례해야 크기를 바꿔도 뭉치는 정도가 같다.
+        // 방울 반지름의 절반쯤이 알맞다. 더 흐리면 문턱을 못 넘어 다 사라진다.
+        $(`goo${key}-blur`).setAttribute('stdDeviation', (iconPx() * v * 0.004).toFixed(2))
+        out(key.toLowerCase() + '-goo', v)
+      }
+
+      /* ---------------- 재 ---------------- */
+
+      /**
+       * 검부러기를 뿌린다. `radial`이면 각도별로 사방으로, 아니면 위로 오른다.
+       * 뭉침 필터 바깥의 제 레이어에 담는다 — 재까지 뭉치면 불덩이에 붙는다.
+       */
+      function buildAsh(host, prefix, radial) {
+        const n = val(prefix + '-ash')
+        const speed = val(prefix + '-ashspeed') / 100
+        const size = val(prefix + '-ashsize') / 100
+        const far = val(prefix + '-ashfar') / 100
+        host.innerHTML = ''
         for (let i = 0; i < n; i++) {
           const s = document.createElement('span')
-          s.className = 'flame'
-          // 좌우 위치·주기·지연을 어긋나게 둔다. 같으면 한꺼번에 깜빡인다.
-          s.style.setProperty('--x', ((((i * 37) % 100) / 100 - 0.5) * 0.9).toFixed(3))
-          s.style.animationDuration = ((0.9 + ((i * 13) % 70) / 100) / speed).toFixed(2) + 's'
-          s.style.animationDelay = (-((i * 29) % 100) / 100).toFixed(2) + 's'
-          s.style.filter = `blur(calc(var(--icon) * ${blur}))`
+          s.className = 'ash ash' + (radial ? 'E' : 'B')
+          s.style.setProperty('--ar', (size * (0.6 + Math.random() * 0.9)).toFixed(3))
+          s.style.setProperty('--afar', (far * (0.7 + Math.random() * 0.6)).toFixed(2))
+          // 제자리 회전. 방향과 바퀴 수를 섞어야 우수수 흩날린다.
+          s.style.setProperty(
+            '--spin',
+            ((Math.random() < 0.5 ? -1 : 1) * (180 + Math.random() * 720)).toFixed(0) + 'deg',
+          )
+          if (radial) {
+            s.style.setProperty('--a', (Math.random() * 360).toFixed(1) + 'deg')
+            s.style.setProperty('--drift', ((Math.random() - 0.5) * 90).toFixed(1) + 'deg')
+          } else {
+            s.style.setProperty('--x', (Math.random() - 0.5).toFixed(3))
+          }
+          // 재는 불보다 오래 떠 있다. 곧장 사라지면 흩날리는 것이 안 보인다.
+          s.style.animationDuration = ((2.2 + Math.random() * 2.6) / speed).toFixed(2) + 's'
+          // 지연을 음수로 흩는다. 양수면 처음 몇 초가 텅 빈 채로 지나간다.
+          s.style.animationDelay = (-Math.random() * 6).toFixed(2) + 's'
           host.appendChild(s)
         }
-        out('a-count', n)
-        out('a-blur', blur.toFixed(3))
-        out('a-speed', speed.toFixed(2) + '×')
-        applyRunning()
+        out(prefix + '-ash', n)
+        out(prefix + '-ashsize', size.toFixed(2))
+        out(prefix + '-ashfar', far.toFixed(2))
+        out(prefix + '-ashspeed', speed.toFixed(2) + '×')
       }
-      ;['a-count', 'a-blur', 'a-speed'].forEach((id) => $(id).addEventListener('input', buildA))
 
-      /* ---------------- B · 메타볼 ---------------- */
+      /* ---------------- B · 위로 타오름 ---------------- */
 
       function buildB() {
         const host = $('fxB')
         const n = val('b-count')
         const speed = val('b-speed') / 100
         const spread = val('b-spread') / 100
+        const size = val('b-size') / 100
+        const reach = val('b-reach') / 100
         host.innerHTML = ''
         for (let i = 0; i < n; i++) {
           const s = document.createElement('span')
           s.className = 'blob'
-          s.style.setProperty('--x', ((((i * 41) % 100) / 100 - 0.5) * 2 * spread).toFixed(3))
-          s.style.setProperty('--r', (0.24 + ((i * 17) % 45) / 100).toFixed(3))
-          s.style.animationDuration = ((1.2 + ((i * 23) % 90) / 100) / speed).toFixed(2) + 's'
-          // 지연을 음수로 흩는다. 양수면 처음 몇 초가 텅 빈 채로 지나간다.
-          s.style.animationDelay = (-((i * 137) % 200) / 100).toFixed(2) + 's'
+          s.style.setProperty('--x', ((Math.random() - 0.5) * 2 * spread).toFixed(3))
+          s.style.setProperty('--r', (size * (0.55 + Math.random() * 0.95)).toFixed(3))
+          s.style.setProperty('--reach', (reach * (0.75 + Math.random() * 0.5)).toFixed(3))
+          s.style.animationDuration = ((1.2 + Math.random() * 0.9) / speed).toFixed(2) + 's'
+          s.style.animationDelay = (-Math.random() * 3).toFixed(2) + 's'
           host.appendChild(s)
         }
         out('b-count', n)
+        out('b-size', size.toFixed(2))
+        out('b-reach', reach.toFixed(2))
         out('b-spread', spread.toFixed(2))
         out('b-speed', speed.toFixed(2) + '×')
         applyRunning()
       }
-      function applyGoo() {
-        const v = val('b-goo')
-        // 흐림은 아이콘에 비례해야 크기를 바꿔도 뭉치는 정도가 같다.
-        // 방울 반지름의 절반쯤이 알맞다. 더 흐리면 문턱을 못 넘어 다 사라진다.
-        $('goo-blur').setAttribute('stdDeviation', (iconPx() * v * 0.004).toFixed(2))
-        out('b-goo', v)
-      }
-      ;['b-count', 'b-spread', 'b-speed'].forEach((id) => $(id).addEventListener('input', buildB))
-      $('b-goo').addEventListener('input', applyGoo)
 
-      /* ---------------- C · 난류 일그러짐 ---------------- */
+      /* ---------------- E · 사방으로 퍼짐 ---------------- */
 
-      function applyC() {
-        $('turb-disp').setAttribute('scale', val('c-scale'))
-        $('turb-noise').setAttribute('numOctaves', val('c-oct'))
-        out('c-scale', val('c-scale'))
-        out('c-freq', (val('c-freq') / 1000).toFixed(3))
-        out('c-oct', val('c-oct'))
-        out('c-speed', (val('c-speed') / 100).toFixed(2) + '×')
-        if (val('c-speed') === 0) applyFreq(0)
+      function buildE() {
+        const host = $('fxE')
+        const n = val('e-count')
+        const speed = val('e-speed') / 100
+        const size = val('e-size') / 100
+        const reach = val('e-reach') / 100
+        const swirl = val('e-swirl')
+        const core = val('e-core') / 100
+
+        host.innerHTML = ''
+        if (core > 0) {
+          const c = document.createElement('span')
+          c.className = 'core'
+          c.style.setProperty('--core', core.toFixed(3))
+          host.appendChild(c)
+        }
+        for (let i = 0; i < n; i++) {
+          const s = document.createElement('span')
+          s.className = 'blob'
+          // 황금각으로 돌려 뿌린다. 고르게 나누면 바퀴살처럼 각져 보이고,
+          // 완전한 난수는 뭉치고 비는 자리가 생긴다. 그 사이가 황금각이다.
+          const angle = (i * 137.508 + Math.random() * 14) % 360
+          s.style.setProperty('--a', angle.toFixed(1) + 'deg')
+          s.style.setProperty('--r', (size * (0.55 + Math.random() * 0.95)).toFixed(3))
+          s.style.setProperty('--reach', (reach * (0.72 + Math.random() * 0.56)).toFixed(3))
+          s.style.setProperty('--swirl', (swirl * (0.6 + Math.random() * 0.8)).toFixed(1) + 'deg')
+          s.style.animationDuration = ((1.3 + Math.random() * 1.0) / speed).toFixed(2) + 's'
+          s.style.animationDelay = (-Math.random() * 3).toFixed(2) + 's'
+          host.appendChild(s)
+        }
+        out('e-count', n)
+        out('e-size', size.toFixed(2))
+        out('e-core', core.toFixed(2))
+        out('e-reach', reach.toFixed(2))
+        out('e-swirl', swirl + '°')
+        out('e-speed', speed.toFixed(2) + '×')
+        applyRunning()
       }
-      ;['c-scale', 'c-freq', 'c-oct', 'c-speed'].forEach((id) =>
-        $(id).addEventListener('input', applyC),
+
+      /* ---------------- 배선 ---------------- */
+
+      ;['b-count', 'b-size', 'b-reach', 'b-spread', 'b-speed'].forEach((id) =>
+        $(id).addEventListener('input', buildB),
       )
-
-      function applyFreq(phase) {
-        const f = val('c-freq') / 1000
-        // 좁은 폭으로 매끄럽게 흔든다. seed를 갈아끼우면 지형이 통째로 바뀌어
-        // 툭툭 튀지만, 주파수를 조금씩 밀면 지형이 서서히 끓는다.
-        const wx = 1 + Math.sin(phase * 1.7) * 0.22
-        const wy = 1 + Math.sin(phase * 2.3 + 1.1) * 0.28
-        // 세로 주파수를 낮게 둔다. 결이 위아래로 길게 늘어져야 불길이 핥는
-        // 모양이 되고, 가로세로가 같으면 자갈밭처럼 오돌토돌해진다.
-        $('turb-noise').setAttribute(
-          'baseFrequency',
-          `${(f * wx).toFixed(4)} ${(f * 0.45 * wy).toFixed(4)}`,
-        )
-      }
-
-      let cPhase = 0
-      function tickC(dt) {
-        const speed = val('c-speed') / 100
-        if (!running.checked || speed === 0) return
-        cPhase += dt * speed
-        applyFreq(cPhase)
-      }
-
-      /* ---------------- D · 캔버스 입자 ---------------- */
-
-      const canvas = $('fxD')
-      const ctx = canvas.getContext('2d')
-      let particles = []
-      let spawnDebt = 0
-
-      function sizeD() {
-        const icon = iconPx()
-        const dpr = Math.min(window.devicePixelRatio || 1, 2)
-        const w = icon * 3
-        const h = icon * 3.8
-        canvas.style.width = w + 'px'
-        canvas.style.height = h + 'px'
-        canvas.width = Math.round(w * dpr)
-        canvas.height = Math.round(h * dpr)
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      }
-
-      /** 수명에 따라 흰빛에서 붉은빛으로 식는다. 층계로 끊으면 띠가 보인다. */
-      const RAMP = [
-        [0.0, 255, 252, 236],
-        [0.12, 255, 228, 150],
-        [0.3, 255, 176, 56],
-        [0.55, 240, 96, 22],
-        [0.8, 168, 38, 12],
-        [1.0, 60, 14, 6],
-      ]
-      function ramp(t) {
-        for (let i = 1; i < RAMP.length; i++) {
-          if (t <= RAMP[i][0]) {
-            const a = RAMP[i - 1]
-            const b = RAMP[i]
-            const k = (t - a[0]) / (b[0] - a[0])
-            return [
-              (a[1] + (b[1] - a[1]) * k) | 0,
-              (a[2] + (b[2] - a[2]) * k) | 0,
-              (a[3] + (b[3] - a[3]) * k) | 0,
-            ]
-          }
-        }
-        return [60, 14, 6]
-      }
-
-      function spawn(icon) {
-        const spread = val('d-spread') / 100
-        const life = val('d-life') / 100
-        // 가운데가 촘촘하고 가장자리가 성기게. 고르게 뿌리면 기둥이 각져 보인다.
-        const u = Math.random() + Math.random() - 1
-        return {
-          x: u * icon * spread * 0.5,
-          y: 0,
-          vx: (Math.random() - 0.5) * icon * 0.25,
-          vy: -icon * (0.6 + Math.random() * 0.4),
-          r: icon * (0.09 + Math.random() * 0.14),
-          phase: Math.random() * Math.PI * 2,
-          freq: 2.5 + Math.random() * 3.5,
-          age: 0,
-          life: life * (0.65 + Math.random() * 0.7),
-        }
-      }
-
-      function tickD(dt, icon) {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2)
-        const w = canvas.width / dpr
-        const h = canvas.height / dpr
-        ctx.clearRect(0, 0, w, h)
-
-        if (running.checked) {
-          spawnDebt += dt * val('d-rate')
-          // 한 프레임에 몰아 만들지 않는다. 창을 다시 열 때 뭉텅이로 터진다.
-          const batch = Math.min(spawnDebt | 0, 60)
-          for (let i = 0; i < batch; i++) particles.push(spawn(icon))
-          spawnDebt -= batch
-        }
-
-        const baseX = w / 2
-        const baseY = h * 0.68
-        const buoy = (val('d-buoy') / 100) * icon
-        const wob = (val('d-wobble') / 100) * icon
-
-        ctx.globalCompositeOperation = 'lighter'
-
-        // 밑불. 입자만 있으면 뿌리가 허전하다.
-        const er = icon * 0.62
-        const ey = baseY - icon * 0.1
-        const eg = ctx.createRadialGradient(baseX, ey, 0, baseX, ey, er)
-        eg.addColorStop(0, 'rgba(255,196,96,0.28)')
-        eg.addColorStop(0.5, 'rgba(240,110,30,0.18)')
-        eg.addColorStop(1, 'rgba(200,60,16,0)')
-        ctx.fillStyle = eg
-        ctx.beginPath()
-        ctx.arc(baseX, ey, er, 0, Math.PI * 2)
-        ctx.fill()
-
-        particles = particles.filter((p) => {
-          if (running.checked) {
-            p.age += dt
-            // 뜨거울수록 세게 밀려 올라간다. 식으면 부력이 준다.
-            const heat = 1 - p.age / p.life
-            p.vy -= buoy * heat * dt
-            p.vy *= 1 - 0.7 * dt
-            p.vx += Math.sin(p.age * p.freq + p.phase) * wob * dt
-            p.vx *= 1 - 1.6 * dt
-            p.x += p.vx * dt
-            p.y += p.vy * dt
-          }
-          const t = p.age / p.life
-          if (t >= 1) return false
-
-          const [r, g, b] = ramp(t)
-          // 확 밝아졌다가 천천히 스러진다.
-          const alpha = Math.min(1, t / 0.06) * Math.pow(1 - t, 1.7) * 0.72
-          // 오르면서 퍼졌다가 흩어진다.
-          const radius = p.r * (0.55 + t * 1.15)
-          const gx = baseX + p.x
-          const gy = baseY + p.y
-
-          const grd = ctx.createRadialGradient(gx, gy, 0, gx, gy, radius)
-          grd.addColorStop(0, `rgba(${r},${g},${b},${alpha})`)
-          grd.addColorStop(0.45, `rgba(${r},${g},${b},${alpha * 0.5})`)
-          grd.addColorStop(1, `rgba(${r},${g},${b},0)`)
-          ctx.fillStyle = grd
-          ctx.beginPath()
-          ctx.arc(gx, gy, radius, 0, Math.PI * 2)
-          ctx.fill()
-          return true
-        })
-
-        ctx.globalCompositeOperation = 'source-over'
-        return particles.length
-      }
-      ;['d-rate', 'd-life', 'd-spread', 'd-buoy', 'd-wobble'].forEach((id) =>
+      ;['e-count', 'e-size', 'e-core', 'e-reach', 'e-swirl', 'e-speed'].forEach((id) =>
+        $(id).addEventListener('input', buildE),
+      )
+      $('b-goo').addEventListener('input', () => applyGoo('B'))
+      $('e-goo').addEventListener('input', () => applyGoo('E'))
+      ;['b-ash', 'b-ashsize', 'b-ashfar', 'b-ashspeed'].forEach((id) =>
         $(id).addEventListener('input', () => {
-          out('d-rate', val('d-rate'))
-          out('d-life', (val('d-life') / 100).toFixed(2) + 's')
-          out('d-spread', (val('d-spread') / 100).toFixed(2))
-          out('d-buoy', (val('d-buoy') / 100).toFixed(2))
-          out('d-wobble', (val('d-wobble') / 100).toFixed(2))
+          buildAsh($('ashB'), 'b', false)
+          applyRunning()
+        }),
+      )
+      ;['e-ash', 'e-ashsize', 'e-ashfar', 'e-ashspeed'].forEach((id) =>
+        $(id).addEventListener('input', () => {
+          buildAsh($('ashE'), 'e', true)
+          applyRunning()
         }),
       )
 
@@ -1053,51 +967,50 @@
           '# 불 효과 실험실 — 고른 값',
           document.body.classList.contains('solo') && solo
             ? `홀로 보는 중: ${solo.dataset.key}`
-            : '전부 보는 중',
+            : '둘 다 보는 중',
           `불꽃 위치: ${$('front').checked ? '아이콘 앞' : '아이콘 뒤'}`,
           `측정: ${$('fps').textContent}`,
           '',
           ...[...document.querySelectorAll('input[type=range]')].map(
-            (el) => `${el.id.padEnd(10)} = ${el.value}`,
+            (el) => `${el.id.padEnd(11)} = ${el.value}`,
           ),
           '',
           '(눌러서 닫는다)',
         ]
-        const dump = $('dump')
-        dump.textContent = lines.join('\n')
-        dump.classList.add('open')
+        $('dump').textContent = lines.join('\n')
+        $('dump').classList.add('open')
       })
       $('dump').addEventListener('click', () => $('dump').classList.remove('open'))
 
-      /* ---------------- 루프 ---------------- */
+      /* ---------------- fps ---------------- */
 
-      let last = performance.now()
       let frames = 0
-      let fpsAt = last
-      let alive = 0
-
+      let fpsAt = performance.now()
       function loop(now) {
-        const dt = Math.min((now - last) / 1000, 0.05)
-        last = now
-
-        alive = tickD(dt, iconPx())
-        tickC(dt)
-
         frames++
         if (now - fpsAt >= 500) {
-          $('fps').textContent = `${Math.round((frames * 1000) / (now - fpsAt))} fps · 입자 ${alive}`
+          const solo = document.querySelector('.card.is-solo')
+          const where = document.body.classList.contains('solo') && solo ? solo.dataset.key : '둘 다'
+          const count = document.querySelectorAll(
+            document.body.classList.contains('solo') && solo
+              ? `.card.is-solo .blob, .card.is-solo .ash`
+              : '.blob, .ash',
+          ).length
+          $('fps').textContent = `${Math.round((frames * 1000) / (now - fpsAt))} fps · ${where} · 조각 ${count}`
           frames = 0
           fpsAt = now
         }
         requestAnimationFrame(loop)
       }
 
-      buildA()
+      applyHeat()
+      applyGoo('B')
+      applyGoo('E')
       buildB()
-      applyGoo()
-      applyC()
-      applyFreq(0)
-      sizeD()
+      buildE()
+      buildAsh($('ashB'), 'b', false)
+      buildAsh($('ashE'), 'e', true)
+      applyRunning()
       requestAnimationFrame(loop)
     </script>
   </body>
