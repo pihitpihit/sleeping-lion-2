@@ -1,38 +1,92 @@
+import { useEffect } from 'react'
 import { useBoardSize } from './useBoardSize'
+import { useSatchelStore } from './store/satchelStore'
+import { resolveToolbarPosition } from './toolbar/position'
+import { SatchelToolbar } from './toolbar/SatchelToolbar'
+import { WidgetBoard } from './board/WidgetBoard'
 import './SatchelPage.css'
 
 /**
  * 행낭 — 위젯 보드.
  *
- * 지금은 셸뿐이다. 툴바 자리는 M5가, 격자는 M2가, 위젯은 M4가 채운다.
- *
  * 보드는 스크롤되지 않는다. 격자가 화면에 꽉 차고 위젯이 그 안에 들어가는 구조라
- * 넘칠 곳이 없어야 한다. 홈화면처럼 페이지를 넘기는 것은 현재 범위 밖이다.
+ * 넘칠 곳이 없어야 한다.
  */
 export function SatchelPage() {
   const { ref: boardRef, size } = useBoardSize<HTMLDivElement>()
 
+  const metrics = useSatchelStore((s) => s.metrics)
+  const settings = useSatchelStore((s) => s.settings)
+  const mode = useSatchelStore((s) => s.mode)
+  const notice = useSatchelStore((s) => s.notice)
+  const setBoardSize = useSatchelStore((s) => s.setBoardSize)
+  const setMode = useSatchelStore((s) => s.setMode)
+  const setToolbarPosition = useSatchelStore((s) => s.setToolbarPosition)
+  const addWidgetOfType = useSatchelStore((s) => s.addWidgetOfType)
+  const removeWidgetInstance = useSatchelStore((s) => s.removeWidgetInstance)
+  const moveOrResize = useSatchelStore((s) => s.moveOrResize)
+  const resetLayout = useSatchelStore((s) => s.resetLayout)
+  const clearNotice = useSatchelStore((s) => s.clearNotice)
+  const currentLayout = useSatchelStore((s) => s.currentLayout)
+  const countOf = useSatchelStore((s) => s.countOf)
+
+  useEffect(() => {
+    if (size.width > 0 && size.height > 0) setBoardSize(size)
+  }, [size, setBoardSize])
+
+  // 툴바 위치는 창 크기로 정한다. 보드 크기가 아니다 — 툴바가 보드를 줄이므로
+  // 보드로 판단하면 서로를 물고 도는 계산이 된다.
+  const position = resolveToolbarPosition(settings.toolbarPosition, {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  })
+
+  const layout = currentLayout()
+  const empty = layout.widgets.length === 0
+
   return (
-    <div className="satchel">
-      {/* 툴바 자리. M5에서 햄버거·모드 전환·위젯 목록이 들어온다. */}
-      <header className="satchel__bar">
-        <a className="satchel__back" href="#/">
-          {/* 간격은 CSS gap으로 준다. JSX 문자열 끝의 공백은 다듬어져 사라진다. */}
-          <span aria-hidden="true">←</span>
-          <span>잠자는 사자 2호점</span>
-        </a>
-      </header>
+    <div className={`satchel satchel--${position} satchel--${mode}`}>
+      <SatchelToolbar
+        position={position}
+        mode={mode}
+        countOf={countOf}
+        onToggleMode={() => setMode(mode === 'edit' ? 'play' : 'edit')}
+        onAdd={addWidgetOfType}
+        onSetPosition={setToolbarPosition}
+        onReset={resetLayout}
+      />
 
       <div
         className="satchel__board"
         ref={boardRef}
-        /* 관측값을 눈에 보이지 않게 노출한다. M2가 붙기 전까지 격자 계산의
-           입력이 제대로 들어오는지 확인할 유일한 통로다. */
         data-board-width={Math.round(size.width)}
         data-board-height={Math.round(size.height)}
+        data-columns={metrics.columns}
+        data-rows={metrics.rows}
       >
-        <p className="satchel__empty">행낭은 아직 비어 있다.</p>
+        <WidgetBoard
+          layout={layout}
+          metrics={metrics}
+          mode={mode}
+          onCommit={moveOrResize}
+          onRemove={removeWidgetInstance}
+        />
+
+        {empty && (
+          <p className="satchel__empty">
+            {mode === 'edit' ? '도구 띠에서 골라 놓아라.' : '행낭이 비었다. 고쳐 놓기로 채워라.'}
+          </p>
+        )}
       </div>
+
+      {notice && (
+        <div className="satchel__notice" role="status">
+          <span>{notice}</span>
+          <button type="button" onClick={clearNotice} aria-label="알림 닫기">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+      )}
     </div>
   )
 }
