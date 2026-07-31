@@ -1,0 +1,13 @@
+dist
+node_modules
+package-lock.json
+
+# 서드파티 라이선스 원문 — 한 글자도 건드리면 안 된다
+public/licenses
+LICENSE
+
+# 마크다운 제외.
+# Prettier는 표의 파이프를 '글자 수'로 맞추는데, 한글은 monospace에서 두 칸을
+# 차지하므로 글자 수를 맞추면 실제로 보이는 폭은 오히려 어긋난다. 정렬이랍시고
+# 더 읽기 어려워진다. 문서는 손으로 줄바꿈해 관리한다.
+*.md

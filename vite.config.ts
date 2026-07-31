@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs'
-import { defineConfig, type Plugin } from 'vite'
+import type { Plugin } from 'vite'
+// vite가 아니라 vitest/config에서 가져온다 — vite의 defineConfig에는 test 필드가 없다.
+import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 // tsconfig.node.json이 nodenext 해석이라 확장자를 명시해야 한다
 // (allowImportingTsExtensions가 켜져 있어 .ts로 적을 수 있다).
@@ -35,4 +37,11 @@ function noticePublicSectionsOnly(): Plugin {
 export default defineConfig({
   base: process.env.VITE_BASE ?? '/',
   plugins: [react(), noticePublicSectionsOnly()],
+  test: {
+    // 검증 대상은 순수 함수(격자 계산, 배치 판정)이므로 DOM이 필요 없다.
+    // 컴포넌트는 헤드리스 브라우저로 실물을 확인하는 편이 낫다.
+    // jsdom이 필요해지면 그때 붙인다.
+    environment: 'node',
+    include: ['src/**/*.test.ts'],
+  },
 })

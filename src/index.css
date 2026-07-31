@@ -22,8 +22,9 @@
   font-weight: 400;
   font-display: swap;
   src: url('./assets/fonts/pirata-one-latin.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
-    U+02DC, U+2000-206F, U+2122, U+2212, U+FEFF, U+FFFD;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2122,
+    U+2212, U+FEFF, U+FFFD;
 }
 
 :root {
@@ -54,8 +55,8 @@
   --sl-font-display: 'Pirata One', 'Cinzel', 'Palatino Linotype', serif;
   --sl-font-ko-display: 'Nanum Myeongjo', 'AppleMyungjo', 'Batang', serif;
   --sl-font-body:
-    'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
-    'Malgun Gothic', 'Noto Sans KR', system-ui, sans-serif;
+    'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic',
+    'Noto Sans KR', system-ui, sans-serif;
 
   /* 안전 영역 — 아이폰 노치·홈 인디케이터, 갤럭시 펀치홀 */
   --sl-safe-top: env(safe-area-inset-top, 0px);

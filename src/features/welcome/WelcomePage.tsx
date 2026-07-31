@@ -85,8 +85,8 @@ export function WelcomePage() {
         <p>{messages.siteTagline[LOCALE]}</p>
         {/* 첫 줄이 정취 쪽으로 갔으므로, 어떤 게임에 쓰는지는 이 줄이 밝힌다. */}
         <p className="welcome__footer-fine">
-          글룸헤이븐 · 사자의 턱 팬 제작 도구. Cephalofair Games와 무관한 비영리
-          도구이며 게임 원문은 담지 않습니다.
+          글룸헤이븐 · 사자의 턱 팬 제작 도구. Cephalofair Games와 무관한 비영리 도구이며 게임
+          원문은 담지 않습니다.
         </p>
         {/* CC BY-NC-SA의 저작자표시(BY)는 '합리적으로 실행 가능한' 방식의 표기를
             요구한다. 에셋을 실제로 들이기 전이라도 글꼴 출처는 여기 둔다. */}
@@ -94,7 +94,8 @@ export function WelcomePage() {
           © 2026 plastics {' · '} 글꼴{' '}
           <a href="https://fonts.google.com/specimen/Pirata+One" className="welcome__link">
             Pirata One
-          </a>{' ('}
+          </a>
+          {' ('}
           {/* index.html과 달리 JSX의 href는 Vite가 base를 다시 쓰지 않는다.
               BASE_URL('/sleeping-lion-2/')을 직접 붙여야 하위 경로 배포에서 안 깨진다. */}
           <a

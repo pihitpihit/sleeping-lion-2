@@ -7,8 +7,7 @@
 
 .notice {
   min-height: 100dvh;
-  padding:
-    calc(var(--sl-safe-top) + clamp(1.5rem, 5vh, 3rem))
+  padding: calc(var(--sl-safe-top) + clamp(1.5rem, 5vh, 3rem))
     calc(var(--sl-safe-right) + clamp(1rem, 5vw, 2rem))
     calc(var(--sl-safe-bottom) + clamp(3rem, 8vh, 5rem))
     calc(var(--sl-safe-left) + clamp(1rem, 5vw, 2rem));

@@ -24,21 +24,29 @@ npm install
 npm run dev            # 개발 서버
 npm run build          # 타입체크 + 프로덕션 빌드
 npm run preview        # 빌드 결과 확인
+npm run lint           # ESLint
+npm run format         # Prettier 적용 (format:check 는 검사만)
+npm run test           # Vitest (test:watch 는 감시 모드)
+npm run check          # 위 넷을 한 번에 — 커밋 전에 돌린다
 ```
 
-### base 경로
+### base 경로 — 로컬에서는 건드리지 않는다
 
-배포 위치에 따라 `base`가 달라지므로 `VITE_BASE` 환경변수로 주입한다.
+`VITE_BASE`는 **GitHub Actions 워크플로만** 쓴다. 로컬에서는 기본값 `/`로 두고
+`npm run build` → `npm run preview`를 그대로 쓴다.
+
+> **직접 주지 말 것.** 빌드와 preview의 base가 어긋나면 에셋이 404가 나고 SPA
+> 폴백이 `index.html`을 돌려준다. 그러면 모듈 스크립트가 MIME 불일치로 **조용히**
+> 실행되지 않아 빈 화면만 뜬다. 콘솔에 오류도 안 찍힌다.
+>
+> 실제로 두 번 밟았다. 한 번은 build에만 주고 preview에 안 줘서, 한 번은 그 반대로.
+> `npm run check`가 마지막에 base 없이 다시 빌드하기 때문에 특히 어긋나기 쉽다.
+
+Pages 배포용 빌드를 손으로 재현해야 한다면 **둘 다** 준다.
 
 ```bash
-npm run build                              # base = '/'  (자가호스팅 루트, 로컬)
-VITE_BASE=/sleeping-lion-2/ npm run build  # GitHub Pages 프로젝트 사이트
-```
-
-`preview`로 확인할 때는 빌드할 때와 **같은** `VITE_BASE`를 줘야 한다. 다르면 에셋이 404가 나고 SPA 폴백이 `index.html`을 돌려주는 탓에, 모듈 스크립트가 MIME 불일치로 조용히 실행되지 않는다.
-
-```bash
-VITE_BASE=/sleeping-lion-2/ npm run preview
+VITE_BASE=/sleeping-lion-2/ npm run build
+VITE_BASE=/sleeping-lion-2/ npm run preview   # 열 주소도 /sleeping-lion-2/ 로
 ```
 
 ## 출처와 라이선스
