@@ -1,6 +1,8 @@
 import { TestWidget } from './TestWidget'
 import { ElementTracker } from './elements/ElementTracker'
 import { isElementTrackerSizeAllowed } from './elements/layout'
+import { ElementSettingsEditor } from './elements/ElementSettingsEditor'
+import { sanitizeElementSettings } from './elements/settings'
 import type { WidgetDefinition } from './types'
 
 /**
@@ -26,8 +28,12 @@ const DEFINITIONS: WidgetDefinition[] = [
     defaultSize: { w: 6, h: 2 },
     // 짧은 쪽 제한은 1이고, "긴 쪽이 6 이상"은 isSizeAllowed가 본다.
     minSize: { w: 1, h: 1 },
-    maxInstances: 1,
+    // 인스턴스 제한 없음 — 여러 개 놓고 각기 다른 원소를 골라 볼 수 있다.
     isSizeAllowed: isElementTrackerSizeAllowed,
+    settings: {
+      sanitize: sanitizeElementSettings,
+      Editor: ElementSettingsEditor,
+    },
     Component: ElementTracker,
   },
 ]
@@ -44,7 +50,8 @@ export function validateDefinition(definition: WidgetDefinition): string | null 
     return `${id}: 최대 크기가 기본 크기보다 작다`
   }
   // 기본 크기가 스스로의 제약을 못 넘으면 위젯을 놓을 수조차 없다.
-  if (isSizeAllowed && !isSizeAllowed(defaultSize)) {
+  // 설정은 기본값으로 본다 — 새로 놓을 때의 상태다.
+  if (isSizeAllowed && !isSizeAllowed(defaultSize, definition.settings?.sanitize(undefined))) {
     return `${id}: 기본 크기가 isSizeAllowed를 통과하지 못한다`
   }
   return null
@@ -79,12 +86,26 @@ export function minSizeOf(id: string): { w: number; h: number } {
  * 새로 놓기. 한 군데라도 빠뜨리면 규칙을 어긴 크기가 저장된다.
  * 모르는 위젯은 통과시킨다(어차피 렌더되지 않고 걸러진다).
  */
-export function isSizeAllowedFor(id: string, size: { w: number; h: number }): boolean {
+export function isSizeAllowedFor(
+  id: string,
+  size: { w: number; h: number },
+  settings?: unknown,
+): boolean {
   const definition = BY_ID.get(id)
   if (!definition) return true
   if (size.w < definition.minSize.w || size.h < definition.minSize.h) return false
   if (definition.maxSize && (size.w > definition.maxSize.w || size.h > definition.maxSize.h)) {
     return false
   }
-  return definition.isSizeAllowed?.(size) ?? true
+  return definition.isSizeAllowed?.(size, settings) ?? true
+}
+
+/** 저장된 값을 그 위젯이 쓸 수 있는 설정으로 다듬는다. 설정을 안 쓰면 undefined. */
+export function sanitizeSettingsFor(id: string, raw: unknown): unknown {
+  return BY_ID.get(id)?.settings?.sanitize(raw)
+}
+
+/** 설정 화면을 지원하는가 — 톱니바퀴 버튼을 낼지 정한다. */
+export function hasSettings(id: string): boolean {
+  return BY_ID.get(id)?.settings != null
 }

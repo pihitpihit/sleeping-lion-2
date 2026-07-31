@@ -76,7 +76,16 @@ function salvage(parsed: unknown): SatchelSettings {
   // 없거나 이상하면 기본값(보임)으로 둔다.
   const showWidgetTitles = typeof raw.showWidgetTitles === 'boolean' ? raw.showWidgetTitles : true
 
-  return { version: SETTINGS_VERSION, layouts, toolbarPosition, showWidgetTitles }
+  // 모양은 위젯마다 다르므로 여기서는 '객체인가'만 본다. 실제 검증은 각 위젯의
+  // sanitize가 한다.
+  const widgetSettings: Record<string, unknown> = {}
+  if (typeof raw.widgetSettings === 'object' && raw.widgetSettings !== null) {
+    for (const [key, value] of Object.entries(raw.widgetSettings)) {
+      if (typeof value === 'object' && value !== null) widgetSettings[key] = value
+    }
+  }
+
+  return { version: SETTINGS_VERSION, layouts, toolbarPosition, showWidgetTitles, widgetSettings }
 }
 
 export function loadSettings(storage: StorageLike | null = defaultStorage()): SatchelSettings {

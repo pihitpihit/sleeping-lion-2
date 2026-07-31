@@ -1,0 +1,102 @@
+/* 슬라이드 토글 — 설정 화면에서 쓴다. */
+
+.sw {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.5rem;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--sl-text-muted);
+  font-family: var(--sl-font-ko-display);
+  font-size: 0.88rem;
+  letter-spacing: 0.03em;
+  text-align: left;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.sw:hover:not(:disabled) {
+  color: var(--sl-text);
+}
+
+.sw:focus-visible {
+  outline: 2px solid var(--sl-gold);
+  outline-offset: 1px;
+}
+
+/* 잠긴 항목 — 지금 고를 수 없다는 것이 분명해야 한다. */
+.sw:disabled {
+  cursor: default;
+  color: var(--sl-text-faint);
+}
+
+.sw__icon {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
+/* 잠기면 아이콘도 흑백으로. 지금 개별 선택이 무의미하다는 것을 보여준다. */
+.sw:disabled .sw__icon {
+  filter: grayscale(1) brightness(0.55);
+}
+
+.sw__label {
+  flex: 1;
+  min-width: 0;
+  word-break: keep-all;
+}
+
+.sw__track {
+  flex: none;
+  position: relative;
+  width: 38px;
+  height: 22px;
+  border-radius: 999px;
+  border: 1px solid var(--sl-border-strong);
+  background: rgba(0, 0, 0, 0.4);
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.sw__knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--sl-text-faint);
+  transition:
+    left 0.18s ease,
+    background-color 0.18s ease;
+}
+
+.sw[aria-checked='true'] .sw__track {
+  background: rgba(201, 162, 39, 0.3);
+  border-color: var(--sl-gold-dim);
+}
+
+.sw[aria-checked='true'] .sw__knob {
+  left: 18px;
+  background: var(--sl-gold);
+}
+
+.sw:disabled .sw__track {
+  opacity: 0.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sw__track,
+  .sw__knob {
+    transition: none;
+  }
+}

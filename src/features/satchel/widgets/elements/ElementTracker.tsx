@@ -4,13 +4,8 @@ import { DRAG_THRESHOLD } from '../../interaction/gestureMath'
 import type { WidgetProps } from '../types'
 import { useElementStore } from './elementStore'
 import { computeElementLayout } from './layout'
-import {
-  ELEMENTS,
-  ELEMENT_STATE_LABEL,
-  nearestSlotState,
-  slotOf,
-  type ElementDef,
-} from './elements'
+import { ELEMENT_STATE_LABEL, nearestSlotState, slotOf, type ElementDef } from './elements'
+import { sanitizeElementSettings, visibleElements } from './settings'
 import './ElementTracker.css'
 
 /**
@@ -23,9 +18,10 @@ import './ElementTracker.css'
  * **규칙을 돌리지 않는다.** 라운드 종료 감쇠는 자동으로 처리하지 않는다(SPEC 1장).
  * 손으로 옮기는 것을 거들 뿐이다.
  */
-export function ElementTracker({ instanceId, mode }: WidgetProps) {
+export function ElementTracker({ instanceId, mode, settings }: WidgetProps) {
   const { ref, size } = useBoardSize<HTMLDivElement>()
-  const layout = computeElementLayout(size)
+  const shownElements = visibleElements(sanitizeElementSettings(settings))
+  const layout = computeElementLayout(size, shownElements.length)
   const vertical = layout.orientation === 'vertical'
 
   return (
@@ -42,7 +38,7 @@ export function ElementTracker({ instanceId, mode }: WidgetProps) {
       aria-label="원소"
     >
       {layout.iconSize > 0 &&
-        ELEMENTS.map((element) => (
+        shownElements.map((element) => (
           <ElementLane
             key={element.id}
             element={element}

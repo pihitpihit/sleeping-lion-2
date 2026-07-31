@@ -8,6 +8,7 @@ import {
   type Delta,
 } from '../interaction/gestureMath'
 import type { WidgetDefinition, SatchelMode } from '../widgets/types'
+import { GearIcon } from './GearIcon'
 
 interface Props {
   widget: WidgetInstance
@@ -18,8 +19,11 @@ interface Props {
   others: Placement[]
   /** 제목 띠를 보일지. 끄면 그 공간이 위젯 내용으로 돌아간다. */
   showTitle: boolean
+  /** 이 인스턴스의 설정. 이미 sanitize를 거친 값이다. */
+  settings: unknown
   onCommit: (next: Placement) => boolean
   onRemove: () => void
+  onOpenSettings: () => void
 }
 
 type GestureKind = 'move' | 'resize'
@@ -46,8 +50,10 @@ export function WidgetFrame({
   mode,
   others,
   showTitle,
+  settings,
   onCommit,
   onRemove,
+  onOpenSettings,
 }: Props) {
   const gesture = useRef<Gesture | null>(null)
   const [preview, setPreview] = useState<Placement | null>(null)
@@ -180,11 +186,28 @@ export function WidgetFrame({
       {/* 편집 중에는 위젯 내용이 포인터를 받지 않는다. 드래그하려다 위젯이
           동작하면 곤란하다. */}
       <div className="widget-frame__content" aria-hidden={mode === 'edit'}>
-        <Widget instanceId={widget.instanceId} size={{ w: widget.w, h: widget.h }} mode={mode} />
+        <Widget
+          instanceId={widget.instanceId}
+          size={{ w: widget.w, h: widget.h }}
+          mode={mode}
+          settings={settings}
+        />
       </div>
 
       {mode === 'edit' && (
         <>
+          {/* 설정을 지원하는 위젯에만 낸다. 제거 버튼 바로 왼쪽. */}
+          {definition.settings && (
+            <button
+              type="button"
+              className="widget-frame__gear"
+              aria-label={`${definition.name} 설정`}
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={onOpenSettings}
+            >
+              <GearIcon />
+            </button>
+          )}
           <button
             type="button"
             className="widget-frame__remove"

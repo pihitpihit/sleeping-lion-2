@@ -1,10 +1,12 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useBoardSize } from './useBoardSize'
 import { useViewportSize } from './useViewportSize'
 import { useSatchelStore } from './store/satchelStore'
 import { resolveToolbarPosition } from './toolbar/position'
 import { SatchelToolbar } from './toolbar/SatchelToolbar'
 import { WidgetBoard } from './board/WidgetBoard'
+import { WidgetSettingsDialog } from './board/WidgetSettingsDialog'
+import { getWidgetDefinition } from './widgets/registry'
 import './SatchelPage.css'
 
 /**
@@ -33,6 +35,11 @@ export function SatchelPage() {
   const undo = useSatchelStore((s) => s.undo)
   const currentLayout = useSatchelStore((s) => s.currentLayout)
   const countOf = useSatchelStore((s) => s.countOf)
+  const settingsFor = useSatchelStore((s) => s.settingsFor)
+  const setWidgetSettings = useSatchelStore((s) => s.setWidgetSettings)
+
+  /** 설정 팝업을 연 위젯. 편집 모드 전용이다. */
+  const [settingsTarget, setSettingsTarget] = useState<string | null>(null)
 
   useEffect(() => {
     if (size.width > 0 && size.height > 0) setBoardSize(size)
@@ -54,6 +61,11 @@ export function SatchelPage() {
   const position = resolveToolbarPosition(settings.toolbarPosition, viewport)
   const layout = currentLayout()
   const empty = layout.widgets.length === 0
+
+  // 편집을 벗어나거나 그 위젯이 사라지면 팝업도 닫힌다.
+  const target = layout.widgets.find((w) => w.instanceId === settingsTarget)
+  const targetDefinition =
+    target && mode === 'edit' ? getWidgetDefinition(target.definitionId) : undefined
 
   return (
     <div className={`satchel satchel--${position} satchel--${mode}`}>
@@ -84,8 +96,10 @@ export function SatchelPage() {
           metrics={metrics}
           mode={mode}
           showWidgetTitles={settings.showWidgetTitles}
+          settingsOf={settingsFor}
           onCommit={moveOrResize}
           onRemove={removeWidgetInstance}
+          onOpenSettings={setSettingsTarget}
         />
 
         {empty && (
@@ -94,6 +108,15 @@ export function SatchelPage() {
           </p>
         )}
       </div>
+
+      {target && targetDefinition && (
+        <WidgetSettingsDialog
+          definition={targetDefinition}
+          value={settingsFor(target.instanceId, target.definitionId)}
+          onChange={(next) => setWidgetSettings(target.instanceId, next)}
+          onClose={() => setSettingsTarget(null)}
+        />
+      )}
 
       {notice && (
         <div className="satchel__notice" role="status">

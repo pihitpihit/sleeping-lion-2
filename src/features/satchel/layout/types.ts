@@ -52,12 +52,26 @@ export interface SatchelSettings {
    * 스스로 다시 배치하므로 별도 처리가 필요 없다.
    */
   showWidgetTitles: boolean
+  /**
+   * 위젯 **인스턴스별** 설정. 모양은 위젯마다 다르므로 unknown으로 둔다.
+   *
+   * 레이아웃 안이 아니라 바깥에 둔다 — 레이아웃은 열 수마다 따로 저장되지만
+   * `instanceId`는 파생을 거쳐도 유지되므로, 안에 넣으면 열 수마다 복제되어
+   * 서로 어긋난다.
+   */
+  widgetSettings: Record<string, unknown>
 }
 
 export const SETTINGS_VERSION = 1
 
 export function emptySettings(): SatchelSettings {
-  return { version: SETTINGS_VERSION, layouts: {}, toolbarPosition: 'auto', showWidgetTitles: true }
+  return {
+    version: SETTINGS_VERSION,
+    layouts: {},
+    toolbarPosition: 'auto',
+    showWidgetTitles: true,
+    widgetSettings: {},
+  }
 }
 
 export function emptyLayout(columns: number): Layout {

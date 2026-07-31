@@ -5,29 +5,29 @@ import { ELEMENTS, nearestSlotState, nextElementState, slotOf, stateAtSlot } fro
 describe('isElementTrackerSizeAllowed', () => {
   // 요구사항: 가로 '혹은' 세로가 6칸 이상. minSize {w,h} 한 쌍으로는 못 적는 조건이다.
   it('한쪽만 6칸 이상이면 통과한다', () => {
-    expect(isElementTrackerSizeAllowed({ w: 6, h: 1 })).toBe(true)
-    expect(isElementTrackerSizeAllowed({ w: 1, h: 6 })).toBe(true)
-    expect(isElementTrackerSizeAllowed({ w: 8, h: 3 })).toBe(true)
+    expect(isElementTrackerSizeAllowed({ w: 6, h: 1 }, undefined)).toBe(true)
+    expect(isElementTrackerSizeAllowed({ w: 1, h: 6 }, undefined)).toBe(true)
+    expect(isElementTrackerSizeAllowed({ w: 8, h: 3 }, undefined)).toBe(true)
   })
 
   it('둘 다 6칸 미만이면 막는다', () => {
-    expect(isElementTrackerSizeAllowed({ w: 5, h: 5 })).toBe(false)
-    expect(isElementTrackerSizeAllowed({ w: 1, h: 1 })).toBe(false)
+    expect(isElementTrackerSizeAllowed({ w: 5, h: 5 }, undefined)).toBe(false)
+    expect(isElementTrackerSizeAllowed({ w: 1, h: 1 }, undefined)).toBe(false)
   })
 })
 
 describe('computeElementLayout', () => {
   it('가로가 길면 수평, 세로가 길면 수직으로 늘어놓는다', () => {
-    expect(computeElementLayout({ width: 600, height: 100 }).orientation).toBe('horizontal')
-    expect(computeElementLayout({ width: 100, height: 600 }).orientation).toBe('vertical')
+    expect(computeElementLayout({ width: 600, height: 100 }, 6).orientation).toBe('horizontal')
+    expect(computeElementLayout({ width: 100, height: 600 }, 6).orientation).toBe('vertical')
   })
 
   it('정사각형이면 수직이다', () => {
-    expect(computeElementLayout({ width: 400, height: 400 }).orientation).toBe('vertical')
+    expect(computeElementLayout({ width: 400, height: 400 }, 6).orientation).toBe('vertical')
   })
 
   it('원소 여섯 칸이 위젯을 고르게 나눠 갖는다', () => {
-    const l = computeElementLayout({ width: 600, height: 100 })
+    const l = computeElementLayout({ width: 600, height: 100 }, 6)
     expect(l.laneLength * ELEMENTS.length).toBeCloseTo(600, 6)
   })
 
@@ -37,7 +37,7 @@ describe('computeElementLayout', () => {
       { width: 100, height: 600 },
       { width: 480, height: 240 },
     ]) {
-      const l = computeElementLayout(size)
+      const l = computeElementLayout(size, 6)
       expect(l.iconSize).toBeGreaterThan(0)
       expect(l.iconSize).toBeLessThan(l.laneLength)
       expect(l.iconSize).toBeLessThan(l.laneThickness)
@@ -45,18 +45,18 @@ describe('computeElementLayout', () => {
   })
 
   it('아이콘이 무한정 커지지 않는다', () => {
-    expect(computeElementLayout({ width: 4000, height: 4000 }).iconSize).toBeLessThanOrEqual(120)
+    expect(computeElementLayout({ width: 4000, height: 4000 }, 6).iconSize).toBeLessThanOrEqual(120)
   })
 
   // 슬라이딩 여부가 이 위젯의 두 가지 표현을 가른다.
   it('수직 여유가 아이콘 두 배 이상이면 미끄러진다', () => {
-    const wide = computeElementLayout({ width: 600, height: 300 })
+    const wide = computeElementLayout({ width: 600, height: 300 }, 6)
     expect(wide.canSlide).toBe(true)
     expect(new Set(wide.slotOffsets).size).toBe(3)
   })
 
   it('여유가 없으면 미끄러지지 않고 세 슬롯이 한 점에 모인다', () => {
-    const thin = computeElementLayout({ width: 600, height: 90 })
+    const thin = computeElementLayout({ width: 600, height: 90 }, 6)
     expect(thin.canSlide).toBe(false)
     expect(new Set(thin.slotOffsets).size).toBe(1)
   })
@@ -71,7 +71,7 @@ describe('computeElementLayout', () => {
       { width: 300, height: 900 },
       { width: 240, height: 640 },
     ]) {
-      const l = computeElementLayout(size)
+      const l = computeElementLayout(size, 6)
       const half = l.iconSize / 2
       for (const offset of l.slotOffsets) {
         expect(offset - half, `${size.width}x${size.height} 앞쪽`).toBeGreaterThanOrEqual(-0.001)
@@ -83,7 +83,7 @@ describe('computeElementLayout', () => {
   })
 
   it('슬롯이 칸 안에 들어온다', () => {
-    const l = computeElementLayout({ width: 600, height: 300 })
+    const l = computeElementLayout({ width: 600, height: 300 }, 6)
     for (const offset of l.slotOffsets) {
       expect(offset).toBeGreaterThan(0)
       expect(offset).toBeLessThan(l.laneThickness)
@@ -96,8 +96,8 @@ describe('computeElementLayout', () => {
       { width: -10, height: 100 },
       { width: Number.NaN, height: 100 },
     ]) {
-      expect(() => computeElementLayout(bad)).not.toThrow()
-      expect(computeElementLayout(bad).iconSize).toBe(0)
+      expect(() => computeElementLayout(bad, 6)).not.toThrow()
+      expect(computeElementLayout(bad, 6).iconSize).toBe(0)
     }
   })
 })

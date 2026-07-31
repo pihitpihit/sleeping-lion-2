@@ -1,4 +1,4 @@
-import { ELEMENTS } from './elements'
+import { sanitizeElementSettings, visibleCount } from './settings'
 
 /**
  * 원소 트래커 안쪽 배치.
@@ -37,9 +37,12 @@ const SLIDE_RATIO = 2
  *
  * 방향은 긴 쪽을 따른다. 정사각형이면 수평 — 실물 원소판이 가로로 놓인다.
  */
-export function computeElementLayout(widget: { width: number; height: number }): ElementLayout {
+export function computeElementLayout(
+  widget: { width: number; height: number },
+  count: number,
+): ElementLayout {
   const { width, height } = widget
-  if (!(width > 0) || !(height > 0)) {
+  if (!(width > 0) || !(height > 0) || count < 1) {
     return {
       orientation: 'horizontal',
       iconSize: 0,
@@ -57,7 +60,7 @@ export function computeElementLayout(widget: { width: number; height: number }):
   const along = orientation === 'horizontal' ? width : height
   const cross = orientation === 'horizontal' ? height : width
 
-  const laneLength = along / ELEMENTS.length
+  const laneLength = along / count
   // 아이콘은 칸의 짧은 쪽에 맞춘다. 그래야 어느 방향에서든 넘치지 않는다.
   const iconSize = Math.min(ICON_MAX, Math.min(laneLength, cross) * ICON_FILL)
 
@@ -88,11 +91,14 @@ export function computeElementLayout(widget: { width: number; height: number }):
 }
 
 /**
- * 위젯 크기가 허용되는가 — **가로 혹은 세로가 6칸 이상**이어야 한다.
+ * 위젯 크기가 허용되는가 — **가로 혹은 세로가 '보이는 원소 수' 이상**이어야 한다.
  *
- * 원소가 여섯이므로 한 줄에 늘어놓으려면 최소 여섯 칸이 필요하다. 6칸보다 짧으면
- * 아이콘이 서로 뭉개진다.
+ * 원소를 한 줄에 늘어놓으므로 그만큼의 칸이 필요하다. 더 짧으면 아이콘이 서로
+ * 뭉개진다. 원소를 줄이면 제약도 함께 느슨해진다.
  */
-export function isElementTrackerSizeAllowed(size: { w: number; h: number }): boolean {
-  return Math.max(size.w, size.h) >= ELEMENTS.length
+export function isElementTrackerSizeAllowed(
+  size: { w: number; h: number },
+  settings: unknown,
+): boolean {
+  return Math.max(size.w, size.h) >= visibleCount(sanitizeElementSettings(settings))
 }

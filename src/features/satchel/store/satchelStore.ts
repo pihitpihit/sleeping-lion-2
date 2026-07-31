@@ -23,6 +23,7 @@ import {
   isKnownWidget,
   isSizeAllowedFor,
   minSizeOf,
+  sanitizeSettingsFor,
 } from '../widgets/registry'
 import type { SatchelMode } from '../widgets/types'
 
@@ -59,6 +60,7 @@ interface SatchelState {
   setMode: (mode: SatchelMode) => void
   setToolbarPreference: (preference: ToolbarPreference) => void
   toggleWidgetTitles: () => void
+  setWidgetSettings: (instanceId: string, next: unknown) => void
   addWidgetOfType: (definitionId: string) => void
   removeWidgetInstance: (instanceId: string) => void
   moveOrResize: (instanceId: string, next: Placement) => boolean
@@ -68,13 +70,28 @@ interface SatchelState {
 
   currentLayout: () => Layout
   countOf: (definitionId: string) => number
+  /** 늘 sanitize를 거친 값. 위젯이 안심하고 자기 타입으로 받는다. */
+  settingsFor: (instanceId: string, definitionId: string) => unknown
 }
 
-/** 현재 열 수의 레이아웃. 없으면 가장 가까운 것에서 파생하고 알 수 없는 위젯을 버린다. */
+/**
+ * 현재 열 수의 레이아웃. 없으면 가장 가까운 것에서 파생하고 알 수 없는 위젯을 버린다.
+ *
+ * 크기 제약이 **인스턴스 설정에 딸리므로**(원소를 둘만 고르면 2칸이면 된다)
+ * 파생에도 설정을 함께 넘긴다.
+ */
 function resolveLayout(settings: SatchelSettings, metrics: GridMetrics): Layout {
-  const layout = layoutForColumns(settings.layouts, metrics, minSizeOf, isSizeAllowedFor)
+  const allowed = (widget: { instanceId: string; definitionId: string }, size: Size2) =>
+    isSizeAllowedFor(
+      widget.definitionId,
+      size,
+      sanitizeSettingsFor(widget.definitionId, settings.widgetSettings[widget.instanceId]),
+    )
+  const layout = layoutForColumns(settings.layouts, metrics, minSizeOf, allowed)
   return dropUnknownWidgets(layout, isKnownWidget)
 }
+
+type Size2 = { w: number; h: number }
 
 /** 이력에 한 장 쌓는다. 오래된 것부터 버려 길이를 묶어 둔다. */
 function pushHistory(past: Layout[], snapshot: Layout): Layout[] {
@@ -135,6 +152,15 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     set({ settings })
   },
 
+  setWidgetSettings: (instanceId, next) => {
+    const settings = {
+      ...get().settings,
+      widgetSettings: { ...get().settings.widgetSettings, [instanceId]: next },
+    }
+    saveSettings(settings)
+    set({ settings })
+  },
+
   addWidgetOfType: (definitionId) => {
     const { settings, metrics } = get()
     const definition = getWidgetDefinition(definitionId)
@@ -156,10 +182,11 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
      */
     const { defaultSize } = definition
     const candidates = [defaultSize, { w: defaultSize.h, h: defaultSize.w }]
+    const fresh = definition.settings?.sanitize(undefined)
     let next: Layout | null = null
     for (const size of candidates) {
       if (size.w > metrics.columns || size.h > metrics.rows) continue
-      if (!isSizeAllowedFor(definitionId, size)) continue
+      if (!isSizeAllowedFor(definitionId, size, fresh)) continue
       next = addWidget(layout, definitionId, size, metrics, crypto.randomUUID())
       if (next) break
     }
@@ -177,7 +204,14 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     const before = resolveLayout(settings, metrics)
     const next = removeWidget(before, instanceId)
     if (next === before) return
-    set({ settings: persist(settings, next), notice: null, past: pushHistory(get().past, before) })
+    // 설정도 함께 지운다. 안 지우면 저장소에 영원히 남는다.
+    const { [instanceId]: _removed, ...widgetSettings } = settings.widgetSettings
+    void _removed
+    set({
+      settings: persist({ ...settings, widgetSettings }, next),
+      notice: null,
+      past: pushHistory(get().past, before),
+    })
   },
 
   moveOrResize: (instanceId, next) => {
@@ -185,7 +219,16 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     const before = resolveLayout(settings, metrics)
     // 위젯 고유 크기 제약. 이동만 하는 경우에도 한 번 더 보는 편이 안전하다.
     const target = before.widgets.find((w) => w.instanceId === instanceId)
-    if (target && !isSizeAllowedFor(target.definitionId, { w: next.w, h: next.h })) return false
+    if (
+      target &&
+      !isSizeAllowedFor(
+        target.definitionId,
+        { w: next.w, h: next.h },
+        sanitizeSettingsFor(target.definitionId, settings.widgetSettings[instanceId]),
+      )
+    ) {
+      return false
+    }
     const updated = updatePlacement(before, instanceId, next, metrics)
     if (!updated) return false
     set({ settings: persist(settings, updated), past: pushHistory(get().past, before) })
@@ -218,6 +261,9 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
   },
 
   currentLayout: () => resolveLayout(get().settings, get().metrics),
+
+  settingsFor: (instanceId, definitionId) =>
+    sanitizeSettingsFor(definitionId, get().settings.widgetSettings[instanceId]),
 
   countOf: (definitionId) =>
     resolveLayout(get().settings, get().metrics).widgets.filter(

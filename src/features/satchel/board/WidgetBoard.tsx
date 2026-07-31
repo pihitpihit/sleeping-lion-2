@@ -9,8 +9,10 @@ interface Props {
   metrics: GridMetrics
   mode: SatchelMode
   showWidgetTitles: boolean
+  settingsOf: (instanceId: string, definitionId: string) => unknown
   onCommit: (instanceId: string, next: Placement) => boolean
   onRemove: (instanceId: string) => void
+  onOpenSettings: (instanceId: string) => void
 }
 
 /**
@@ -23,8 +25,10 @@ export function WidgetBoard({
   metrics,
   mode,
   showWidgetTitles,
+  settingsOf,
   onCommit,
   onRemove,
+  onOpenSettings,
 }: Props) {
   if (metrics.columns <= 0 || metrics.rows <= 0) return null
 
@@ -93,8 +97,10 @@ export function WidgetBoard({
             mode={mode}
             others={others}
             showTitle={showWidgetTitles}
+            settings={settingsOf(widget.instanceId, widget.definitionId)}
             onCommit={(next) => onCommit(widget.instanceId, next)}
             onRemove={() => onRemove(widget.instanceId)}
+            onOpenSettings={() => onOpenSettings(widget.instanceId)}
           />
         )
       })}

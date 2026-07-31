@@ -16,6 +16,17 @@ import { emptyLayout, type Layout, type WidgetInstance } from './types'
  * 3. 격자 안으로 자르고, 겹치는 것부터 빈 자리로 옮긴다. 자리가 없으면 버린다.
  */
 
+/**
+ * 크기 제약 판정.
+ *
+ * 인스턴스를 통째로 받는다 — 제약이 **그 인스턴스의 설정**에 딸릴 수 있기
+ * 때문이다(원소를 둘만 고르면 2칸이면 된다).
+ */
+export type SizeGuard = (
+  widget: { instanceId: string; definitionId: string },
+  size: { w: number; h: number },
+) => boolean
+
 /** 열 수가 가장 가까운 레이아웃. 동률이면 작은 쪽. */
 export function pickSourceLayout(
   layouts: Readonly<Record<number, Layout>>,
@@ -39,7 +50,7 @@ export function deriveLayout(
   source: Layout,
   metrics: GridMetrics,
   minSizeOf: (definitionId: string) => { w: number; h: number },
-  isSizeAllowed: (definitionId: string, size: { w: number; h: number }) => boolean = () => true,
+  isSizeAllowed: SizeGuard = () => true,
 ): Layout {
   if (metrics.columns <= 0 || metrics.rows <= 0) return emptyLayout(metrics.columns)
   if (source.columns === metrics.columns) {
@@ -69,7 +80,7 @@ function repack(
   widgets: readonly WidgetInstance[],
   metrics: GridMetrics,
   minSizeOf: (definitionId: string) => { w: number; h: number },
-  isSizeAllowed: (definitionId: string, size: { w: number; h: number }) => boolean,
+  isSizeAllowed: SizeGuard,
 ): Layout {
   const placed: WidgetInstance[] = []
   const taken: Placement[] = []
@@ -89,7 +100,7 @@ function repack(
     // 최소 크기가 격자보다 크면 이 기기에서는 놓을 수 없다.
     if (wanted.w > metrics.columns || wanted.h > metrics.rows) continue
     // 위젯 고유 제약(예: 긴 쪽이 6칸 이상)을 못 넘기면 이 격자에서는 뺀다.
-    if (!isSizeAllowed(widget.definitionId, { w: wanted.w, h: wanted.h })) continue
+    if (!isSizeAllowed(widget, { w: wanted.w, h: wanted.h })) continue
 
     const spot = canPlaceAt(wanted, taken, metrics)
       ? wanted
@@ -111,7 +122,7 @@ export function layoutForColumns(
   layouts: Readonly<Record<number, Layout>>,
   metrics: GridMetrics,
   minSizeOf: (definitionId: string) => { w: number; h: number },
-  isSizeAllowed: (definitionId: string, size: { w: number; h: number }) => boolean = () => true,
+  isSizeAllowed: SizeGuard = () => true,
 ): Layout {
   if (metrics.columns <= 0) return emptyLayout(0)
 

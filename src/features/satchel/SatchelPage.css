@@ -536,3 +536,127 @@
   color: var(--sl-text-faint);
   font-size: 0.75em;
 }
+
+/* --------------------------------------------------------------------------
+   위젯 설정 — 톱니바퀴와 팝업
+   -------------------------------------------------------------------------- */
+
+/* 톱니바퀴는 제거 버튼 바로 왼쪽에 선다. 둘 다 프레임 바깥에 걸쳐 있다. */
+.widget-frame__gear {
+  position: absolute;
+  top: -10px;
+  right: 22px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--sl-border-strong);
+  border-radius: 999px;
+  background: var(--sl-raised);
+  color: var(--sl-text-muted);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.widget-frame__gear:hover,
+.widget-frame__gear:focus-visible {
+  border-color: var(--sl-gold-dim);
+  color: var(--sl-gold);
+}
+
+.widget-settings {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--sl-safe-top) + 1rem) 1rem calc(var(--sl-safe-bottom) + 1rem);
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.widget-settings__panel {
+  width: min(100%, 22rem);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--sl-border-strong);
+  border-radius: 4px;
+  background: var(--sl-panel);
+  box-shadow: 0 30px 60px -24px rgba(0, 0, 0, 1);
+}
+
+.widget-settings__panel:focus {
+  outline: none;
+}
+
+.widget-settings__head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.6rem 0.6rem 1rem;
+  border-bottom: 1px solid var(--sl-border);
+}
+
+.widget-settings__title {
+  flex: 1;
+  margin: 0;
+  font-family: var(--sl-font-ko-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--sl-gold-bright);
+}
+
+.widget-settings__close {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--sl-text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.widget-settings__close:hover,
+.widget-settings__close:focus-visible {
+  border-color: var(--sl-ember);
+  color: var(--sl-ember);
+}
+
+.widget-settings__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+/* 원소 트래커 설정 */
+.element-settings__rule {
+  margin: 0.4rem 0.5rem;
+  border: 0;
+  height: 1px;
+  background: var(--sl-border);
+}
+
+.element-settings__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.element-settings__hint {
+  margin: 0.6rem 0.5rem 0.2rem;
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: var(--sl-text-faint);
+  text-wrap: pretty;
+}
