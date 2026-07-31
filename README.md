@@ -1,14 +1,16 @@
 # 잠자는 사자 2호점 · Sleeping Lion II
 
-Gloomhaven / Jaws of the Lion 동행 웹앱. 팬메이드 비영리 도구.
+글룸헤이븐과 사자의 턱에 쓰는 웹앱. 팬이 만든 비영리 도구.
 
 **https://pihitpihit.github.io/sleeping-lion-2/**
+
+만든 곳: **plastics**
 
 설계는 [SPEC.md](./SPEC.md)가 정본이고, 작업 지침은 [CLAUDE.md](./CLAUDE.md)에 있다.
 
 ## 두 축
 
-- **축 ① 캠페인 기록지 (영속)** — 시나리오 정산 결과를 기록·관리. IndexedDB 저장, 나중에 PocketBase 동기화.
+- **축 ① 캠페인 기록지 (영속)** — 한 판이 끝난 뒤의 결과를 기록·관리. IndexedDB 저장, 나중에 PocketBase 동기화.
 - **축 ② 인게임 도구 패널 (휘발성)** — 원소 트래커 / 공격 보정 덱 / 주도권 정렬. 메모리에만 두고 새로고침하면 초기화된다.
 
 ## 저작권 경계
@@ -39,8 +41,11 @@ VITE_BASE=/sleeping-lion-2/ npm run build  # GitHub Pages 프로젝트 사이트
 VITE_BASE=/sleeping-lion-2/ npm run preview
 ```
 
-## 서드파티
+## 출처와 라이선스
 
-- **Pirata One** — SIL Open Font License 1.1. 라틴 서브셋만 self-host. 전문: [`public/licenses/pirata-one-OFL.txt`](./public/licenses/pirata-one-OFL.txt)
+소스 코드는 **plastics** 저작이며 MIT다([LICENSE](./LICENSE)). 외부 자료는 각자의 라이선스를 따른다 — 전체 목록과 조건은 [NOTICE.md](./NOTICE.md)가 정본이다.
 
-그 외 아트 에셋은 쓰지 않는다. 문장·아이콘은 전부 인라인 SVG로 직접 그린다.
+- **Pirata One** — SIL Open Font License 1.1. 라틴 서브셋만 self-host.
+- **Gloomhaven Creator Pack** — CC BY-NC-SA 4.0. 아직 쓰지 않는다. 들이게 되면 `public/assets/creator-pack/`에만 두고 그 안의 `ATTRIBUTION.md`에 파일 단위로 기록한다(SPEC 13.1장).
+
+현재 문장·아이콘은 전부 직접 그린 인라인 SVG다.

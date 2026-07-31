@@ -17,9 +17,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: clamp(2rem, 6vh, 4rem);
+  gap: clamp(1.75rem, 5vh, 3.5rem);
   padding:
-    calc(var(--sl-safe-top) + clamp(2rem, 6vh, 4rem))
+    calc(var(--sl-safe-top) + clamp(1.75rem, 5vh, 3.5rem))
     calc(var(--sl-safe-right) + clamp(1.25rem, 5vw, 3rem))
     calc(var(--sl-safe-bottom) + clamp(1.5rem, 4vh, 3rem))
     calc(var(--sl-safe-left) + clamp(1.25rem, 5vw, 3rem));
@@ -162,7 +162,7 @@
 .welcome__pillars {
   list-style: none;
   width: 100%;
-  margin: clamp(2rem, 5vh, 3rem) 0 0;
+  margin: clamp(1.75rem, 4vh, 2.75rem) 0 0;
   padding: 0;
   display: grid;
   grid-template-columns: 1fr;

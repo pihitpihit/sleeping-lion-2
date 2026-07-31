@@ -5,19 +5,23 @@ import './WelcomePage.css'
  * 웰컴 페이지.
  *
  * 메뉴는 아직 배치하지 않는다. 아래 두 장은 내비게이션이 아니라
- * SPEC 1장의 두 축이 무엇인지 보여주는 안내 카드이며, 전부 준비 중 상태다.
+ * SPEC 1장의 두 축이 무엇인지 보여주는 안내 카드이며, 전부 채비 중 상태다.
+ *
+ * 문체 원칙 — 여관 주인이 간판과 장부에 적어둔 말투로 쓴다. 번역투("~하는 것들",
+ * "동행 도구", "정산")와 기술 문서 어휘를 화면에 그대로 내보내지 않는다.
+ * SPEC은 기술 용어로 쓰되(캠페인 기록지·인게임 도구), 화면 문구는 결이 맞게 옮긴다.
  */
 
 const PILLARS = [
   {
     ordinal: 'I',
-    title: '캠페인 기록지',
-    body: '시나리오가 끝난 뒤의 정산을 남긴다. 골드와 경험치, 레벨업과 퍽, 아이템 변동, 번영과 명성. 세션 사이를 잇는 장부.',
+    title: '캠페인 장부',
+    body: '한 판이 끝나면 셈을 적는다. 금화와 경험치, 레벨과 퍽, 손에 넣은 물건, 도시의 번영과 우리 명성까지. 다음 원정까지 남는 것들이다.',
   },
   {
     ordinal: 'II',
-    title: '인게임 도구',
-    body: '탁자 위에서 쓰는 것들. 원소 트래커, 공격 보정 덱, 주도권 정렬. 판이 끝나면 남기지 않고 잊는다.',
+    title: '탁자 위 도구',
+    body: '판이 도는 동안에만 쓴다. 원소와 보정 덱, 주도권 순서. 자리를 뜨면 알아서 치워진다.',
   },
 ]
 
@@ -42,9 +46,9 @@ export function WelcomePage() {
         </div>
 
         <p className="welcome__tagline">
-          첫 여관에서 갈라져 나온 우리 파티의 아지트.
+          본점은 글룸헤이븐 어귀에, 2호점은 여기에.
           <br />
-          장부를 펴고, 자리를 잡으시오.
+          돌아와서는 장부를 펴고, 다시 나설 때는 연장을 챙긴다.
         </p>
 
         <ul className="welcome__pillars">
@@ -55,22 +59,22 @@ export function WelcomePage() {
               </span>
               <h2 className="welcome__pillar-title">{pillar.title}</h2>
               <p className="welcome__pillar-body">{pillar.body}</p>
-              <span className="welcome__pillar-status">준비 중</span>
+              <span className="welcome__pillar-status">채비 중</span>
             </li>
           ))}
         </ul>
       </main>
 
       <footer className="welcome__footer">
-        <p>Gloomhaven · Jaws of the Lion 동행 도구</p>
+        <p>글룸헤이븐과 사자의 턱에 쓰는 도구</p>
         <p className="welcome__footer-fine">
-          Cephalofair Games와 무관한 비영리 팬메이드 도구이며, 게임 콘텐츠 원문을
-          담지 않습니다.
+          Cephalofair Games와 무관하게 팬이 만든 비영리 도구입니다. 게임 원문은 담지
+          않습니다.
         </p>
         {/* CC BY-NC-SA의 저작자표시(BY)는 '합리적으로 실행 가능한' 방식의 표기를
-            요구한다. 에셋을 실제로 도입하기 전이라도 서체 크레딧은 여기 둔다. */}
+            요구한다. 에셋을 실제로 들이기 전이라도 글꼴 출처는 여기 둔다. */}
         <p className="welcome__footer-fine">
-          서체{' '}
+          © 2026 plastics {' · '} 글꼴{' '}
           <a href="https://fonts.google.com/specimen/Pirata+One" className="welcome__link">
             Pirata One
           </a>{' ('}
@@ -82,13 +86,12 @@ export function WelcomePage() {
           >
             SIL OFL 1.1
           </a>
-          {')'}
-          {' · '}
+          {') · '}
           <a
             href="https://github.com/pihitpihit/sleeping-lion-2/blob/main/NOTICE.md"
             className="welcome__link"
           >
-            서드파티 고지
+            출처와 라이선스
           </a>
         </p>
       </footer>
