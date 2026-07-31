@@ -10,7 +10,8 @@ import { FireEffect } from './FireEffect'
  * 컴포넌트를 변수에 담아 그리면 매 렌더마다 다른 타입으로 취급돼 상태가
  * 날아갈 수 있다.
  */
-export function ElementEffect({ elementId }: { elementId: string }) {
-  if (elementId === 'fire') return <FireEffect />
+export function ElementEffect({ elementId, iconSize }: { elementId: string; iconSize: number }) {
+  // 뭉침 흐림은 SVG 필터 속성이라 CSS 변수로 못 넘긴다. 픽셀 값이 필요하다.
+  if (elementId === 'fire') return <FireEffect iconSize={iconSize} />
   return null
 }

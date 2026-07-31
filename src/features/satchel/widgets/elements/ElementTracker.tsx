@@ -207,7 +207,7 @@ function ElementLane({
           따라간다 — 칸 한가운데 고정해 두면 미끄러진 석판과 떨어진다. */}
       {customEffect && blazing && (
         <span className="elements__effect">
-          <ElementEffect elementId={element.id} />
+          <ElementEffect elementId={element.id} iconSize={iconSize} />
         </span>
       )}
 
@@ -218,6 +218,9 @@ function ElementLane({
           dragOffset === null ? '' : 'elements__stone--dragging',
           // 고유 효과가 있으면 공통 빛무리를 끈다. 겹치면 효과가 묻힌다.
           customEffect ? 'elements__stone--custom-effect' : '',
+          // 타오르는 동안 석판 자체가 달아오른다. 효과는 뒤에 깔릴 뿐이라
+          // 원판을 뜨겁게 만들려면 석판에 직접 걸어야 한다.
+          customEffect && blazing ? 'elements__stone--heated' : '',
         ]
           .filter(Boolean)
           .join(' ')}
