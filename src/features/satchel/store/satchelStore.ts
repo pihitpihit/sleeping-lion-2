@@ -18,7 +18,12 @@ import {
   type SatchelSettings,
   type ToolbarPreference,
 } from '../layout'
-import { getWidgetDefinition, isKnownWidget, minSizeOf } from '../widgets/registry'
+import {
+  getWidgetDefinition,
+  isKnownWidget,
+  isSizeAllowedFor,
+  minSizeOf,
+} from '../widgets/registry'
 import type { SatchelMode } from '../widgets/types'
 
 /**
@@ -66,7 +71,7 @@ interface SatchelState {
 
 /** 현재 열 수의 레이아웃. 없으면 가장 가까운 것에서 파생하고 알 수 없는 위젯을 버린다. */
 function resolveLayout(settings: SatchelSettings, metrics: GridMetrics): Layout {
-  const layout = layoutForColumns(settings.layouts, metrics, minSizeOf)
+  const layout = layoutForColumns(settings.layouts, metrics, minSizeOf, isSizeAllowedFor)
   return dropUnknownWidgets(layout, isKnownWidget)
 }
 
@@ -161,6 +166,9 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
   moveOrResize: (instanceId, next) => {
     const { settings, metrics } = get()
     const before = resolveLayout(settings, metrics)
+    // 위젯 고유 크기 제약. 이동만 하는 경우에도 한 번 더 보는 편이 안전하다.
+    const target = before.widgets.find((w) => w.instanceId === instanceId)
+    if (target && !isSizeAllowedFor(target.definitionId, { w: next.w, h: next.h })) return false
     const updated = updatePlacement(before, instanceId, next, metrics)
     if (!updated) return false
     set({ settings: persist(settings, updated), past: pushHistory(get().past, before) })

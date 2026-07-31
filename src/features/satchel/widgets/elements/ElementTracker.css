@@ -1,0 +1,169 @@
+/* ==========================================================================
+   원소 트래커 — 홈에 끼워진 석판이 미끄러지는 트랙
+   --------------------------------------------------------------------------
+   원소마다 홈이 하나 파여 있고 걸림 자국 셋이 찍혀 있다. 건드리기 전에도
+   "상태가 셋"이라는 것이 보여야 하기 때문이다.
+
+   폭이 좁아 미끄러질 수 없으면(`--sliding` 없음) 홈이 사라지고 석판만 남는다.
+   그때는 제자리에서 흑백/컬러/빛남만 바뀐다.
+
+   왼쪽(위)이 꺼짐, 오른쪽(아래)으로 갈수록 강하다.
+   ========================================================================== */
+
+.elements {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  padding: 0.35rem;
+}
+
+.elements--horizontal {
+  flex-direction: row;
+}
+
+.elements--vertical {
+  flex-direction: column;
+}
+
+.elements__lane {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* --------------------------------------------------------------------------
+   홈 — 미끄러질 수 있을 때만 판다
+   -------------------------------------------------------------------------- */
+
+.elements__groove {
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.34);
+  box-shadow:
+    inset 0 2px 3px rgba(0, 0, 0, 0.55),
+    inset 0 -1px 0 rgba(232, 205, 114, 0.06);
+  /* 걸림 자국 셋. 홈을 1/6·3/6·5/6 지점에서 살짝 밝게 만든다. */
+  background-image: radial-gradient(
+    circle at var(--detent-x, 50%) var(--detent-y, 50%),
+    rgba(232, 205, 114, 0.14) 0 2px,
+    transparent 2px
+  );
+  pointer-events: none;
+}
+
+.elements--horizontal .elements__groove {
+  left: 50%;
+  top: 12%;
+  bottom: 12%;
+  width: calc(var(--element-icon) * 0.34);
+  transform: translateX(-50%);
+  background-image:
+    radial-gradient(circle at 50% 16.6667%, rgba(232, 205, 114, 0.16) 0 2.5px, transparent 2.5px),
+    radial-gradient(circle at 50% 50%, rgba(232, 205, 114, 0.16) 0 2.5px, transparent 2.5px),
+    radial-gradient(circle at 50% 83.3333%, rgba(232, 205, 114, 0.16) 0 2.5px, transparent 2.5px);
+}
+
+.elements--vertical .elements__groove {
+  top: 50%;
+  left: 12%;
+  right: 12%;
+  height: calc(var(--element-icon) * 0.34);
+  transform: translateY(-50%);
+  background-image:
+    radial-gradient(circle at 16.6667% 50%, rgba(232, 205, 114, 0.16) 0 2.5px, transparent 2.5px),
+    radial-gradient(circle at 50% 50%, rgba(232, 205, 114, 0.16) 0 2.5px, transparent 2.5px),
+    radial-gradient(circle at 83.3333% 50%, rgba(232, 205, 114, 0.16) 0 2.5px, transparent 2.5px);
+}
+
+/* --------------------------------------------------------------------------
+   석판 — 원소가 새겨진 돌
+   -------------------------------------------------------------------------- */
+
+.elements__stone {
+  position: absolute;
+  width: var(--element-icon);
+  height: var(--element-icon);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  cursor: pointer;
+  /* 관성 — 살짝 넘쳤다 돌아오는 곡선 */
+  transition:
+    left 0.32s cubic-bezier(0.34, 1.4, 0.5, 1),
+    top 0.32s cubic-bezier(0.34, 1.4, 0.5, 1),
+    filter 0.24s ease,
+    opacity 0.24s ease;
+  /* 편집 모드에서 위젯 내용은 포인터를 받지 않는다. 여기서도 막아둔다. */
+  touch-action: none;
+}
+
+.elements--horizontal .elements__stone {
+  left: 50%;
+  top: var(--element-offset);
+  transform: translate(-50%, -50%);
+}
+
+.elements--vertical .elements__stone {
+  top: 50%;
+  left: var(--element-offset);
+  transform: translate(-50%, -50%);
+}
+
+.elements__stone:focus-visible {
+  outline: 2px solid var(--sl-gold);
+  outline-offset: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   상태별 표현
+   -------------------------------------------------------------------------- */
+
+/* 꺼짐 — 흑백. 명도도 낮춰 확실히 죽은 것으로 보이게 한다. */
+.elements__stone--inert {
+  filter: grayscale(1) brightness(0.55) contrast(0.9);
+  opacity: 0.7;
+}
+
+/* 사그라듦 — 색은 돌아오지만 아직 빛나지 않는다 */
+.elements__stone--waning {
+  filter: none;
+  opacity: 0.92;
+}
+
+/* 타오름 — 색 + 원소 색에 맞춘 빛무리 */
+.elements__stone--strong {
+  filter: none;
+  opacity: 1;
+  animation: element-glare 1.9s ease-in-out infinite;
+}
+
+@keyframes element-glare {
+  0%,
+  100% {
+    box-shadow:
+      0 0 8px 1px var(--element-color),
+      0 0 18px 3px color-mix(in srgb, var(--element-color) 45%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 14px 3px var(--element-color),
+      0 0 34px 8px color-mix(in srgb, var(--element-color) 55%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .elements__stone {
+    transition: none;
+  }
+
+  /* 빛무리는 끄되 타오름이 사그라듦과 구분은 돼야 하므로 고정 발광은 남긴다. */
+  .elements__stone--strong {
+    animation: none;
+    box-shadow: 0 0 12px 2px var(--element-color);
+  }
+}

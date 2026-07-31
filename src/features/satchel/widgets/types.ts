@@ -26,5 +26,16 @@ export interface WidgetDefinition {
   maxSize?: { w: number; h: number }
   /** 없으면 무제한. 1이면 툴바에서 토글로 동작한다. */
   maxInstances?: number
+  /**
+   * `minSize`/`maxSize`로 표현할 수 없는 제약.
+   *
+   * 원소 트래커의 "가로 **혹은** 세로가 6칸 이상"이 그런 경우다. OR 조건이라
+   * 한 쌍의 최소 크기로는 못 적는다 — `{6,6}`으로 두면 세로 막대(1×6)까지 막힌다.
+   *
+   * **크기가 바뀔 수 있는 모든 길목이 이 훅을 봐야 한다.** 크기 조절(M6),
+   * 열 수 파생(M3), 새로 놓기(M4) 어느 하나라도 빠뜨리면 규칙을 어긴 크기가
+   * 저장된다.
+   */
+  isSizeAllowed?: (size: { w: number; h: number }) => boolean
   Component: ComponentType<WidgetProps>
 }

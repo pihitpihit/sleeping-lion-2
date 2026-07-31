@@ -32,14 +32,19 @@
 
 ## 아트 에셋
 
-### Gloomhaven Creator Pack — *현재 사용하지 않음*
-
-이 앱은 아직 Creator Pack 에셋을 쓰지 않는다. 화면의 문장과 아이콘은 전부 직접
-그린 것이다. 도입하면 이 항목에 파일 목록과 변경 내용을 적는다.
+### Gloomhaven Creator Pack — *사용 중*
 
 - **저작권:** Isaac Childres / Cephalofair Games
 - **라이선스:** [Creative Commons BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 - **원본:** https://boardgamegeek.com/thread/1733586/files-for-creation
+- **쓰는 것:** 원소 아이콘 6종(불·얼음·바람·풀·빛·어둠). Creator Pack V2의
+  `Icon Pack/Element Icons.pdf`에서 해당 쪽을 SVG로 추출했다.
+- **변경사항:** 쪽 단위 추출 외에 도형·색·비율을 바꾸지 않았다. 화면에서 흑백으로
+  보일 때는 CSS 필터를 쓰며 파일 자체는 원본 색을 유지한다.
+- **파일 단위 기록:** `public/assets/creator-pack/ATTRIBUTION.md`
+
+**이 에셋을 개변한 결과물도 CC BY-NC-SA 4.0이다.** 그 밖의 화면 요소(사자 문장,
+파비콘 등)는 직접 그린 것이라 이 조건과 무관하다.
 
 ## 상표
 

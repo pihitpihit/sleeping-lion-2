@@ -39,11 +39,12 @@ export function deriveLayout(
   source: Layout,
   metrics: GridMetrics,
   minSizeOf: (definitionId: string) => { w: number; h: number },
+  isSizeAllowed: (definitionId: string, size: { w: number; h: number }) => boolean = () => true,
 ): Layout {
   if (metrics.columns <= 0 || metrics.rows <= 0) return emptyLayout(metrics.columns)
   if (source.columns === metrics.columns) {
     // 열 수가 같아도 행 수는 다를 수 있다(툴바 위치·화면 높이). 자르고 겹침만 푼다.
-    return repack(source.widgets, metrics, minSizeOf)
+    return repack(source.widgets, metrics, minSizeOf, isSizeAllowed)
   }
 
   const ratio = metrics.columns / source.columns
@@ -55,7 +56,7 @@ export function deriveLayout(
       w: Math.max(min.w, Math.round(widget.w * ratio)),
     }
   })
-  return repack(scaled, metrics, minSizeOf)
+  return repack(scaled, metrics, minSizeOf, isSizeAllowed)
 }
 
 /**
@@ -68,6 +69,7 @@ function repack(
   widgets: readonly WidgetInstance[],
   metrics: GridMetrics,
   minSizeOf: (definitionId: string) => { w: number; h: number },
+  isSizeAllowed: (definitionId: string, size: { w: number; h: number }) => boolean,
 ): Layout {
   const placed: WidgetInstance[] = []
   const taken: Placement[] = []
@@ -86,6 +88,8 @@ function repack(
 
     // 최소 크기가 격자보다 크면 이 기기에서는 놓을 수 없다.
     if (wanted.w > metrics.columns || wanted.h > metrics.rows) continue
+    // 위젯 고유 제약(예: 긴 쪽이 6칸 이상)을 못 넘기면 이 격자에서는 뺀다.
+    if (!isSizeAllowed(widget.definitionId, { w: wanted.w, h: wanted.h })) continue
 
     const spot = canPlaceAt(wanted, taken, metrics)
       ? wanted
@@ -107,13 +111,14 @@ export function layoutForColumns(
   layouts: Readonly<Record<number, Layout>>,
   metrics: GridMetrics,
   minSizeOf: (definitionId: string) => { w: number; h: number },
+  isSizeAllowed: (definitionId: string, size: { w: number; h: number }) => boolean = () => true,
 ): Layout {
   if (metrics.columns <= 0) return emptyLayout(0)
 
   const existing = layouts[metrics.columns]
-  if (existing) return repack(existing.widgets, metrics, minSizeOf)
+  if (existing) return repack(existing.widgets, metrics, minSizeOf, isSizeAllowed)
 
   const source = pickSourceLayout(layouts, metrics.columns)
   if (!source) return emptyLayout(metrics.columns)
-  return deriveLayout(source, metrics, minSizeOf)
+  return deriveLayout(source, metrics, minSizeOf, isSizeAllowed)
 }
