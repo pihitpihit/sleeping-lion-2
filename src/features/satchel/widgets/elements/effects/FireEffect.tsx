@@ -10,11 +10,11 @@ import './FireEffect.css'
    ========================================================================== */
 
 /** 방울 수(e-count). 가장 비싼 값이다 — 폰에서 버거우면 여기부터 줄인다. */
-const BLOB_COUNT = 160
+const BLOB_COUNT = 200
 /** 방울 크기(e-size). 아이콘 지름에 대한 비율. */
-const BLOB_SIZE = 0.14
+const BLOB_SIZE = 0.11
 /** 붙박이 심지(e-core). 0이면 한가운데가 뚫려 도넛이 된다. */
-const CORE = 0.66
+const CORE = 0.6
 /** 뻗는 거리(e-reach). */
 const REACH = 0.79
 /** 나아가며 틀어지는 각도(e-swirl). 0이면 별 모양 도형이 된다. */
@@ -22,7 +22,7 @@ const SWIRL = 12
 /** 속도 배수(e-speed). */
 const SPEED = 4.37
 /** 뭉침(e-goo). 흐림 반지름 = 아이콘 × 이 값 × 0.004. */
-const GOO = 20
+const GOO = 17
 
 /** 재 개수(e-ash). */
 const ASH_COUNT = 29
