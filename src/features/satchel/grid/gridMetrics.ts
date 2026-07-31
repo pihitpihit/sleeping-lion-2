@@ -1,0 +1,124 @@
+/**
+ * 보드 크기를 격자로 나눈다.
+ *
+ * React도 DOM도 모르는 순수 함수다. 화면에 아무것도 그리지 않으며 검증은
+ * Vitest로만 한다 — 격자 계산은 눈으로 확인하기 어렵고 회귀가 조용히 생긴다.
+ */
+
+/** 보드 영역의 픽셀 크기. `useBoardSize`가 관측한 값이 그대로 들어온다. */
+export interface Size {
+  width: number
+  height: number
+}
+
+export interface GridMetrics {
+  columns: number
+  rows: number
+  /** 셀 한 변(px). 정사각형이다. */
+  cellSize: number
+  /** 셀 사이 간격(px). */
+  gap: number
+  /** 격자를 가운데 두기 위한 좌우·상하 여백(px). */
+  paddingX: number
+  paddingY: number
+}
+
+/**
+ * 셀 한 칸이 목표로 하는 크기(px). 앱 아이콘 정도.
+ *
+ * 열 수를 구간표로 정하지 않고 이 값에서 역산한다. 구간표를 쓰면 넓은 화면에서
+ * 셀이 100px을 넘어 위젯이 휑해지고, 경계마다 손으로 값을 맞춰야 한다.
+ * 목표 크기 하나를 두면 어느 폭에서든 셀이 비슷하게 나온다 — 실측표는
+ * `milestone/M2-격자-시스템.md`에 있다.
+ */
+const TARGET_CELL = 84
+
+/** 셀 사이 간격(px). 고정값이다. */
+export const GRID_GAP = 12
+
+/** 격자 바깥 최소 여백(px). */
+const MIN_PADDING = 12
+
+/** 열 수 하한. 이보다 적으면 위젯을 나란히 둘 수가 없다. */
+const MIN_COLUMNS = 4
+/** 열 수 상한. 아주 넓은 화면에서 셀이 잘게 부서지는 것을 막는다. */
+const MAX_COLUMNS = 16
+
+/**
+ * 격자가 차지하는 최대 폭(px). 이보다 넓은 보드에서는 격자를 가운데 둔다.
+ *
+ * 상한이 없으면 2560px 모니터에서 열 수가 상한에 걸려 셀이 147px까지 부푼다.
+ * 게다가 그 폭을 가로지르며 위젯을 끄는 것은 실제로 쓸 수 없다. 손이 닿는
+ * 범위로 묶어두는 편이 낫다.
+ */
+const MAX_GRID_WIDTH = 1600
+
+/** 보드를 잴 수 없을 때. 렌더러는 `columns === 0`이면 아무것도 그리지 않는다. */
+export const EMPTY_METRICS: GridMetrics = {
+  columns: 0,
+  rows: 0,
+  cellSize: 0,
+  gap: GRID_GAP,
+  paddingX: 0,
+  paddingY: 0,
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(Math.max(value, min), max)
+}
+
+/**
+ * n개의 셀과 그 사이 간격이 차지하는 길이.
+ * `n * cell + (n - 1) * gap` 을 한군데 모아 둔다.
+ */
+export function spanOf(count: number, cellSize: number, gap: number): number {
+  return count <= 0 ? 0 : count * cellSize + (count - 1) * gap
+}
+
+/**
+ * 보드 크기를 받아 격자를 계산한다.
+ *
+ * 순서가 중요하다 — **열 수를 먼저 정하고 셀 크기는 남은 폭을 나눠 갖는다.**
+ * 셀 크기를 먼저 고정하면 기기마다 열 수가 어중간하게 떨어지고 가장자리에
+ * 애매한 여백이 남는다. 홈화면이 그렇게 동작하지 않는 이유다.
+ *
+ * 행 수는 구간으로 정하지 않는다. 셀이 정사각형이므로 남은 높이에 몇 개가
+ * 들어가는지로 결정한다 — 세로 공간은 기기 편차가 크고 툴바 위치(M5)에 따라서도
+ * 달라지므로 계산으로 뽑는 편이 맞다.
+ */
+export function computeGridMetrics(board: Size): GridMetrics {
+  const { width, height } = board
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+    return EMPTY_METRICS
+  }
+
+  // 열과 셀은 상한을 씌운 폭으로 계산하고, 여백은 아래에서 실제 폭으로 구한다.
+  // 그러면 넓은 화면에서 격자가 저절로 가운데 놓인다.
+  const usableWidth = Math.min(width, MAX_GRID_WIDTH) - MIN_PADDING * 2
+  const usableHeight = height - MIN_PADDING * 2
+  if (usableWidth <= 0 || usableHeight <= 0) return EMPTY_METRICS
+
+  // n개의 셀이 차지하는 길이는 n*(cell+gap) - gap 이므로, 역산하면 이 꼴이 된다.
+  const columns = clamp(
+    Math.round((usableWidth + GRID_GAP) / (TARGET_CELL + GRID_GAP)),
+    MIN_COLUMNS,
+    MAX_COLUMNS,
+  )
+
+  // 셀 크기는 내림한다. 반올림하면 누적 오차로 마지막 열이 삐져나온다.
+  // 남는 픽셀은 아래에서 여백으로 흡수된다.
+  let cellSize = Math.max(1, Math.floor((usableWidth - (columns - 1) * GRID_GAP) / columns))
+
+  let rows = Math.floor((usableHeight + GRID_GAP) / (cellSize + GRID_GAP))
+  if (rows < 1) {
+    // 높이가 정사각형 한 칸도 못 담는 극단(가로 폰에서 툴바가 상단일 때).
+    // 최소 1행을 보장하되 셀을 줄여 보드 안에 들어오게 한다. 정사각형은 유지한다.
+    rows = 1
+    cellSize = Math.max(1, Math.floor(usableHeight))
+  }
+
+  const paddingX = (width - spanOf(columns, cellSize, GRID_GAP)) / 2
+  const paddingY = (height - spanOf(rows, cellSize, GRID_GAP)) / 2
+
+  return { columns, rows, cellSize, gap: GRID_GAP, paddingX, paddingY }
+}
