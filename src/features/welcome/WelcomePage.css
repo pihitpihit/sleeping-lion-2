@@ -178,6 +178,10 @@
 .welcome__pillar {
   position: relative;
   overflow: hidden;
+  /* 본문 길이가 카드마다 달라도 상태 칩은 같은 높이에 놓이도록 세로로 쌓고
+     칩을 바닥에 붙인다. 그리드가 카드 높이는 이미 맞춰준다. */
+  display: flex;
+  flex-direction: column;
   padding: clamp(1.15rem, 4vw, 1.75rem);
   text-align: left;
   border: 1px solid var(--sl-border);
@@ -239,6 +243,9 @@
 .welcome__pillar-status {
   position: relative;
   display: inline-block;
+  /* flex 아이템이므로 가로로 늘어나지 않게 잡고, 남는 공간을 위로 밀어 바닥에 붙인다 */
+  align-self: flex-start;
+  margin-top: auto;
   padding: 0.15rem 0.6rem;
   border: 1px solid var(--sl-border-strong);
   border-radius: 999px;

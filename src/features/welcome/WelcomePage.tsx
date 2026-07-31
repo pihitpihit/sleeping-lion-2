@@ -1,3 +1,4 @@
+import { LOCALE, messages } from '../../i18n/messages'
 import { LionCrest } from './LionCrest'
 import './WelcomePage.css'
 
@@ -12,20 +13,24 @@ import './WelcomePage.css'
  * SPEC은 기술 용어로 쓰되(캠페인 기록지·인게임 도구), 화면 문구는 결이 맞게 옮긴다.
  *
  * 태그라인의 두 낱말이 두 카드 제목을 그대로 받는다 —
- * 장부→'캠페인 장부'(축 ①), 행낭→'원정 행낭'(축 ②).
+ * 일지→'모험 일지'(축 ①), 행낭→'원정 행낭'(축 ②).
  * 셋 중 하나를 고치면 나머지도 같이 손봐야 구조가 유지된다.
+ *
+ * 카드 본문은 무엇을 다루는지만 적고 동작은 설명하지 않는다. "다음 원정까지
+ * 남는다", "끝나면 비워진다" 같은 문장은 영속성 여부를 풀어 쓴 기능 설명이라
+ * 간판에 어울리지 않는다. 그건 SPEC이 할 말이다.
  */
 
 const PILLARS = [
   {
     ordinal: 'I',
-    title: '캠페인 장부',
-    body: '한 판이 끝나면 셈을 적는다. 금화와 경험치, 레벨과 퍽, 손에 넣은 물건, 도시의 번영과 우리 명성까지. 다음 원정까지 남는 것들이다.',
+    title: '모험 일지',
+    body: '한 판이 끝나면 셈을 적는다. 금화와 경험치, 레벨과 퍽, 손에 넣은 물건, 도시의 번영과 우리 명성까지.',
   },
   {
     ordinal: 'II',
     title: '원정 행낭',
-    body: '판이 도는 동안에만 쓴다. 원소와 보정 덱, 주도권 순서. 원정이 끝나면 알아서 비워진다.',
+    body: '원소와 보정 덱, 주도권 순서. 판이 도는 동안 곁에 둔다.',
   },
 ]
 
@@ -52,7 +57,7 @@ export function WelcomePage() {
         <p className="welcome__tagline">
           본점은 글룸헤이븐 어귀에, 2호점은 여기에.
           <br />
-          돌아와서는 장부를 펴고, 다시 나설 때는 행낭을 챙긴다.
+          돌아와서는 일지를 적고, 다시 나설 때는 행낭을 챙긴다.
         </p>
 
         <ul className="welcome__pillars">
@@ -70,10 +75,11 @@ export function WelcomePage() {
       </main>
 
       <footer className="welcome__footer">
-        <p>글룸헤이븐과 사자의 턱에 쓰는 도구</p>
+        <p>{messages.siteTagline[LOCALE]}</p>
+        {/* 첫 줄이 정취 쪽으로 갔으므로, 어떤 게임에 쓰는지는 이 줄이 밝힌다. */}
         <p className="welcome__footer-fine">
-          Cephalofair Games와 무관하게 팬이 만든 비영리 도구입니다. 게임 원문은 담지
-          않습니다.
+          글룸헤이븐 · 사자의 턱 팬 제작 도구. Cephalofair Games와 무관한 비영리
+          도구이며 게임 원문은 담지 않습니다.
         </p>
         {/* CC BY-NC-SA의 저작자표시(BY)는 '합리적으로 실행 가능한' 방식의 표기를
             요구한다. 에셋을 실제로 들이기 전이라도 글꼴 출처는 여기 둔다. */}
