@@ -55,8 +55,13 @@
         background: linear-gradient(180deg, var(--sl-bg), var(--sl-void));
         color: var(--sl-text-muted);
         font-family:
-          'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic',
-          system-ui, sans-serif;
+          'Pretendard',
+          -apple-system,
+          BlinkMacSystemFont,
+          'Apple SD Gothic Neo',
+          'Malgun Gothic',
+          system-ui,
+          sans-serif;
         line-height: 1.65;
       }
 
@@ -179,7 +184,8 @@
         width: var(--icon);
         height: var(--icon);
         border-radius: 50%;
-        background: url('../public/assets/creator-pack/elements/fire.svg') center / contain no-repeat;
+        background: url('../public/assets/creator-pack/elements/fire.svg') center / contain
+          no-repeat;
         filter: brightness(calc(1 + var(--heat) * 0.5)) saturate(calc(1 + var(--heat) * 0.7));
       }
       /* 속열 */
@@ -557,11 +563,10 @@
   <body>
     <h1>불 효과 실험실</h1>
     <p class="intro">
-      메타볼 두 갈래를 견준다. <strong>B</strong>는 아래에서 위로 타오르고,
-      <strong>E</strong>는 가운데에서 사방으로 퍼진다. 아래 띠의
-      <strong>달굼·맥박·테</strong>가 원판 자체를 달아오르게 한다. <strong>홀로</strong>를 누르면
-      한쪽만 크게 남아 fps로 비용을 잴 수 있다. 마음에 드는 조합을 찾으면
-      <strong>값 내보내기</strong>를 눌러 그 숫자를 알려주면 앱에 옮긴다.
+      메타볼 두 갈래를 견준다. <strong>B</strong>는 아래에서 위로 타오르고, <strong>E</strong>는
+      가운데에서 사방으로 퍼진다. 아래 띠의 <strong>달굼·맥박·테</strong>가 원판 자체를 달아오르게
+      한다. <strong>홀로</strong>를 누르면 한쪽만 크게 남아 fps로 비용을 잴 수 있다. 마음에 드는
+      조합을 찾으면 <strong>값 내보내기</strong>를 눌러 그 숫자를 알려주면 앱에 옮긴다.
     </p>
     <p class="warn">
       운영체제에 "동작 줄이기"가 켜져 있다. 실제 앱은 이 설정에서 애니메이션을 끄지만, 여기서는
@@ -753,11 +758,19 @@
       <defs>
         <filter id="gooB" x="-35%" y="-35%" width="170%" height="170%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="s" id="gooB-blur" />
-          <feColorMatrix in="s" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8" />
+          <feColorMatrix
+            in="s"
+            mode="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8"
+          />
         </filter>
         <filter id="gooE" x="-35%" y="-35%" width="170%" height="170%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="s" id="gooE-blur" />
-          <feColorMatrix in="s" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8" />
+          <feColorMatrix
+            in="s"
+            mode="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8"
+          />
         </filter>
       </defs>
     </svg>
@@ -990,13 +1003,15 @@
         frames++
         if (now - fpsAt >= 500) {
           const solo = document.querySelector('.card.is-solo')
-          const where = document.body.classList.contains('solo') && solo ? solo.dataset.key : '둘 다'
+          const where =
+            document.body.classList.contains('solo') && solo ? solo.dataset.key : '둘 다'
           const count = document.querySelectorAll(
             document.body.classList.contains('solo') && solo
               ? `.card.is-solo .blob, .card.is-solo .ash`
               : '.blob, .ash',
           ).length
-          $('fps').textContent = `${Math.round((frames * 1000) / (now - fpsAt))} fps · ${where} · 조각 ${count}`
+          $('fps').textContent =
+            `${Math.round((frames * 1000) / (now - fpsAt))} fps · ${where} · 조각 ${count}`
           frames = 0
           fpsAt = now
         }
