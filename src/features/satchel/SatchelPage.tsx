@@ -6,6 +6,7 @@ import { resolveToolbarPosition } from './toolbar/position'
 import { SatchelToolbar } from './toolbar/SatchelToolbar'
 import { WidgetBoard } from './board/WidgetBoard'
 import { WidgetSettingsDialog } from './board/WidgetSettingsDialog'
+import { CloseIcon } from './board/frameIcons'
 import { getWidgetDefinition } from './widgets/registry'
 import './SatchelPage.css'
 
@@ -122,7 +123,7 @@ export function SatchelPage() {
         <div className="satchel__notice" role="status">
           <span>{notice}</span>
           <button type="button" onClick={clearNotice} aria-label="알림 닫기">
-            <span aria-hidden="true">×</span>
+            <CloseIcon size={18} />
           </button>
         </div>
       )}

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { WidgetDefinition } from '../widgets/types'
+import { CloseIcon } from './frameIcons'
 
 interface Props {
   definition: WidgetDefinition
@@ -80,7 +81,7 @@ export function WidgetSettingsDialog({ definition, value, onChange, onClose }: P
             aria-label="닫기"
             onClick={onClose}
           >
-            <span aria-hidden="true">×</span>
+            <CloseIcon size={20} />
           </button>
         </header>
 

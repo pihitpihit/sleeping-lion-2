@@ -21,7 +21,7 @@ const BASE = {
 /** 햄버거 — 메뉴 */
 export function MenuIcon() {
   return (
-    <svg {...BASE} width="20" height="20">
+    <svg {...BASE} width="22" height="22">
       <path d="M4 7h16M4 12h16M4 17h16" />
     </svg>
   )
@@ -30,7 +30,7 @@ export function MenuIcon() {
 /** 연필 — 고쳐 놓기 */
 export function EditIcon() {
   return (
-    <svg {...BASE} width="20" height="20">
+    <svg {...BASE} width="22" height="22">
       <path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3Z" />
       <path d="M14.5 6.5l3 3" />
     </svg>
@@ -40,7 +40,7 @@ export function EditIcon() {
 /** 디스켓 — 다 됐다(저장) */
 export function SaveIcon() {
   return (
-    <svg {...BASE} width="20" height="20">
+    <svg {...BASE} width="22" height="22">
       <path d="M5 4h11l3 3v13H5V4Z" />
       <path d="M9 4v5h6V4" />
       <path d="M8 13h8v7H8v-7Z" />
@@ -51,7 +51,7 @@ export function SaveIcon() {
 /** 되감는 화살 — 되돌리기 */
 export function UndoIcon() {
   return (
-    <svg {...BASE} width="20" height="20">
+    <svg {...BASE} width="22" height="22">
       <path d="M4 9h9a5.5 5.5 0 1 1 0 11H8" />
       <path d="M8 4.5 3.5 9 8 13.5" />
     </svg>

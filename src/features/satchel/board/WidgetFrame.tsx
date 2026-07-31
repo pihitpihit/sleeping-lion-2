@@ -8,7 +8,7 @@ import {
   type Delta,
 } from '../interaction/gestureMath'
 import type { WidgetDefinition, SatchelMode } from '../widgets/types'
-import { GearIcon } from './GearIcon'
+import { CloseIcon, GearIcon } from './frameIcons'
 
 interface Props {
   widget: WidgetInstance
@@ -215,7 +215,7 @@ export function WidgetFrame({
             onPointerDown={(e) => e.stopPropagation()}
             onClick={onRemove}
           >
-            <span aria-hidden="true">×</span>
+            <CloseIcon />
           </button>
           <span
             className="widget-frame__resize"
