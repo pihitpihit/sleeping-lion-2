@@ -1,0 +1,330 @@
+/* ==========================================================================
+   웰컴 페이지
+   --------------------------------------------------------------------------
+   레이아웃 기준
+   - 세로 길이는 100dvh. 100vh는 모바일 브라우저 주소창 때문에 잘린다.
+   - 좌우/상하 여백에 env(safe-area-inset-*)를 더해 아이폰 노치와 홈 인디케이터,
+     갤럭시 펀치홀을 피한다. index.html의 viewport-fit=cover와 짝을 이룬다.
+   - 타이포는 전부 clamp()로 유동 스케일. 375px(아이폰 SE)부터 데스크톱까지
+     미디어쿼리 없이 이어진다. 미디어쿼리는 열 수가 바뀌는 지점에서만 쓴다.
+   ========================================================================== */
+
+.welcome {
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(2rem, 6vh, 4rem);
+  padding:
+    calc(var(--sl-safe-top) + clamp(2rem, 6vh, 4rem))
+    calc(var(--sl-safe-right) + clamp(1.25rem, 5vw, 3rem))
+    calc(var(--sl-safe-bottom) + clamp(1.5rem, 4vh, 3rem))
+    calc(var(--sl-safe-left) + clamp(1.25rem, 5vw, 3rem));
+  overflow: hidden;
+
+  /* 촛불이 위에서 떨어지는 어두운 방. 위쪽 온기 → 아래쪽 어둠. */
+  background:
+    radial-gradient(
+      ellipse 120% 80% at 50% -10%,
+      rgba(201, 162, 39, 0.13),
+      transparent 60%
+    ),
+    radial-gradient(ellipse 90% 60% at 50% 110%, rgba(168, 57, 31, 0.07), transparent 65%),
+    linear-gradient(180deg, var(--sl-bg) 0%, var(--sl-void) 100%);
+}
+
+/* 종이 결 — SVG 노이즈를 얹어 평평한 그라디언트의 디지털 느낌을 없앤다.
+   외부 이미지 파일이 아니라 인라인 데이터라 오프라인에서도 뜬다. */
+.welcome::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.42;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* 가장자리 어둠 */
+.welcome::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 75% 65% at 50% 45%,
+    transparent 40%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+
+/* --------------------------------------------------------------------------
+   간판
+   -------------------------------------------------------------------------- */
+
+.welcome__sign {
+  width: 100%;
+  max-width: 60rem;
+  /* flex 아이템의 기본 min-width는 auto라 내용의 min-content 폭 아래로 줄지
+     않는다. 나중에 긴 문자열(URL·식별자 등)이 들어와도 문서를 넓히지 못하게
+     막아두는 안전장치. */
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.welcome__crest {
+  width: clamp(5.5rem, 20vw, 9rem);
+  height: auto;
+  margin-bottom: clamp(1rem, 3vh, 1.75rem);
+  filter: drop-shadow(0 0 18px rgba(201, 162, 39, 0.25));
+}
+
+.welcome__wordmark {
+  margin: 0;
+  max-width: 100%;
+  font-family: var(--sl-font-display);
+  font-weight: 400;
+  /* 좁은 화면에서도 간판답게 크게 걸리도록 9vw. 대신 'Sleeping'과 'Lion II'
+     사이에서 두 줄로 접히므로 가로로는 넘치지 않는다. */
+  font-size: clamp(2.6rem, 9vw, 5.5rem);
+  line-height: 1.02;
+  letter-spacing: 0.02em;
+  background: linear-gradient(
+    180deg,
+    var(--sl-gold-bright) 0%,
+    var(--sl-gold) 45%,
+    var(--sl-gold-dim) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* 각인된 느낌 — 아래쪽 검은 그림자로 판에 파인 듯이 */
+  filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.75));
+}
+
+.welcome__ko-sign {
+  margin: clamp(0.5rem, 1.5vh, 0.9rem) 0 0;
+  font-family: var(--sl-font-ko-display);
+  font-size: clamp(1.05rem, 4.2vw, 1.6rem);
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  /* letter-spacing이 마지막 글자 뒤에도 붙어 시각적 중심이 왼쪽으로 밀린다 */
+  text-indent: 0.3em;
+  color: var(--sl-text);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* 구분선 — 가는 선 두 개 사이의 마름모 */
+.welcome__rule {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(100%, 22rem);
+  margin: clamp(1.25rem, 3.5vh, 2rem) 0;
+}
+
+.welcome__rule-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--sl-border-strong), transparent);
+}
+
+.welcome__rule-gem {
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  rotate: 45deg;
+  background: var(--sl-gold);
+  box-shadow: 0 0 10px rgba(201, 162, 39, 0.55);
+}
+
+.welcome__tagline {
+  margin: 0;
+  max-width: 34rem;
+  font-size: clamp(0.9rem, 3.4vw, 1.05rem);
+  line-height: 1.85;
+  color: var(--sl-text-muted);
+  text-wrap: balance;
+}
+
+/* --------------------------------------------------------------------------
+   두 축 안내 카드
+   -------------------------------------------------------------------------- */
+
+.welcome__pillars {
+  list-style: none;
+  width: 100%;
+  margin: clamp(2rem, 5vh, 3rem) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: clamp(0.85rem, 2.5vw, 1.25rem);
+}
+
+@media (min-width: 40rem) {
+  .welcome__pillars {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.welcome__pillar {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(1.15rem, 4vw, 1.75rem);
+  text-align: left;
+  border: 1px solid var(--sl-border);
+  border-radius: 3px;
+  background:
+    linear-gradient(160deg, rgba(201, 162, 39, 0.05), transparent 55%),
+    var(--sl-panel);
+  box-shadow:
+    inset 0 1px 0 rgba(232, 205, 114, 0.07),
+    0 12px 28px -18px rgba(0, 0, 0, 0.9);
+}
+
+/* 카드 좌상단 놋쇠 모서리쇠 */
+.welcome__pillar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-top: 2px solid var(--sl-gold-dim);
+  border-left: 2px solid var(--sl-gold-dim);
+  opacity: 0.7;
+}
+
+/* 배경에 흐리게 깔리는 서수 */
+.welcome__pillar-ordinal {
+  position: absolute;
+  top: -0.2rem;
+  right: 0.65rem;
+  font-family: var(--sl-font-display);
+  font-size: clamp(4rem, 14vw, 5.5rem);
+  line-height: 1;
+  color: var(--sl-gold);
+  opacity: 0.11;
+  pointer-events: none;
+  user-select: none;
+}
+
+.welcome__pillar-title {
+  position: relative;
+  margin: 0 0 0.5rem;
+  font-family: var(--sl-font-ko-display);
+  font-size: clamp(1.05rem, 4vw, 1.25rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--sl-gold-bright);
+}
+
+.welcome__pillar-body {
+  position: relative;
+  margin: 0 0 0.9rem;
+  font-size: clamp(0.85rem, 3.2vw, 0.94rem);
+  line-height: 1.75;
+  color: var(--sl-text-muted);
+  text-wrap: pretty;
+}
+
+.welcome__pillar-status {
+  position: relative;
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--sl-border-strong);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  color: var(--sl-text-faint);
+}
+
+/* --------------------------------------------------------------------------
+   바닥글
+   -------------------------------------------------------------------------- */
+
+.welcome__footer {
+  width: 100%;
+  max-width: 40rem;
+  text-align: center;
+  color: var(--sl-text-faint);
+}
+
+.welcome__footer p {
+  margin: 0;
+  font-size: clamp(0.74rem, 2.8vw, 0.82rem);
+  line-height: 1.7;
+}
+
+.welcome__footer-fine {
+  margin-top: 0.5rem !important;
+  opacity: 0.75;
+  text-wrap: pretty;
+}
+
+/* --------------------------------------------------------------------------
+   가로로 누운 폰 — 세로 공간이 극히 좁을 때 문장과 여백을 줄인다
+   -------------------------------------------------------------------------- */
+
+@media (max-height: 32rem) and (orientation: landscape) {
+  .welcome {
+    justify-content: flex-start;
+    gap: 1.25rem;
+    padding-top: calc(var(--sl-safe-top) + 1.25rem);
+    padding-bottom: calc(var(--sl-safe-bottom) + 1rem);
+  }
+
+  .welcome__crest {
+    width: 3.5rem;
+    margin-bottom: 0.4rem;
+  }
+
+  /* 가로 폰은 폭이 넓어 9vw가 76px까지 치솟는다. 세로가 없는 화면에서는
+     간판 크기를 폭이 아니라 높이에 맞춰 눌러야 카드까지 한 화면에 들어온다. */
+  .welcome__wordmark {
+    font-size: clamp(1.9rem, 5vw, 2.9rem);
+  }
+
+  .welcome__ko-sign {
+    margin-top: 0.35rem;
+    font-size: 0.95rem;
+    letter-spacing: 0.22em;
+    text-indent: 0.22em;
+  }
+
+  .welcome__rule {
+    margin: 0.7rem 0;
+  }
+
+  .welcome__tagline {
+    font-size: 0.84rem;
+    line-height: 1.6;
+  }
+
+  .welcome__pillars {
+    grid-template-columns: repeat(2, 1fr);
+    margin-top: 1.25rem;
+  }
+
+  .welcome__pillar {
+    padding: 0.9rem 1rem;
+  }
+
+  .welcome__pillar-body {
+    margin-bottom: 0.7rem;
+    font-size: 0.8rem;
+    line-height: 1.6;
+  }
+
+  .welcome__pillar-ordinal {
+    font-size: 3.5rem;
+  }
+}

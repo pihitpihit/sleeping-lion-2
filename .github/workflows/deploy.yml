@@ -1,0 +1,55 @@
+name: Deploy
+
+# main에 푸시되면 빌드하고, GitHub Pages로 배포한다.
+# 수동 실행(workflow_dispatch)도 열어둔다.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# 배포에 필요한 최소 권한만.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 배포는 한 번에 하나만. 진행 중인 배포는 취소하지 않는다(중간에 끊긴 배포가
+# 사이트를 깨진 상태로 남기지 않도록).
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build
+        # 프로젝트 사이트는 https://<user>.github.io/<repo>/ 아래에 놓이므로
+        # base 경로를 레포명으로 맞춰야 에셋 링크가 깨지지 않는다.
+        # 루트 도메인이나 자가호스팅으로 옮기면 이 값을 '/'로 바꾼다.
+        env:
+          VITE_BASE: /${{ github.event.repository.name }}/
+        run: npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
