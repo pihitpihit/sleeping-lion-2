@@ -64,8 +64,8 @@ export function WelcomePage() {
       <footer className="welcome__footer">
         <p>Gloomhaven · Jaws of the Lion 동행 도구</p>
         <p className="welcome__footer-fine">
-          비공개 · 지정 파티 전용. Cephalofair Games와 무관한 팬메이드 도구이며,
-          게임 콘텐츠 원문을 담지 않습니다.
+          Cephalofair Games와 무관한 비영리 팬메이드 도구이며, 게임 콘텐츠 원문을
+          담지 않습니다.
         </p>
       </footer>
     </div>

@@ -1,6 +1,8 @@
 # 잠자는 사자 2호점 · Sleeping Lion II
 
-Gloomhaven / Jaws of the Lion 동행 웹앱. 비공개·지정 파티 전용.
+Gloomhaven / Jaws of the Lion 동행 웹앱. 팬메이드 비영리 도구.
+
+**https://pihitpihit.github.io/sleeping-lion-2/**
 
 설계는 [SPEC.md](./SPEC.md)가 정본이고, 작업 지침은 [CLAUDE.md](./CLAUDE.md)에 있다.
 
