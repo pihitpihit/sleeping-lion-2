@@ -58,8 +58,25 @@ export function slotOf(state: ElementState): number {
   return SLOT_ORDER.indexOf(state)
 }
 
-/** 트랙 위 위치(0~2)를 가장 가까운 상태로 되돌린다. 드래그를 놓을 때 쓴다. */
+/** 트랙 위 위치(0~2)를 가장 가까운 상태로 되돌린다. */
 export function stateAtSlot(slot: number): ElementState {
   const clamped = Math.min(Math.max(Math.round(slot), 0), SLOT_ORDER.length - 1)
   return SLOT_ORDER[clamped]
+}
+
+/**
+ * 픽셀 위치에서 가장 가까운 슬롯을 찾는다. 드래그를 **놓을 때** 쓴다.
+ *
+ * 끄는 동안에는 손가락을 그대로 따라가고, 손을 뗀 뒤에야 이 판정으로 붙는다.
+ * 끄는 중에 칸마다 튀면 조작감이 나쁘다.
+ */
+export function nearestSlotState(
+  offset: number,
+  slotOffsets: readonly [number, number, number],
+): ElementState {
+  let best = 0
+  for (let i = 1; i < slotOffsets.length; i += 1) {
+    if (Math.abs(slotOffsets[i] - offset) < Math.abs(slotOffsets[best] - offset)) best = i
+  }
+  return SLOT_ORDER[best]
 }

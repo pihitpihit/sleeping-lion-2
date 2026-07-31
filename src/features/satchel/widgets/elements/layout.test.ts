@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { computeElementLayout, isElementTrackerSizeAllowed } from './layout'
-import { ELEMENTS, nextElementState, slotOf, stateAtSlot } from './elements'
+import { ELEMENTS, nearestSlotState, nextElementState, slotOf, stateAtSlot } from './elements'
 
 describe('isElementTrackerSizeAllowed', () => {
   // 요구사항: 가로 '혹은' 세로가 6칸 이상. minSize {w,h} 한 쌍으로는 못 적는 조건이다.
@@ -121,6 +121,24 @@ describe('원소 상태', () => {
     expect(stateAtSlot(0.4)).toBe('inert')
     expect(stateAtSlot(0.6)).toBe('waning')
     expect(stateAtSlot(99)).toBe('strong')
+  })
+
+  // 끄는 동안에는 손가락을 따라가고, 손을 뗀 뒤에야 이 판정으로 붙는다.
+  it('놓은 자리에서 가장 가까운 슬롯으로 붙는다', () => {
+    const slots = [20, 100, 180] as const
+    expect(nearestSlotState(20, slots)).toBe('inert')
+    expect(nearestSlotState(55, slots)).toBe('inert')
+    expect(nearestSlotState(65, slots)).toBe('waning')
+    expect(nearestSlotState(139, slots)).toBe('waning')
+    expect(nearestSlotState(141, slots)).toBe('strong')
+    expect(nearestSlotState(999, slots)).toBe('strong')
+    expect(nearestSlotState(-999, slots)).toBe('inert')
+  })
+
+  it('슬롯 간격이 고르지 않아도 가까운 쪽을 고른다', () => {
+    const slots = [0, 10, 200] as const
+    expect(nearestSlotState(9, slots)).toBe('waning')
+    expect(nearestSlotState(120, slots)).toBe('strong')
   })
 
   it('여섯 원소가 요구된 순서대로다', () => {

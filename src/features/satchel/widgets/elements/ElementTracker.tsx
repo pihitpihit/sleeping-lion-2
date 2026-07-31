@@ -7,10 +7,9 @@ import { computeElementLayout } from './layout'
 import {
   ELEMENTS,
   ELEMENT_STATE_LABEL,
+  nearestSlotState,
   slotOf,
-  stateAtSlot,
   type ElementDef,
-  type ElementState,
 } from './elements'
 import './ElementTracker.css'
 
@@ -83,14 +82,20 @@ function ElementLane({
   const setState = useElementStore((s) => s.setState)
   const laneRef = useRef<HTMLButtonElement | null>(null)
 
-  /** 드래그 중 임시로 보여줄 상태. 손을 뗄 때 확정한다. */
-  const [dragState, setDragState] = useState<ElementState | null>(null)
-  const drag = useRef<{ pointerId: number; origin: number; moved: boolean } | null>(null)
+  /**
+   * 끄는 동안의 **연속** 위치(px). 칸에 붙이지 않고 손가락을 그대로 따라간다.
+   * 끄는 중에 칸마다 튀면 조작감이 나쁘다 — 붙는 것은 손을 뗀 뒤다.
+   */
+  const [dragOffset, setDragOffset] = useState<number | null>(null)
+  const drag = useRef<{ pointerId: number; origin: number; start: number; moved: boolean } | null>(
+    null,
+  )
   /** 방금 끌어서 놓았으면 뒤따라오는 click을 삼킨다. 안 그러면 상태가 두 번 바뀐다. */
   const swallowClick = useRef(false)
 
-  const shown = dragState ?? state
-  const offset = slotOffsets[slotOf(shown)]
+  // 끄는 중에는 놓일 자리의 모습을 미리 보여준다. 위치는 손가락을 따라간다.
+  const shown = dragOffset === null ? state : nearestSlotState(dragOffset, slotOffsets)
+  const offset = dragOffset ?? slotOffsets[slotOf(state)]
 
   /**
    * 칸 전체가 탭 대상이다 — 홈을 눌러도, 석판을 눌러도 다음 상태로 넘어간다.
@@ -112,6 +117,7 @@ function ElementLane({
     drag.current = {
       pointerId: event.pointerId,
       origin: vertical ? event.clientX : event.clientY,
+      start: slotOffsets[slotOf(state)],
       moved: false,
     }
   }
@@ -126,12 +132,10 @@ function ElementLane({
     if (!d.moved && Math.abs(delta) < DRAG_THRESHOLD) return
     d.moved = true
 
-    // 손가락 위치를 트랙 좌표로 옮긴다. 슬롯 간격은 칸 폭의 1/3이다.
-    const rect = laneRef.current?.getBoundingClientRect()
-    if (!rect) return
-    const crossSize = vertical ? rect.width : rect.height
-    const step = crossSize / 3
-    setDragState(stateAtSlot(slotOf(state) + delta / step))
+    // 양 끝 슬롯 밖으로는 나가지 않는다. 트랙에 끼워진 판이므로 홈을 벗어날 수 없다.
+    const min = slotOffsets[0]
+    const max = slotOffsets[slotOffsets.length - 1]
+    setDragOffset(Math.min(Math.max(d.start + delta, min), max))
   }
 
   function end(event: ReactPointerEvent<HTMLSpanElement>) {
@@ -140,17 +144,20 @@ function ElementLane({
     drag.current = null
 
     if (d.moved) {
-      if (dragState) setState(instanceId, element.id, dragState)
+      // 여기서 처음으로 칸에 붙는다.
+      if (dragOffset !== null) {
+        setState(instanceId, element.id, nearestSlotState(dragOffset, slotOffsets))
+      }
       // 끌어서 놓은 것은 탭이 아니다. 뒤따라오는 click을 삼킨다.
       swallowClick.current = true
     }
-    setDragState(null)
+    setDragOffset(null)
   }
 
   function cancel() {
     if (drag.current?.moved) swallowClick.current = true
     drag.current = null
-    setDragState(null)
+    setDragOffset(null)
   }
 
   const style = {
@@ -169,10 +176,34 @@ function ElementLane({
       tabIndex={mode === 'play' ? 0 : -1}
       onClick={onLaneClick}
     >
-      {canSlide && <span className="elements__groove" aria-hidden="true" />}
+      {/* 홈과 걸림 자국은 석판과 **같은 slotOffsets에서** 그린다.
+          CSS에서 비율(1/6·3/6·5/6)로 따로 그리면 석판 위치와 어긋난다 —
+          실제로 어긋났다. 한 값에서 나와야 맞을 수밖에 없다. */}
+      {canSlide && (
+        <>
+          <span
+            className="elements__groove"
+            style={
+              {
+                '--groove-start': `${slotOffsets[0]}px`,
+                '--groove-length': `${slotOffsets[2] - slotOffsets[0]}px`,
+              } as React.CSSProperties
+            }
+            aria-hidden="true"
+          />
+          {slotOffsets.map((slot, i) => (
+            <span
+              key={i}
+              className="elements__detent"
+              style={{ '--detent-at': `${slot}px` } as React.CSSProperties}
+              aria-hidden="true"
+            />
+          ))}
+        </>
+      )}
 
       <span
-        className={`elements__stone elements__stone--${shown}`}
+        className={`elements__stone elements__stone--${shown}${dragOffset === null ? '' : ' elements__stone--dragging'}`}
         style={{
           backgroundImage: `url(${import.meta.env.BASE_URL}assets/creator-pack/elements/${element.file}.svg)`,
         }}

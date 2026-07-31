@@ -44,7 +44,10 @@
 }
 
 /* --------------------------------------------------------------------------
-   홈 — 미끄러질 수 있을 때만 판다
+   홈과 걸림 자국 — 미끄러질 수 있을 때만 판다
+
+   위치는 전부 컴포넌트가 넘긴 slotOffsets에서 나온다. CSS에서 비율로 따로
+   그리면 석판 위치와 어긋난다.
    -------------------------------------------------------------------------- */
 
 .elements__groove {
@@ -54,37 +57,46 @@
   box-shadow:
     inset 0 2px 3px rgba(0, 0, 0, 0.55),
     inset 0 -1px 0 rgba(232, 205, 114, 0.06);
-  /* 걸림 자국 셋. 홈을 1/6·3/6·5/6 지점에서 살짝 밝게 만든다. */
-  background-image: radial-gradient(
-    circle at var(--detent-x, 50%) var(--detent-y, 50%),
-    rgba(232, 205, 114, 0.14) 0 2px,
-    transparent 2px
-  );
   pointer-events: none;
 }
 
+/* 홈은 석판이 오가는 구간을 덮되, 양 끝을 석판 반지름만큼 넉넉히 감싼다. */
 .elements--horizontal .elements__groove {
   left: 50%;
-  top: 12%;
-  bottom: 12%;
+  top: calc(var(--groove-start) - var(--element-icon) * 0.32);
+  height: calc(var(--groove-length) + var(--element-icon) * 0.64);
   width: calc(var(--element-icon) * 0.34);
   transform: translateX(-50%);
-  background-image:
-    radial-gradient(circle at 50% 16.6667%, rgba(232, 205, 114, 0.16) 0 2.5px, transparent 2.5px),
-    radial-gradient(circle at 50% 50%, rgba(232, 205, 114, 0.16) 0 2.5px, transparent 2.5px),
-    radial-gradient(circle at 50% 83.3333%, rgba(232, 205, 114, 0.16) 0 2.5px, transparent 2.5px);
 }
 
 .elements--vertical .elements__groove {
   top: 50%;
-  left: 12%;
-  right: 12%;
+  left: calc(var(--groove-start) - var(--element-icon) * 0.32);
+  width: calc(var(--groove-length) + var(--element-icon) * 0.64);
   height: calc(var(--element-icon) * 0.34);
   transform: translateY(-50%);
-  background-image:
-    radial-gradient(circle at 16.6667% 50%, rgba(232, 205, 114, 0.16) 0 2.5px, transparent 2.5px),
-    radial-gradient(circle at 50% 50%, rgba(232, 205, 114, 0.16) 0 2.5px, transparent 2.5px),
-    radial-gradient(circle at 83.3333% 50%, rgba(232, 205, 114, 0.16) 0 2.5px, transparent 2.5px);
+}
+
+/* 걸림 자국 — 석판이 멈추는 바로 그 자리에 찍는다. */
+.elements__detent {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgba(232, 205, 114, 0.3);
+  pointer-events: none;
+}
+
+.elements--horizontal .elements__detent {
+  left: 50%;
+  top: var(--detent-at);
+  transform: translate(-50%, -50%);
+}
+
+.elements--vertical .elements__detent {
+  top: 50%;
+  left: var(--detent-at);
+  transform: translate(-50%, -50%);
 }
 
 /* --------------------------------------------------------------------------
@@ -108,10 +120,17 @@
   transition:
     left 0.32s cubic-bezier(0.34, 1.4, 0.5, 1),
     top 0.32s cubic-bezier(0.34, 1.4, 0.5, 1),
-    filter 0.24s ease,
-    opacity 0.24s ease;
+    filter 0.24s ease;
   /* 편집 모드에서 위젯 내용은 포인터를 받지 않는다. 여기서도 막아둔다. */
   touch-action: none;
+}
+
+/* 끄는 동안에는 전환을 끈다. 켜두면 손가락보다 늦게 따라와 끈적하게 느껴진다.
+   붙는 것은 손을 뗀 뒤이며, 그때 다시 전환이 살아나 튕기듯 자리를 잡는다. */
+.elements__stone--dragging {
+  transition: filter 0.24s ease;
+  cursor: grabbing;
+  z-index: 2;
 }
 
 .elements--horizontal .elements__stone {
@@ -130,22 +149,21 @@
    상태별 표현
    -------------------------------------------------------------------------- */
 
-/* 꺼짐 — 흑백. 명도도 낮춰 확실히 죽은 것으로 보이게 한다. */
+/* 꺼짐 — 흑백.
+   **opacity를 쓰지 않는다.** 반투명해지면 뒤의 홈과 바탕이 비쳐 돌이 아니라
+   유령처럼 보인다. 명도와 채도만 낮춰 '꺼진 돌'로 남긴다. */
 .elements__stone--inert {
-  filter: grayscale(1) brightness(0.55) contrast(0.9);
-  opacity: 0.7;
+  filter: grayscale(1) brightness(0.5) contrast(0.95);
 }
 
 /* 사그라듦 — 색은 돌아오지만 아직 빛나지 않는다 */
 .elements__stone--waning {
-  filter: none;
-  opacity: 0.92;
+  filter: brightness(0.88);
 }
 
 /* 타오름 — 색 + 원소 색에 맞춘 빛무리 */
 .elements__stone--strong {
   filter: none;
-  opacity: 1;
   animation: element-glare 1.9s ease-in-out infinite;
 }
 
