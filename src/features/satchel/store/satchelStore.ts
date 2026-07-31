@@ -140,13 +140,23 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
       return
     }
 
-    const next = addWidget(
-      layout,
-      definitionId,
-      definition.defaultSize,
-      metrics,
-      crypto.randomUUID(),
-    )
+    /**
+     * 기본 크기가 안 들어가면 **눕혀서** 시도한다.
+     *
+     * 원소 트래커는 긴 쪽이 6칸이어야 하는데 폰은 4열뿐이다. 가로로는 못 놓아도
+     * 세로로는 놓을 수 있으므로, 돌려보지 않고 "자리가 없다"고 하면 폰에서
+     * 아예 쓸 수 없는 위젯이 된다.
+     */
+    const { defaultSize } = definition
+    const candidates = [defaultSize, { w: defaultSize.h, h: defaultSize.w }]
+    let next: Layout | null = null
+    for (const size of candidates) {
+      if (size.w > metrics.columns || size.h > metrics.rows) continue
+      if (!isSizeAllowedFor(definitionId, size)) continue
+      next = addWidget(layout, definitionId, size, metrics, crypto.randomUUID())
+      if (next) break
+    }
+
     if (!next) {
       // 조용히 실패하면 버튼이 고장난 것으로 보인다.
       set({ notice: '자리가 없다. 다른 연장을 치우거나 크기를 줄여라.' })

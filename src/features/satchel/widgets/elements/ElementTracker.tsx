@@ -81,15 +81,32 @@ function ElementLane({
   const state = useElementStore((s) => s.stateOf(instanceId, element.id))
   const advance = useElementStore((s) => s.advance)
   const setState = useElementStore((s) => s.setState)
+  const laneRef = useRef<HTMLButtonElement | null>(null)
 
   /** 드래그 중 임시로 보여줄 상태. 손을 뗄 때 확정한다. */
   const [dragState, setDragState] = useState<ElementState | null>(null)
   const drag = useRef<{ pointerId: number; origin: number; moved: boolean } | null>(null)
+  /** 방금 끌어서 놓았으면 뒤따라오는 click을 삼킨다. 안 그러면 상태가 두 번 바뀐다. */
+  const swallowClick = useRef(false)
 
   const shown = dragState ?? state
   const offset = slotOffsets[slotOf(shown)]
 
-  function begin(event: ReactPointerEvent<HTMLButtonElement>) {
+  /**
+   * 칸 전체가 탭 대상이다 — 홈을 눌러도, 석판을 눌러도 다음 상태로 넘어간다.
+   * 좁은 화면에서 석판만 눌러야 하면 잘 안 맞는다.
+   */
+  function onLaneClick() {
+    if (mode !== 'play') return
+    if (swallowClick.current) {
+      swallowClick.current = false
+      return
+    }
+    advance(instanceId, element.id)
+  }
+
+  /** 끄는 것은 석판에서만 시작한다. 홈을 끄는 것은 탭으로 친다. */
+  function begin(event: ReactPointerEvent<HTMLSpanElement>) {
     if (mode !== 'play' || !canSlide) return
     event.currentTarget.setPointerCapture(event.pointerId)
     drag.current = {
@@ -99,7 +116,7 @@ function ElementLane({
     }
   }
 
-  function move(event: ReactPointerEvent<HTMLButtonElement>) {
+  function move(event: ReactPointerEvent<HTMLSpanElement>) {
     const d = drag.current
     if (!d || d.pointerId !== event.pointerId) return
 
@@ -110,24 +127,28 @@ function ElementLane({
     d.moved = true
 
     // 손가락 위치를 트랙 좌표로 옮긴다. 슬롯 간격은 칸 폭의 1/3이다.
-    const rect = event.currentTarget.parentElement?.getBoundingClientRect()
+    const rect = laneRef.current?.getBoundingClientRect()
     if (!rect) return
     const crossSize = vertical ? rect.width : rect.height
     const step = crossSize / 3
     setDragState(stateAtSlot(slotOf(state) + delta / step))
   }
 
-  function end(event: ReactPointerEvent<HTMLButtonElement>) {
+  function end(event: ReactPointerEvent<HTMLSpanElement>) {
     const d = drag.current
     if (!d || d.pointerId !== event.pointerId) return
     drag.current = null
 
-    if (d.moved && dragState) setState(instanceId, element.id, dragState)
-    else if (!d.moved) advance(instanceId, element.id)
+    if (d.moved) {
+      if (dragState) setState(instanceId, element.id, dragState)
+      // 끌어서 놓은 것은 탭이 아니다. 뒤따라오는 click을 삼킨다.
+      swallowClick.current = true
+    }
     setDragState(null)
   }
 
   function cancel() {
+    if (drag.current?.moved) swallowClick.current = true
     drag.current = null
     setDragState(null)
   }
@@ -139,26 +160,27 @@ function ElementLane({
   } as React.CSSProperties
 
   return (
-    <div className="elements__lane" style={style}>
+    <button
+      type="button"
+      ref={laneRef}
+      className="elements__lane"
+      style={style}
+      aria-label={`${element.name} — ${ELEMENT_STATE_LABEL[shown]}`}
+      tabIndex={mode === 'play' ? 0 : -1}
+      onClick={onLaneClick}
+    >
       {canSlide && <span className="elements__groove" aria-hidden="true" />}
 
-      <button
-        type="button"
+      <span
         className={`elements__stone elements__stone--${shown}`}
         style={{
           backgroundImage: `url(${import.meta.env.BASE_URL}assets/creator-pack/elements/${element.file}.svg)`,
         }}
-        aria-label={`${element.name} — ${ELEMENT_STATE_LABEL[shown]}`}
-        tabIndex={mode === 'play' ? 0 : -1}
         onPointerDown={begin}
         onPointerMove={move}
         onPointerUp={end}
         onPointerCancel={cancel}
-        onClick={(event) => {
-          // 포인터 흐름에서 이미 처리했다. 키보드로 눌렀을 때만 여기서 넘긴다.
-          if (event.detail === 0 && mode === 'play') advance(instanceId, element.id)
-        }}
       />
-    </div>
+    </button>
   )
 }

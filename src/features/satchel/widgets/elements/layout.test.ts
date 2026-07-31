@@ -22,8 +22,8 @@ describe('computeElementLayout', () => {
     expect(computeElementLayout({ width: 100, height: 600 }).orientation).toBe('vertical')
   })
 
-  it('정사각형이면 수평이다 — 실물 원소판이 가로다', () => {
-    expect(computeElementLayout({ width: 400, height: 400 }).orientation).toBe('horizontal')
+  it('정사각형이면 수직이다', () => {
+    expect(computeElementLayout({ width: 400, height: 400 }).orientation).toBe('vertical')
   })
 
   it('원소 여섯 칸이 위젯을 고르게 나눠 갖는다', () => {
@@ -59,6 +59,27 @@ describe('computeElementLayout', () => {
     const thin = computeElementLayout({ width: 600, height: 90 })
     expect(thin.canSlide).toBe(false)
     expect(new Set(thin.slotOffsets).size).toBe(1)
+  })
+
+  // 실제로 삐져나갔던 버그다. 폭을 1/6·3/6·5/6로 나누면 슬라이딩 기준(cross >= icon*2)
+  // 아래에서 양 끝 아이콘이 icon/6만큼 칸 밖으로 나간다.
+  it('아이콘이 어느 슬롯에서도 칸 밖으로 나가지 않는다', () => {
+    for (const size of [
+      { width: 600, height: 300 },
+      { width: 600, height: 148 }, // 슬라이딩 경계 언저리
+      { width: 600, height: 200 },
+      { width: 300, height: 900 },
+      { width: 240, height: 640 },
+    ]) {
+      const l = computeElementLayout(size)
+      const half = l.iconSize / 2
+      for (const offset of l.slotOffsets) {
+        expect(offset - half, `${size.width}x${size.height} 앞쪽`).toBeGreaterThanOrEqual(-0.001)
+        expect(offset + half, `${size.width}x${size.height} 뒤쪽`).toBeLessThanOrEqual(
+          l.laneThickness + 0.001,
+        )
+      }
+    }
   })
 
   it('슬롯이 칸 안에 들어온다', () => {

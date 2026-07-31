@@ -30,6 +30,17 @@
   position: relative;
   min-width: 0;
   min-height: 0;
+  /* 칸 전체가 탭 대상이다 — 홈을 눌러도 상태가 넘어간다. */
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.elements__lane:focus-visible {
+  outline: 2px solid var(--sl-gold);
+  outline-offset: -2px;
 }
 
 /* --------------------------------------------------------------------------
@@ -91,7 +102,8 @@
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
-  cursor: pointer;
+  /* 끄는 것은 석판에서만 시작한다. 홈을 끄는 것은 탭으로 친다. */
+  cursor: grab;
   /* 관성 — 살짝 넘쳤다 돌아오는 곡선 */
   transition:
     left 0.32s cubic-bezier(0.34, 1.4, 0.5, 1),
@@ -112,11 +124,6 @@
   top: 50%;
   left: var(--element-offset);
   transform: translate(-50%, -50%);
-}
-
-.elements__stone:focus-visible {
-  outline: 2px solid var(--sl-gold);
-  outline-offset: 3px;
 }
 
 /* --------------------------------------------------------------------------

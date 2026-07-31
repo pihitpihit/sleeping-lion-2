@@ -52,7 +52,8 @@ export function computeElementLayout(widget: { width: number; height: number }):
     }
   }
 
-  const orientation: Orientation = width >= height ? 'horizontal' : 'vertical'
+  // 정사각형(예: 6×6)이면 세로를 고른다. 가로가 **더 길 때만** 수평이다.
+  const orientation: Orientation = width > height ? 'horizontal' : 'vertical'
   const along = orientation === 'horizontal' ? width : height
   const cross = orientation === 'horizontal' ? height : width
 
@@ -62,9 +63,16 @@ export function computeElementLayout(widget: { width: number; height: number }):
 
   const canSlide = cross >= iconSize * SLIDE_RATIO
 
-  // 슬라이딩할 때는 세 슬롯을 폭에 고르게 펴고, 아니면 셋 다 한가운데다.
+  /**
+   * 슬롯은 **아이콘 반지름만큼 안쪽에서** 시작하고 끝난다.
+   *
+   * 폭을 1/6·3/6·5/6로 나누면 양 끝 슬롯의 아이콘이 칸 밖으로 삐져나온다 —
+   * 슬라이딩 기준이 `cross >= icon*2`이므로 1/6 지점은 icon/3인데 아이콘 반지름은
+   * icon/2라 icon/6만큼 넘친다. 안쪽으로 밀어 넣어야 위젯 안에 머문다.
+   */
+  const half = iconSize / 2
   const slotOffsets: [number, number, number] = canSlide
-    ? [cross * (1 / 6), cross * (3 / 6), cross * (5 / 6)]
+    ? [half, cross / 2, cross - half]
     : [cross / 2, cross / 2, cross / 2]
 
   return {
