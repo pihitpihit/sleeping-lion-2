@@ -15,6 +15,27 @@ import './NoticePage.css'
  */
 
 /**
+ * NOTICE.md에서 사이트에 공개할 구간만 뽑는다.
+ *
+ * 그 문서는 두 독자를 상대한다 — 방문자에게 필요한 것은 표기 의무가 있는 사실뿐이고,
+ * 우리가 지킬 규칙과 판단 근거(쓸 수 없는 글꼴, SA 전염 범위 등)는 저장소에만 둔다.
+ * 파일을 둘로 쪼개면 사본이 원본과 어긋나므로, 한 파일 안에서 구간만 표시한다.
+ */
+function extractPublicSections(markdown: string): string {
+  // 마커는 '한 줄을 통째로 차지할 때만' 유효하다. 이 제약이 없으면 문서가
+  // 자기 편집 규칙을 설명하며 인용한 마커까지 진짜로 취급해, 설명문 조각이
+  // 공개 구간으로 새어 나온다.
+  const MARKED_BLOCK =
+    /^[ \t]*<!--[ \t]*site:begin[ \t]*-->[ \t]*$([\s\S]*?)^[ \t]*<!--[ \t]*site:end[ \t]*-->[ \t]*$/gm
+  const blocks = [...markdown.matchAll(MARKED_BLOCK)]
+  if (blocks.length === 0) {
+    // 마커가 사라졌다면 조용히 전문을 노출하는 대신 눈에 띄게 실패시킨다.
+    throw new Error('NOTICE.md에 site:begin / site:end 마커가 없습니다.')
+  }
+  return blocks.map((block) => block[1].trim()).join('\n\n')
+}
+
+/**
  * 저장소 기준 상대경로를 사이트에서 실제로 열리는 주소로 바꾼다.
  * NOTICE.md의 링크는 GitHub에서 보는 것을 전제로 쓰여 있어 그대로 두면 404가 난다.
  */
@@ -31,7 +52,11 @@ function rewriteRepoLinks(markdown: string): string {
 
 export function NoticePage() {
   const html = useMemo(
-    () => marked.parse(rewriteRepoLinks(noticeSource), { async: false, gfm: true }) as string,
+    () =>
+      marked.parse(rewriteRepoLinks(extractPublicSections(noticeSource)), {
+        async: false,
+        gfm: true,
+      }) as string,
     [],
   )
 
@@ -43,6 +68,8 @@ export function NoticePage() {
             ← 잠자는 사자 2호점
           </a>
         </nav>
+
+        <h1 className="notice__title">출처와 라이선스</h1>
 
         {/* 내용은 우리가 작성한 저장소 문서이며 사용자 입력이 아니다. */}
         <article className="notice__prose" dangerouslySetInnerHTML={{ __html: html }} />

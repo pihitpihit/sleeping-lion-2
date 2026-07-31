@@ -51,13 +51,20 @@
   min-width: 0;
 }
 
-.notice__prose h1 {
+/* 제목은 마크다운이 아니라 페이지가 직접 낸다 — 공개 구간은 본문부터 시작한다 */
+.notice__title {
   margin: 0 0 1.5rem;
   font-family: var(--sl-font-ko-display);
   font-size: clamp(1.5rem, 5.5vw, 2rem);
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--sl-gold-bright);
+}
+
+/* 공개 구간의 첫 문단은 도입부이므로 조금 크게 */
+.notice__prose > p:first-child {
+  color: var(--sl-text);
+  margin-bottom: 1.5rem;
 }
 
 .notice__prose h2 {
