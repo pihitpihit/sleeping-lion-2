@@ -4,7 +4,7 @@ import { DRAG_THRESHOLD } from '../../interaction/gestureMath'
 import type { WidgetProps } from '../types'
 import { useElementStore } from './elementStore'
 import { computeElementLayout } from './layout'
-import { ELEMENT_STATE_LABEL, nearestSlotState, slotOf, type ElementDef } from './elements'
+import { ELEMENT_STATE_LABEL, glowOf, nearestSlotState, slotOf, type ElementDef } from './elements'
 import { sanitizeElementSettings, visibleElements } from './settings'
 import { ElementEffect } from './effects'
 import { hasElementEffect } from './effects/registry'
@@ -161,8 +161,14 @@ function ElementLane({
   const customEffect = hasElementEffect(element.id)
   const blazing = shown === 'strong'
 
+  // 빛무리 색은 아이콘 색과 따로 간다. 어둠은 아이콘이 거의 검정이라 그대로
+  // 쓰면 어두운 바탕에 묻혀 타오르는지 알 수 없다.
+  const glow = glowOf(element)
+
   const style = {
     '--element-color': element.color,
+    '--element-glow': glow.inner,
+    '--element-glow-outer': glow.outer,
     '--element-icon': `${iconSize}px`,
     '--element-offset': `${offset}px`,
   } as React.CSSProperties

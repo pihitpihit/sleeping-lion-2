@@ -195,17 +195,20 @@
   left: var(--element-offset);
 }
 
+/* 빛무리는 아이콘 색이 아니라 `--element-glow`를 쓴다. 어둠처럼 아이콘이
+   바탕과 거의 같은 원소는 제 색으로 빛나면 타오르는지 보이지 않는다.
+   안팎을 다르게 주면 두 겹으로 번진다(어둠은 안쪽 보라 → 바깥 파랑). */
 @keyframes element-glare {
   0%,
   100% {
     box-shadow:
-      0 0 8px 1px var(--element-color),
-      0 0 18px 3px color-mix(in srgb, var(--element-color) 45%, transparent);
+      0 0 8px 1px var(--element-glow),
+      0 0 18px 3px color-mix(in srgb, var(--element-glow-outer) 45%, transparent);
   }
   50% {
     box-shadow:
-      0 0 14px 3px var(--element-color),
-      0 0 34px 8px color-mix(in srgb, var(--element-color) 55%, transparent);
+      0 0 14px 3px var(--element-glow),
+      0 0 34px 8px color-mix(in srgb, var(--element-glow-outer) 55%, transparent);
   }
 }
 
@@ -217,7 +220,7 @@
   /* 빛무리는 끄되 타오름이 사그라듦과 구분은 돼야 하므로 고정 발광은 남긴다. */
   .elements__stone--strong {
     animation: none;
-    box-shadow: 0 0 12px 2px var(--element-color);
+    box-shadow: 0 0 12px 2px var(--element-glow);
   }
 
   .elements__stone--custom-effect {

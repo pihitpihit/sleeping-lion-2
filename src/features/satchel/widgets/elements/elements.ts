@@ -15,8 +15,17 @@ export interface ElementDef {
   name: string
   /** `public/assets/creator-pack/elements/<file>.svg` */
   file: string
-  /** 아이콘에서 뽑은 원본 색. 글레어에 쓴다. */
+  /** 아이콘에서 뽑은 원본 색. */
   color: string
+  /**
+   * 타오름 빛무리의 안쪽 색. 없으면 `color`를 쓴다.
+   *
+   * 아이콘 색이 늘 빛무리로 쓸 만한 것은 아니다. 어둠은 아이콘이 거의 검정이라
+   * 그대로 쓰면 어두운 바탕에 묻혀 타오르는지 알 수 없다. 그런 원소만 따로 준다.
+   */
+  glow?: string
+  /** 빛무리 바깥 색. 없으면 `glow`. 안팎을 다르게 주면 두 겹으로 번진다. */
+  glowOuter?: string
 }
 
 /**
@@ -29,8 +38,16 @@ export const ELEMENTS: readonly ElementDef[] = [
   { id: 'air', name: '바람', file: 'air', color: '#98B0B5' },
   { id: 'earth', name: '풀', file: 'earth', color: '#7DA82A' },
   { id: 'light', name: '빛', file: 'light', color: '#ECA610' },
-  { id: 'dark', name: '어둠', file: 'dark', color: '#202830' },
+  // 어둠만 빛무리 색을 따로 준다. 아이콘 색(#202830)은 바탕과 거의 같아
+  // 타오름이 보이지 않는다. 안쪽 보라 → 바깥 파랑으로 두 겹을 준다.
+  { id: 'dark', name: '어둠', file: 'dark', color: '#202830', glow: '#A06CFF', glowOuter: '#4C6FF5' },
 ]
+
+/** 빛무리에 쓸 안팎 색. 지정이 없으면 아이콘 색으로 돌아간다. */
+export function glowOf(element: ElementDef): { inner: string; outer: string } {
+  const inner = element.glow ?? element.color
+  return { inner, outer: element.glowOuter ?? inner }
+}
 
 export const ELEMENT_STATE_LABEL: Record<ElementState, string> = {
   inert: '꺼짐',
