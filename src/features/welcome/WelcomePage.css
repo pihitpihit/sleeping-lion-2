@@ -270,6 +270,20 @@
   text-wrap: pretty;
 }
 
+.welcome__link {
+  color: var(--sl-text-muted);
+  text-decoration: underline;
+  text-decoration-color: var(--sl-border-strong);
+  text-underline-offset: 0.2em;
+  transition: color 0.15s ease;
+}
+
+.welcome__link:hover,
+.welcome__link:focus-visible {
+  color: var(--sl-gold);
+  text-decoration-color: var(--sl-gold-dim);
+}
+
 /* --------------------------------------------------------------------------
    가로로 누운 폰 — 세로 공간이 극히 좁을 때 문장과 여백을 줄인다
    -------------------------------------------------------------------------- */

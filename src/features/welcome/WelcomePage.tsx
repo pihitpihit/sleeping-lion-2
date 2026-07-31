@@ -67,6 +67,30 @@ export function WelcomePage() {
           Cephalofair Games와 무관한 비영리 팬메이드 도구이며, 게임 콘텐츠 원문을
           담지 않습니다.
         </p>
+        {/* CC BY-NC-SA의 저작자표시(BY)는 '합리적으로 실행 가능한' 방식의 표기를
+            요구한다. 에셋을 실제로 도입하기 전이라도 서체 크레딧은 여기 둔다. */}
+        <p className="welcome__footer-fine">
+          서체{' '}
+          <a href="https://fonts.google.com/specimen/Pirata+One" className="welcome__link">
+            Pirata One
+          </a>{' ('}
+          {/* index.html과 달리 JSX의 href는 Vite가 base를 다시 쓰지 않는다.
+              BASE_URL('/sleeping-lion-2/')을 직접 붙여야 하위 경로 배포에서 안 깨진다. */}
+          <a
+            href={`${import.meta.env.BASE_URL}licenses/pirata-one-OFL.txt`}
+            className="welcome__link"
+          >
+            SIL OFL 1.1
+          </a>
+          {')'}
+          {' · '}
+          <a
+            href="https://github.com/pihitpihit/sleeping-lion-2/blob/main/NOTICE.md"
+            className="welcome__link"
+          >
+            서드파티 고지
+          </a>
+        </p>
       </footer>
     </div>
   )

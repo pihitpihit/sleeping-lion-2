@@ -57,7 +57,18 @@
 
 **핵심 원칙: 앱(클라이언트·서버 어디에도) 저작권 콘텐츠 원문을 저장·전송하지 않는다.**
 
-- 카드 능력 텍스트, 시나리오 서사 텍스트, 몬스터 스탯표 등 Cephalofair Games의 저작물 원문은 **배포물에 일절 포함하지 않는다.**
+> **2026-07-31 개정 — 텍스트와 아트를 분리한다.**
+> 이전 문서는 "Cephalofair 저작물을 일절 포함하지 않는다"고 뭉뚱그렸다. 그러나
+> 저작자 Isaac Childres가 **Gloomhaven Creator Pack을 CC BY-NC-SA 4.0으로 직접
+> 공개**했음이 1차 출처로 확인됐다(13.1장). 라이선스가 있는 것과 없는 것을 같이
+> 묶어둘 이유가 없으므로 다음과 같이 나눈다.
+>
+> - **텍스트 콘텐츠 → 종전대로 일절 미포함.** 카드 능력 텍스트, 시나리오 서사,
+>   몬스터 스탯표. 라이선스 유무와 무관한 우리 자체 원칙이다.
+> - **아트 에셋 → CC BY-NC-SA 4.0 조건을 지키는 선에서 선별 포함 허용.**
+>   원소·상태이상·클래스 아이콘 등. 조건과 격리 규칙은 13.1장이 정본.
+
+- 카드 능력 텍스트, 시나리오 서사 텍스트, 몬스터 스탯표 등 Cephalofair Games의 **텍스트 저작물 원문은 배포물에 일절 포함하지 않는다.**
 - 퍽(perk)은 **텍스트 없이 인덱스/체크마크로만** 추적한다. 예: "퍽 슬롯 3번 적용됨" (카드 문구 저장 안 함).
 - 콘텐츠가 필요한 부분은 두 경로로만 채운다:
   1. **사용자 직접 입력** — 사용자가 자기 소유 게임을 참조해 수치를 입력.
@@ -293,7 +304,10 @@ GitHub Pages 배포를 위해 레포를 public으로 전환했다. 따라서:
 - [x] 동기화: 진행 상태만, last-write-wins + version 잠금, Realtime
 - [x] 권한: 본인 캐릭터만 편집, 파티 상태는 파티장, 파티장 위임 가능
 - [x] 다중 캠페인
-- [x] 저작권: 콘텐츠 원문 미저장, 사용자 입력/데이터팩 로드
+- [x] 저작권(텍스트): 카드 원문·시나리오 서사·몬스터 스탯 미저장. 사용자 입력/데이터팩 로드
+- [x] 저작권(아트): Creator Pack을 CC BY-NC-SA 4.0 조건 하에 선별 도입. `public/assets/creator-pack/`에 격리 (13.1장)
+- [x] 코드 라이선스: MIT. 에셋은 각자 라이선스 (NOTICE.md)
+- [x] 서체: Pirata One(OFL)만 사용. Nyala·High Tower Text는 재배포 불가라 금지
 - [x] 안전망: JSON export/import
 - [x] 기록 단위: 시나리오 정산 + 수동 보정 둘 다
 - [x] 웹앱 기반 확정 (Tauri 등 네이티브 셸 미채택)
@@ -332,4 +346,61 @@ GitHub Pages 배포를 위해 레포를 public으로 전환했다. 따라서:
 | **GHS 소스 코드** | 🔴 참고만, 이식 금지. AGPL-3.0 카피레프트. 게다가 Angular↔React라 이식 불가. 눈으로 배우는 것만 허용. |
 | **GHS 번들 게임 콘텐츠 (카드 원문·시나리오 서사·몬스터 스탯 텍스트)** | 🔴 미포함. GHS는 이를 번들하지만 우리 3장 원칙은 더 엄격하다. **콘텐츠 데이터 자체는 가져오지 않고**, JSON **스키마 형식(구조)만** 데이터팩 로더 설계에 참고한다. |
 
-**요약 원칙:** 형식·구조·아이디어·OFL 폰트는 가져오고, **Cephalofair 저작물 콘텐츠와 AGPL 코드는 가져오지 않는다.** 아트는 반드시 원본 라이선스(주로 CC BY-NC-SA 4.0)를 확인하고 출처를 표기한다.
+**요약 원칙:** 형식·구조·아이디어·OFL 폰트는 가져오고, **Cephalofair 텍스트 콘텐츠와 AGPL 코드는 가져오지 않는다.** 아트는 13.1장의 조건을 지켜 선별 도입한다.
+
+---
+
+## 13.1 Gloomhaven Creator Pack (아트 에셋 정본)
+
+**출처:** https://boardgamegeek.com/thread/1733586/files-for-creation
+
+**라이선스 근거 (1차 출처 확인됨).** 저작자 Isaac Childres(@Cephalofair, Designer/Publisher)가 해당 스레드 첫 글에서 직접 선언했다:
+
+> Update 2: I would like to make it clear that I am sharing these assets under creative commons license **BY-NC-SA 4.0**. ... you can use these assets for non-commercial applications with proper attribution, and any derivative work based off these assets is protected under the same license as well.
+
+### 지켜야 할 조건
+
+| 조건 | 내용 |
+|---|---|
+| **BY** | 저작자 식별(Isaac Childres / Cephalofair Games), 저작권 표시, 라이선스 고지, 면책 고지, 원본 링크 유지 |
+| **NC** | 비영리. 광고·유료화·판매 금지 |
+| **SA** | **개변한 에셋은 그 결과물도 BY-NC-SA 4.0**이 된다 |
+| 변경 표시 | 무엇을 어떻게 바꿨는지 명시 (의무) |
+
+### 격리 규칙 (SA 전염을 막기 위해 반드시 지킨다)
+
+SA는 개변한 에셋에만 미치고 나란히 놓인 우리 MIT 코드까지 끌어내리지 않는다(CC 용어로 collection과 adaptation의 차이). **단 그 경계는 파일이 분리돼 있을 때만 유지된다.**
+
+1. Creator Pack 유래 에셋은 **`public/assets/creator-pack/` 안에만** 둔다.
+2. **`.tsx`에 인라인 SVG로 박아 넣지 않는다.** 그 소스 파일이 개작물로 취급될 소지가 있다. (우리가 직접 그린 `LionCrest.tsx` 같은 원저작물은 무관하다.)
+3. 팩 전체(약 200MB)를 통째로 커밋하지 않는다. **실제 쓰는 아이콘만 선별한다.**
+4. 파일을 추가·수정할 때마다 `public/assets/creator-pack/ATTRIBUTION.md`의 표를 갱신한다.
+
+### 팩에서 가져오지 않는 것
+
+- **서체 파일.** 팩에 섞여 있어도 저작자가 라이선스할 수 있는 대상이 아니다(아래 참조).
+- **텍스트 콘텐츠.** 카드 원문·시나리오 서사·몬스터 스탯 텍스트. 3장 자체 원칙.
+
+### 서체 — 셋 중 하나만 쓸 수 있다
+
+원 스레드는 게임에 쓰인 서체 셋을 알려주지만, **저작자가 라이선스한 것은 에셋이지 서체가 아니다.** 서체는 그의 소유가 아니며 단지 "게임에 이걸 썼다"는 정보다.
+
+| 서체 | 판정 | 사유 |
+|---|---|---|
+| **Pirata One** | 🟢 사용 중 | SIL OFL 1.1 |
+| **Nyala** | 🔴 금지 | Windows 번들 독점 서체. 재배포 불가 |
+| **High Tower Text** | 🔴 금지 | Monotype 독점(MS Office 번들). 스레드의 다운로드 링크는 정식 배포처가 아니다 |
+
+라틴 본문 세리프가 필요해지면 OFL 대체를 쓴다 — High Tower 자리엔 **EB Garamond**나 **Cardo**, Nyala 자리엔 **Gentium Book Plus**나 **Alegreya**.
+
+### 상표는 별개
+
+CC 라이선스는 상표권을 부여하지 않는다("Patent and trademark rights are not licensed under this Public License"). "Gloomhaven"·"Jaws of the Lion"·"Cephalofair"는 Cephalofair Games의 상표이며, 호환성을 설명하기 위해 **지명적으로만** 언급한다. 로고·워드마크는 쓰지 않고 면책 문구를 페이지에 유지한다.
+
+### 미결 — 저작자 사전 연락 여부
+
+같은 스레드에서 "이 파일들로 Vassal 모듈이나 앱을 만들어도 되냐"는 질문에 Isaac이 답했다:
+
+> This is intended for creating new content. **If someone wanted to create a Vassal mod or an app, I'd prefer they still talk to me first.**
+
+우리가 만드는 것이 정확히 그 '앱'이다. 시간순으로는 이 발언(2017-02-24)이 먼저이고 CC BY-NC-SA 선언(Update 2)이 나중이며, 부여된 CC 라이선스는 철회 불가이고 앱 용도를 배제하지도 않는다. 따라서 **법적으로는 CC 조건 준수로 충분하다고 판단**한다. 다만 공개 배포이고 저작자가 이 경우를 콕 집어 언급했으므로, 에셋을 실제로 도입하기 전에 한 번 연락해두는 편이 안전하다. **결정 보류 — 형님 판단.**
