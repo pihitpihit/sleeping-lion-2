@@ -40,7 +40,14 @@ export const ELEMENTS: readonly ElementDef[] = [
   { id: 'light', name: '빛', file: 'light', color: '#ECA610' },
   // 어둠만 빛무리 색을 따로 준다. 아이콘 색(#202830)은 바탕과 거의 같아
   // 타오름이 보이지 않는다. 안쪽 보라 → 바깥 파랑으로 두 겹을 준다.
-  { id: 'dark', name: '어둠', file: 'dark', color: '#202830', glow: '#A06CFF', glowOuter: '#4C6FF5' },
+  {
+    id: 'dark',
+    name: '어둠',
+    file: 'dark',
+    color: '#202830',
+    glow: '#A06CFF',
+    glowOuter: '#4C6FF5',
+  },
 ]
 
 /** 빛무리에 쓸 안팎 색. 지정이 없으면 아이콘 색으로 돌아간다. */
