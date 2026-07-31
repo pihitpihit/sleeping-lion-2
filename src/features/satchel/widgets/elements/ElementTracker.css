@@ -167,6 +167,34 @@
   animation: element-glare 1.9s ease-in-out infinite;
 }
 
+/* 고유 효과가 붙은 원소는 공통 빛무리를 끈다. 겹치면 효과가 묻힌다. */
+.elements__stone--custom-effect {
+  animation: none;
+  box-shadow: none;
+}
+
+/* 고유 효과가 놓이는 자리. **석판과 똑같은 규칙으로 자리를 잡는다** —
+   칸 한가운데 고정하면 미끄러진 석판과 효과가 따로 논다. */
+.elements__effect {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  transition:
+    left 0.32s cubic-bezier(0.34, 1.4, 0.5, 1),
+    top 0.32s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+
+.elements--horizontal .elements__effect {
+  left: 50%;
+  top: var(--element-offset);
+}
+
+.elements--vertical .elements__effect {
+  top: 50%;
+  left: var(--element-offset);
+}
+
 @keyframes element-glare {
   0%,
   100% {
@@ -190,5 +218,9 @@
   .elements__stone--strong {
     animation: none;
     box-shadow: 0 0 12px 2px var(--element-color);
+  }
+
+  .elements__stone--custom-effect {
+    box-shadow: none;
   }
 }

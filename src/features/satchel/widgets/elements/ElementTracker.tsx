@@ -6,6 +6,8 @@ import { useElementStore } from './elementStore'
 import { computeElementLayout } from './layout'
 import { ELEMENT_STATE_LABEL, nearestSlotState, slotOf, type ElementDef } from './elements'
 import { sanitizeElementSettings, visibleElements } from './settings'
+import { ElementEffect } from './effects'
+import { hasElementEffect } from './effects/registry'
 import './ElementTracker.css'
 
 /**
@@ -156,6 +158,9 @@ function ElementLane({
     setDragOffset(null)
   }
 
+  const customEffect = hasElementEffect(element.id)
+  const blazing = shown === 'strong'
+
   const style = {
     '--element-color': element.color,
     '--element-icon': `${iconSize}px`,
@@ -198,8 +203,24 @@ function ElementLane({
         </>
       )}
 
+      {/* 고유 효과는 아이콘 뒤에 깔린다. 타오를 때만 나오고, 석판과 같은 자리를
+          따라간다 — 칸 한가운데 고정해 두면 미끄러진 석판과 떨어진다. */}
+      {customEffect && blazing && (
+        <span className="elements__effect">
+          <ElementEffect elementId={element.id} />
+        </span>
+      )}
+
       <span
-        className={`elements__stone elements__stone--${shown}${dragOffset === null ? '' : ' elements__stone--dragging'}`}
+        className={[
+          'elements__stone',
+          `elements__stone--${shown}`,
+          dragOffset === null ? '' : 'elements__stone--dragging',
+          // 고유 효과가 있으면 공통 빛무리를 끈다. 겹치면 효과가 묻힌다.
+          customEffect ? 'elements__stone--custom-effect' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
         style={{
           backgroundImage: `url(${import.meta.env.BASE_URL}assets/creator-pack/elements/${element.file}.svg)`,
         }}

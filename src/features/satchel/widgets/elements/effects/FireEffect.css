@@ -1,0 +1,263 @@
+/* ==========================================================================
+   불 원소 — 타오름 효과
+   --------------------------------------------------------------------------
+   크기는 전부 `--element-icon`에 비례한다. 아이콘이 75px에서 120px까지 변하므로
+   고정 픽셀을 쓰면 큰 화면에서 초라해지고 작은 화면에서 넘친다.
+
+   애니메이션은 transform과 opacity만 건드린다. width/top 같은 것을 움직이면
+   매 프레임 레이아웃이 다시 계산된다.
+   ========================================================================== */
+
+.fire {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--element-icon);
+  height: var(--element-icon);
+  transform: translate(-50%, -50%);
+  /* 아이콘 뒤에 깔린다. 석판보다 먼저 그려지므로 DOM 순서만으로 충분하다 —
+     z-index를 음수로 주면 칸 바탕 아래로 내려가 아예 안 보인다. */
+  pointer-events: none;
+}
+
+.fire > span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+}
+
+/* --------------------------------------------------------------------------
+   1. 그을음 — 둘레가 타들어간 자국
+   -------------------------------------------------------------------------- */
+
+.fire__scorch {
+  width: calc(var(--element-icon) * 1.62);
+  height: calc(var(--element-icon) * 1.62);
+  margin: calc(var(--element-icon) * -0.81) 0 0 calc(var(--element-icon) * -0.81);
+  /* 여러 겹의 원을 어긋나게 겹쳐 가장자리를 고르지 않게 만든다.
+     정확한 원이면 '타들어간' 것이 아니라 그냥 테두리로 보인다. */
+  /* 검은 자국만으로는 어두운 바탕에서 안 보인다. 타들어가는 가장자리는
+     '숯'이 아니라 '달아오른 테'로 그려야 눈에 든다. */
+  background:
+    radial-gradient(circle at 40% 36%, rgba(170, 58, 14, 0.5) 0 22%, transparent 46%),
+    radial-gradient(circle at 64% 68%, rgba(150, 46, 10, 0.45) 0 20%, transparent 44%),
+    radial-gradient(
+      circle at 50% 50%,
+      transparent 0 40%,
+      rgba(96, 30, 6, 0.85) 50%,
+      rgba(34, 10, 2, 0.7) 62%,
+      transparent 78%
+    );
+  filter: blur(calc(var(--element-icon) * 0.045));
+  animation: fire-scorch 9s linear infinite;
+}
+
+@keyframes fire-scorch {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. 잉걸 — 바닥에서 올라오는 열기
+   -------------------------------------------------------------------------- */
+
+.fire__ember {
+  width: calc(var(--element-icon) * 1.3);
+  height: calc(var(--element-icon) * 1.3);
+  margin: calc(var(--element-icon) * -0.65) 0 0 calc(var(--element-icon) * -0.65);
+  background: radial-gradient(
+    circle,
+    rgba(255, 186, 84, 0.7) 0 22%,
+    rgba(238, 92, 34, 0.5) 42%,
+    transparent 70%
+  );
+  animation: fire-ember 1.6s ease-in-out infinite;
+}
+
+@keyframes fire-ember {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.75;
+  }
+  50% {
+    transform: scale(1.14);
+    opacity: 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. 불꽃 혀
+   -------------------------------------------------------------------------- */
+
+.fire__flame {
+  /* 넓적하면 빛무리로 뭉개진다. 세로로 길쭉해야 '혀'로 읽힌다. */
+  width: calc(var(--element-icon) * 0.3);
+  height: calc(var(--element-icon) * 0.62);
+  margin: calc(var(--element-icon) * -0.31) 0 0 calc(var(--element-icon) * -0.15);
+  /* 아래는 둥글고 위는 뾰족하다. */
+  border-radius: 50% 50% 46% 46% / 74% 74% 26% 26%;
+  background: linear-gradient(
+    to top,
+    rgba(255, 244, 214, 0.98) 0%,
+    rgba(255, 206, 92, 0.98) 22%,
+    rgba(255, 128, 26, 0.92) 52%,
+    rgba(214, 48, 16, 0.6) 78%,
+    rgba(140, 24, 8, 0) 100%
+  );
+  /* 흐림이 과하면 형태가 사라진다. 가장자리만 부드럽게 하는 정도로. */
+  filter: blur(calc(var(--element-icon) * 0.014));
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation-name: fire-rise;
+  animation-timing-function: ease-out;
+  animation-iteration-count: infinite;
+}
+
+/**
+ * 저마다 다른 주기·지연·좌우 위치를 준다.
+ * 주기가 같으면 여섯이 한꺼번에 깜빡여 기계적으로 보인다.
+ */
+.fire__flame--1 {
+  --fire-x: -0.3;
+  animation-duration: 1.25s;
+  animation-delay: 0s;
+}
+.fire__flame--2 {
+  --fire-x: 0.28;
+  animation-duration: 1.05s;
+  animation-delay: 0.34s;
+}
+.fire__flame--3 {
+  --fire-x: 0;
+  animation-duration: 1.5s;
+  animation-delay: 0.62s;
+}
+.fire__flame--4 {
+  --fire-x: -0.14;
+  animation-duration: 0.92s;
+  animation-delay: 0.15s;
+}
+.fire__flame--5 {
+  --fire-x: 0.42;
+  animation-duration: 1.35s;
+  animation-delay: 0.85s;
+}
+.fire__flame--6 {
+  --fire-x: -0.44;
+  animation-duration: 1.15s;
+  animation-delay: 0.5s;
+}
+
+@keyframes fire-rise {
+  0% {
+    transform: translate(calc(var(--element-icon) * var(--fire-x)), calc(var(--element-icon) * 0.3))
+      scale(0.4, 0.32) rotate(0deg);
+    opacity: 0;
+  }
+  14% {
+    opacity: 1;
+  }
+  55% {
+    transform: translate(
+        calc(var(--element-icon) * var(--fire-x) * 1.15),
+        calc(var(--element-icon) * -0.34)
+      )
+      scale(1, 1.05) rotate(-7deg);
+    opacity: 0.92;
+  }
+  100% {
+    transform: translate(
+        calc(var(--element-icon) * var(--fire-x) * 1.5),
+        calc(var(--element-icon) * -1.02)
+      )
+      scale(0.34, 0.5) rotate(9deg);
+    opacity: 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. 불티
+   -------------------------------------------------------------------------- */
+
+.fire__spark {
+  width: calc(var(--element-icon) * 0.07);
+  height: calc(var(--element-icon) * 0.07);
+  margin: calc(var(--element-icon) * -0.035) 0 0 calc(var(--element-icon) * -0.035);
+  background: rgba(255, 208, 120, 0.95);
+  box-shadow: 0 0 calc(var(--element-icon) * 0.08) rgba(255, 150, 50, 0.9);
+  opacity: 0;
+  animation-name: fire-spark;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.fire__spark--1 {
+  --fire-x: -0.5;
+  animation-duration: 2.1s;
+  animation-delay: 0.2s;
+}
+.fire__spark--2 {
+  --fire-x: 0.46;
+  animation-duration: 1.7s;
+  animation-delay: 0.9s;
+}
+.fire__spark--3 {
+  --fire-x: 0.12;
+  animation-duration: 2.4s;
+  animation-delay: 1.4s;
+}
+.fire__spark--4 {
+  --fire-x: -0.22;
+  animation-duration: 1.9s;
+  animation-delay: 0.55s;
+}
+.fire__spark--5 {
+  --fire-x: 0.62;
+  animation-duration: 2.6s;
+  animation-delay: 1.8s;
+}
+
+@keyframes fire-spark {
+  0% {
+    transform: translate(
+      calc(var(--element-icon) * var(--fire-x)),
+      calc(var(--element-icon) * 0.3)
+    );
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(
+      calc(var(--element-icon) * var(--fire-x) * 1.9),
+      calc(var(--element-icon) * -1.15)
+    );
+    opacity: 0;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   움직임을 줄이라는 설정에서는 타오르는 것만 남긴다
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .fire__scorch,
+  .fire__ember {
+    animation: none;
+  }
+
+  /* 불꽃과 불티는 아예 뺀다 — 멈춘 불꽃은 불꽃으로 보이지 않는다.
+     대신 잉걸을 남겨 '타오름'이 다른 상태와 구분되게 한다. */
+  .fire__flame,
+  .fire__spark {
+    display: none;
+  }
+
+  .fire__ember {
+    opacity: 1;
+  }
+}
