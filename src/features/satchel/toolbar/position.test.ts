@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { defaultToolbarPosition, resolveToolbarPosition } from './position'
+import { defaultToolbarPosition, nextToolbarPreference, resolveToolbarPosition } from './position'
 
 describe('defaultToolbarPosition', () => {
   it('폰 세로는 상단', () => {
@@ -29,7 +29,17 @@ describe('resolveToolbarPosition', () => {
     expect(resolveToolbarPosition('top', { width: 1440, height: 900 })).toBe('top')
   })
 
-  it('고른 값이 없으면 기본값을 쓴다', () => {
-    expect(resolveToolbarPosition(null, { width: 375, height: 667 })).toBe('top')
+  it("'auto'면 기기·방향으로 정한다", () => {
+    expect(resolveToolbarPosition('auto', { width: 375, height: 667 })).toBe('top')
+    expect(resolveToolbarPosition('auto', { width: 852, height: 393 })).toBe('left')
+  })
+})
+
+describe('nextToolbarPreference', () => {
+  // 2단 토글이면 한 번 고정한 뒤 자동으로 되돌아갈 방법이 없다.
+  it('자동 → 위 → 왼쪽 → 자동 으로 돈다', () => {
+    expect(nextToolbarPreference('auto')).toBe('top')
+    expect(nextToolbarPreference('top')).toBe('left')
+    expect(nextToolbarPreference('left')).toBe('auto')
   })
 })

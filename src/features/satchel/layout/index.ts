@@ -5,6 +5,7 @@ export {
   type Layout,
   type SatchelSettings,
   type ToolbarPosition,
+  type ToolbarPreference,
   type WidgetInstance,
 } from './types'
 export {

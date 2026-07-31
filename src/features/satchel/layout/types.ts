@@ -29,21 +29,28 @@ export interface Layout {
   widgets: WidgetInstance[]
 }
 
+/** 실제로 그려지는 위치. */
 export type ToolbarPosition = 'top' | 'left'
+
+/**
+ * 사용자가 고를 수 있는 값. `auto`는 기기와 방향에 맡긴다는 뜻이며,
+ * 회전하면 따라 바뀐다. 고정값을 고르면 회전해도 그대로다.
+ */
+export type ToolbarPreference = ToolbarPosition | 'auto'
 
 /** `localStorage`에 실제로 들어가는 것. */
 export interface SatchelSettings {
   version: number
   /** 키는 열 수. */
   layouts: Record<number, Layout>
-  /** 사용자가 직접 고른 툴바 위치. 고르지 않았으면 기기별 기본값을 쓴다(M5). */
-  toolbarPosition: ToolbarPosition | null
+  /** 툴바 위치 선호. `auto`면 기기·방향에 맡긴다. */
+  toolbarPosition: ToolbarPreference
 }
 
 export const SETTINGS_VERSION = 1
 
 export function emptySettings(): SatchelSettings {
-  return { version: SETTINGS_VERSION, layouts: {}, toolbarPosition: null }
+  return { version: SETTINGS_VERSION, layouts: {}, toolbarPosition: 'auto' }
 }
 
 export function emptyLayout(columns: number): Layout {

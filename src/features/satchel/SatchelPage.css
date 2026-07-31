@@ -56,15 +56,10 @@
   align-items: stretch;
   width: 6.5rem;
   border-right: 1px solid var(--sl-border);
-  /* 위젯이 늘면 목록도 늘어난다. 보드를 밀어내지 않고 띠 안에서만 스크롤한다.
-     스크롤바가 나타나도 두께가 변하지 않도록 폭을 고정해 두었다. */
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: none;
-}
-
-.satchel-bar--left::-webkit-scrollbar {
-  display: none;
+  /* 띠 자체는 넘침을 자르지 않는다. 메뉴가 띠 바깥(left: 100%)에 열리므로
+     여기서 overflow를 걸면 메뉴가 통째로 잘려 안 보인다 — 실제로 그렇게 났다.
+     넘치는 것은 아래 위젯 목록뿐이므로 스크롤도 그쪽에 건다. */
+  overflow: visible;
 }
 
 .satchel-bar__button {
@@ -147,6 +142,17 @@
 
 .satchel-bar--left .satchel-bar__widgets {
   flex-direction: column;
+  /* 목록만 스크롤한다. 띠 두께는 그대로 유지돼 격자가 다시 계산되지 않는다. */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+.satchel-bar--left .satchel-bar__widgets::-webkit-scrollbar,
+.satchel-bar--top .satchel-bar__widgets::-webkit-scrollbar {
+  display: none;
 }
 
 .satchel-bar__count {
@@ -224,12 +230,20 @@
   overflow: hidden;
 }
 
-/* 격자 — 편집 중에만 보인다. 셀마다 점 하나. */
+/* 격자 — 편집 중에만 보인다. 칸과 칸 사이를 지나는 점선. */
 .widget-board__grid {
   position: absolute;
+  left: 0;
+  top: 0;
   pointer-events: none;
-  opacity: 0.55;
   animation: satchel-grid-in 0.18s ease;
+}
+
+.widget-board__grid line {
+  stroke: var(--sl-border-strong);
+  stroke-width: 1;
+  stroke-dasharray: 3 6;
+  opacity: 0.6;
 }
 
 @keyframes satchel-grid-in {
@@ -426,4 +440,10 @@
     transition: none;
     animation: none;
   }
+}
+
+/* 메뉴에서 자동 상태일 때 지금 어디에 붙어 있는지 함께 보여준다 */
+.satchel-menu__hint {
+  color: var(--sl-text-faint);
+  font-size: 0.75em;
 }

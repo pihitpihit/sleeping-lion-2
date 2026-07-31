@@ -72,9 +72,16 @@ describe('loadSettings', () => {
     expect(s.toolbarPosition).toBe('top')
   })
 
-  it('알 수 없는 툴바 위치는 null로 떨어뜨린다', () => {
-    const bad = JSON.stringify({ ...VALID, toolbarPosition: '오른쪽' })
-    expect(loadSettings(fakeStorage({ [STORAGE_KEY]: bad })).toolbarPosition).toBeNull()
+  it("알 수 없는 툴바 위치는 'auto'로 떨어뜨린다", () => {
+    for (const bad of ['오른쪽', null, 42]) {
+      const raw = JSON.stringify({ ...VALID, toolbarPosition: bad })
+      expect(loadSettings(fakeStorage({ [STORAGE_KEY]: raw })).toolbarPosition).toBe('auto')
+    }
+  })
+
+  it("'auto'를 그대로 읽는다", () => {
+    const raw = JSON.stringify({ ...VALID, toolbarPosition: 'auto' })
+    expect(loadSettings(fakeStorage({ [STORAGE_KEY]: raw })).toolbarPosition).toBe('auto')
   })
 })
 

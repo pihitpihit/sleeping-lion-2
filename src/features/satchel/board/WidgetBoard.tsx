@@ -1,4 +1,3 @@
-import type { CSSProperties } from 'react'
 import { spanOf, type GridMetrics, type Placement } from '../grid'
 import type { Layout } from '../layout'
 import { getWidgetDefinition } from '../widgets/registry'
@@ -29,23 +28,43 @@ export function WidgetBoard({ layout, metrics, mode, onCommit, onRemove }: Props
    * 선으로 그리면 셀 크기가 소수일 때 흐려지고, 셀 수만큼 DOM을 만들면
    * 12×8에 96개가 된다. 배경 하나로 끝내는 편이 가볍고 홈화면과도 닮았다.
    */
-  const gridStyle: CSSProperties = {
-    // 격자 영역에 정확히 겹쳐 둔다. 보드 전체에 깔면 가장자리 밖까지 점이 찍힌다.
-    left: `${metrics.paddingX}px`,
-    top: `${metrics.paddingY}px`,
-    width: `${spanOf(metrics.columns, metrics.cellSize, metrics.gap)}px`,
-    height: `${spanOf(metrics.rows, metrics.cellSize, metrics.gap)}px`,
-    backgroundImage: 'radial-gradient(circle, var(--sl-border-strong) 1.5px, transparent 1.5px)',
-    backgroundSize: `${step}px ${step}px`,
-    // radial-gradient의 원은 타일 한가운데에 놓인다. 원을 셀 한가운데로 보내려면
-    // 타일 원점을 (셀/2 − 타일/2) 만큼 당겨야 하고, 그 값이 −간격/2다.
-    backgroundPosition: `${-metrics.gap / 2}px ${-metrics.gap / 2}px`,
-  }
+  /**
+   * 격자는 **칸 사이를 지나는 점선**으로 그린다.
+   *
+   * 칸 한가운데에 표시를 두면 위젯을 어디까지 늘릴지 가늠이 안 된다. 경계선이
+   * 있어야 "여기부터 다음 칸"이 보인다. 선은 간격 한복판(칸과 칸 사이)을 지난다.
+   *
+   * SVG로 그리는 이유는 두 가지다. CSS 그라디언트로는 진짜 점선을 만들 수 없고,
+   * 선은 열+행+2개뿐이라 칸마다 DOM을 만드는 것(14×9면 126개)과 비교가 안 된다.
+   */
+  const boardWidth = metrics.paddingX * 2 + spanOf(metrics.columns, metrics.cellSize, metrics.gap)
+  const boardHeight = metrics.paddingY * 2 + spanOf(metrics.rows, metrics.cellSize, metrics.gap)
+  const half = metrics.gap / 2
+  const verticals = Array.from(
+    { length: metrics.columns + 1 },
+    (_, k) => metrics.paddingX - half + k * step,
+  )
+  const horizontals = Array.from(
+    { length: metrics.rows + 1 },
+    (_, k) => metrics.paddingY - half + k * step,
+  )
 
   return (
     <>
       {mode === 'edit' && (
-        <div className="widget-board__grid" style={gridStyle} aria-hidden="true" />
+        <svg
+          className="widget-board__grid"
+          width={boardWidth}
+          height={boardHeight}
+          aria-hidden="true"
+        >
+          {verticals.map((x) => (
+            <line key={`v${x}`} x1={x} y1={horizontals[0]} x2={x} y2={horizontals.at(-1)} />
+          ))}
+          {horizontals.map((y) => (
+            <line key={`h${y}`} x1={verticals[0]} y1={y} x2={verticals.at(-1)} y2={y} />
+          ))}
+        </svg>
       )}
 
       {layout.widgets.map((widget, index) => {

@@ -67,7 +67,11 @@ function salvage(parsed: unknown): SatchelSettings {
   }
 
   const toolbarPosition =
-    raw.toolbarPosition === 'top' || raw.toolbarPosition === 'left' ? raw.toolbarPosition : null
+    raw.toolbarPosition === 'top' ||
+    raw.toolbarPosition === 'left' ||
+    raw.toolbarPosition === 'auto'
+      ? raw.toolbarPosition
+      : 'auto'
 
   return { version: SETTINGS_VERSION, layouts, toolbarPosition }
 }

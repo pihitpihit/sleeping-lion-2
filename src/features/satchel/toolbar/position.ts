@@ -1,4 +1,4 @@
-import type { ToolbarPosition } from '../layout'
+import type { ToolbarPosition, ToolbarPreference } from '../layout'
 
 /**
  * 기기 유형에 따른 툴바 기본 위치.
@@ -23,10 +23,26 @@ export function defaultToolbarPosition(viewport: {
   return isPortrait && isNarrow ? 'top' : 'left'
 }
 
-/** 사용자가 고른 값이 있으면 그것이 이긴다. 기본값이 계속 덮어쓰면 설정이 무의미해진다. */
+/**
+ * 선호를 실제 위치로 옮긴다.
+ *
+ * 고정값을 고르면 그것이 이긴다 — 기본값이 계속 덮어쓰면 설정이 무의미해진다.
+ * `auto`는 매번 기기·방향으로 다시 정하므로 회전하면 따라 바뀐다.
+ */
 export function resolveToolbarPosition(
-  chosen: ToolbarPosition | null,
+  preference: ToolbarPreference,
   viewport: { width: number; height: number },
 ): ToolbarPosition {
-  return chosen ?? defaultToolbarPosition(viewport)
+  return preference === 'auto' ? defaultToolbarPosition(viewport) : preference
+}
+
+/** 메뉴에서 한 번 누를 때마다 자동 → 위 → 왼쪽 → 자동 으로 돈다. */
+export function nextToolbarPreference(current: ToolbarPreference): ToolbarPreference {
+  return current === 'auto' ? 'top' : current === 'top' ? 'left' : 'auto'
+}
+
+export const TOOLBAR_PREFERENCE_LABEL: Record<ToolbarPreference, string> = {
+  auto: '자동',
+  top: '위',
+  left: '왼쪽',
 }

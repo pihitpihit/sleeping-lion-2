@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useBoardSize } from './useBoardSize'
+import { useViewportSize } from './useViewportSize'
 import { useSatchelStore } from './store/satchelStore'
 import { resolveToolbarPosition } from './toolbar/position'
 import { SatchelToolbar } from './toolbar/SatchelToolbar'
@@ -14,19 +15,22 @@ import './SatchelPage.css'
  */
 export function SatchelPage() {
   const { ref: boardRef, size } = useBoardSize<HTMLDivElement>()
+  const viewport = useViewportSize()
 
   const metrics = useSatchelStore((s) => s.metrics)
   const settings = useSatchelStore((s) => s.settings)
   const mode = useSatchelStore((s) => s.mode)
   const notice = useSatchelStore((s) => s.notice)
+  const past = useSatchelStore((s) => s.past)
   const setBoardSize = useSatchelStore((s) => s.setBoardSize)
   const setMode = useSatchelStore((s) => s.setMode)
-  const setToolbarPosition = useSatchelStore((s) => s.setToolbarPosition)
+  const setToolbarPreference = useSatchelStore((s) => s.setToolbarPreference)
   const addWidgetOfType = useSatchelStore((s) => s.addWidgetOfType)
   const removeWidgetInstance = useSatchelStore((s) => s.removeWidgetInstance)
   const moveOrResize = useSatchelStore((s) => s.moveOrResize)
   const resetLayout = useSatchelStore((s) => s.resetLayout)
   const clearNotice = useSatchelStore((s) => s.clearNotice)
+  const undo = useSatchelStore((s) => s.undo)
   const currentLayout = useSatchelStore((s) => s.currentLayout)
   const countOf = useSatchelStore((s) => s.countOf)
 
@@ -34,13 +38,20 @@ export function SatchelPage() {
     if (size.width > 0 && size.height > 0) setBoardSize(size)
   }, [size, setBoardSize])
 
-  // 툴바 위치는 창 크기로 정한다. 보드 크기가 아니다 — 툴바가 보드를 줄이므로
-  // 보드로 판단하면 서로를 물고 도는 계산이 된다.
-  const position = resolveToolbarPosition(settings.toolbarPosition, {
-    width: window.innerWidth,
-    height: window.innerHeight,
-  })
+  // 편집 중 되돌리기 단축키. 관용대로 Ctrl/Cmd+Z.
+  useEffect(() => {
+    if (mode !== 'edit') return
+    function onKey(event: globalThis.KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') {
+        event.preventDefault()
+        undo()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [mode, undo])
 
+  const position = resolveToolbarPosition(settings.toolbarPosition, viewport)
   const layout = currentLayout()
   const empty = layout.widgets.length === 0
 
@@ -48,11 +59,14 @@ export function SatchelPage() {
     <div className={`satchel satchel--${position} satchel--${mode}`}>
       <SatchelToolbar
         position={position}
+        preference={settings.toolbarPosition}
         mode={mode}
+        canUndo={past.length > 0}
         countOf={countOf}
         onToggleMode={() => setMode(mode === 'edit' ? 'play' : 'edit')}
         onAdd={addWidgetOfType}
-        onSetPosition={setToolbarPosition}
+        onSetPreference={setToolbarPreference}
+        onUndo={undo}
         onReset={resetLayout}
       />
 

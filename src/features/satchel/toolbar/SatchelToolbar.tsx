@@ -1,15 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
-import type { ToolbarPosition } from '../layout'
+import type { ToolbarPosition, ToolbarPreference } from '../layout'
+import { nextToolbarPreference, TOOLBAR_PREFERENCE_LABEL } from './position'
 import { widgetDefinitions } from '../widgets/registry'
 import type { SatchelMode } from '../widgets/types'
 
 interface Props {
   position: ToolbarPosition
+  preference: ToolbarPreference
   mode: SatchelMode
+  canUndo: boolean
   countOf: (definitionId: string) => number
   onToggleMode: () => void
   onAdd: (definitionId: string) => void
-  onSetPosition: (position: ToolbarPosition) => void
+  onSetPreference: (preference: ToolbarPreference) => void
+  onUndo: () => void
   onReset: () => void
 }
 
@@ -23,11 +27,14 @@ interface Props {
  */
 export function SatchelToolbar({
   position,
+  preference,
   mode,
+  canUndo,
   countOf,
   onToggleMode,
   onAdd,
-  onSetPosition,
+  onSetPreference,
+  onUndo,
   onReset,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -71,6 +78,12 @@ export function SatchelToolbar({
       </button>
 
       {mode === 'edit' && (
+        <button type="button" className="satchel-bar__button" disabled={!canUndo} onClick={onUndo}>
+          되돌리기
+        </button>
+      )}
+
+      {mode === 'edit' && (
         <ul className="satchel-bar__widgets">
           {widgetDefinitions.map((definition) => {
             const count = countOf(definition.id)
@@ -109,12 +122,10 @@ export function SatchelToolbar({
             type="button"
             className="satchel-menu__item"
             role="menuitem"
-            onClick={() => {
-              onSetPosition(position === 'top' ? 'left' : 'top')
-              setMenuOpen(false)
-            }}
+            onClick={() => onSetPreference(nextToolbarPreference(preference))}
           >
-            도구 띠 {position === 'top' ? '왼쪽으로' : '위로'}
+            도구 띠 — {TOOLBAR_PREFERENCE_LABEL[preference]}
+            {preference === 'auto' && <span className="satchel-menu__hint"> ({position})</span>}
           </button>
           <button
             type="button"

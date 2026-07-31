@@ -16,7 +16,7 @@ import {
   updatePlacement,
   type Layout,
   type SatchelSettings,
-  type ToolbarPosition,
+  type ToolbarPreference,
 } from '../layout'
 import { getWidgetDefinition, isKnownWidget, minSizeOf } from '../widgets/registry'
 import type { SatchelMode } from '../widgets/types'
@@ -33,21 +33,32 @@ import type { SatchelMode } from '../widgets/types'
  * 드래그 중에는 저장하지 않다가 조작이 끝날 때만 저장해야 하기 때문이다.
  */
 
+/**
+ * 되돌리기 이력의 최대 길이.
+ *
+ * 편집 중 실수를 무르는 용도지 작업 기록이 아니다. 깊게 쌓아둘 이유가 없고,
+ * 메모리에만 있으므로 새로고침하면 사라진다.
+ */
+const HISTORY_LIMIT = 20
+
 interface SatchelState {
   settings: SatchelSettings
   metrics: GridMetrics
   mode: SatchelMode
   /** 자리를 못 찾았을 때처럼 사용자에게 알려야 하는 한마디. */
   notice: string | null
+  /** 되돌리기 이력. 영속하지 않는다 — 지금 편집 중인 것에 대한 상태다. */
+  past: Layout[]
 
   setBoardSize: (size: Size) => void
   setMode: (mode: SatchelMode) => void
-  setToolbarPosition: (position: ToolbarPosition) => void
+  setToolbarPreference: (preference: ToolbarPreference) => void
   addWidgetOfType: (definitionId: string) => void
   removeWidgetInstance: (instanceId: string) => void
   moveOrResize: (instanceId: string, next: Placement) => boolean
   resetLayout: () => void
   clearNotice: () => void
+  undo: () => void
 
   currentLayout: () => Layout
   countOf: (definitionId: string) => number
@@ -57,6 +68,12 @@ interface SatchelState {
 function resolveLayout(settings: SatchelSettings, metrics: GridMetrics): Layout {
   const layout = layoutForColumns(settings.layouts, metrics, minSizeOf)
   return dropUnknownWidgets(layout, isKnownWidget)
+}
+
+/** 이력에 한 장 쌓는다. 오래된 것부터 버려 길이를 묶어 둔다. */
+function pushHistory(past: Layout[], snapshot: Layout): Layout[] {
+  const next = [...past, snapshot]
+  return next.length > HISTORY_LIMIT ? next.slice(next.length - HISTORY_LIMIT) : next
 }
 
 function persist(settings: SatchelSettings, layout: Layout): SatchelSettings {
@@ -76,6 +93,7 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
   // 편집 중 나갔다가 다음 판에 편집 모드로 열린다.
   mode: 'play',
   notice: null,
+  past: [],
 
   setBoardSize: (size) => {
     const metrics = computeGridMetrics(size)
@@ -91,14 +109,15 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     }
 
     // 격자가 바뀌었다. 파생 결과를 저장해 두면 이후로는 독립적으로 편집된다.
+    // 이력은 버린다 — 다른 격자에서 만든 배치로 되돌리면 좌표가 맞지 않는다.
     const settings = get().settings
     const layout = resolveLayout(settings, metrics)
-    set({ metrics, settings: persist(settings, layout) })
+    set({ metrics, settings: persist(settings, layout), past: [] })
   },
 
   setMode: (mode) => set({ mode, notice: null }),
 
-  setToolbarPosition: (toolbarPosition) => {
+  setToolbarPreference: (toolbarPosition) => {
     const settings = { ...get().settings, toolbarPosition }
     saveSettings(settings)
     set({ settings })
@@ -128,29 +147,48 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
       set({ notice: '자리가 없다. 다른 연장을 치우거나 크기를 줄여라.' })
       return
     }
-    set({ settings: persist(settings, next), notice: null })
+    set({ settings: persist(settings, next), notice: null, past: pushHistory(get().past, layout) })
   },
 
   removeWidgetInstance: (instanceId) => {
     const { settings, metrics } = get()
-    const next = removeWidget(resolveLayout(settings, metrics), instanceId)
-    set({ settings: persist(settings, next), notice: null })
+    const before = resolveLayout(settings, metrics)
+    const next = removeWidget(before, instanceId)
+    if (next === before) return
+    set({ settings: persist(settings, next), notice: null, past: pushHistory(get().past, before) })
   },
 
   moveOrResize: (instanceId, next) => {
     const { settings, metrics } = get()
-    const updated = updatePlacement(resolveLayout(settings, metrics), instanceId, next, metrics)
+    const before = resolveLayout(settings, metrics)
+    const updated = updatePlacement(before, instanceId, next, metrics)
     if (!updated) return false
-    set({ settings: persist(settings, updated) })
+    set({ settings: persist(settings, updated), past: pushHistory(get().past, before) })
     return true
   },
 
   resetLayout: () => {
     const { settings, metrics } = get()
-    set({ settings: persist(settings, { columns: metrics.columns, widgets: [] }), notice: null })
+    const before = resolveLayout(settings, metrics)
+    set({
+      settings: persist(settings, { columns: metrics.columns, widgets: [] }),
+      notice: null,
+      past: pushHistory(get().past, before),
+    })
   },
 
   clearNotice: () => set({ notice: null }),
+
+  undo: () => {
+    const { settings, past } = get()
+    const previous = past.at(-1)
+    if (!previous) return
+    set({
+      settings: persist(settings, previous),
+      past: past.slice(0, -1),
+      notice: null,
+    })
+  },
 
   currentLayout: () => resolveLayout(get().settings, get().metrics),
 
