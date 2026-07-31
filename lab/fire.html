@@ -564,6 +564,40 @@
           display: block;
         }
       }
+      /* ----------------------------------------------------------------------
+         아이콘을 못 불러온 경우
+
+         사파리는 file://로 연 문서가 제 폴더 밖의 file://을 읽는 것을 막는다.
+         이 실험실은 CSS도 JS도 전부 인라인이라 바깥 파일이 원소 아이콘 하나뿐인데,
+         그것이 lab/ 밖(public/assets/…)에 있다. 그래서 사파리에서 로컬 파일로
+         열면 원판만 빈다.
+
+         대역을 둔다. Creator Pack 그림을 흉내 내지 않는다 — 자리와 크기만 맞춘
+         민무늬 원판이다. 불꽃이 원판을 어떻게 감싸는지는 이것으로도 판단된다.
+         ---------------------------------------------------------------------- */
+      body.no-icon .stone {
+        background:
+          radial-gradient(circle at 40% 34%, rgba(255, 255, 255, 0.14), transparent 55%),
+          radial-gradient(circle at 50% 50%, #6d4527, #3a2214 68%, #241408);
+        box-shadow: inset 0 0 0 2px rgba(236, 226, 205, 0.5);
+      }
+
+      .notice {
+        display: none;
+        margin: 0 0 0.9rem;
+        padding: 0.45rem 0.7rem;
+        border: 1px solid #8a7028;
+        border-radius: 3px;
+        color: var(--sl-gold);
+        font-size: 0.78rem;
+      }
+      body.no-icon .notice {
+        display: block;
+      }
+      .notice code {
+        color: var(--sl-text);
+      }
+
       .warn {
         display: none;
         margin: 0 0 0.9rem;
@@ -588,6 +622,14 @@
       <code>http://&lt;맥의 IP&gt;:5173/lab/fire.html</code>에 들어가면 된다. 데스크톱과 폰은
       <em>물리적 크기</em>가 달라 같은 값도 다르게 보인다 — 88px이 27인치 화면에서는 약 23mm,
       폰에서는 약 12mm다. 폰의 판단이 정본이다.
+    </p>
+    <p class="notice">
+      <strong>원소 아이콘을 불러오지 못했다.</strong> 사파리는 <code>file://</code>로 연 문서가 제
+      폴더 밖의 파일을 읽는 것을 막는다 — 이 실험실에서 바깥 파일은 아이콘 하나뿐인데 그것이
+      <code>lab/</code> 밖에 있다. 지금은 민무늬 원판으로 대신 그렸다. 진짜 아이콘까지 보려면
+      <code>npm run dev -- --host</code>로 띄운 뒤
+      <code>http://&lt;맥의 IP&gt;:5173/lab/fire.html</code>로 열면 된다. 크롬은 이 제한이 없어 로컬
+      파일로도 보인다.
     </p>
     <p class="warn">
       운영체제에 "동작 줄이기"가 켜져 있다. 실제 앱은 이 설정에서 애니메이션을 끄지만, 여기서는
@@ -819,6 +861,18 @@
       const out = (id, text) => ($(id).nextElementSibling.value = text)
       const val = (id) => +$(id).value
       const iconPx = () => parseFloat(getComputedStyle(root).getPropertyValue('--icon'))
+
+      /**
+       * 원소 아이콘이 실제로 불러와지는지 미리 두드려 본다.
+       *
+       * 배경 이미지가 실패해도 CSS는 아무 말이 없다 — 그냥 빈 원판이 남는다.
+       * 같은 주소를 Image로 한 번 불러 보면 실패를 잡을 수 있다.
+       */
+      {
+        const probe = new Image()
+        probe.onerror = () => document.body.classList.add('no-icon')
+        probe.src = '../public/assets/creator-pack/elements/fire.svg'
+      }
 
       /* ---------------- 원판 달굼 ---------------- */
 
