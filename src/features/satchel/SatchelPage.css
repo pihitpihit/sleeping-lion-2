@@ -62,22 +62,20 @@
   overflow: visible;
 }
 
-.satchel-bar__button {
+/* 제어 버튼 — 메뉴·모드·되돌리기. 아이콘만 두른 장치처럼 보인다. */
+.satchel-bar__control {
   /* 플레이 중 급하게 누르는 화면이다. 터치 목표를 확보한다. */
-  min-height: 44px;
-  min-width: 44px;
-  padding: 0 0.75rem;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
   border: 1px solid var(--sl-border);
-  border-radius: 3px;
-  background: var(--sl-panel);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.3);
   color: var(--sl-text-muted);
-  font-family: var(--sl-font-ko-display);
-  font-size: 0.85rem;
-  letter-spacing: 0.04em;
   cursor: pointer;
   transition:
     color 0.15s ease,
@@ -85,43 +83,117 @@
     background-color 0.15s ease;
 }
 
-/* 가로 띠에서는 버튼이 줄바꿈되면 높이가 흔들린다. 세로 띠에서는 폭이 좁으므로
-   줄바꿈을 허용한다. */
-.satchel-bar--top .satchel-bar__button {
-  white-space: nowrap;
-}
-
-.satchel-bar--left .satchel-bar__button {
-  padding: 0.4rem 0.35rem;
-  font-size: 0.78rem;
-  line-height: 1.3;
-  text-align: center;
-}
-
-.satchel-bar__button:hover:not(:disabled) {
+.satchel-bar__control:hover:not(:disabled) {
   color: var(--sl-gold);
   border-color: var(--sl-border-strong);
+  background: rgba(0, 0, 0, 0.45);
 }
 
 /* 어두운 테마에서 기본 초점 링은 잘 보이지 않는다. 직접 그린다. */
-.satchel-bar__button:focus-visible {
+.satchel-bar__control:focus-visible,
+.satchel-bar__widget:focus-visible {
   outline: 2px solid var(--sl-gold);
   outline-offset: 2px;
 }
 
-.satchel-bar__button:disabled {
-  opacity: 0.45;
+.satchel-bar__control:disabled {
+  opacity: 0.35;
   cursor: default;
 }
 
-.satchel-bar__button[aria-pressed='true'] {
-  color: var(--sl-gold-bright);
+/* 모드 전환은 이 화면에서 가장 중요한 버튼이다. 놋쇠 테로 한 단 올린다. */
+.satchel-bar__control--accent {
   border-color: var(--sl-gold-dim);
-  background: rgba(201, 162, 39, 0.12);
+  color: var(--sl-gold);
 }
 
-.satchel-bar__hamburger {
-  font-size: 1.05rem;
+.satchel-bar__control--accent[aria-pressed='true'] {
+  color: var(--sl-void);
+  border-color: var(--sl-gold);
+  background: var(--sl-gold);
+}
+
+.satchel-bar__control--accent[aria-pressed='true']:hover {
+  background: var(--sl-gold-bright);
+  color: var(--sl-void);
+}
+
+/* 제어와 연장 사이의 금. 두 갈래가 다른 것임을 눈으로 가른다. */
+.satchel-bar__divider {
+  flex: none;
+  background: var(--sl-border);
+}
+
+.satchel-bar--top .satchel-bar__divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 0.4rem 0.15rem;
+}
+
+.satchel-bar--left .satchel-bar__divider {
+  height: 1px;
+  margin: 0.15rem 0.4rem;
+}
+
+.satchel-bar__controls {
+  flex: none;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.satchel-bar--top .satchel-bar__controls {
+  flex-direction: row;
+}
+
+.satchel-bar--left .satchel-bar__controls {
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 연장 버튼 — 꺼내 놓는 물건. 이름을 쓴 판이라 제어와 결이 다르다. */
+.satchel-bar__widget {
+  min-height: 40px;
+  width: 100%;
+  padding: 0.35rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 1px solid var(--sl-border);
+  border-radius: 3px;
+  background: linear-gradient(160deg, rgba(201, 162, 39, 0.06), transparent 60%), var(--sl-panel);
+  box-shadow: inset 0 1px 0 rgba(232, 205, 114, 0.06);
+  color: var(--sl-text-muted);
+  font-family: var(--sl-font-ko-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  line-height: 1.25;
+  /* 한글은 기본적으로 낱말 중간에서 꺾인다. 좁은 세로 띠에서 '원소 트/래커'처럼
+     갈라지므로 낱말 단위로 접는다. */
+  word-break: keep-all;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.satchel-bar--top .satchel-bar__widget {
+  white-space: nowrap;
+}
+
+.satchel-bar__widget:hover:not(:disabled) {
+  color: var(--sl-gold-bright);
+  border-color: var(--sl-gold-dim);
+}
+
+.satchel-bar__widget:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.satchel-bar__widget[aria-pressed='true'] {
+  color: var(--sl-gold-bright);
+  border-color: var(--sl-gold-dim);
 }
 
 .satchel-bar__widgets {
@@ -129,8 +201,12 @@
   margin: 0;
   padding: 0;
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
   min-width: 0;
+}
+
+.satchel-bar__widgets li {
+  display: flex;
 }
 
 .satchel-bar--top .satchel-bar__widgets {
@@ -270,6 +346,11 @@
 
 .widget-frame {
   position: absolute;
+  /* 제목 띠와 내용이 위아래로 쌓인다. 띠가 없으면 내용이 전부 차지한다. */
+  display: flex;
+  flex-direction: column;
+  /* overflow는 감추지 않는다 — 제거 버튼과 크기 핸들이 프레임 바깥에 걸쳐 있어
+     잘려 버린다. 제목 띠의 모서리는 자기 border-radius로 처리한다. */
   border: 1px solid var(--sl-border);
   border-radius: 3px;
   background: var(--sl-panel);
@@ -296,9 +377,28 @@
   pointer-events: none;
 }
 
+/* 제목 띠 — 켜져 있을 때만 자리를 차지한다. 끄면 그 높이가 내용으로 돌아간다. */
+.widget-frame__title {
+  flex: none;
+  padding: 0.2rem 0.5rem 0.2rem 1.1rem;
+  border-bottom: 1px solid var(--sl-border);
+  background: rgba(0, 0, 0, 0.24);
+  font-family: var(--sl-font-ko-display);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  color: var(--sl-text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  border-radius: 2px 2px 0 0;
+}
+
 .widget-frame__content {
-  width: 100%;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
 }
 
 /* 편집 중에는 위젯 내용이 포인터를 받지 않는다. 드래그하려다 위젯이 동작하면 곤란하다. */
@@ -334,17 +434,6 @@
 .widget-frame--invalid {
   border-color: var(--sl-ember);
   background: rgba(168, 57, 31, 0.14);
-}
-
-.widget-frame__name {
-  position: absolute;
-  left: 0.55rem;
-  bottom: 0.35rem;
-  font-family: var(--sl-font-ko-display);
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
-  color: var(--sl-text-faint);
-  pointer-events: none;
 }
 
 .widget-frame__remove,

@@ -45,12 +45,19 @@ export interface SatchelSettings {
   layouts: Record<number, Layout>
   /** 툴바 위치 선호. `auto`면 기기·방향에 맡긴다. */
   toolbarPosition: ToolbarPreference
+  /**
+   * 위젯 제목 띠를 보일지.
+   *
+   * 끄면 그만큼 공간이 위젯 내용에 돌아간다 — 위젯은 자기 영역을 관측해
+   * 스스로 다시 배치하므로 별도 처리가 필요 없다.
+   */
+  showWidgetTitles: boolean
 }
 
 export const SETTINGS_VERSION = 1
 
 export function emptySettings(): SatchelSettings {
-  return { version: SETTINGS_VERSION, layouts: {}, toolbarPosition: 'auto' }
+  return { version: SETTINGS_VERSION, layouts: {}, toolbarPosition: 'auto', showWidgetTitles: true }
 }
 
 export function emptyLayout(columns: number): Layout {

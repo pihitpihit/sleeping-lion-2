@@ -8,6 +8,7 @@ interface Props {
   layout: Layout
   metrics: GridMetrics
   mode: SatchelMode
+  showWidgetTitles: boolean
   onCommit: (instanceId: string, next: Placement) => boolean
   onRemove: (instanceId: string) => void
 }
@@ -17,7 +18,14 @@ interface Props {
  *
  * 좌표 산술은 전부 `cellsToPixels`가 한다 — 렌더러가 다시 계산하지 않는다.
  */
-export function WidgetBoard({ layout, metrics, mode, onCommit, onRemove }: Props) {
+export function WidgetBoard({
+  layout,
+  metrics,
+  mode,
+  showWidgetTitles,
+  onCommit,
+  onRemove,
+}: Props) {
   if (metrics.columns <= 0 || metrics.rows <= 0) return null
 
   const step = metrics.cellSize + metrics.gap
@@ -84,6 +92,7 @@ export function WidgetBoard({ layout, metrics, mode, onCommit, onRemove }: Props
             metrics={metrics}
             mode={mode}
             others={others}
+            showTitle={showWidgetTitles}
             onCommit={(next) => onCommit(widget.instanceId, next)}
             onRemove={() => onRemove(widget.instanceId)}
           />

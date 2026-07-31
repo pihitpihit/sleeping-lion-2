@@ -3,42 +3,47 @@ import type { ToolbarPosition, ToolbarPreference } from '../layout'
 import { nextToolbarPreference, TOOLBAR_PREFERENCE_LABEL } from './position'
 import { widgetDefinitions } from '../widgets/registry'
 import type { SatchelMode } from '../widgets/types'
+import { EditIcon, MenuIcon, SaveIcon, UndoIcon } from './icons'
 
 interface Props {
   position: ToolbarPosition
   preference: ToolbarPreference
   mode: SatchelMode
   canUndo: boolean
+  showWidgetTitles: boolean
   countOf: (definitionId: string) => number
   onToggleMode: () => void
   onAdd: (definitionId: string) => void
   onSetPreference: (preference: ToolbarPreference) => void
+  onToggleWidgetTitles: () => void
   onUndo: () => void
-  onReset: () => void
 }
 
 /**
- * 툴바.
+ * 도구 띠.
  *
- * 플레이 모드에서는 햄버거와 편집 전환만 둔다 — 플레이 중에는 화면이 조용해야 한다.
- * 편집 모드에서만 위젯 목록이 펼쳐진다.
+ * 두 갈래를 눈으로 구분한다.
+ * - **제어 버튼**(메뉴·모드·되돌리기) — 아이콘만. 놋쇠 테를 두른 장치처럼 보인다.
+ * - **연장 버튼**(위젯 추가) — 이름을 쓴 판. 꺼내 놓는 물건이라 결이 달라야 한다.
  *
- * 상단·좌측을 같은 마크업으로 그리고 방향은 CSS가 처리한다.
+ * 플레이 모드에서는 제어만 남긴다 — 플레이 중에는 화면이 조용해야 한다.
  */
 export function SatchelToolbar({
   position,
   preference,
   mode,
   canUndo,
+  showWidgetTitles,
   countOf,
   onToggleMode,
   onAdd,
   onSetPreference,
+  onToggleWidgetTitles,
   onUndo,
-  onReset,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
+  const editing = mode === 'edit'
 
   useEffect(() => {
     if (!menuOpen) return
@@ -58,59 +63,73 @@ export function SatchelToolbar({
 
   return (
     <div className={`satchel-bar satchel-bar--${position}`} ref={menuRef}>
-      <button
-        type="button"
-        className="satchel-bar__button satchel-bar__hamburger"
-        aria-label="메뉴"
-        aria-expanded={menuOpen}
-        onClick={() => setMenuOpen((open) => !open)}
-      >
-        <span aria-hidden="true">☰</span>
-      </button>
-
-      <button
-        type="button"
-        className="satchel-bar__button satchel-bar__mode"
-        aria-pressed={mode === 'edit'}
-        onClick={onToggleMode}
-      >
-        {mode === 'edit' ? '다 됐다' : '고쳐 놓기'}
-      </button>
-
-      {mode === 'edit' && (
-        <button type="button" className="satchel-bar__button" disabled={!canUndo} onClick={onUndo}>
-          되돌리기
+      <div className="satchel-bar__controls">
+        <button
+          type="button"
+          className="satchel-bar__control"
+          aria-label="메뉴"
+          aria-expanded={menuOpen}
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          <MenuIcon />
         </button>
-      )}
 
-      {mode === 'edit' && (
-        <ul className="satchel-bar__widgets">
-          {widgetDefinitions.map((definition) => {
-            const count = countOf(definition.id)
-            const isToggle = definition.maxInstances === 1
-            const full = definition.maxInstances != null && count >= definition.maxInstances
-            return (
-              <li key={definition.id}>
-                <button
-                  type="button"
-                  className="satchel-bar__button satchel-bar__widget"
-                  aria-pressed={isToggle ? count > 0 : undefined}
-                  disabled={full}
-                  onClick={() => onAdd(definition.id)}
-                >
-                  {definition.name}
-                  {/* 토글이 아닌 위젯은 여러 개 놓을 수 있다. 몇 개 놓였는지
-                      보여야 '추가'라는 것이 드러난다. */}
-                  {!isToggle && count > 0 && (
-                    <span className="satchel-bar__count" aria-label={`${count}개 놓임`}>
-                      {count}
-                    </span>
-                  )}
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+        <button
+          type="button"
+          className="satchel-bar__control satchel-bar__control--accent"
+          aria-label={editing ? '다 됐다' : '고쳐 놓기'}
+          title={editing ? '다 됐다' : '고쳐 놓기'}
+          aria-pressed={editing}
+          onClick={onToggleMode}
+        >
+          {editing ? <SaveIcon /> : <EditIcon />}
+        </button>
+
+        {editing && (
+          <button
+            type="button"
+            className="satchel-bar__control"
+            aria-label="되돌리기"
+            title="되돌리기"
+            disabled={!canUndo}
+            onClick={onUndo}
+          >
+            <UndoIcon />
+          </button>
+        )}
+      </div>
+
+      {editing && (
+        <>
+          <span className="satchel-bar__divider" aria-hidden="true" />
+          <ul className="satchel-bar__widgets">
+            {widgetDefinitions.map((definition) => {
+              const count = countOf(definition.id)
+              const isToggle = definition.maxInstances === 1
+              const full = definition.maxInstances != null && count >= definition.maxInstances
+              return (
+                <li key={definition.id}>
+                  <button
+                    type="button"
+                    className="satchel-bar__widget"
+                    aria-pressed={isToggle ? count > 0 : undefined}
+                    disabled={full}
+                    onClick={() => onAdd(definition.id)}
+                  >
+                    {definition.name}
+                    {/* 토글이 아닌 위젯은 여러 개 놓을 수 있다. 몇 개 놓였는지
+                        보여야 '추가'라는 것이 드러난다. */}
+                    {!isToggle && count > 0 && (
+                      <span className="satchel-bar__count" aria-label={`${count}개 놓임`}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        </>
       )}
 
       {menuOpen && (
@@ -121,23 +140,20 @@ export function SatchelToolbar({
           <button
             type="button"
             className="satchel-menu__item"
+            role="menuitemcheckbox"
+            aria-checked={showWidgetTitles}
+            onClick={onToggleWidgetTitles}
+          >
+            연장 이름 {showWidgetTitles ? '숨기기' : '보이기'}
+          </button>
+          <button
+            type="button"
+            className="satchel-menu__item"
             role="menuitem"
             onClick={() => onSetPreference(nextToolbarPreference(preference))}
           >
             도구 띠 — {TOOLBAR_PREFERENCE_LABEL[preference]}
             {preference === 'auto' && <span className="satchel-menu__hint"> ({position})</span>}
-          </button>
-          <button
-            type="button"
-            className="satchel-menu__item satchel-menu__item--danger"
-            role="menuitem"
-            onClick={() => {
-              // 되돌릴 수 없다. 반드시 확인을 받는다.
-              if (window.confirm('행낭을 비운다. 되돌릴 수 없다.')) onReset()
-              setMenuOpen(false)
-            }}
-          >
-            행낭 비우기
           </button>
         </div>
       )}

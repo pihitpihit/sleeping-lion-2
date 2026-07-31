@@ -25,10 +25,10 @@ export function SatchelPage() {
   const setBoardSize = useSatchelStore((s) => s.setBoardSize)
   const setMode = useSatchelStore((s) => s.setMode)
   const setToolbarPreference = useSatchelStore((s) => s.setToolbarPreference)
+  const toggleWidgetTitles = useSatchelStore((s) => s.toggleWidgetTitles)
   const addWidgetOfType = useSatchelStore((s) => s.addWidgetOfType)
   const removeWidgetInstance = useSatchelStore((s) => s.removeWidgetInstance)
   const moveOrResize = useSatchelStore((s) => s.moveOrResize)
-  const resetLayout = useSatchelStore((s) => s.resetLayout)
   const clearNotice = useSatchelStore((s) => s.clearNotice)
   const undo = useSatchelStore((s) => s.undo)
   const currentLayout = useSatchelStore((s) => s.currentLayout)
@@ -62,12 +62,13 @@ export function SatchelPage() {
         preference={settings.toolbarPosition}
         mode={mode}
         canUndo={past.length > 0}
+        showWidgetTitles={settings.showWidgetTitles}
         countOf={countOf}
         onToggleMode={() => setMode(mode === 'edit' ? 'play' : 'edit')}
         onAdd={addWidgetOfType}
         onSetPreference={setToolbarPreference}
+        onToggleWidgetTitles={toggleWidgetTitles}
         onUndo={undo}
-        onReset={resetLayout}
       />
 
       <div
@@ -82,6 +83,7 @@ export function SatchelPage() {
           layout={layout}
           metrics={metrics}
           mode={mode}
+          showWidgetTitles={settings.showWidgetTitles}
           onCommit={moveOrResize}
           onRemove={removeWidgetInstance}
         />

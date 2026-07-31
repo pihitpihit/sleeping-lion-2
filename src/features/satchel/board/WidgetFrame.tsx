@@ -16,6 +16,8 @@ interface Props {
   mode: SatchelMode
   /** 자기 자신을 뺀 나머지 배치. 겹침 판정에 쓴다. */
   others: Placement[]
+  /** 제목 띠를 보일지. 끄면 그 공간이 위젯 내용으로 돌아간다. */
+  showTitle: boolean
   onCommit: (next: Placement) => boolean
   onRemove: () => void
 }
@@ -43,6 +45,7 @@ export function WidgetFrame({
   metrics,
   mode,
   others,
+  showTitle,
   onCommit,
   onRemove,
 }: Props) {
@@ -170,6 +173,10 @@ export function WidgetFrame({
       onPointerCancel={cancel}
       onKeyDown={onKeyDown}
     >
+      {/* 제목 띠. 끄면 이 자리가 통째로 위젯 내용에 돌아가고, 위젯은 자기 영역을
+          관측해 스스로 다시 배치한다. */}
+      {showTitle && <div className="widget-frame__title">{definition.name}</div>}
+
       {/* 편집 중에는 위젯 내용이 포인터를 받지 않는다. 드래그하려다 위젯이
           동작하면 곤란하다. */}
       <div className="widget-frame__content" aria-hidden={mode === 'edit'}>
@@ -178,7 +185,6 @@ export function WidgetFrame({
 
       {mode === 'edit' && (
         <>
-          <span className="widget-frame__name">{definition.name}</span>
           <button
             type="button"
             className="widget-frame__remove"

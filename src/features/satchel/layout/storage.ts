@@ -73,7 +73,10 @@ function salvage(parsed: unknown): SatchelSettings {
       ? raw.toolbarPosition
       : 'auto'
 
-  return { version: SETTINGS_VERSION, layouts, toolbarPosition }
+  // 없거나 이상하면 기본값(보임)으로 둔다.
+  const showWidgetTitles = typeof raw.showWidgetTitles === 'boolean' ? raw.showWidgetTitles : true
+
+  return { version: SETTINGS_VERSION, layouts, toolbarPosition, showWidgetTitles }
 }
 
 export function loadSettings(storage: StorageLike | null = defaultStorage()): SatchelSettings {

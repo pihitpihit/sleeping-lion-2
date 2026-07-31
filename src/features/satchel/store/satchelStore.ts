@@ -58,6 +58,7 @@ interface SatchelState {
   setBoardSize: (size: Size) => void
   setMode: (mode: SatchelMode) => void
   setToolbarPreference: (preference: ToolbarPreference) => void
+  toggleWidgetTitles: () => void
   addWidgetOfType: (definitionId: string) => void
   removeWidgetInstance: (instanceId: string) => void
   moveOrResize: (instanceId: string, next: Placement) => boolean
@@ -128,6 +129,12 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     set({ settings })
   },
 
+  toggleWidgetTitles: () => {
+    const settings = { ...get().settings, showWidgetTitles: !get().settings.showWidgetTitles }
+    saveSettings(settings)
+    set({ settings })
+  },
+
   addWidgetOfType: (definitionId) => {
     const { settings, metrics } = get()
     const definition = getWidgetDefinition(definitionId)
@@ -185,6 +192,8 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     return true
   },
 
+  // 메뉴에서는 잠시 뺐다. 되돌리기가 붙은 뒤로 급하지 않고, 실수로 누르면
+  // 잃는 것이 크다. 필요해지면 다시 노출한다.
   resetLayout: () => {
     const { settings, metrics } = get()
     const before = resolveLayout(settings, metrics)
