@@ -31,11 +31,40 @@ const ICON_FILL = 0.74
 const ICON_MAX = 120
 /** 슬라이딩을 켜는 기준 — 수직 방향으로 아이콘 크기의 이 배수만큼 있어야 한다. */
 const SLIDE_RATIO = 2
+/** 아이콘 크기가 이보다 덜 차이 나면 같은 것으로 친다(px). */
+const ICON_TIE = 0.5
+
+interface Fit {
+  iconSize: number
+  laneLength: number
+  canSlide: boolean
+}
+
+/**
+ * 한 방향으로 늘어놓았을 때의 결과.
+ *
+ * `along`은 칸들이 늘어서는 축, `cross`는 석판이 미끄러지는 축이다.
+ */
+function fit(along: number, cross: number, count: number): Fit {
+  const laneLength = along / count
+  // 아이콘은 칸의 짧은 쪽에 맞춘다. 그래야 어느 방향에서든 넘치지 않는다.
+  const iconSize = Math.min(ICON_MAX, Math.min(laneLength, cross) * ICON_FILL)
+  return { iconSize, laneLength, canSlide: cross >= iconSize * SLIDE_RATIO }
+}
 
 /**
  * 위젯이 차지한 픽셀 크기를 받아 안쪽 배치를 계산한다.
  *
- * 방향은 긴 쪽을 따른다. 정사각형이면 수평 — 실물 원소판이 가로로 놓인다.
+ * **방향은 두 갈래를 다 재 보고 고른다.** 위젯의 가로세로 비만 보고 정하면
+ * 원소를 하나만 켠 채 넓고 낮게 놓았을 때 어긋난다 — 넓으니 수평을 고르는데,
+ * 수평에서 석판이 미끄러지는 축은 '높이'라서 낮으면 미끄러질 자리가 없다.
+ * 칸이 하나뿐일 때는 늘어놓을 것이 없으므로 **긴 쪽을 미끄러지는 축으로** 써야
+ * 한다.
+ *
+ * 고르는 순서:
+ * 1. 아이콘이 더 큰 쪽. 아이콘이 작아지면 무엇보다 먼저 눈에 띈다.
+ * 2. 아이콘이 비슷하면 미끄러지는 쪽. 걸림 자국 셋이 보이는 편이 낫다.
+ * 3. 그래도 같으면 세로 — 정사각형(예: 6×6)에서의 기존 선택을 지킨다.
  */
 export function computeElementLayout(
   widget: { width: number; height: number },
@@ -55,16 +84,21 @@ export function computeElementLayout(
     }
   }
 
-  // 정사각형(예: 6×6)이면 세로를 고른다. 가로가 **더 길 때만** 수평이다.
-  const orientation: Orientation = width > height ? 'horizontal' : 'vertical'
-  const along = orientation === 'horizontal' ? width : height
+  // 수평 = 칸들이 가로로 늘어서고 석판은 위아래로 미끄러진다.
+  // 세로  = 칸들이 세로로 쌓이고 석판은 좌우로 미끄러진다.
+  const asHorizontal = fit(width, height, count)
+  const asVertical = fit(height, width, count)
+
+  let orientation: Orientation
+  if (asHorizontal.iconSize > asVertical.iconSize + ICON_TIE) orientation = 'horizontal'
+  else if (asVertical.iconSize > asHorizontal.iconSize + ICON_TIE) orientation = 'vertical'
+  else if (asHorizontal.canSlide !== asVertical.canSlide)
+    orientation = asHorizontal.canSlide ? 'horizontal' : 'vertical'
+  else orientation = 'vertical'
+
+  const chosen = orientation === 'horizontal' ? asHorizontal : asVertical
   const cross = orientation === 'horizontal' ? height : width
-
-  const laneLength = along / count
-  // 아이콘은 칸의 짧은 쪽에 맞춘다. 그래야 어느 방향에서든 넘치지 않는다.
-  const iconSize = Math.min(ICON_MAX, Math.min(laneLength, cross) * ICON_FILL)
-
-  const canSlide = cross >= iconSize * SLIDE_RATIO
+  const { iconSize, laneLength, canSlide } = chosen
 
   /**
    * 슬롯은 **아이콘 반지름만큼 안쪽에서** 시작하고 끝난다.

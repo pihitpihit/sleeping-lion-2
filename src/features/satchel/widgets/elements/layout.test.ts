@@ -102,6 +102,72 @@ describe('computeElementLayout', () => {
   })
 })
 
+/**
+ * 방향을 위젯의 가로세로 비만 보고 정하면, 칸이 몇 개인지에 따라 어긋난다.
+ *
+ * 넓고 낮은 위젯에 원소를 하나만 켜면 '넓으니 수평'이 되는데, 수평에서 석판이
+ * 미끄러지는 축은 높이다. 낮으면 미끄러질 자리가 없어 슬라이딩이 죽는다.
+ * 칸이 하나뿐이면 늘어놓을 것이 없으므로 긴 쪽을 미끄러지는 축으로 써야 한다.
+ */
+describe('원소를 하나만 켰을 때의 방향', () => {
+  it('넓고 낮으면 가로로 미끄러진다', () => {
+    const l = computeElementLayout({ width: 600, height: 80 }, 1)
+    // 세로 배치 = 칸이 가로로 눕고 석판이 좌우로 움직인다
+    expect(l.orientation).toBe('vertical')
+    expect(l.canSlide).toBe(true)
+  })
+
+  it('좁고 높으면 세로로 미끄러진다', () => {
+    const l = computeElementLayout({ width: 80, height: 600 }, 1)
+    expect(l.orientation).toBe('horizontal')
+    expect(l.canSlide).toBe(true)
+  })
+
+  it('긴 쪽을 미끄러지는 축으로 쓰느라 아이콘을 깎지 않는다', () => {
+    // 두 방향 모두 아이콘은 짧은 변에 맞춰지므로 크기가 같다. 공짜로 얻는 것이다.
+    const wide = computeElementLayout({ width: 600, height: 80 }, 1)
+    const tall = computeElementLayout({ width: 80, height: 600 }, 1)
+    expect(wide.iconSize).toBeCloseTo(tall.iconSize, 6)
+  })
+
+  it('걸림 자국 셋이 긴 쪽에 고르게 놓인다', () => {
+    const l = computeElementLayout({ width: 600, height: 80 }, 1)
+    const [first, , last] = l.slotOffsets
+    expect(first).toBeCloseTo(l.iconSize / 2, 6)
+    expect(last).toBeCloseTo(600 - l.iconSize / 2, 6)
+  })
+})
+
+describe('여러 칸일 때는 늘어놓을 자리가 우선이다', () => {
+  it('여섯 칸은 넓으면 수평, 높으면 수직 그대로다', () => {
+    expect(computeElementLayout({ width: 600, height: 160 }, 6).orientation).toBe('horizontal')
+    expect(computeElementLayout({ width: 160, height: 600 }, 6).orientation).toBe('vertical')
+  })
+
+  it('칸 수가 줄면 같은 위젯에서도 방향이 뒤집힐 수 있다', () => {
+    const box = { width: 600, height: 90 }
+    expect(computeElementLayout(box, 6).orientation).toBe('horizontal')
+    expect(computeElementLayout(box, 1).orientation).toBe('vertical')
+  })
+
+  it('어느 칸 수에서도 아이콘이 칸을 벗어나지 않는다', () => {
+    for (let count = 1; count <= 6; count += 1) {
+      for (const box of [
+        { width: 600, height: 80 },
+        { width: 80, height: 600 },
+        { width: 400, height: 400 },
+        { width: 300, height: 120 },
+      ]) {
+        const l = computeElementLayout(box, count)
+        expect(l.iconSize).toBeLessThanOrEqual(Math.min(l.laneLength, l.laneThickness) + 1e-9)
+        // 양 끝 슬롯의 아이콘도 칸 안에 머문다
+        expect(l.slotOffsets[0]).toBeGreaterThanOrEqual(l.iconSize / 2 - 1e-9)
+        expect(l.slotOffsets[2]).toBeLessThanOrEqual(l.laneThickness - l.iconSize / 2 + 1e-9)
+      }
+    }
+  })
+})
+
 describe('원소 상태', () => {
   it('탭하면 꺼짐 → 타오름 → 사그라듦 → 꺼짐 으로 돈다', () => {
     expect(nextElementState('inert')).toBe('strong')
