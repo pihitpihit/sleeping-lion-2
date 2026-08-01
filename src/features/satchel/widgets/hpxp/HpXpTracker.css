@@ -177,24 +177,12 @@
 
 /* 붉은 쪽 — 바탕보다 밝은 산호빛. 위에서 빛을 받는 것처럼 기울인다. */
 .hpxp__half--hp .hpxp__mark-fill {
-  background: linear-gradient(
-    155deg,
-    #fdd8cf 0%,
-    #f2a79a 30%,
-    #d9695c 62%,
-    #a63b30 100%
-  );
+  background: linear-gradient(155deg, #fdd8cf 0%, #f2a79a 30%, #d9695c 62%, #a63b30 100%);
 }
 
 /* 푸른 쪽 — 실물에서 별은 거의 흰빛이다. 아래로 갈수록 하늘빛이 든다. */
 .hpxp__half--xp .hpxp__mark-fill {
-  background: linear-gradient(
-    155deg,
-    #ffffff 0%,
-    #e8f3ff 28%,
-    #b6d6f2 62%,
-    #7aa6cf 100%
-  );
+  background: linear-gradient(155deg, #ffffff 0%, #e8f3ff 28%, #b6d6f2 62%, #7aa6cf 100%);
 }
 
 .hpxp__value {
