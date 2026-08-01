@@ -1,0 +1,161 @@
+/* ==========================================================================
+   로그인 — 여관 문 앞
+
+   웰컴 페이지와 같은 팔레트를 쓴다. 여기만 다른 색을 쓰면 다른 앱에 온 것처럼
+   보인다.
+   ========================================================================== */
+
+.login {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--sl-safe-top) + 1.5rem) calc(var(--sl-safe-right) + 1.25rem)
+    calc(var(--sl-safe-bottom) + 1.5rem) calc(var(--sl-safe-left) + 1.25rem);
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(201, 162, 39, 0.07), transparent 70%),
+    linear-gradient(180deg, var(--sl-bg), var(--sl-void));
+}
+
+.login__panel {
+  width: 100%;
+  max-width: 24rem;
+  padding: 1.75rem 1.5rem 1.4rem;
+  border: 1px solid var(--sl-border);
+  border-radius: 4px;
+  background: var(--sl-panel);
+  box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.5);
+}
+
+.login__mark {
+  margin: 0;
+  font-family: var(--sl-font-display);
+  font-size: 2rem;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0.03em;
+  color: var(--sl-gold-bright);
+  text-align: center;
+}
+
+.login__sign {
+  margin: 0.3rem 0 1.4rem;
+  font-family: var(--sl-font-ko-display);
+  font-size: 0.95rem;
+  color: var(--sl-text-muted);
+  text-align: center;
+  letter-spacing: 0.06em;
+}
+
+/* 시험판임이 눈에 띄어야 한다 — 공개 주소에 올라가므로 진짜와 헷갈리면 곤란하다. */
+.login__trial {
+  margin: 0 0 1.2rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px dashed var(--sl-gold-dim);
+  border-radius: 3px;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--sl-text-muted);
+}
+
+.login__trial strong {
+  color: var(--sl-gold);
+  font-weight: 500;
+}
+
+.login__trial code {
+  padding: 0 0.2em;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.35);
+  color: var(--sl-text);
+}
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.login__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  color: var(--sl-text-muted);
+}
+
+.login__field input {
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--sl-border);
+  border-radius: 3px;
+  background: var(--sl-void);
+  color: var(--sl-text);
+  font: inherit;
+  font-size: 1rem; /* 16px 미만이면 iOS가 입력할 때 화면을 확대한다 */
+}
+
+.login__field input:focus-visible {
+  outline: none;
+  border-color: var(--sl-gold);
+  box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.25);
+}
+
+/* 자리를 늘 차지한다. 오류가 뜰 때마다 아래가 밀리면 누르려던 단추가 도망간다. */
+.login__error {
+  min-height: 1.2rem;
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--sl-ember);
+}
+
+.login__submit {
+  margin-top: 0.2rem;
+  padding: 0.7rem;
+  border: 1px solid var(--sl-gold-dim);
+  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(201, 162, 39, 0.22), rgba(201, 162, 39, 0.1));
+  color: var(--sl-gold-bright);
+  font-family: var(--sl-font-ko-display);
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.login__submit:hover:not(:disabled) {
+  border-color: var(--sl-gold);
+  background: linear-gradient(180deg, rgba(201, 162, 39, 0.32), rgba(201, 162, 39, 0.16));
+}
+
+.login__submit:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.login__note {
+  margin: 1.1rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.6;
+  color: var(--sl-text-faint);
+  text-align: center;
+}
+
+.login__notice-link {
+  display: block;
+  margin-top: 0.9rem;
+  font-size: 0.76rem;
+  color: var(--sl-text-faint);
+  text-align: center;
+}
+
+.login__notice-link:hover {
+  color: var(--sl-gold);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login__submit {
+    transition: none;
+  }
+}

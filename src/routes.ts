@@ -22,6 +22,8 @@ export const LAZY_ROUTES: Record<string, ComponentType> = {
   '/satchel': lazy(() =>
     import('./features/satchel/SatchelPage').then((m) => ({ default: m.SatchelPage })),
   ),
+  // 로그인은 따로 떨어져 있어야 한다. `demo` 빌드는 이 청크를 아예 받지 않는다.
+  '/login': lazy(() => import('./features/auth/LoginPage').then((m) => ({ default: m.LoginPage }))),
 }
 
 /**

@@ -38,6 +38,11 @@ jobs:
         # 루트 도메인이나 자가호스팅으로 옮기면 이 값을 '/'로 바꾼다.
         env:
           VITE_BASE: /${{ github.event.repository.name }}/
+          # 로그인 게이트는 켜되 백엔드는 가짜다(SPEC 3.1의 `mock`).
+          # 서버가 아직 없으므로 배포된 페이지에서 로그인 흐름만 만져볼 수 있다.
+          # 이 값을 지우거나 오타를 내면 `live`가 되어 로그인은 요구하되 아무도
+          # 못 들어오는 상태가 된다 — 조용히 열리는 것보다 낫다.
+          VITE_AUTH_MODE: mock
         run: npm run build
 
       - uses: actions/upload-pages-artifact@v3

@@ -27,3 +27,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# 로컬 환경설정. 서버 주소와 키가 들어가므로 커밋하지 않는다.
+.env
+.env.local
+.env.*.local

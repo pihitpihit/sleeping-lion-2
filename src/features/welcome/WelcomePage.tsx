@@ -1,4 +1,5 @@
 import { LOCALE, messages } from '../../i18n/messages'
+import { AccountStrip } from '../auth/AccountStrip'
 import { LionCrest } from './LionCrest'
 import './WelcomePage.css'
 
@@ -112,6 +113,7 @@ export function WelcomePage() {
       </main>
 
       <footer className="welcome__footer">
+        <AccountStrip />
         <p>{messages.siteTagline[LOCALE]}</p>
         {/* 첫 줄이 정취 쪽으로 갔으므로, 어떤 게임에 쓰는지는 이 줄이 밝힌다. */}
         <p className="welcome__footer-fine">
