@@ -1,27 +1,39 @@
+import { useRef, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import { useBoardSize } from '../../useBoardSize'
 import type { WidgetProps } from '../types'
-import { computeHpXpLayout, MAX_VALUE, MIN_VALUE, TRACK_LABEL, type HpXpTrack } from './hpxp'
+import {
+  computeHpXpLayout,
+  MAX_VALUE,
+  MIN_VALUE,
+  stepsFromDrag,
+  TAP_SLOP_PX,
+  toLocalDelta,
+  TRACK_LABEL,
+  type HpXpTrack,
+} from './hpxp'
 import { useHpXpStore } from './hpxpStore'
 import './HpXpTracker.css'
 
 /**
  * HP/XP 트래커.
  *
- * 실물 다이얼을 본떴다 — 붉은 쪽에 생명, 푸른 쪽에 경험, 가운데 육각 창에 숫자.
- * 실물은 검은 손잡이를 돌리지만 화면에서는 **손잡이 둘이 ∓ 단추가 된다.**
- * 돌리는 시늉을 만들면 손가락으로 정확히 맞추기 어렵다.
+ * 실물 다이얼을 본떴다 — 붉은 쪽에 생명, 푸른 쪽에 경험, 표식 안에 숫자.
  *
- * **판의 아트는 베끼지 않았다.** 붉은 반쪽·푸른 반쪽·육각 창·빛나는 테두리라는
- * 얼개만 따르고, 그 밖의 문양은 직접 그린 도형이다. 실물 카드의 그림은
- * Cephalofair의 저작물이므로 담지 않는다(SPEC 3장).
+ * **단추가 없다.** 실물은 손잡이를 돌리므로 화면에서도 **끄는 것**이 본래
+ * 동작이다. ∓ 단추를 두면 다이얼이 아니라 계산기가 된다.
  *
- * **물방울과 별만은 Creator Pack의 원본이다** — 저작자가 CC BY-NC-SA로 공개한
- * 것이라 쓸 수 있다(SPEC 13.1). 파일은 `public/assets/creator-pack/general/`에
- * 있고 여기서는 배경 이미지로만 부른다.
+ * - **끌기** — 위로 끌면 늘고 아래로 끌면 준다. 일정 거리마다 한 칸.
+ * - **누르기** — 표식의 위쪽 절반은 +1, 아래쪽 절반은 −1. 끄는 방향과 같은 축이라
+ *   한 번 해보면 안다.
+ * - **방향키** — 포인터가 없는 환경을 위해. 위·오른쪽이 +1이다.
+ *
+ * **판의 아트는 베끼지 않았다.** 붉은 반쪽·푸른 반쪽·빛나는 테라는 얼개만 따른다.
+ * 물방울과 별만은 Creator Pack의 원본이며 `public/assets/creator-pack/general/`에
+ * 두고 배경 이미지로만 부른다(SPEC 13.1).
  *
  * **룰을 돌리지 않는다.** 최대 체력이 얼마인지, 레벨업에 몇이 필요한지 모른다.
  */
-export function HpXpTracker({ instanceId, mode }: WidgetProps) {
+export function HpXpTracker({ instanceId, mode, rotation }: WidgetProps) {
   const { ref, size } = useBoardSize<HTMLDivElement>()
   const layout = computeHpXpLayout(size)
   const values = useHpXpStore((s) => s.valuesOf(instanceId))
@@ -33,13 +45,8 @@ export function HpXpTracker({ instanceId, mode }: WidgetProps) {
       className={`hpxp hpxp--${layout.orientation}`}
       style={
         {
-          '--hpxp-number': `${layout.numberSize}px`,
-          '--hpxp-knob': `${layout.knobSize}px`,
           '--hpxp-mark': `${layout.markSize}px`,
-          '--hpxp-window': `${layout.windowWidth}px`,
-          '--hpxp-gap': `${layout.gap}px`,
-          '--hpxp-pad-outer': `${layout.padOuter}px`,
-          '--hpxp-pad-inner': `${layout.padInner}px`,
+          '--hpxp-number': `${layout.numberSize}px`,
         } as React.CSSProperties
       }
     >
@@ -47,11 +54,11 @@ export function HpXpTracker({ instanceId, mode }: WidgetProps) {
       <span className="hpxp__frame" aria-hidden="true" />
 
       {(['hp', 'xp'] as const).map((track) => (
-        <Half
+        <Dial
           key={track}
           track={track}
           value={values[track]}
-          showMark={layout.showMarks}
+          rotation={rotation}
           disabled={mode !== 'play'}
           onAdjust={(delta) => adjust(instanceId, track, delta)}
         />
@@ -66,25 +73,125 @@ export function HpXpTracker({ instanceId, mode }: WidgetProps) {
  */
 const MARK_FILE: Record<HpXpTrack, string> = { hp: 'hp-drop', xp: 'xp-star' }
 
-interface HalfProps {
+interface DialProps {
   track: HpXpTrack
   value: number
-  showMark: boolean
+  rotation: number
   disabled: boolean
   onAdjust: (delta: number) => void
 }
 
-function Half({ track, value, showMark, disabled, onAdjust }: HalfProps) {
+function Dial({ track, value, rotation, disabled, onAdjust }: DialProps) {
   const label = TRACK_LABEL[track]
 
+  /**
+   * 끄는 동안의 상태.
+   *
+   * 이미 반영한 칸 수를 들고 있다가 **넘은 만큼만** 더 반영한다. 매번 처음부터
+   * 다시 세면 같은 칸을 여러 번 더하게 된다.
+   */
+  const drag = useRef<{
+    pointerId: number
+    originX: number
+    originY: number
+    applied: number
+    moved: boolean
+  } | null>(null)
+
+  function begin(event: ReactPointerEvent<HTMLButtonElement>) {
+    if (disabled) return
+    event.currentTarget.setPointerCapture(event.pointerId)
+    drag.current = {
+      pointerId: event.pointerId,
+      originX: event.clientX,
+      originY: event.clientY,
+      applied: 0,
+      moved: false,
+    }
+  }
+
+  function move(event: ReactPointerEvent<HTMLButtonElement>) {
+    const d = drag.current
+    if (!d || d.pointerId !== event.pointerId) return
+
+    const dx = event.clientX - d.originX
+    const dy = event.clientY - d.originY
+    // 손가락은 미세하게 흔들린다. 이 안쪽이면 아직 누른 것으로 본다.
+    if (!d.moved && Math.hypot(dx, dy) < TAP_SLOP_PX) return
+    d.moved = true
+
+    // 화면 이동을 위젯 안쪽 좌표로 돌린다. 이게 없으면 돌려 앉은 사람에게
+    // 값이 거꾸로 움직인다.
+    const local = toLocalDelta(dx, dy, rotation)
+    const steps = stepsFromDrag(local.dy)
+    const delta = steps - d.applied
+    if (delta !== 0) {
+      d.applied = steps
+      onAdjust(delta)
+    }
+  }
+
+  function end(event: ReactPointerEvent<HTMLButtonElement>) {
+    const d = drag.current
+    if (!d || d.pointerId !== event.pointerId) return
+    drag.current = null
+    if (d.moved) return
+
+    /*
+      끌지 않았으면 누른 것이다. 표식의 어느 쪽을 눌렀는지로 부호를 정한다.
+
+      **화면의 축이 아니라 위젯 안쪽의 축으로 본다.** 회전은 가운데를 축으로
+      하므로 바깥 상자의 가운데가 곧 돌아간 표식의 가운데다 — 거기서의 거리를
+      돌려주면 안쪽 좌표가 된다.
+    */
+    const rect = event.currentTarget.getBoundingClientRect()
+    const fromCenter = toLocalDelta(
+      event.clientX - (rect.x + rect.width / 2),
+      event.clientY - (rect.y + rect.height / 2),
+      rotation,
+    )
+    onAdjust(fromCenter.dy < 0 ? 1 : -1)
+  }
+
+  function cancel() {
+    drag.current = null
+  }
+
+  function onKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    if (disabled) return
+    const delta =
+      event.key === 'ArrowUp' || event.key === 'ArrowRight'
+        ? 1
+        : event.key === 'ArrowDown' || event.key === 'ArrowLeft'
+          ? -1
+          : 0
+    if (delta === 0) return
+    event.preventDefault()
+    onAdjust(delta)
+  }
+
   return (
-    <div
-      className={`hpxp__half hpxp__half--${track}`}
-      role="group"
-      aria-label={`${label} ${value}`}
-    >
-      {/* 표식은 바깥쪽 끝에 선다 — 실물에서 물방울과 별이 그 자리에 있다. */}
-      {showMark && (
+    <div className={`hpxp__half hpxp__half--${track}`}>
+      <button
+        type="button"
+        className="hpxp__dial"
+        // 값을 읽어주는 것이 먼저다. 조작 방법은 설명으로 붙인다.
+        role="spinbutton"
+        aria-label={label}
+        aria-valuenow={value}
+        aria-valuemin={MIN_VALUE}
+        aria-valuemax={MAX_VALUE}
+        aria-valuetext={`${label} ${value}`}
+        disabled={disabled}
+        onPointerDown={begin}
+        onPointerMove={move}
+        onPointerUp={end}
+        onPointerCancel={cancel}
+        onKeyDown={onKeyDown}
+      >
+        {/* 그림과 숫자를 갈라 둔다. **부모에 filter를 걸면 자식까지 걸린다** —
+            숫자를 흰 표식과 같이 하얗게 만들어 안 보이게 했던 자리다. 자식에서
+            되돌리려 해도 통하지 않는다(자식이 먼저 그려지고 부모가 덮는다). */}
         <span
           className="hpxp__mark"
           aria-hidden="true"
@@ -92,35 +199,7 @@ function Half({ track, value, showMark, disabled, onAdjust }: HalfProps) {
             backgroundImage: `url(${import.meta.env.BASE_URL}assets/creator-pack/general/${MARK_FILE[track]}.svg)`,
           }}
         />
-      )}
-
-      <button
-        type="button"
-        className="hpxp__knob"
-        aria-label={`${label} 하나 줄이기`}
-        disabled={disabled || value <= MIN_VALUE}
-        onClick={() => onAdjust(-1)}
-      >
-        <span className="hpxp__sign" aria-hidden="true">
-          −
-        </span>
-      </button>
-
-      {/* 육각 창. 실물의 숫자 구멍이다. */}
-      <span className="hpxp__window">
         <span className="hpxp__value">{value}</span>
-      </span>
-
-      <button
-        type="button"
-        className="hpxp__knob"
-        aria-label={`${label} 하나 늘리기`}
-        disabled={disabled || value >= MAX_VALUE}
-        onClick={() => onAdjust(1)}
-      >
-        <span className="hpxp__sign" aria-hidden="true">
-          +
-        </span>
       </button>
     </div>
   )

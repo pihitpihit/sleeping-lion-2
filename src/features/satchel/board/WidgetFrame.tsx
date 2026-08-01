@@ -214,6 +214,7 @@ export function WidgetFrame({
             instanceId={widget.instanceId}
             size={{ w: widget.w, h: widget.h }}
             mode={mode}
+            rotation={rotation}
             settings={settings}
           />
         </div>

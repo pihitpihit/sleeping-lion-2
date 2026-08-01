@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react'
+import type { Rotation } from '../layout'
 
 /** 편집 중에는 위젯이 상호작용을 받지 않는다. 드래그하려다 카드가 뽑히면 곤란하다. */
 export type SatchelMode = 'play' | 'edit'
@@ -8,6 +9,14 @@ export interface WidgetProps {
   /** 이 위젯이 차지한 셀 크기. 내용 밀도를 바꾸는 데 쓴다. */
   size: { w: number; h: number }
   mode: SatchelMode
+  /**
+   * 이 위젯이 돌아간 각도.
+   *
+   * **손가락을 읽는 위젯만 쓴다.** 포인터 좌표는 화면 기준으로 오는데 내용은
+   * 돌아가 있다. 180도로 돌려 마주 앉은 사람이 제 기준 '위로' 끄는 것은 화면
+   * 기준으로는 '아래로'다 — 그대로 쓰면 값이 거꾸로 움직인다.
+   */
+  rotation: Rotation
   /**
    * 이 인스턴스의 설정. 스토어가 늘 `sanitize`를 거쳐 넘기므로 위젯은
    * 자기 타입으로 좁혀 받아도 된다.

@@ -40,107 +40,86 @@ export type HpXpOrientation = 'side-by-side' | 'stacked'
 
 export interface HpXpLayout {
   orientation: HpXpOrientation
-  /** 물방울·별 표식을 낼 자리가 있는가. 좁으면 숫자가 먼저다. */
-  showMarks: boolean
+  /** 표식(물방울·별)의 한 변(px). 숫자가 그 안에 앉는다. */
+  markSize: number
   /** 숫자 글자 크기(px). */
   numberSize: number
-  /** ±단추 지름(px). */
-  knobSize: number
-  /** 물방울·별 표식의 한 변(px). 실물에서 손잡이보다 조금 크다. */
-  markSize: number
-  /** 육각 창의 너비(px). */
-  windowWidth: number
-  /** 조각 사이 틈(px). */
-  gap: number
-  /** 바깥쪽 여백(px) — 알약의 둥근 끝과 빛나는 테를 피한다. */
-  padOuter: number
-  /** 안쪽 여백(px) — 두 반쪽이 가운데서 부딪히지 않게 한다. */
-  padInner: number
 }
 
-/* 숫자 크기에 대한 비율. 한 줄에 늘어설 것들의 폭을 이걸로 잡는다. */
-const WINDOW_RATIO = 2.6
-const KNOB_RATIO = 0.95
-const MARK_RATIO = 1.1
-/** 이보다 작아지면 표식을 빼고 숫자에 자리를 준다. */
-const MIN_COMFORTABLE_NUMBER = 14
+/** 표식 안에서 숫자가 차지하는 비율. 물방울의 불룩한 아래쪽에 들어갈 만큼. */
+const NUMBER_IN_MARK = 0.4
 const MIN_NUMBER = 9
-const MAX_NUMBER = 40
+const MAX_MARK = 132
 
 /**
  * 안쪽 배치.
  *
- * **자리를 계산해서 나눠 준다.** 처음에는 flex에 맡겼더니 창이 눌려 숫자가
- * 잘렸고, 창을 고정하자 이번엔 손잡이가 눌려 타원이 됐다. 한 줄에 늘어설 것이
- * 넷(표식·손잡이·창·손잡이)이라 서로 밀어낼 뿐이다. 그래서 **긴 변에 무엇이
- * 몇 개 들어가는지 먼저 셈하고** 그 결과를 픽셀로 내려보낸다.
+ * 손잡이와 육각 창이 사라지고 **표식 하나가 그 자리를 다 쓴다.** 한 줄에 넷을
+ * 늘어놓느라 서로 밀어내던 문제가 통째로 없어졌다.
  */
 export function computeHpXpLayout(box: { width: number; height: number }): HpXpLayout {
   const width = Number.isFinite(box.width) ? box.width : 0
   const height = Number.isFinite(box.height) ? box.height : 0
-  const empty: HpXpLayout = {
-    orientation: 'side-by-side',
-    showMarks: false,
-    numberSize: 0,
-    knobSize: 0,
-    markSize: 0,
-    windowWidth: 0,
-    gap: 0,
-    padOuter: 0,
-    padInner: 0,
+  if (width <= 0 || height <= 0) {
+    return { orientation: 'side-by-side', markSize: 0, numberSize: 0 }
   }
-  if (width <= 0 || height <= 0) return empty
 
   // 사진처럼 붉은 쪽이 왼쪽, 푸른 쪽이 오른쪽인 것이 기본이다.
-  // 세로로 길 때만 위아래로 쌓는다.
   const orientation: HpXpOrientation = width >= height ? 'side-by-side' : 'stacked'
 
-  // 반쪽 하나가 차지하는 상자.
   const halfWidth = orientation === 'side-by-side' ? width / 2 : width
   const halfHeight = orientation === 'side-by-side' ? height : height / 2
-  const along = Math.max(halfWidth, halfHeight)
-  const across = Math.min(halfWidth, halfHeight)
 
-  const gap = Math.max(2, along * 0.022)
-  /*
-    여백을 여기서 정한다.
+  // 알약의 둥근 끝과 빛나는 테를 피해 안쪽만 쓴다.
+  const markSize = Math.max(0, Math.min(MAX_MARK, Math.min(halfWidth, halfHeight) * 0.82))
+  const numberSize = markSize > 0 ? Math.max(MIN_NUMBER, markSize * NUMBER_IN_MARK) : 0
 
-    처음에는 CSS가 padding을, 여기가 usable을 따로 정했더니 둘이 어긋나 내용이
-    반쪽 밖으로 넘쳤다 — 가운데서 두 `+` 단추가 겹쳐 한쪽이 눌리지 않았다.
-    **한 곳에서 정하고 픽셀로 내려보낸다.**
-  */
-  const padOuter = along * 0.11
-  const padInner = along * 0.05
-  const usable = Math.max(0, along - padOuter - padInner)
+  return { orientation, markSize, numberSize }
+}
 
-  /** 표식을 낼 때·안 낼 때 각각 숫자를 얼마까지 키울 수 있는가. */
-  const fit = (marks: boolean) => {
-    const pieces = WINDOW_RATIO + KNOB_RATIO * 2 + (marks ? MARK_RATIO : 0)
-    const gaps = gap * (marks ? 3 : 2)
-    return (usable - gaps) / pieces
-  }
+/* --------------------------------------------------------------------------
+   손가락 읽기
+   -------------------------------------------------------------------------- */
 
-  // 숫자는 짧은 변에도 맞아야 한다. 어느 방향에서도 넘치지 않게.
-  let showMarks = true
-  let numberSize = Math.min(MAX_NUMBER, across * 0.42, fit(true))
-  if (numberSize < MIN_COMFORTABLE_NUMBER) {
-    // 표식을 뺀 자리를 숫자에 준다. 물방울보다 숫자가 먼저다.
-    showMarks = false
-    numberSize = Math.min(MAX_NUMBER, across * 0.42, fit(false))
-  }
-  numberSize = Math.max(MIN_NUMBER, numberSize)
+/** 한 칸 오르내리는 데 필요한 이동(px). 손가락으로 다루기 좋은 폭. */
+export const DRAG_STEP_PX = 22
 
-  return {
-    orientation,
-    showMarks,
-    numberSize,
-    knobSize: numberSize * KNOB_RATIO,
-    markSize: numberSize * MARK_RATIO,
-    windowWidth: numberSize * WINDOW_RATIO,
-    gap,
-    padOuter,
-    padInner,
-  }
+/** 이보다 덜 움직였으면 끈 것이 아니라 누른 것이다. */
+export const TAP_SLOP_PX = 5
+
+/**
+ * 화면에서의 이동을 **위젯 안쪽 좌표**로 돌린다.
+ *
+ * 내용은 CSS `rotate`로 돌아가 있지만 포인터 좌표는 화면 기준으로 온다.
+ * 180도로 돌려 마주 앉은 사람이 제 기준 '위로' 끄는 것은 화면에서는 '아래로'다.
+ * 그대로 쓰면 값이 거꾸로 움직인다.
+ *
+ * 화면 = R(θ)·안쪽 이므로 안쪽 = R(−θ)·화면 이다.
+ */
+export function toLocalDelta(dx: number, dy: number, rotation: number): { dx: number; dy: number } {
+  const rad = (-rotation * Math.PI) / 180
+  // 90도 단위만 쓰므로 반올림하면 정확히 0과 ±1이 된다. 부동소수 찌꺼기를 없앤다.
+  const cos = Math.round(Math.cos(rad))
+  const sin = Math.round(Math.sin(rad))
+  return { dx: unsign(dx * cos - dy * sin), dy: unsign(dx * sin + dy * cos) }
+}
+
+/** `-0`을 `0`으로 만든다. 값은 같지만 `Object.is`로 비교하면 갈리고, 밖으로
+ *  내보낼 이유가 없다. */
+function unsign(value: number): number {
+  return value === 0 ? 0 : value
+}
+
+/**
+ * 끈 거리에서 몇 칸인지.
+ *
+ * **위로 끌면 늘어난다.** 화면 좌표는 아래로 갈수록 커지므로 부호를 뒤집는다.
+ */
+export function stepsFromDrag(localDy: number, stepPx = DRAG_STEP_PX): number {
+  if (!Number.isFinite(localDy) || stepPx <= 0) return 0
+  // 반올림이 아니라 버림이다. 반올림하면 반 칸만 움직여도 한 칸이 되어
+  // 손을 떼는 순간 값이 튄다. 또 0에서 위아래 문턱이 어긋난다.
+  return unsign(Math.trunc(-localDy / stepPx))
 }
 
 /**

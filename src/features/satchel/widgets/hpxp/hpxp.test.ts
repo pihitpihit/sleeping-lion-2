@@ -2,10 +2,13 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import {
   clampValue,
   computeHpXpLayout,
+  DRAG_STEP_PX,
   isHpXpSizeAllowed,
   MAX_VALUE,
   MIN_VALUE,
   step,
+  stepsFromDrag,
+  toLocalDelta,
 } from './hpxp'
 import { useHpXpStore } from './hpxpStore'
 
@@ -79,24 +82,30 @@ describe('안쪽 배치', () => {
     expect(computeHpXpLayout({ width: 200, height: 200 }).orientation).toBe('side-by-side')
   })
 
-  it('좁으면 표식을 뺀다 — 숫자가 먼저다', () => {
-    expect(computeHpXpLayout({ width: 360, height: 170 }).showMarks).toBe(true)
-    expect(computeHpXpLayout({ width: 170, height: 84 }).showMarks).toBe(false)
-  })
-
-  it('숫자와 단추가 반쪽 안에 들어온다', () => {
+  it('표식이 반쪽 안에 들어온다', () => {
     for (const box of [
+      { width: 760, height: 170 },
       { width: 360, height: 170 },
-      { width: 170, height: 360 },
-      { width: 180, height: 84 },
-      { width: 84, height: 180 },
+      { width: 190, height: 84 },
+      { width: 170, height: 760 },
+      { width: 84, height: 190 },
+      { width: 300, height: 300 },
     ]) {
       const l = computeHpXpLayout(box)
       const halfW = l.orientation === 'side-by-side' ? box.width / 2 : box.width
       const halfH = l.orientation === 'side-by-side' ? box.height : box.height / 2
-      const across = Math.min(halfW, halfH)
-      expect(l.knobSize).toBeLessThanOrEqual(across + 1e-9)
-      expect(l.numberSize).toBeLessThanOrEqual(across + 1e-9)
+      expect(l.markSize).toBeLessThanOrEqual(Math.min(halfW, halfH) + 1e-9)
+    }
+  })
+
+  it('숫자가 표식보다 작다', () => {
+    for (const box of [
+      { width: 760, height: 170 },
+      { width: 190, height: 84 },
+      { width: 84, height: 190 },
+    ]) {
+      const l = computeHpXpLayout(box)
+      expect(l.numberSize).toBeLessThan(l.markSize)
     }
   })
 
@@ -107,8 +116,70 @@ describe('안쪽 배치', () => {
       { width: Number.NaN, height: 100 },
     ]) {
       expect(() => computeHpXpLayout(bad)).not.toThrow()
+      expect(computeHpXpLayout(bad).markSize).toBe(0)
       expect(computeHpXpLayout(bad).numberSize).toBe(0)
     }
+  })
+})
+
+/**
+ * 회전은 눈으로 확인하기 어렵다 — 돌려 앉아 봐야 알고, 반대로 움직여도 '그런가
+ * 보다' 하게 된다. 표로 못 박는다.
+ */
+describe('손가락 이동을 위젯 안쪽 좌표로 돌린다', () => {
+  it('돌리지 않았으면 그대로다', () => {
+    expect(toLocalDelta(3, -7, 0)).toEqual({ dx: 3, dy: -7 })
+  })
+
+  it('180도면 위아래·좌우가 뒤집힌다', () => {
+    // 마주 앉은 사람이 제 기준 위로 끄는 것은 화면에서는 아래로다.
+    expect(toLocalDelta(0, 10, 180)).toEqual({ dx: 0, dy: -10 })
+    expect(toLocalDelta(5, 0, 180)).toEqual({ dx: -5, dy: 0 })
+  })
+
+  it('90도면 화면의 아래가 안쪽의 오른쪽이 된다', () => {
+    // 내용이 시계 방향으로 90도 돌았으므로, 안쪽의 +x가 화면의 +y로 나온다.
+    expect(toLocalDelta(0, 10, 90)).toEqual({ dx: 10, dy: 0 })
+    expect(toLocalDelta(10, 0, 90)).toEqual({ dx: 0, dy: -10 })
+  })
+
+  it('270도는 90도의 반대다', () => {
+    expect(toLocalDelta(0, 10, 270)).toEqual({ dx: -10, dy: 0 })
+  })
+
+  it('네 방향 모두 길이를 지킨다', () => {
+    for (const r of [0, 90, 180, 270]) {
+      const { dx, dy } = toLocalDelta(3, 4, r)
+      expect(Math.hypot(dx, dy)).toBeCloseTo(5, 9)
+    }
+  })
+})
+
+describe('끈 거리에서 칸 수', () => {
+  it('위로 끌면 늘고 아래로 끌면 준다', () => {
+    expect(stepsFromDrag(-DRAG_STEP_PX)).toBe(1)
+    expect(stepsFromDrag(DRAG_STEP_PX)).toBe(-1)
+    expect(stepsFromDrag(-DRAG_STEP_PX * 3)).toBe(3)
+  })
+
+  it('한 칸이 안 되면 움직이지 않는다', () => {
+    expect(stepsFromDrag(0)).toBe(0)
+    expect(stepsFromDrag(-DRAG_STEP_PX + 1)).toBe(0)
+    expect(stepsFromDrag(DRAG_STEP_PX - 1)).toBe(0)
+  })
+
+  /** 0에서 대칭이어야 한다. 반올림을 쓰면 위아래가 한 칸씩 어긋난다. */
+  it('올릴 때와 내릴 때의 문턱이 같다', () => {
+    for (let px = 1; px < DRAG_STEP_PX * 4; px += 1) {
+      // 대칭을 곧게 적는다. `-stepsFromDrag(px)`로 비교하면 0일 때 `-0`이 나와
+      // Object.is에서 갈린다 — 시험이 만들어낸 함정이지 코드의 문제가 아니다.
+      expect(stepsFromDrag(-px) + stepsFromDrag(px)).toBe(0)
+    }
+  })
+
+  it('이상한 값에도 0을 낸다', () => {
+    expect(stepsFromDrag(Number.NaN)).toBe(0)
+    expect(stepsFromDrag(10, 0)).toBe(0)
   })
 })
 
@@ -163,47 +234,5 @@ describe('인스턴스마다 값을 따로 갖는다', () => {
     else Reflect.deleteProperty(globalThis, 'localStorage')
 
     expect(written).toEqual([])
-  })
-})
-
-/**
- * 여백을 CSS와 계산이 따로 정했더니 내용이 반쪽 밖으로 넘쳐, 가운데서 두 `+`
- * 단추가 겹쳤다. 한쪽이 다른 쪽을 가려 눌리지 않았다. 이 시험이 그것을 잡는다.
- */
-describe('한 줄에 늘어설 것이 반쪽 안에 들어온다', () => {
-  const boxes = [
-    { width: 760, height: 170 },
-    { width: 380, height: 170 },
-    { width: 190, height: 84 },
-    { width: 170, height: 760 },
-    { width: 170, height: 380 },
-    { width: 84, height: 190 },
-    { width: 360, height: 360 },
-  ]
-
-  it('표식·손잡이·창·손잡이와 틈의 합이 긴 변을 넘지 않는다', () => {
-    for (const box of boxes) {
-      const l = computeHpXpLayout(box)
-      const halfW = l.orientation === 'side-by-side' ? box.width / 2 : box.width
-      const halfH = l.orientation === 'side-by-side' ? box.height : box.height / 2
-      const along = Math.max(halfW, halfH)
-
-      const pieces = l.windowWidth + l.knobSize * 2 + (l.showMarks ? l.markSize : 0)
-      const gaps = l.gap * (l.showMarks ? 3 : 2)
-      const used = pieces + gaps + l.padOuter + l.padInner
-
-      expect(used).toBeLessThanOrEqual(along + 1e-6)
-    }
-  })
-
-  it('숫자가 짧은 변 안에도 들어온다', () => {
-    for (const box of boxes) {
-      const l = computeHpXpLayout(box)
-      const halfW = l.orientation === 'side-by-side' ? box.width / 2 : box.width
-      const halfH = l.orientation === 'side-by-side' ? box.height : box.height / 2
-      const across = Math.min(halfW, halfH)
-      // 창 높이는 숫자의 1.5배다(CSS).
-      expect(l.numberSize * 1.5).toBeLessThanOrEqual(across + 1e-6)
-    }
   })
 })
