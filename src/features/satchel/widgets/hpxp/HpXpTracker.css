@@ -147,23 +147,54 @@
   아래쪽 불룩한 자리로 조금 내린다. 별은 가운데가 넓어 그대로 둔다.
 */
 /*
-  표식 그림만 따로 걸러낸다.
+  표식 — 물방울과 별.
 
-  **부모(단추)에 filter를 걸면 자식인 숫자까지 걸린다.** 흰 표식을 만들려고
-  `brightness(0) invert(1)`을 걸었더니 숫자도 하얘져 보이지 않았다. 자식에서
-  되돌리려 해도 통하지 않는다 — 자식이 먼저 그려지고 부모가 그 위를 덮는다.
+  **색을 뒤집지 않고 오려낸다.** 처음에는 `brightness(0) invert(1)`로 흰빛을
+  만들었는데, 판판한 흰색이라 실물의 도톰한 느낌이 나지 않았다. 원본 SVG를
+  **마스크**로 쓰면 모양만 빌리고 색은 우리가 정할 수 있다 — 바탕과 같은 계열의
+  그라디언트를 깔아 도톰하게 만든다.
+
+  겹을 둘로 나눈다. CSS는 `filter`를 먼저 걸고 `mask`를 나중에 적용하므로, 한
+  겹에 다 걸면 그림자가 **오려내기 전의 네모**를 따라 생긴다. 바깥이 그림자를,
+  안쪽이 모양과 색을 맡으면 그림자가 모양을 따라간다.
+
+  파일은 손대지 않는다 — 화면에서만 바꾼다(SPEC 13.1).
 */
 .hpxp__mark {
   position: absolute;
   inset: 0;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-size: contain;
-  /* 원본은 거의 검정이다. 붉은·푸른 바탕에서 보이도록 흰빛으로 바꾸되
-     **파일은 원본 색을 유지한다**(SPEC 13.1). */
-  filter: brightness(0) invert(1) drop-shadow(0 0 1.5px rgba(0, 0, 0, 0.9))
-    drop-shadow(0 2px 5px rgba(0, 0, 0, 0.55));
+  /* 도톰하게 떠 있는 느낌. 아래로 드리운 그림자와 가장자리의 옅은 테. */
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45)) drop-shadow(0 1px 0 rgba(0, 0, 0, 0.3));
   pointer-events: none;
+}
+
+.hpxp__mark-fill {
+  position: absolute;
+  inset: 0;
+  -webkit-mask: var(--hpxp-mark-src) center / contain no-repeat;
+  mask: var(--hpxp-mark-src) center / contain no-repeat;
+}
+
+/* 붉은 쪽 — 바탕보다 밝은 산호빛. 위에서 빛을 받는 것처럼 기울인다. */
+.hpxp__half--hp .hpxp__mark-fill {
+  background: linear-gradient(
+    155deg,
+    #fdd8cf 0%,
+    #f2a79a 30%,
+    #d9695c 62%,
+    #a63b30 100%
+  );
+}
+
+/* 푸른 쪽 — 실물에서 별은 거의 흰빛이다. 아래로 갈수록 하늘빛이 든다. */
+.hpxp__half--xp .hpxp__mark-fill {
+  background: linear-gradient(
+    155deg,
+    #ffffff 0%,
+    #e8f3ff 28%,
+    #b6d6f2 62%,
+    #7aa6cf 100%
+  );
 }
 
 .hpxp__value {
@@ -175,14 +206,19 @@
   line-height: 1;
   /* 자릿수가 바뀔 때 숫자가 흔들리지 않게 한다. */
   font-variant-numeric: tabular-nums;
-  /* 흰 표식 위에 앉으므로 어둡게. */
-  color: #1a1114;
+  /* 밝은 표식 위에 앉으므로 어둡게. 각자 제 계열의 짙은 색으로 둔다. */
+  color: #3d0f0a;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
   pointer-events: none;
 }
 
 /* 물방울은 위가 뾰족하고 아래가 불룩하다. 한가운데면 뾰족한 쪽에 걸린다. */
 .hpxp__half--hp .hpxp__value {
   transform: translateY(14%);
+}
+
+.hpxp__half--xp .hpxp__value {
+  color: #0d2340;
 }
 
 @media (prefers-reduced-motion: reduce) {

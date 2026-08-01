@@ -81,8 +81,14 @@ export function computeHpXpLayout(box: { width: number; height: number }): HpXpL
    손가락 읽기
    -------------------------------------------------------------------------- */
 
-/** 한 칸 오르내리는 데 필요한 이동(px). 손가락으로 다루기 좋은 폭. */
-export const DRAG_STEP_PX = 22
+/**
+ * 한 칸 오르내리는 데 필요한 이동(px).
+ *
+ * 처음 22px은 너무 예민했다 — 조금만 스쳐도 숫자가 훌쩍 뛴다. ±1은 탭이 맡고
+ * 끌기는 여러 칸을 한 번에 옮길 때 쓰는 것이므로, 손이 확실히 움직였을 때만
+ * 반응하는 편이 낫다.
+ */
+export const DRAG_STEP_PX = 38
 
 /** 이보다 덜 움직였으면 끈 것이 아니라 누른 것이다. */
 export const TAP_SLOP_PX = 5

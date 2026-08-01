@@ -195,10 +195,16 @@ function Dial({ track, value, rotation, disabled, onAdjust }: DialProps) {
         <span
           className="hpxp__mark"
           aria-hidden="true"
-          style={{
-            backgroundImage: `url(${import.meta.env.BASE_URL}assets/creator-pack/general/${MARK_FILE[track]}.svg)`,
-          }}
-        />
+          style={
+            {
+              '--hpxp-mark-src': `url(${import.meta.env.BASE_URL}assets/creator-pack/general/${MARK_FILE[track]}.svg)`,
+            } as React.CSSProperties
+          }
+        >
+          {/* 겹을 나눠야 그림자가 산다. 바깥이 그림자를, 안쪽이 모양과 색을 맡는다.
+              한 겹에 다 걸면 그림자가 오려내기 전의 네모를 따라 생긴다. */}
+          <span className="hpxp__mark-fill" />
+        </span>
         <span className="hpxp__value">{value}</span>
       </button>
     </div>
