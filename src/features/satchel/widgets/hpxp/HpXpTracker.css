@@ -163,8 +163,9 @@
 .hpxp__mark {
   position: absolute;
   inset: 0;
-  /* 도톰하게 떠 있는 느낌. 아래로 드리운 그림자와 가장자리의 옅은 테. */
-  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.45)) drop-shadow(0 1px 0 rgba(0, 0, 0, 0.3));
+  /* 도톰하게 떠 있는 느낌. 가장자리의 얇은 테가 바탕에서 떼어 놓고,
+     아래로 드리운 그림자가 높이를 준다. */
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.6)) drop-shadow(0 4px 5px rgba(0, 0, 0, 0.45));
   pointer-events: none;
 }
 
@@ -175,42 +176,133 @@
   mask: var(--hpxp-mark-src) center / contain no-repeat;
 }
 
-/* 붉은 쪽 — 바탕보다 밝은 산호빛. 위에서 빛을 받는 것처럼 기울인다. */
+/*
+  입체감은 세 겹에서 나온다.
+
+  1. 왼쪽 위의 하이라이트 — 빛이 어디서 오는지 정한다.
+  2. 오른쪽 아래의 그늘 — 부피가 있다는 신호.
+  3. 바탕 그라디언트 — 전체 기울기.
+
+  하나만으로는 색칠한 도형에 머문다. 겹쳐야 도톰해진다.
+
+  **`transparent`로 끝내지 않는다.** CSS의 `transparent`는 '투명한 검정'이라
+  밝은 색에서 그리로 섞이면 회색을 지나며 고리 자국이 진다. 같은 색의 알파 0으로
+  끝내야 매끈하게 사라진다.
+*/
 .hpxp__half--hp .hpxp__mark-fill {
-  background: linear-gradient(155deg, #fdd8cf 0%, #f2a79a 30%, #d9695c 62%, #a63b30 100%);
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.78) 0%, rgba(255, 255, 255, 0) 58%),
+    radial-gradient(circle at 74% 84%, rgba(80, 8, 4, 0.45) 0%, rgba(80, 8, 4, 0) 62%),
+    linear-gradient(155deg, #fbc9be 0%, #ef9a8b 30%, #d2604f 64%, #962f26 100%);
 }
 
-/* 푸른 쪽 — 실물에서 별은 거의 흰빛이다. 아래로 갈수록 하늘빛이 든다. */
+/* 푸른 쪽 — 흰빛에 너무 가까우면 표식이 떠 보인다. 하늘빛을 더 들인다. */
 .hpxp__half--xp .hpxp__mark-fill {
-  background: linear-gradient(155deg, #ffffff 0%, #e8f3ff 28%, #b6d6f2 62%, #7aa6cf 100%);
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.82) 0%, rgba(255, 255, 255, 0) 58%),
+    radial-gradient(circle at 74% 84%, rgba(6, 26, 62, 0.42) 0%, rgba(6, 26, 62, 0) 62%),
+    linear-gradient(155deg, #d3e9ff 0%, #9cc7ec 32%, #6098cf 66%, #35659e 100%);
 }
 
-.hpxp__value {
+/* --------------------------------------------------------------------------
+   숫자 띠 — 실물 다이얼의 드럼
+
+   창을 숫자 한 칸보다 조금 높게 두어 위아래 이웃이 살짝 비친다. 그 비침과
+   가장자리의 흐림이 원통을 들여다보는 느낌을 만든다 — 진짜 3D를 쓰지 않고도
+   드럼으로 읽힌다.
+   -------------------------------------------------------------------------- */
+
+.hpxp__reel {
   position: relative;
   z-index: 1;
+  display: block;
+  width: 100%;
+  /*
+    숫자 한 칸(1em)보다 조금만 높다. 남는 자리로 이웃이 비쳐 드럼처럼 읽힌다.
+
+    처음에 1.62em으로 크게 뒀더니 다음 숫자가 또렷하게 드러나 흠집처럼 보였다.
+    **이웃은 기척만 있으면 된다** — 움직일 때 결이 보이는 정도.
+  */
+  height: 1.3em;
+  overflow: hidden;
   font-family: var(--sl-font-ko-display);
   font-size: var(--hpxp-number);
   font-weight: 700;
-  line-height: 1;
   /* 자릿수가 바뀔 때 숫자가 흔들리지 않게 한다. */
   font-variant-numeric: tabular-nums;
-  /* 밝은 표식 위에 앉으므로 어둡게. 각자 제 계열의 짙은 색으로 둔다. */
-  color: #3d0f0a;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+  /* 위아래 가장자리를 흐린다. 원통의 곡면이 말려 들어가는 자리다. */
+  /*
+    흐림은 **이웃이 비치는 자리에만** 건다. 창이 1.62em이고 칸이 1em이므로
+    가운데 숫자는 19~81%를 차지한다 — 그 안쪽까지 흐리면 정작 읽어야 할 숫자가
+    갉인다. 처음에 34~66%만 또렷하게 두었다가 숫자 위아래가 깎였다.
+  */
+  /*
+    흐림은 **이웃이 비치는 자리에만** 건다. 창이 1.3em이고 칸이 1em이므로 가운데
+    숫자는 12~88%를 차지한다 — 그 안쪽까지 흐리면 정작 읽어야 할 숫자가 갉인다.
+    처음에 34~66%만 또렷하게 두었다가 위아래가 깎였다.
+  */
+  -webkit-mask: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.16) 6%,
+    #000 12.5%,
+    #000 87.5%,
+    rgba(0, 0, 0, 0.16) 94%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  mask: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.16) 6%,
+    #000 12.5%,
+    #000 87.5%,
+    rgba(0, 0, 0, 0.16) 94%,
+    rgba(0, 0, 0, 0) 100%
+  );
   pointer-events: none;
 }
 
-/* 물방울은 위가 뾰족하고 아래가 불룩하다. 한가운데면 뾰족한 쪽에 걸린다. */
-.hpxp__half--hp .hpxp__value {
-  transform: translateY(14%);
+/*
+  띠를 통째로 민다.
+
+  낱낱을 갈아끼우지 않는 이유: **몇 칸을 건너뛰어도 그대로 통한다.** 끌기로 한
+  번에 여섯 칸이 오르면 여섯 칸만큼 미끄러진다.
+
+  가운데 맞춤: 창이 1.3em이고 칸이 1em이므로 위아래 0.15em씩 남는다.
+*/
+.hpxp__strip {
+  display: block;
+  transform: translateY(calc(0.15em - var(--hpxp-n) * 1em));
+  /* 끝에서 살짝 넘쳤다 돌아온다 — 물리적인 드럼이 멎는 결. */
+  transition: transform 0.22s cubic-bezier(0.22, 1.2, 0.4, 1);
 }
 
-.hpxp__half--xp .hpxp__value {
+.hpxp__digit {
+  display: block;
+  height: 1em;
+  line-height: 1em;
+  text-align: center;
+}
+
+/* 붉은 표식 위에 앉으므로 어둡게. 각자 제 계열의 짙은 색으로 둔다. */
+.hpxp__half--hp .hpxp__reel {
+  color: #3d0f0a;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.hpxp__half--xp .hpxp__reel {
   color: #0d2340;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* 물방울은 위가 뾰족하고 아래가 불룩하다. 한가운데면 뾰족한 쪽에 걸린다. */
+.hpxp__half--hp .hpxp__reel {
+  transform: translateY(12%);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hpxp__dial {
+  /* 도는 것이 어지러운 사람에게는 그냥 바뀐다. 값은 그대로 보인다. */
+  .hpxp__strip {
     transition: none;
   }
 }
