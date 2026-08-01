@@ -11,9 +11,13 @@ import './HpXpTracker.css'
  * 실물은 검은 손잡이를 돌리지만 화면에서는 **손잡이 둘이 ∓ 단추가 된다.**
  * 돌리는 시늉을 만들면 손가락으로 정확히 맞추기 어렵다.
  *
- * **아트를 베끼지 않았다.** 붉은 반쪽·푸른 반쪽·육각 창·빛나는 테두리라는
- * 얼개만 따르고, 문양과 표식은 여기서 직접 그린 도형이다. 실물 카드의 그림은
+ * **판의 아트는 베끼지 않았다.** 붉은 반쪽·푸른 반쪽·육각 창·빛나는 테두리라는
+ * 얼개만 따르고, 그 밖의 문양은 직접 그린 도형이다. 실물 카드의 그림은
  * Cephalofair의 저작물이므로 담지 않는다(SPEC 3장).
+ *
+ * **물방울과 별만은 Creator Pack의 원본이다** — 저작자가 CC BY-NC-SA로 공개한
+ * 것이라 쓸 수 있다(SPEC 13.1). 파일은 `public/assets/creator-pack/general/`에
+ * 있고 여기서는 배경 이미지로만 부른다.
  *
  * **룰을 돌리지 않는다.** 최대 체력이 얼마인지, 레벨업에 몇이 필요한지 모른다.
  */
@@ -31,6 +35,7 @@ export function HpXpTracker({ instanceId, mode }: WidgetProps) {
         {
           '--hpxp-number': `${layout.numberSize}px`,
           '--hpxp-knob': `${layout.knobSize}px`,
+          '--hpxp-mark': `${layout.markSize}px`,
           '--hpxp-window': `${layout.windowWidth}px`,
           '--hpxp-gap': `${layout.gap}px`,
           '--hpxp-pad-outer': `${layout.padOuter}px`,
@@ -55,6 +60,12 @@ export function HpXpTracker({ instanceId, mode }: WidgetProps) {
   )
 }
 
+/**
+ * 표식 그림. **Creator Pack 에셋이므로 `.tsx`에 인라인 SVG로 박지 않는다**
+ * (SPEC 13.1) — 배경 이미지로 붙이고 파일은 `public/assets/creator-pack/`에 둔다.
+ */
+const MARK_FILE: Record<HpXpTrack, string> = { hp: 'hp-drop', xp: 'xp-star' }
+
 interface HalfProps {
   track: HpXpTrack
   value: number
@@ -74,9 +85,13 @@ function Half({ track, value, showMark, disabled, onAdjust }: HalfProps) {
     >
       {/* 표식은 바깥쪽 끝에 선다 — 실물에서 물방울과 별이 그 자리에 있다. */}
       {showMark && (
-        <span className="hpxp__mark" aria-hidden="true">
-          {track === 'hp' ? <DropMark /> : <StarMark />}
-        </span>
+        <span
+          className="hpxp__mark"
+          aria-hidden="true"
+          style={{
+            backgroundImage: `url(${import.meta.env.BASE_URL}assets/creator-pack/general/${MARK_FILE[track]}.svg)`,
+          }}
+        />
       )}
 
       <button
@@ -108,35 +123,5 @@ function Half({ track, value, showMark, disabled, onAdjust }: HalfProps) {
         </span>
       </button>
     </div>
-  )
-}
-
-/** 핏방울. 직접 그린 도형이다 — Creator Pack 에셋이 아니다. */
-function DropMark() {
-  return (
-    <svg viewBox="0 0 24 24" width="100%" height="100%" focusable="false">
-      <path
-        d="M12 2.5c4.4 5.6 7 9.3 7 12.4a7 7 0 1 1-14 0c0-3.1 2.6-6.8 7-12.4Z"
-        fill="currentColor"
-      />
-    </svg>
-  )
-}
-
-/** 여덟 갈래 별. 경험을 뜻한다. */
-function StarMark() {
-  const spikes = Array.from({ length: 8 }, (_, i) => i * 45)
-  return (
-    <svg viewBox="0 0 24 24" width="100%" height="100%" focusable="false">
-      {spikes.map((deg) => (
-        <path
-          key={deg}
-          d="M12 1.2 14.1 9.6 12 12 9.9 9.6Z"
-          fill="currentColor"
-          transform={`rotate(${deg} 12 12)`}
-        />
-      ))}
-      <circle cx="12" cy="12" r="3.1" fill="currentColor" />
-    </svg>
   )
 }

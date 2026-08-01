@@ -46,6 +46,8 @@ export interface HpXpLayout {
   numberSize: number
   /** ±단추 지름(px). */
   knobSize: number
+  /** 물방울·별 표식의 한 변(px). 실물에서 손잡이보다 조금 크다. */
+  markSize: number
   /** 육각 창의 너비(px). */
   windowWidth: number
   /** 조각 사이 틈(px). */
@@ -59,6 +61,7 @@ export interface HpXpLayout {
 /* 숫자 크기에 대한 비율. 한 줄에 늘어설 것들의 폭을 이걸로 잡는다. */
 const WINDOW_RATIO = 2.6
 const KNOB_RATIO = 0.95
+const MARK_RATIO = 1.1
 /** 이보다 작아지면 표식을 빼고 숫자에 자리를 준다. */
 const MIN_COMFORTABLE_NUMBER = 14
 const MIN_NUMBER = 9
@@ -80,6 +83,7 @@ export function computeHpXpLayout(box: { width: number; height: number }): HpXpL
     showMarks: false,
     numberSize: 0,
     knobSize: 0,
+    markSize: 0,
     windowWidth: 0,
     gap: 0,
     padOuter: 0,
@@ -111,7 +115,7 @@ export function computeHpXpLayout(box: { width: number; height: number }): HpXpL
 
   /** 표식을 낼 때·안 낼 때 각각 숫자를 얼마까지 키울 수 있는가. */
   const fit = (marks: boolean) => {
-    const pieces = WINDOW_RATIO + KNOB_RATIO * 2 + (marks ? KNOB_RATIO : 0)
+    const pieces = WINDOW_RATIO + KNOB_RATIO * 2 + (marks ? MARK_RATIO : 0)
     const gaps = gap * (marks ? 3 : 2)
     return (usable - gaps) / pieces
   }
@@ -131,6 +135,7 @@ export function computeHpXpLayout(box: { width: number; height: number }): HpXpL
     showMarks,
     numberSize,
     knobSize: numberSize * KNOB_RATIO,
+    markSize: numberSize * MARK_RATIO,
     windowWidth: numberSize * WINDOW_RATIO,
     gap,
     padOuter,

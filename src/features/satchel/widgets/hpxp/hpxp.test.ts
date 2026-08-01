@@ -188,7 +188,7 @@ describe('한 줄에 늘어설 것이 반쪽 안에 들어온다', () => {
       const halfH = l.orientation === 'side-by-side' ? box.height : box.height / 2
       const along = Math.max(halfW, halfH)
 
-      const pieces = l.windowWidth + l.knobSize * 2 + (l.showMarks ? l.knobSize : 0)
+      const pieces = l.windowWidth + l.knobSize * 2 + (l.showMarks ? l.markSize : 0)
       const gaps = l.gap * (l.showMarks ? 3 : 2)
       const used = pieces + gaps + l.padOuter + l.padInner
 
