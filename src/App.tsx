@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useState } from 'react'
-import { HOME_ROUTE, LAZY_ROUTES, readRoute } from './routes'
+import { HOME_ROUTE, LAZY_ROUTES, readRoute, routeKey } from './routes'
 import { WelcomePage } from './features/welcome/WelcomePage'
 import { AUTH_MODE } from './features/auth/mode'
 import { guardRoute } from './features/auth/guard'
@@ -61,11 +61,18 @@ export default function App() {
   // 보내는 동안에는 아무것도 그리지 않는다. 잠깐이라도 보이면 새는 것이다.
   if (redirectTo !== null) return null
 
-  const LazyPage = LAZY_ROUTES[route]
+  const LazyPage = LAZY_ROUTES[routeKey(route)]
   if (LazyPage) {
+    /**
+     * `key`에 라우트 전체를 준다.
+     *
+     * 값이 붙는 경로(`/join/<토큰>`)는 토큰만 달라도 **다른 화면**이다. 키가
+     * 없으면 React가 같은 컴포넌트로 보고 그대로 두어, 초대 링크에서 다른 초대
+     * 링크로 옮겼을 때 앞의 결과가 남는다. 실제로 그랬다.
+     */
     return (
       <Suspense fallback={null}>
-        <LazyPage />
+        <LazyPage key={route} />
       </Suspense>
     )
   }

@@ -24,6 +24,25 @@ export const LAZY_ROUTES: Record<string, ComponentType> = {
   ),
   // 로그인은 따로 떨어져 있어야 한다. `demo` 빌드는 이 청크를 아예 받지 않는다.
   '/login': lazy(() => import('./features/auth/LoginPage').then((m) => ({ default: m.LoginPage }))),
+  '/parties': lazy(() =>
+    import('./features/net/PartiesPage').then((m) => ({ default: m.PartiesPage })),
+  ),
+  '/join': lazy(() => import('./features/net/JoinPage').then((m) => ({ default: m.JoinPage }))),
+}
+
+/**
+ * 뒤에 값이 붙는 경로.
+ *
+ * `#/join/<토큰>`이 첫 사례다. 이것 하나 때문에 react-router를 들이는 것은
+ * 과하므로, **첫 마디만 보고 화면을 고르고 나머지는 화면이 직접 읽는다.**
+ * 중첩이 생기면 그때 갈아탄다.
+ */
+const PREFIX_ROUTES: readonly string[] = ['/join']
+
+/** 라우트에서 화면을 찾을 열쇠. `/join/abc` → `/join` */
+export function routeKey(route: string): string {
+  const head = '/' + (route.split('/')[1] ?? '')
+  return PREFIX_ROUTES.includes(head) ? head : route
 }
 
 /**
@@ -41,5 +60,9 @@ export function readRoute(hash: string): string | null {
 
   const route = hash.slice(1)
   // 알 수 없는 경로는 웰컴으로 되돌린다.
-  return route === HOME_ROUTE || route in LAZY_ROUTES ? route : HOME_ROUTE
+  if (route === HOME_ROUTE || route in LAZY_ROUTES) return route
+  // 값이 붙는 경로는 첫 마디로 알아본다. `/join`만으로는 열지 않는다 —
+  // 토큰이 없으면 볼 것이 없다.
+  const key = routeKey(route)
+  return key !== route && key in LAZY_ROUTES ? route : HOME_ROUTE
 }
