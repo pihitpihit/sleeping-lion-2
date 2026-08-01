@@ -1,5 +1,5 @@
 import { spanOf, type GridMetrics, type Placement } from '../grid'
-import type { Layout } from '../layout'
+import type { Layout, Rotation } from '../layout'
 import { getWidgetDefinition } from '../widgets/registry'
 import type { SatchelMode } from '../widgets/types'
 import { WidgetFrame } from './WidgetFrame'
@@ -10,9 +10,11 @@ interface Props {
   mode: SatchelMode
   showWidgetTitles: boolean
   settingsOf: (instanceId: string, definitionId: string) => unknown
+  rotationOf: (instanceId: string) => Rotation
   onCommit: (instanceId: string, next: Placement) => boolean
   onRemove: (instanceId: string) => void
   onOpenSettings: (instanceId: string) => void
+  onRotate: (instanceId: string) => void
 }
 
 /**
@@ -26,9 +28,11 @@ export function WidgetBoard({
   mode,
   showWidgetTitles,
   settingsOf,
+  rotationOf,
   onCommit,
   onRemove,
   onOpenSettings,
+  onRotate,
 }: Props) {
   if (metrics.columns <= 0 || metrics.rows <= 0) return null
 
@@ -98,9 +102,11 @@ export function WidgetBoard({
             others={others}
             showTitle={showWidgetTitles}
             settings={settingsOf(widget.instanceId, widget.definitionId)}
+            rotation={rotationOf(widget.instanceId)}
             onCommit={(next) => onCommit(widget.instanceId, next)}
             onRemove={() => onRemove(widget.instanceId)}
             onOpenSettings={() => onOpenSettings(widget.instanceId)}
+            onRotate={() => onRotate(widget.instanceId)}
           />
         )
       })}

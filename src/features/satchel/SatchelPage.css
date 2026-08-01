@@ -378,6 +378,26 @@
 }
 
 /* 제목 띠 — 켜져 있을 때만 자리를 차지한다. 끄면 그 높이가 내용으로 돌아간다. */
+/*
+  돌아가는 속.
+
+  90·270도에서는 가로세로를 바꿔 그린 뒤 돌린다. 크기와 회전각은 인라인으로
+  온다 — 프레임의 실제 픽셀 크기를 알아야 하는데 그것은 격자 계산의 결과다.
+
+  전환 효과를 걸지 않는다. 폭과 높이가 즉시 뒤바뀌는데 회전만 부드럽게 돌면
+  도는 도중에 모양이 어긋나 보인다.
+*/
+.widget-frame__rotor {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-origin: center;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
 .widget-frame__title {
   flex: none;
   padding: 0.2rem 0.5rem 0.2rem 1.1rem;
@@ -443,6 +463,7 @@
    툴바는 이와 달리 원형 테를 유지한다 — 거기서는 테가 장치의 일부다. */
 .widget-frame__remove,
 .widget-frame__gear,
+.widget-frame__rotate,
 .widget-frame__resize {
   position: absolute;
   display: flex;
@@ -457,7 +478,8 @@
 }
 
 .widget-frame__remove,
-.widget-frame__gear {
+.widget-frame__gear,
+.widget-frame__rotate {
   top: -13px;
   color: var(--sl-text-muted);
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 1px rgba(0, 0, 0, 0.9));
@@ -486,8 +508,26 @@
   color: var(--sl-gold);
 }
 
+/* 돌리기는 톱니 왼쪽. 톱니가 없는 위젯에서는 톱니 자리를 대신 차지한다 —
+   빈 자리를 남기면 무엇이 빠졌나 싶어진다.
+   상자가 34px이고 6px씩 띄우므로 -13 → 27 → 67 순으로 선다. */
+.widget-frame__rotate {
+  right: 67px;
+  color: var(--sl-moss);
+}
+
+.widget-frame__rotate--alone {
+  right: 27px;
+}
+
+.widget-frame__rotate:hover,
+.widget-frame__rotate:focus-visible {
+  color: var(--sl-moss-bright);
+}
+
 .widget-frame__remove:focus-visible,
-.widget-frame__gear:focus-visible {
+.widget-frame__gear:focus-visible,
+.widget-frame__rotate:focus-visible {
   outline: 2px solid var(--sl-gold);
   outline-offset: -2px;
   border-radius: 4px;

@@ -1,6 +1,6 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent, type KeyboardEvent } from 'react'
 import { canPlaceAt, cellsToPixels, type GridMetrics, type Placement } from '../grid'
-import type { WidgetInstance } from '../layout'
+import { swapsAxes, type Rotation, type WidgetInstance } from '../layout'
 import {
   exceedsThreshold,
   previewMove,
@@ -8,7 +8,7 @@ import {
   type Delta,
 } from '../interaction/gestureMath'
 import type { WidgetDefinition, SatchelMode } from '../widgets/types'
-import { CloseIcon, GearIcon } from './frameIcons'
+import { CloseIcon, GearIcon, RotateIcon } from './frameIcons'
 
 interface Props {
   widget: WidgetInstance
@@ -21,9 +21,12 @@ interface Props {
   showTitle: boolean
   /** 이 인스턴스의 설정. 이미 sanitize를 거친 값이다. */
   settings: unknown
+  /** 이 위젯이 바라보는 방향. 상 둘레 어느 자리에서 보는가. */
+  rotation: Rotation
   onCommit: (next: Placement) => boolean
   onRemove: () => void
   onOpenSettings: () => void
+  onRotate: () => void
 }
 
 type GestureKind = 'move' | 'resize'
@@ -51,9 +54,11 @@ export function WidgetFrame({
   others,
   showTitle,
   settings,
+  rotation,
   onCommit,
   onRemove,
   onOpenSettings,
+  onRotate,
 }: Props) {
   const gesture = useRef<Gesture | null>(null)
   const [preview, setPreview] = useState<Placement | null>(null)
@@ -150,6 +155,17 @@ export function WidgetFrame({
 
   const Widget = definition.Component
 
+  /**
+   * 90·270도에서는 가로세로를 바꿔 그린 뒤 돌린다. 0·180도도 같은 식으로 두어
+   * 갈래를 하나로 유지한다 — 회전이 0일 때만 다른 길을 타면 그 길에서만 나는
+   * 어긋남이 생긴다.
+   */
+  const rotorStyle = {
+    width: `${swapsAxes(rotation) ? rect.height : rect.width}px`,
+    height: `${swapsAxes(rotation) ? rect.width : rect.height}px`,
+    transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
+  }
+
   return (
     <div
       className={[
@@ -179,23 +195,48 @@ export function WidgetFrame({
       onPointerCancel={cancel}
       onKeyDown={onKeyDown}
     >
-      {/* 제목 띠. 끄면 이 자리가 통째로 위젯 내용에 돌아가고, 위젯은 자기 영역을
-          관측해 스스로 다시 배치한다. */}
-      {showTitle && <div className="widget-frame__title">{definition.name}</div>}
+      {/*
+        돌아가는 속. 제목과 내용이 함께 돈다 — 마주 앉은 사람에게는 제목도
+        거꾸로면 곤란하다.
 
-      {/* 편집 중에는 위젯 내용이 포인터를 받지 않는다. 드래그하려다 위젯이
-          동작하면 곤란하다. */}
-      <div className="widget-frame__content" aria-hidden={mode === 'edit'}>
-        <Widget
-          instanceId={widget.instanceId}
-          size={{ w: widget.w, h: widget.h }}
-          mode={mode}
-          settings={settings}
-        />
+        90·270도에서는 **가로세로를 바꿔 그린 뒤 돌린다.** 그래야 돌린 결과가
+        원래 칸을 정확히 채운다. 위젯은 자기 영역을 관측해 스스로 배치하므로,
+        뒤바뀐 모양에 맞춰 알아서 다시 눕는다.
+      */}
+      <div className="widget-frame__rotor" style={rotorStyle}>
+        {/* 제목 띠. 끄면 이 자리가 통째로 위젯 내용에 돌아간다. */}
+        {showTitle && <div className="widget-frame__title">{definition.name}</div>}
+
+        {/* 편집 중에는 위젯 내용이 포인터를 받지 않는다. 드래그하려다 위젯이
+            동작하면 곤란하다. */}
+        <div className="widget-frame__content" aria-hidden={mode === 'edit'}>
+          <Widget
+            instanceId={widget.instanceId}
+            size={{ w: widget.w, h: widget.h }}
+            mode={mode}
+            settings={settings}
+          />
+        </div>
       </div>
 
       {mode === 'edit' && (
         <>
+          {/* 편집 단추는 **돌지 않는다.** 함께 돌리면 크기 핸들의 방향까지
+              뒤집혀 오른쪽으로 끌면 줄어드는 꼴이 된다. 조작하는 손은 화면을
+              마주 보고 있으므로 화면 기준으로 둔다. */}
+          <button
+            type="button"
+            className={
+              definition.settings
+                ? 'widget-frame__rotate'
+                : 'widget-frame__rotate widget-frame__rotate--alone'
+            }
+            aria-label={`${definition.name} 돌리기 (지금 ${rotation}도)`}
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={onRotate}
+          >
+            <RotateIcon />
+          </button>
           {/* 설정을 지원하는 위젯에만 낸다. 제거 버튼 바로 왼쪽. */}
           {definition.settings && (
             <button

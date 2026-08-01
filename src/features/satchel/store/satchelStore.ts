@@ -11,10 +11,12 @@ import {
   dropUnknownWidgets,
   layoutForColumns,
   loadSettings,
+  nextRotation,
   removeWidget,
   saveSettings,
   updatePlacement,
   type Layout,
+  type Rotation,
   type SatchelSettings,
   type ToolbarPreference,
 } from '../layout'
@@ -61,6 +63,8 @@ interface SatchelState {
   setToolbarPreference: (preference: ToolbarPreference) => void
   toggleWidgetTitles: () => void
   setWidgetSettings: (instanceId: string, next: unknown) => void
+  /** 시계 방향으로 한 칸 돌린다. */
+  rotateWidget: (instanceId: string) => void
   addWidgetOfType: (definitionId: string) => void
   removeWidgetInstance: (instanceId: string) => void
   moveOrResize: (instanceId: string, next: Placement) => boolean
@@ -72,6 +76,7 @@ interface SatchelState {
   countOf: (definitionId: string) => number
   /** 늘 sanitize를 거친 값. 위젯이 안심하고 자기 타입으로 받는다. */
   settingsFor: (instanceId: string, definitionId: string) => unknown
+  rotationOf: (instanceId: string) => Rotation
 }
 
 /**
@@ -161,6 +166,16 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     set({ settings })
   },
 
+  rotateWidget: (instanceId) => {
+    const current = get().settings.widgetRotations[instanceId] ?? 0
+    const settings = {
+      ...get().settings,
+      widgetRotations: { ...get().settings.widgetRotations, [instanceId]: nextRotation(current) },
+    }
+    saveSettings(settings)
+    set({ settings })
+  },
+
   addWidgetOfType: (definitionId) => {
     const { settings, metrics } = get()
     const definition = getWidgetDefinition(definitionId)
@@ -206,9 +221,11 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     if (next === before) return
     // 설정도 함께 지운다. 안 지우면 저장소에 영원히 남는다.
     const { [instanceId]: _removed, ...widgetSettings } = settings.widgetSettings
+    // 회전도 함께 거둔다. 안 그러면 지운 위젯의 방향이 저장소에 쌓인다.
+    const { [instanceId]: _removedRotation, ...widgetRotations } = settings.widgetRotations
     void _removed
     set({
-      settings: persist({ ...settings, widgetSettings }, next),
+      settings: persist({ ...settings, widgetSettings, widgetRotations }, next),
       notice: null,
       past: pushHistory(get().past, before),
     })
@@ -264,6 +281,8 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
 
   settingsFor: (instanceId, definitionId) =>
     sanitizeSettingsFor(definitionId, get().settings.widgetSettings[instanceId]),
+
+  rotationOf: (instanceId) => get().settings.widgetRotations[instanceId] ?? 0,
 
   countOf: (definitionId) =>
     resolveLayout(get().settings, get().metrics).widgets.filter(

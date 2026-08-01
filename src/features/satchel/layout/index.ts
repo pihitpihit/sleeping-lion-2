@@ -1,7 +1,12 @@
 export {
+  ROTATIONS,
   SETTINGS_VERSION,
   emptyLayout,
   emptySettings,
+  isRotation,
+  nextRotation,
+  swapsAxes,
+  type Rotation,
   type Layout,
   type SatchelSettings,
   type ToolbarPosition,

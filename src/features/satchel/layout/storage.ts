@@ -1,4 +1,11 @@
-import { emptySettings, SETTINGS_VERSION, type Layout, type SatchelSettings } from './types'
+import {
+  emptySettings,
+  isRotation,
+  SETTINGS_VERSION,
+  type Layout,
+  type Rotation,
+  type SatchelSettings,
+} from './types'
 
 /**
  * `localStorage` 읽고 쓰기.
@@ -85,7 +92,22 @@ function salvage(parsed: unknown): SatchelSettings {
     }
   }
 
-  return { version: SETTINGS_VERSION, layouts, toolbarPosition, showWidgetTitles, widgetSettings }
+  // 90도 단위가 아닌 값은 버린다 — 임의 각도로 저장된 것은 우리 것이 아니다.
+  const widgetRotations: Record<string, Rotation> = {}
+  if (typeof raw.widgetRotations === 'object' && raw.widgetRotations !== null) {
+    for (const [key, value] of Object.entries(raw.widgetRotations)) {
+      if (isRotation(value)) widgetRotations[key] = value
+    }
+  }
+
+  return {
+    version: SETTINGS_VERSION,
+    layouts,
+    toolbarPosition,
+    showWidgetTitles,
+    widgetSettings,
+    widgetRotations,
+  }
 }
 
 export function loadSettings(storage: StorageLike | null = defaultStorage()): SatchelSettings {

@@ -60,6 +60,37 @@ export interface SatchelSettings {
    * 서로 어긋난다.
    */
   widgetSettings: Record<string, unknown>
+  /**
+   * 위젯 **인스턴스별** 회전. 없으면 0도.
+   *
+   * 보드게임 상은 마주 앉거나 사방에서 가운데를 본다. 태블릿을 상 가운데 놓으면
+   * 누군가에게는 모든 것이 거꾸로다. 위젯마다 방향을 돌려 각자 제 앞의 것을 제
+   * 방향으로 보게 한다.
+   *
+   * **`widgetSettings`와 마찬가지로 레이아웃 바깥에 둔다.** 레이아웃은 열 수마다
+   * 따로 저장되지만 어느 쪽에 앉았는지는 화면 폭과 무관하다 — 안에 넣으면 폰과
+   * 태블릿에서 방향이 따로 놀게 된다.
+   */
+  widgetRotations: Record<string, Rotation>
+}
+
+/** 90도 단위. 임의 각도는 두지 않는다 — 상 둘레에 앉는 자리가 넷이다. */
+export type Rotation = 0 | 90 | 180 | 270
+
+export const ROTATIONS: readonly Rotation[] = [0, 90, 180, 270]
+
+/** 다음 방향. 버튼을 누를 때마다 시계 방향으로 한 칸. */
+export function nextRotation(rotation: Rotation): Rotation {
+  return ROTATIONS[(ROTATIONS.indexOf(rotation) + 1) % ROTATIONS.length]
+}
+
+export function isRotation(value: unknown): value is Rotation {
+  return value === 0 || value === 90 || value === 180 || value === 270
+}
+
+/** 90·270도에서는 가로세로가 바뀐다. 회전 전에 그 모양으로 그려야 한다. */
+export function swapsAxes(rotation: Rotation): boolean {
+  return rotation === 90 || rotation === 270
 }
 
 export const SETTINGS_VERSION = 1
@@ -71,6 +102,7 @@ export function emptySettings(): SatchelSettings {
     toolbarPosition: 'auto',
     showWidgetTitles: true,
     widgetSettings: {},
+    widgetRotations: {},
   }
 }
 

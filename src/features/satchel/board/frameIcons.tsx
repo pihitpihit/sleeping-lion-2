@@ -41,6 +41,22 @@ export function GearIcon({ size = 22 }: { size?: number }) {
   )
 }
 
+/**
+ * 굽은 화살 — 돌리기.
+ *
+ * 원을 온전히 닫지 않는다. 트인 자리와 화살촉이 함께 **어느 쪽으로 도는지**를
+ * 말해준다 — 닫힌 원에 촉만 붙이면 방향이 잘 안 읽힌다.
+ */
+export function RotateIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg {...BASE} width={size} height={size} strokeWidth={2.4}>
+      {/* 12시에서 시작해 시계 방향으로 3/4바퀴 */}
+      <path d="M12 4.2a7.8 7.8 0 1 0 7.8 7.8" />
+      <path d="M12 1.2 15.2 4.2 12 7.2" strokeWidth={2.2} />
+    </svg>
+  )
+}
+
 /** 가위표 — 치우기·닫기. */
 export function CloseIcon({ size = 22 }: { size?: number }) {
   return (

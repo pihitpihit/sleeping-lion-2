@@ -20,7 +20,7 @@ import './ElementTracker.css'
  * **규칙을 돌리지 않는다.** 라운드 종료 감쇠는 자동으로 처리하지 않는다(SPEC 1장).
  * 손으로 옮기는 것을 거들 뿐이다.
  */
-export function ElementTracker({ instanceId, mode, settings }: WidgetProps) {
+export function ElementTracker({ mode, settings }: WidgetProps) {
   const { ref, size } = useBoardSize<HTMLDivElement>()
   const shownElements = visibleElements(sanitizeElementSettings(settings))
   const layout = computeElementLayout(size, shownElements.length)
@@ -44,7 +44,6 @@ export function ElementTracker({ instanceId, mode, settings }: WidgetProps) {
           <ElementLane
             key={element.id}
             element={element}
-            instanceId={instanceId}
             mode={mode}
             iconSize={layout.iconSize}
             canSlide={layout.canSlide}
@@ -58,7 +57,6 @@ export function ElementTracker({ instanceId, mode, settings }: WidgetProps) {
 
 interface LaneProps {
   element: ElementDef
-  instanceId: string
   mode: WidgetProps['mode']
   iconSize: number
   canSlide: boolean
@@ -66,16 +64,8 @@ interface LaneProps {
   vertical: boolean
 }
 
-function ElementLane({
-  element,
-  instanceId,
-  mode,
-  iconSize,
-  canSlide,
-  slotOffsets,
-  vertical,
-}: LaneProps) {
-  const state = useElementStore((s) => s.stateOf(instanceId, element.id))
+function ElementLane({ element, mode, iconSize, canSlide, slotOffsets, vertical }: LaneProps) {
+  const state = useElementStore((s) => s.stateOf(element.id))
   const advance = useElementStore((s) => s.advance)
   const setState = useElementStore((s) => s.setState)
   const laneRef = useRef<HTMLButtonElement | null>(null)
@@ -105,7 +95,7 @@ function ElementLane({
       swallowClick.current = false
       return
     }
-    advance(instanceId, element.id)
+    advance(element.id)
   }
 
   /** 끄는 것은 석판에서만 시작한다. 홈을 끄는 것은 탭으로 친다. */
@@ -144,7 +134,7 @@ function ElementLane({
     if (d.moved) {
       // 여기서 처음으로 칸에 붙는다.
       if (dragOffset !== null) {
-        setState(instanceId, element.id, nearestSlotState(dragOffset, slotOffsets))
+        setState(element.id, nearestSlotState(dragOffset, slotOffsets))
       }
       // 끌어서 놓은 것은 탭이 아니다. 뒤따라오는 click을 삼킨다.
       swallowClick.current = true

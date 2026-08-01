@@ -37,6 +37,8 @@ export function SatchelPage() {
   const currentLayout = useSatchelStore((s) => s.currentLayout)
   const countOf = useSatchelStore((s) => s.countOf)
   const settingsFor = useSatchelStore((s) => s.settingsFor)
+  const rotationOf = useSatchelStore((s) => s.rotationOf)
+  const rotateWidget = useSatchelStore((s) => s.rotateWidget)
   const setWidgetSettings = useSatchelStore((s) => s.setWidgetSettings)
 
   /** 설정 팝업을 연 위젯. 편집 모드 전용이다. */
@@ -98,9 +100,11 @@ export function SatchelPage() {
           mode={mode}
           showWidgetTitles={settings.showWidgetTitles}
           settingsOf={settingsFor}
+          rotationOf={rotationOf}
           onCommit={moveOrResize}
           onRemove={removeWidgetInstance}
           onOpenSettings={setSettingsTarget}
+          onRotate={rotateWidget}
         />
 
         {empty && (
