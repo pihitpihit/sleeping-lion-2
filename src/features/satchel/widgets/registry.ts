@@ -1,4 +1,6 @@
 import { TestWidget } from './TestWidget'
+import { HpXpTracker } from './hpxp/HpXpTracker'
+import { isHpXpSizeAllowed } from './hpxp/hpxp'
 import { ElementTracker } from './elements/ElementTracker'
 import { isElementTrackerSizeAllowed } from './elements/layout'
 import { ElementSettingsEditor } from './elements/ElementSettingsEditor'
@@ -35,6 +37,18 @@ const DEFINITIONS: WidgetDefinition[] = [
       Editor: ElementSettingsEditor,
     },
     Component: ElementTracker,
+  },
+  {
+    id: 'hpxp',
+    // 형님 지시 — 여관 문체로 바꾸지 않는다. 무엇인지 즉시 알아야 하는 이름이다.
+    name: 'HP/XP 트래커',
+    defaultSize: { w: 4, h: 2 },
+    // 짧은 쪽 1칸까지 줄어든다. "긴 쪽 4칸, 짧은 쪽 2칸까지"는 isSizeAllowed가 본다 —
+    // maxSize 한 쌍으로는 4×2와 2×4를 함께 허용할 수 없다.
+    minSize: { w: 1, h: 1 },
+    // 인스턴스 제한 없음 — 사람마다 하나씩 놓는다. 값은 서로 섞이지 않는다.
+    isSizeAllowed: isHpXpSizeAllowed,
+    Component: HpXpTracker,
   },
 ]
 

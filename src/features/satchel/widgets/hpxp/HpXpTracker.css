@@ -1,0 +1,254 @@
+/* ==========================================================================
+   HP/XP 트래커
+
+   실물 다이얼의 얼개를 따른다 — 알약꼴 판, 붉은 반쪽과 푸른 반쪽, 가운데를 향해
+   마주 보는 육각 창, 가장자리를 도는 빛나는 테.
+
+   **아트는 베끼지 않는다.** 그림은 Cephalofair의 저작물이므로 담지 않고, 여기
+   있는 것은 전부 그라디언트와 도형이다(SPEC 3장).
+   ========================================================================== */
+
+.hpxp {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  /* 알약꼴. 짧은 변의 절반으로 두면 어느 비율에서도 끝이 둥글게 떨어진다. */
+  border-radius: 999px;
+  overflow: hidden;
+  /* 붉은 쪽에서 푸른 쪽으로. 가운데는 자줏빛으로 섞인다. */
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, transparent 42%),
+    linear-gradient(
+      var(--hpxp-axis, 90deg),
+      #7c1512 0%,
+      #b0241d 26%,
+      #6e2340 50%,
+      #1c4ea6 74%,
+      #12327a 100%
+    );
+  box-shadow:
+    inset 0 2px 6px rgba(255, 255, 255, 0.16),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.5);
+  color: #f4ecdf;
+  user-select: none;
+}
+
+.hpxp--stacked {
+  flex-direction: column;
+  --hpxp-axis: 180deg;
+}
+
+/* 결. 실물의 갈라진 표면 대신 옅은 사선 몇 겹으로 질감만 낸다.
+   무늬가 또렷하면 숫자를 읽는 데 방해가 된다. */
+.hpxp::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(58deg, rgba(255, 255, 255, 0.05) 0 2px, transparent 2px 26px),
+    repeating-linear-gradient(-34deg, rgba(0, 0, 0, 0.12) 0 1px, transparent 1px 34px);
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   테두리 문양
+   -------------------------------------------------------------------------- */
+
+.hpxp__frame {
+  position: absolute;
+  inset: 6%;
+  border: 2px solid rgba(244, 236, 223, 0.72);
+  border-radius: 999px;
+  box-shadow:
+    0 0 8px rgba(255, 255, 255, 0.45),
+    inset 0 0 8px rgba(255, 255, 255, 0.3);
+  pointer-events: none;
+}
+
+/* 위아래 가운데의 꺾쇠. 실물에서 두 색이 만나는 자리를 표시하는 장식이다. */
+.hpxp__frame::before,
+.hpxp__frame::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-left: -0.55rem;
+  border-top: 2px solid rgba(244, 236, 223, 0.8);
+  border-right: 2px solid rgba(244, 236, 223, 0.8);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5);
+}
+
+.hpxp__frame::before {
+  top: -0.55rem;
+  transform: rotate(-45deg);
+}
+
+.hpxp__frame::after {
+  bottom: -0.55rem;
+  transform: rotate(135deg);
+}
+
+/* --------------------------------------------------------------------------
+   반쪽
+   -------------------------------------------------------------------------- */
+
+.hpxp__half {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--hpxp-gap);
+  /* 여백은 배치 계산이 정한다. 여기서 %로 따로 정하면 계산과 어긋나 내용이
+     반쪽 밖으로 넘친다 — 실제로 가운데서 두 `+` 단추가 겹쳤다. */
+  padding: 0 var(--hpxp-pad-inner);
+}
+
+.hpxp--side-by-side .hpxp__half--hp {
+  padding-left: var(--hpxp-pad-outer);
+}
+
+.hpxp--side-by-side .hpxp__half--xp {
+  padding-right: var(--hpxp-pad-outer);
+}
+
+/* 푸른 쪽은 거울처럼 뒤집는다 — 실물에서 두 표식이 바깥을 향해 마주 본다. */
+.hpxp__half--xp {
+  flex-direction: row-reverse;
+}
+
+.hpxp--stacked .hpxp__half--xp {
+  flex-direction: row;
+}
+
+.hpxp__mark {
+  flex: none;
+  width: var(--hpxp-knob);
+  height: var(--hpxp-knob);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 236, 226, 0.92);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.55));
+}
+
+.hpxp__half--xp .hpxp__mark {
+  color: rgba(226, 244, 255, 0.95);
+}
+
+/* --------------------------------------------------------------------------
+   손잡이 — 실물의 검은 다이얼이 여기서는 ∓ 단추가 된다
+   -------------------------------------------------------------------------- */
+
+.hpxp__knob {
+  /* 자리는 배치 계산이 이미 나눠 줬다. 여기서 다시 밀어내지 않는다 —
+     밀어내면 손잡이가 타원이 된다. */
+  flex: none;
+  width: var(--hpxp-knob);
+  height: var(--hpxp-knob);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 32%, #45464a 0%, #1b1c1f 58%, #0a0a0c 100%);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.6),
+    0 2px 4px rgba(0, 0, 0, 0.55),
+    inset 0 1px 1px rgba(255, 255, 255, 0.22);
+  color: rgba(244, 236, 223, 0.9);
+  cursor: pointer;
+  /* 편집 모드에서 드래그하려다 값이 바뀌면 곤란하다. 프레임이 이미 막지만
+     여기서도 막아 손가락이 미끄러지는 경우를 줄인다. */
+  touch-action: manipulation;
+}
+
+.hpxp__knob:hover:not(:disabled) {
+  color: #fff;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.6),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+.hpxp__knob:active:not(:disabled) {
+  /* 눌린 느낌. 실물 단추가 들어가는 만큼만. */
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.7),
+    inset 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* 끝에 닿으면 더 돌아가지 않는다. 사라지지 않고 흐려진다 —
+   자리가 비면 다른 단추의 위치가 흔들린다. */
+.hpxp__knob:disabled {
+  opacity: 0.34;
+  cursor: default;
+}
+
+.hpxp__knob:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 2px;
+}
+
+.hpxp__sign {
+  font-size: calc(var(--hpxp-knob) * 0.56);
+  line-height: 1;
+  font-weight: 500;
+}
+
+/* --------------------------------------------------------------------------
+   육각 창
+   -------------------------------------------------------------------------- */
+
+/*
+  창은 줄어들지 않는다.
+
+  처음에 `flex: 0 1 auto`로 두었더니 손잡이가 고정 크기라 창만 눌려 숫자가
+  잘렸다. **숫자가 이 위젯의 전부다** — 줄어들 것은 손잡이지 창이 아니다.
+*/
+.hpxp__window {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--hpxp-window);
+  height: calc(var(--hpxp-number) * 1.5);
+  /* 실물의 육각 구멍. 좌우가 뾰족하다. */
+  clip-path: polygon(14% 0%, 86% 0%, 100% 50%, 86% 100%, 14% 100%, 0% 50%);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.5));
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.hpxp__value {
+  /* 제목용 장식 서체(Pirata One)는 숫자가 읽기 어렵다. 체력은 한눈에 읽혀야
+     하므로 본문 세리프를 쓴다. */
+  font-family: var(--sl-font-ko-display);
+  font-size: var(--hpxp-number);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  /* 자릿수가 바뀔 때 숫자가 흔들리지 않게 한다. */
+  font-variant-numeric: tabular-nums;
+  color: #f6efe2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+/* 창 안쪽은 그 반쪽의 색을 옅게 머금는다 — 실물에서 붉은 창과 푸른 창이 갈린다. */
+.hpxp__half--hp .hpxp__window {
+  background: linear-gradient(180deg, rgba(58, 6, 6, 0.85), rgba(20, 4, 4, 0.7));
+}
+
+.hpxp__half--xp .hpxp__window {
+  background: linear-gradient(180deg, rgba(6, 22, 58, 0.85), rgba(4, 10, 26, 0.7));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hpxp__knob {
+    transition: none;
+  }
+}
