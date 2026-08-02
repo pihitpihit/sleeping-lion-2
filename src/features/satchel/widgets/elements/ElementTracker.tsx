@@ -1,6 +1,6 @@
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { useBoardSize } from '../../useBoardSize'
-import { DRAG_THRESHOLD } from '../../interaction/gestureMath'
+import { DRAG_THRESHOLD, toLocalDelta } from '../../interaction/gestureMath'
 import type { WidgetProps } from '../types'
 import { useElementStore } from './elementStore'
 import { computeElementLayout } from './layout'
@@ -20,7 +20,7 @@ import './ElementTracker.css'
  * **규칙을 돌리지 않는다.** 라운드 종료 감쇠는 자동으로 처리하지 않는다(SPEC 1장).
  * 손으로 옮기는 것을 거들 뿐이다.
  */
-export function ElementTracker({ mode, settings }: WidgetProps) {
+export function ElementTracker({ mode, rotation, settings }: WidgetProps) {
   const { ref, size } = useBoardSize<HTMLDivElement>()
   const shownElements = visibleElements(sanitizeElementSettings(settings))
   const layout = computeElementLayout(size, shownElements.length)
@@ -45,6 +45,7 @@ export function ElementTracker({ mode, settings }: WidgetProps) {
             key={element.id}
             element={element}
             mode={mode}
+            rotation={rotation}
             iconSize={layout.iconSize}
             canSlide={layout.canSlide}
             slotOffsets={layout.slotOffsets}
@@ -58,13 +59,22 @@ export function ElementTracker({ mode, settings }: WidgetProps) {
 interface LaneProps {
   element: ElementDef
   mode: WidgetProps['mode']
+  rotation: number
   iconSize: number
   canSlide: boolean
   slotOffsets: readonly [number, number, number]
   vertical: boolean
 }
 
-function ElementLane({ element, mode, iconSize, canSlide, slotOffsets, vertical }: LaneProps) {
+function ElementLane({
+  element,
+  mode,
+  rotation,
+  iconSize,
+  canSlide,
+  slotOffsets,
+  vertical,
+}: LaneProps) {
   const state = useElementStore((s) => s.stateOf(element.id))
   const advance = useElementStore((s) => s.advance)
   const setState = useElementStore((s) => s.setState)
@@ -75,9 +85,13 @@ function ElementLane({ element, mode, iconSize, canSlide, slotOffsets, vertical 
    * 끄는 중에 칸마다 튀면 조작감이 나쁘다 — 붙는 것은 손을 뗀 뒤다.
    */
   const [dragOffset, setDragOffset] = useState<number | null>(null)
-  const drag = useRef<{ pointerId: number; origin: number; start: number; moved: boolean } | null>(
-    null,
-  )
+  const drag = useRef<{
+    pointerId: number
+    originX: number
+    originY: number
+    start: number
+    moved: boolean
+  } | null>(null)
   /** 방금 끌어서 놓았으면 뒤따라오는 click을 삼킨다. 안 그러면 상태가 두 번 바뀐다. */
   const swallowClick = useRef(false)
 
@@ -104,7 +118,8 @@ function ElementLane({ element, mode, iconSize, canSlide, slotOffsets, vertical 
     event.currentTarget.setPointerCapture(event.pointerId)
     drag.current = {
       pointerId: event.pointerId,
-      origin: vertical ? event.clientX : event.clientY,
+      originX: event.clientX,
+      originY: event.clientY,
       start: slotOffsets[slotOf(state)],
       moved: false,
     }
@@ -114,9 +129,17 @@ function ElementLane({ element, mode, iconSize, canSlide, slotOffsets, vertical 
     const d = drag.current
     if (!d || d.pointerId !== event.pointerId) return
 
-    // 슬라이딩 축은 배치 방향과 수직이다. 가로 배치면 위아래로 민다.
-    const now = vertical ? event.clientX : event.clientY
-    const delta = now - d.origin
+    /*
+      **화면 좌표를 위젯 안쪽으로 돌린 뒤에 축을 고른다.**
+
+      홈은 CSS로 함께 돌아가는데 포인터는 화면 기준으로 온다. 90도로 세우면 홈이
+      가로로 보이는데 손은 위아래로 끌어야 움직였다 — 눈과 손이 어긋났다.
+
+      슬라이딩 축은 배치 방향과 수직이다. 가로 배치면 안쪽 세로로, 세로 배치면
+      안쪽 가로로 민다.
+    */
+    const local = toLocalDelta(event.clientX - d.originX, event.clientY - d.originY, rotation)
+    const delta = vertical ? local.dx : local.dy
     if (!d.moved && Math.abs(delta) < DRAG_THRESHOLD) return
     d.moved = true
 

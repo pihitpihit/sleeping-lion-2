@@ -63,3 +63,26 @@ export const DRAG_THRESHOLD = 4
 export function exceedsThreshold(delta: Delta): boolean {
   return Math.abs(delta.dx) >= DRAG_THRESHOLD || Math.abs(delta.dy) >= DRAG_THRESHOLD
 }
+
+/**
+ * 화면에서의 이동을 **위젯 안쪽 좌표**로 돌린다.
+ *
+ * 내용은 CSS `rotate`로 돌아가 있지만 포인터 좌표는 화면 기준으로 온다.
+ * 180도로 돌려 마주 앉은 사람이 제 기준 '위로' 끄는 것은 화면에서는 '아래로'다.
+ * 그대로 쓰면 값이 거꾸로 움직인다.
+ *
+ * 화면 = R(θ)·안쪽 이므로 안쪽 = R(−θ)·화면 이다.
+ */
+export function toLocalDelta(dx: number, dy: number, rotation: number): { dx: number; dy: number } {
+  const rad = (-rotation * Math.PI) / 180
+  // 90도 단위만 쓰므로 반올림하면 정확히 0과 ±1이 된다. 부동소수 찌꺼기를 없앤다.
+  const cos = Math.round(Math.cos(rad))
+  const sin = Math.round(Math.sin(rad))
+  return { dx: unsign(dx * cos - dy * sin), dy: unsign(dx * sin + dy * cos) }
+}
+
+/** `-0`을 `0`으로 만든다. 값은 같지만 `Object.is`로 비교하면 갈리고, 밖으로
+ *  내보낼 이유가 없다. */
+function unsign(value: number): number {
+  return value === 0 ? 0 : value
+}
