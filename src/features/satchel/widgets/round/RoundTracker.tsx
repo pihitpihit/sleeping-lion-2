@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useBoardSize } from '../../useBoardSize'
+import { ConfirmDialog } from '../../board/ConfirmDialog'
 import { NumberReel } from '../reel/NumberReel'
 import type { WidgetProps } from '../types'
 import { computeRoundLayout } from './round'
-import { MAX_ROUND, useRoundStore } from './roundStore'
+import { FIRST_ROUND, MAX_ROUND, useRoundStore } from './roundStore'
 import { RestartIcon } from './roundIcons'
 import './RoundTracker.css'
 
@@ -25,6 +27,7 @@ export function RoundTracker({ mode }: WidgetProps) {
   const round = useRoundStore((s) => s.round)
   const advance = useRoundStore((s) => s.advance)
   const restart = useRoundStore((s) => s.restart)
+  const [asking, setAsking] = useState(false)
 
   return (
     <div
@@ -70,20 +73,41 @@ export function RoundTracker({ mode }: WidgetProps) {
         끄는 것도 '새로 시작'이다. 무엇보다 **판의 모양이 라운드에 따라 바뀌지
         않는다** — 2라운드가 되는 순간 귀퉁이가 잘려 나가면 눈에 거슬린다.
 
-        되돌릴 수 없는 일이므로 한 번 더 묻는다.
+        되돌릴 수 없는 일이므로 한 번 더 묻는다 — 뜸을 들이는 팝업으로.
       */}
       {mode === 'play' && (
         <button
           type="button"
           className="round__restart"
           aria-label="판을 새로 시작한다. 첫 라운드로 가고 원소가 모두 꺼진다."
-          onClick={() => {
-            if (!window.confirm('첫 라운드로 되돌리고 원소를 모두 끕니까?')) return
-            restart()
-          }}
+          onClick={() => setAsking(true)}
         >
           <RestartIcon size={layout.cutIconSize} />
         </button>
+      )}
+
+      {/*
+        지금 몇 라운드인지 함께 보여준다. "정말입니까"는 무엇을 잃는지 알려주지
+        않는다 — 12라운드를 버리는 것과 2라운드를 버리는 것은 다른 일이다.
+
+        이미 첫 라운드면 되돌릴 라운드가 없다. 그때도 할 일은 남아 있으므로
+        (원소를 끈다) 묻기는 하되, "1라운드로 되돌린다"고 적지는 않는다.
+      */}
+      {asking && (
+        <ConfirmDialog
+          title="판을 새로 시작"
+          description={
+            round === FIRST_ROUND
+              ? '이미 첫 라운드다. 원소를 모두 끈다. 되돌릴 수 없다.'
+              : `지금 ${round}라운드다. 1라운드로 되돌리고 원소를 모두 끈다. 되돌릴 수 없다.`
+          }
+          confirmLabel="새로 시작"
+          onCancel={() => setAsking(false)}
+          onConfirm={() => {
+            restart()
+            setAsking(false)
+          }}
+        />
       )}
     </div>
   )

@@ -1,0 +1,189 @@
+/* ==========================================================================
+   되돌릴 수 없는 일을 묻는 팝업
+
+   위젯 설정 팝업(`.widget-settings`)과 겉모습을 맞추되 클래스는 나눈다 — 이쪽은
+   `document.body`에 그려지므로 행낭 화면의 CSS 안에 둘 수 없다.
+   ========================================================================== */
+
+.confirm {
+  position: fixed;
+  inset: 0;
+  /* 위젯 설정 팝업(40)보다 위. 설정을 열어둔 채로도 물을 수 있어야 한다. */
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--sl-safe-top) + 1rem) 1rem calc(var(--sl-safe-bottom) + 1rem);
+  /* 설정 팝업보다 짙게 깐다. 뒤쪽이 흐려질수록 지금 물어보는 것 하나만 남는다. */
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.confirm__panel {
+  width: min(100%, 21rem);
+  max-height: 100%;
+  overflow-y: auto;
+  border: 1px solid var(--sl-border-strong);
+  border-radius: 4px;
+  background: var(--sl-panel);
+  box-shadow: 0 30px 60px -24px rgba(0, 0, 0, 1);
+}
+
+.confirm__panel:focus {
+  outline: none;
+}
+
+.confirm__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.6rem 0.6rem 1rem;
+  border-bottom: 1px solid var(--sl-border);
+}
+
+.confirm__title {
+  flex: 1;
+  margin: 0;
+  font-family: var(--sl-font-ko-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  /* 황금이 아니라 잉걸빛이다 — 제목만 봐도 무르는 일이 아님이 보여야 한다. */
+  color: var(--sl-ember);
+}
+
+.confirm__close {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--sl-text-muted);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.confirm__close:hover,
+.confirm__close:focus-visible {
+  color: var(--sl-gold-bright);
+}
+
+.confirm__body {
+  margin: 0;
+  padding: 1rem;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--sl-text);
+}
+
+/* 읽어 주기 위한 자리다. 눈으로는 채워지는 띠가 같은 말을 한다. */
+.confirm__status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.confirm__foot {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 1rem 1rem;
+}
+
+.confirm__cancel,
+.confirm__arm {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 4px;
+  font-family: var(--sl-font-body);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+/*
+  무르는 쪽이 더 눈에 띈다. 보통은 실행 쪽을 채워 그리지만 여기서는 반대다 —
+  이 팝업에서 바라는 기본값은 '안 한다'이다.
+*/
+.confirm__cancel {
+  border: 1px solid var(--sl-border-strong);
+  background: var(--sl-raised);
+  color: var(--sl-text);
+}
+
+.confirm__cancel:hover,
+.confirm__cancel:focus-visible {
+  border-color: var(--sl-gold);
+  color: var(--sl-gold-bright);
+}
+
+/*
+  실행 쪽.
+
+  뜸이 도는 동안 잉걸빛이 왼쪽에서 차오른다. **눌리지 않는 이유가 보여야**
+  고장으로 읽히지 않는다.
+
+  `background-image`로 칠하는 것은 `background-color`와 따로 놀아서, 살아난 뒤
+  바탕색을 바꿔도 띠가 지워지지 않는다 — 다 찬 띠와 살아난 바탕이 같은 색이라
+  그대로 이어진다.
+*/
+.confirm__arm {
+  position: relative;
+  border: 1px solid var(--sl-ember);
+  background-color: transparent;
+  background-image: linear-gradient(
+    90deg,
+    var(--sl-ember) 0 calc(var(--confirm-progress, 0) * 100%),
+    transparent calc(var(--confirm-progress, 0) * 100%)
+  );
+  color: var(--sl-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.confirm__arm:disabled {
+  cursor: not-allowed;
+  color: var(--sl-text-muted);
+}
+
+.confirm__arm:not(:disabled) {
+  background-color: var(--sl-ember);
+  color: var(--sl-text);
+  font-weight: 600;
+}
+
+.confirm__arm:not(:disabled):hover,
+.confirm__arm:not(:disabled):focus-visible {
+  border-color: var(--sl-gold-bright);
+}
+
+/* 남은 초. 숫자만 따로 세워 두어야 단추 이름이 초마다 흔들리지 않는다. */
+.confirm__arm-count {
+  min-width: 1.4em;
+  padding: 0 0.3em;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  font-family: var(--sl-font-display);
+  font-size: 1.05rem;
+  line-height: 1.4;
+  color: var(--sl-gold-bright);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confirm__cancel,
+  .confirm__arm {
+    transition: none;
+  }
+}
