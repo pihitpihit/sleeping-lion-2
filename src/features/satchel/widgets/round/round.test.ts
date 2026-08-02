@@ -24,7 +24,7 @@ describe('원소 하강', () => {
 
 describe('라운드를 넘기면 원소가 함께 내려간다', () => {
   beforeEach(() => {
-    useRoundStore.getState().reset()
+    useRoundStore.getState().restart()
     useElementStore.getState().resetAll()
   })
 
@@ -85,11 +85,27 @@ describe('라운드를 넘기면 원소가 함께 내려간다', () => {
     expect(useElementStore.getState().stateOf('fire')).toBe('strong')
   })
 
-  it('되돌리면 첫 라운드로 가되 원소는 건드리지 않는다', () => {
+  /**
+   * 새 시나리오를 펴면 라운드 표식이 1로 가고 원소판도 비어 있다. 라운드만
+   * 1인데 불이 타오르고 있으면 어느 것이 판의 상태인지 알 수 없다.
+   */
+  it('처음으로 되돌리면 라운드와 원소가 함께 초기화된다', () => {
     useElementStore.getState().setState('fire', 'strong')
-    useRoundStore.getState().reset()
+    useElementStore.getState().setState('ice', 'waning')
+    useRoundStore.getState().advance()
+
+    useRoundStore.getState().restart()
+
     expect(useRoundStore.getState().round).toBe(FIRST_ROUND)
-    expect(useElementStore.getState().stateOf('fire')).toBe('strong')
+    expect(useElementStore.getState().stateOf('fire')).toBe('inert')
+    expect(useElementStore.getState().stateOf('ice')).toBe('inert')
+  })
+
+  it('마지막 칸까지 갔어도 처음으로 돌아온다', () => {
+    for (let i = 0; i < MAX_ROUND; i += 1) useRoundStore.getState().advance()
+    expect(useRoundStore.getState().round).toBe(MAX_ROUND)
+    useRoundStore.getState().restart()
+    expect(useRoundStore.getState().round).toBe(FIRST_ROUND)
   })
 
   /** SPEC 5.2 — 도구 런타임은 메모리 전용이다. */

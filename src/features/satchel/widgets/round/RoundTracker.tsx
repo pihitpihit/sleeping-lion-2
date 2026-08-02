@@ -23,6 +23,7 @@ export function RoundTracker({ mode }: WidgetProps) {
   const layout = computeRoundLayout(size)
   const round = useRoundStore((s) => s.round)
   const advance = useRoundStore((s) => s.advance)
+  const restart = useRoundStore((s) => s.restart)
 
   return (
     <div
@@ -64,6 +65,27 @@ export function RoundTracker({ mode }: WidgetProps) {
         <span className="round__hint" aria-hidden="true">
           누르면 원소가 내려간다
         </span>
+      )}
+
+      {/*
+        판을 새로 시작하는 문. **첫 라운드에는 내지 않는다** — 이미 처음이라
+        누를 이유가 없고, 자리만 차지하면 잘못 눌릴 일만 생긴다.
+
+        판을 넘기는 큰 단추 위에 겹쳐 두되 구석으로 밀어 둔다. 되돌릴 수 없는
+        일이므로 한 번 더 묻는다.
+      */}
+      {round > FIRST_ROUND && mode === 'play' && (
+        <button
+          type="button"
+          className="round__restart"
+          aria-label="판을 새로 시작한다. 첫 라운드로 가고 원소가 모두 꺼진다."
+          onClick={() => {
+            if (!window.confirm('첫 라운드로 되돌리고 원소를 모두 끕니까?')) return
+            restart()
+          }}
+        >
+          처음으로
+        </button>
       )}
     </div>
   )

@@ -32,8 +32,16 @@ interface RoundState {
   round: number
   /** 다음 라운드로. 원소가 한 단계씩 내려간다. */
   advance: () => void
-  /** 첫 라운드로 되돌린다. 원소는 건드리지 않는다 — 원소는 원소대로 지운다. */
-  reset: () => void
+  /**
+   * 판을 새로 시작한다 — 첫 라운드로 가고 **원소도 모두 끈다.**
+   *
+   * 처음에는 라운드만 되돌리고 원소는 두려 했다. 실물을 생각하면 틀렸다 —
+   * 새 시나리오를 펴면 라운드 표식이 1로 가고 원소판도 비어 있다. 라운드만
+   * 1로 가 있는데 불이 타오르고 있으면 어느 것이 판의 상태인지 알 수 없다.
+   *
+   * 라운드와 원소를 잇는 자리가 이미 여기이므로 함께 둔다.
+   */
+  restart: () => void
 }
 
 export const useRoundStore = create<RoundState>((set, get) => ({
@@ -45,5 +53,8 @@ export const useRoundStore = create<RoundState>((set, get) => ({
     useElementStore.getState().decayAll()
   },
 
-  reset: () => set({ round: FIRST_ROUND }),
+  restart: () => {
+    set({ round: FIRST_ROUND })
+    useElementStore.getState().resetAll()
+  },
 }))

@@ -92,6 +92,40 @@
   pointer-events: none;
 }
 
+/*
+  판을 새로 시작하는 문.
+
+  큰 단추 위에 얹히므로 **자기 자리에서만 포인터를 받는다.** 판 전체가 라운드를
+  넘기는 자리라, 이 조각까지 그 일을 하면 실수로 판이 넘어간다.
+*/
+.round__restart {
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  transform: translateX(-50%);
+  padding: 0.15em 0.6em;
+  border: 1px solid var(--sl-border);
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.55);
+  color: var(--sl-text-faint);
+  font-family: var(--sl-font-body);
+  font-size: var(--round-label);
+  line-height: 1.6;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.round__restart:hover,
+.round__restart:focus-visible {
+  border-color: var(--sl-ember);
+  color: var(--sl-ember);
+}
+
+.round__restart:focus-visible {
+  outline: 2px solid var(--sl-gold);
+  outline-offset: 2px;
+}
+
 .round__end {
   position: absolute;
   top: 6%;
