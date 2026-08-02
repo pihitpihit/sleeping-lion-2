@@ -1,0 +1,108 @@
+/* ==========================================================================
+   라운드 트래커
+
+   실물은 판 위의 칸을 표식이 한 칸씩 옮겨 간다. 화면에서는 새긴 돌판 하나로
+   줄이고, 숫자만 도는 띠로 돌린다 — 칸을 늘어놓으면 라운드가 길어질수록 감당이
+   안 되고, 정작 알고 싶은 것은 '지금 몇 라운드인가' 하나다.
+   ========================================================================== */
+
+.round {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/*
+  돌판. 누르는 곳이 곧 판 전체다 — 작은 단추를 따로 두면 판 중에 겨냥해야 한다.
+*/
+.round__plate {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15em;
+  padding: 4%;
+  border: 1px solid var(--sl-border-strong);
+  border-radius: 4px;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 22%, rgba(201, 162, 39, 0.13), transparent 70%),
+    linear-gradient(180deg, var(--sl-raised), var(--sl-void));
+  box-shadow:
+    inset 0 1px 0 rgba(232, 205, 114, 0.12),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.6);
+  color: var(--sl-gold-bright);
+  font-family: var(--sl-font-ko-display);
+  font-size: var(--round-number);
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  /* 눌렀을 때 화면이 함께 움직이면 몇 번 눌렸는지 알기 어렵다. */
+  touch-action: manipulation;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.round__plate:hover:not(:disabled) {
+  border-color: var(--sl-gold);
+}
+
+.round__plate:active:not(:disabled) {
+  /* 눌린 만큼 들어간다. 라운드를 넘기는 것은 되돌리기 어려우므로 손끝에
+     확실한 응답이 있어야 한다. */
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.85);
+}
+
+.round__plate:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+
+.round__plate:focus-visible {
+  outline: 2px solid var(--sl-gold);
+  outline-offset: -3px;
+}
+
+.round__label {
+  font-size: var(--round-label);
+  font-weight: 400;
+  letter-spacing: 0.24em;
+  /* 자간을 준 만큼 오른쪽이 비어 보인다. 그만큼 왼쪽으로 당긴다. */
+  text-indent: 0.24em;
+  color: var(--sl-text-faint);
+}
+
+/* 첫 라운드에만 낸다. 한 번 넘겨 보면 알게 되므로 계속 붙어 있을 이유가 없다. */
+.round__hint {
+  position: absolute;
+  left: 50%;
+  bottom: 4%;
+  transform: translateX(-50%);
+  padding: 0 0.4em;
+  font-size: var(--round-label);
+  white-space: nowrap;
+  color: var(--sl-text-faint);
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.round__end {
+  position: absolute;
+  top: 6%;
+  right: 8%;
+  font-size: var(--round-label);
+  color: var(--sl-ember);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .round__plate {
+    transition: none;
+  }
+}

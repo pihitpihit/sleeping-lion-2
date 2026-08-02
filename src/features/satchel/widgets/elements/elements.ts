@@ -71,6 +71,20 @@ export function nextElementState(state: ElementState): ElementState {
 }
 
 /**
+ * 라운드가 넘어갈 때의 하강.
+ *
+ * **탭 순서(`nextElementState`)와 다르다.** 탭은 돌고 돌지만 하강은 한 방향으로만
+ * 내려가고 바닥에서 멎는다 — 꺼진 원소가 라운드가 지났다고 다시 타오르지 않는다.
+ *
+ * 실물에서는 라운드 끝에 강한 칸의 표식을 약한 칸으로, 약한 칸의 것을 통에
+ * 되돌린다. 그것을 그대로 옮긴 것이며 **규칙을 판정하지는 않는다** — 언제
+ * 넘길지는 사람이 정한다(SPEC 1장 축 ②).
+ */
+export function decayElementState(state: ElementState): ElementState {
+  return state === 'strong' ? 'waning' : 'inert'
+}
+
+/**
  * 슬라이딩 트랙에서 왼쪽부터의 칸 번호.
  *
  * **왼쪽이 꺼짐, 오른쪽으로 갈수록 강하다** — 전력계 은유다. 활성화하면 오른쪽

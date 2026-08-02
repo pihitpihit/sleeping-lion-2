@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { nextElementState, type ElementState } from './elements'
+import { decayElementState, nextElementState, type ElementState } from './elements'
 
 /**
  * 원소 상태 — **도구 런타임이다.**
@@ -27,6 +27,12 @@ interface ElementTrackerState {
   stateOf: (elementId: string) => ElementState
   setState: (elementId: string, state: ElementState) => void
   advance: (elementId: string) => void
+  /**
+   * 라운드가 넘어갈 때 모두 한 단계 내린다.
+   *
+   * 꺼진 것은 그대로다 — 라운드가 지났다고 다시 타오르지 않는다.
+   */
+  decayAll: () => void
   /** 전부 꺼짐으로. */
   resetAll: () => void
 }
@@ -41,6 +47,18 @@ export const useElementStore = create<ElementTrackerState>((set, get) => ({
   advance: (elementId) => {
     get().setState(elementId, nextElementState(get().stateOf(elementId)))
   },
+
+  decayAll: () =>
+    set((s) => {
+      const next: Record<string, ElementState> = {}
+      // 꺼진 것은 아예 담지 않는다. `stateOf`가 없는 것을 꺼짐으로 읽으므로
+      // 결과는 같고, 쌓이지 않는다.
+      for (const [id, state] of Object.entries(s.elements)) {
+        const decayed = decayElementState(state)
+        if (decayed !== 'inert') next[id] = decayed
+      }
+      return { elements: next }
+    }),
 
   resetAll: () => set({ elements: {} }),
 }))

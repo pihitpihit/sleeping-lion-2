@@ -1,5 +1,6 @@
 import { TestWidget } from './TestWidget'
 import { HpXpTracker } from './hpxp/HpXpTracker'
+import { RoundTracker } from './round/RoundTracker'
 import { isHpXpSizeAllowed } from './hpxp/hpxp'
 import { ElementTracker } from './elements/ElementTracker'
 import { isElementTrackerSizeAllowed } from './elements/layout'
@@ -49,6 +50,15 @@ const DEFINITIONS: WidgetDefinition[] = [
     // 인스턴스 제한 없음 — 사람마다 하나씩 놓는다. 값은 서로 섞이지 않는다.
     isSizeAllowed: isHpXpSizeAllowed,
     Component: HpXpTracker,
+  },
+  {
+    id: 'round',
+    name: '라운드 트래커',
+    defaultSize: { w: 2, h: 2 },
+    // 크기 자유 — 한 칸짜리 표식으로도, 넓게 펴서 멀리서 보이게도 쓴다.
+    minSize: { w: 1, h: 1 },
+    // 인스턴스 제한 없음. 값은 행낭 전체에 하나뿐이라 몇 개를 놓든 같은 것을 본다.
+    Component: RoundTracker,
   },
 ]
 

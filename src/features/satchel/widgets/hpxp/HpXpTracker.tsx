@@ -12,6 +12,7 @@ import {
   type HpXpTrack,
 } from './hpxp'
 import { useHpXpStore } from './hpxpStore'
+import { NumberReel } from '../reel/NumberReel'
 import './HpXpTracker.css'
 
 /**
@@ -72,36 +73,6 @@ export function HpXpTracker({ instanceId, mode, rotation }: WidgetProps) {
  * (SPEC 13.1) — 배경 이미지로 붙이고 파일은 `public/assets/creator-pack/`에 둔다.
  */
 const MARK_FILE: Record<HpXpTrack, string> = { hp: 'hp-drop', xp: 'xp-star' }
-
-/**
- * 숫자 띠 — 실물 다이얼의 드럼.
- *
- * 0부터 99까지를 세로로 늘어놓고 **띠 전체를 밀어** 해당 숫자를 창에 맞춘다.
- * 값이 바뀌면 CSS 전환이 그 사이를 메우므로 드럼이 도는 것처럼 보인다.
- *
- * 낱낱을 갈아끼우지 않고 띠를 미는 이유: **몇 칸을 건너뛰어도 그대로 통한다.**
- * 끌기로 한 번에 여섯 칸이 오르면 여섯 칸만큼 미끄러진다. 들고 나는 것을
- * 따로 그리는 방식은 한 칸씩만 자연스럽고, 도중에 방향이 바뀌면 엉킨다.
- *
- * **읽어주지 않는다.** 단추가 `aria-valuetext`로 이미 값을 말하므로, 여기까지
- * 읽으면 0부터 99까지를 죄다 읽는다.
- */
-function Reel({ value }: { value: number }) {
-  return (
-    <span className="hpxp__reel" aria-hidden="true">
-      <span className="hpxp__strip" style={{ '--hpxp-n': value } as React.CSSProperties}>
-        {DIGITS.map((n) => (
-          <span key={n} className="hpxp__digit">
-            {n}
-          </span>
-        ))}
-      </span>
-    </span>
-  )
-}
-
-/** 띠에 늘어설 숫자. 값의 범위가 곧 띠의 길이다. */
-const DIGITS = Array.from({ length: MAX_VALUE - MIN_VALUE + 1 }, (_, i) => MIN_VALUE + i)
 
 interface DialProps {
   track: HpXpTrack
@@ -235,7 +206,7 @@ function Dial({ track, value, rotation, disabled, onAdjust }: DialProps) {
               한 겹에 다 걸면 그림자가 오려내기 전의 네모를 따라 생긴다. */}
           <span className="hpxp__mark-fill" />
         </span>
-        <Reel value={value} />
+        <NumberReel value={value} max={MAX_VALUE} />
       </button>
     </div>
   )
