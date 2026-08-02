@@ -24,10 +24,12 @@ describe('뜸', () => {
 
 describe('남은 초', () => {
   /**
-   * **올림이다.** 2999ms를 '2'로 적으면 3초짜리 뜸이 2초로 시작해 1초가 통째로
+   * **올림이다.** 4999ms를 '4'로 적으면 5초짜리 뜸이 4초로 시작해 1초가 통째로
    * 사라져 보이고, 0.4초 남았을 때 '0'이 적히면 눌러도 안 먹는 고장으로 읽힌다.
    */
   it('올려 센다 — 0이 적히는 동안 눌리지 않는 일이 없다', () => {
+    expect(secondsLeft(CONFIRM_DELAY_MS)).toBe(5)
+    expect(secondsLeft(4999)).toBe(5)
     expect(secondsLeft(3000)).toBe(3)
     expect(secondsLeft(2999)).toBe(3)
     expect(secondsLeft(2001)).toBe(3)
@@ -72,9 +74,12 @@ describe('눌러도 되는가', () => {
     expect(isArmed(0)).toBe(true)
   })
 
-  /** 관성 탭을 끊을 만큼은 있고, 관문이 될 만큼은 아니어야 한다. */
+  /**
+   * 관성 탭을 끊을 만큼은 있어야 하고, 초를 세는 창이 두 자리로 벌어질 만큼
+   * 길어서는 안 된다 — 그쯤 되면 뜸이 아니라 벌이다.
+   */
   it('뜸은 손이 멈출 만한 길이다', () => {
     expect(CONFIRM_DELAY_MS).toBeGreaterThanOrEqual(2000)
-    expect(CONFIRM_DELAY_MS).toBeLessThanOrEqual(5000)
+    expect(CONFIRM_DELAY_MS).toBeLessThan(10000)
   })
 })
