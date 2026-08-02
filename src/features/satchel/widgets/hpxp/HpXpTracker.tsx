@@ -175,7 +175,7 @@ function Dial({ track, value, rotation, disabled, onAdjust }: DialProps) {
     <div className={`hpxp__half hpxp__half--${track}`}>
       <button
         type="button"
-        className="hpxp__dial"
+        className="hpxp__dial sl-numeral"
         // 값을 읽어주는 것이 먼저다. 조작 방법은 설명으로 붙인다.
         role="spinbutton"
         aria-label={label}

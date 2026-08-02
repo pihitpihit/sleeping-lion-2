@@ -43,7 +43,7 @@ export function RoundTracker({ mode }: WidgetProps) {
     >
       <button
         type="button"
-        className="round__plate"
+        className="round__plate sl-numeral"
         // 값을 먼저 말한다. 누르면 무슨 일이 일어나는지는 설명으로 붙인다.
         aria-label={`${round}라운드. 누르면 다음 라운드로 넘어가고 원소가 한 단계 내려간다.`}
         aria-live="polite"
@@ -53,7 +53,7 @@ export function RoundTracker({ mode }: WidgetProps) {
         <NumberReel value={round} max={MAX_ROUND} />
         {layout.showLabel && (
           <span className="round__label" aria-hidden="true">
-            라운드
+            ROUND
           </span>
         )}
       </button>

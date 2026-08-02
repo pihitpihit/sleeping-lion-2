@@ -78,6 +78,22 @@
   box-sizing: border-box;
 }
 
+/*
+  숫자와 라틴 글자는 기본으로 Pirata One을 쓴다.
+
+  CSS로는 "이 글자만 숫자다"를 고를 수 없으므로 규칙 대신 표를 둔다 — 숫자나
+  영문만 들어가는 자리에 이 클래스를 붙인다. 한글이 섞이는 자리에는 붙이지
+  않는다. Pirata One은 라틴 전용 subset이라 한글이 대체 서체로 떨어져 한 줄에
+  두 서체가 섞인다.
+
+  **굵기를 주지 않는다.** Pirata One은 한 벌뿐이라 브라우저가 가짜 굵기를
+  만들어 획이 뭉갠다(HP/XP에서 겪었다).
+*/
+.sl-numeral {
+  font-family: var(--sl-font-display);
+  font-weight: 400;
+}
+
 html,
 body,
 #root {

@@ -167,7 +167,7 @@ export function ConfirmDialog({
           >
             <span className="confirm__arm-label">{confirmLabel}</span>
             {!armed && (
-              <span className="confirm__arm-count" aria-hidden="true">
+              <span className="confirm__arm-count sl-numeral" aria-hidden="true">
                 {left}
               </span>
             )}

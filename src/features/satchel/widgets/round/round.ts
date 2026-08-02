@@ -8,7 +8,7 @@
 export interface RoundLayout {
   /** 숫자 글자 크기(px). */
   numberSize: number
-  /** '라운드' 글자 크기(px). */
+  /** 'ROUND' 글자 크기(px). */
   labelSize: number
   /** 이름표를 낼 자리가 있는가. 좁으면 숫자가 먼저다. */
   showLabel: boolean

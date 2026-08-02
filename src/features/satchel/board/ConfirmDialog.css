@@ -175,7 +175,7 @@
   padding: 0 0.3em;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.45);
-  font-family: var(--sl-font-display);
+  /* 서체는 `.sl-numeral`이 준다. */
   font-size: 1.05rem;
   line-height: 1.4;
   color: var(--sl-gold-bright);

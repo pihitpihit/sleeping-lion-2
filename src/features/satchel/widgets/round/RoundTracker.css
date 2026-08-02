@@ -42,9 +42,8 @@
     inset 0 1px 0 rgba(232, 205, 114, 0.12),
     inset 0 -2px 6px rgba(0, 0, 0, 0.6);
   color: var(--sl-gold-bright);
-  font-family: var(--sl-font-ko-display);
+  /* 서체는 `.sl-numeral`이 준다 — 판 안에 숫자와 'ROUND'뿐이라 통째로 붙였다. */
   font-size: var(--round-number);
-  font-weight: 600;
   line-height: 1;
   cursor: pointer;
   user-select: none;
@@ -75,12 +74,18 @@
   outline-offset: -3px;
 }
 
+/*
+  이름표는 'ROUND'다. 실물 판에 새겨진 것도 영문이고, Pirata One은 라틴 전용이라
+  한글로 두면 이름표만 다른 서체로 떨어져 숫자와 결이 갈린다.
+
+  읽어 주는 쪽에는 이 글자가 가지 않는다 — 판 전체의 `aria-label`이 한국어로
+  "N라운드"라고 이미 말한다.
+*/
 .round__label {
   font-size: var(--round-label);
-  font-weight: 400;
-  letter-spacing: 0.24em;
+  letter-spacing: 0.3em;
   /* 자간을 준 만큼 오른쪽이 비어 보인다. 그만큼 왼쪽으로 당긴다. */
-  text-indent: 0.24em;
+  text-indent: 0.3em;
   color: var(--sl-text-faint);
 }
 
