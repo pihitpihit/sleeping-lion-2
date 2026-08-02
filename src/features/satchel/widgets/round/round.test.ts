@@ -158,3 +158,51 @@ describe('안쪽 배치', () => {
     }
   })
 })
+
+/**
+ * 삼각형 안에 아이콘을 넣는 일이라 눈으로는 "대충 맞네"까지밖에 못 본다.
+ * 빗변을 넘는지는 셈으로 확인한다.
+ */
+describe('잘린 귀퉁이', () => {
+  const boxes = [
+    { width: 80, height: 80 },
+    { width: 180, height: 180 },
+    { width: 400, height: 120 },
+    { width: 120, height: 400 },
+    { width: 700, height: 700 },
+  ]
+
+  it('손끝으로 짚을 만한 크기에서 멈춘다', () => {
+    for (const box of boxes) {
+      const l = computeRoundLayout(box)
+      expect(l.cutSize).toBeGreaterThanOrEqual(34)
+      expect(l.cutSize).toBeLessThanOrEqual(56)
+    }
+  })
+
+  /**
+   * 직각삼각형의 두 변이 `L`이면 빗변은 `x + y = L`이다. 아이콘 가운데가
+   * `(0.3L, 0.3L)`(CSS의 30%)이므로 오른쪽 아래 모서리는 `0.6L + s`다.
+   */
+  it('아이콘이 빗변을 넘지 않는다', () => {
+    for (const box of boxes) {
+      const l = computeRoundLayout(box)
+      const corner = 0.6 * l.cutSize + l.cutIconSize
+      expect(corner).toBeLessThanOrEqual(l.cutSize)
+    }
+  })
+
+  it('아이콘이 삼각형보다 크지 않다', () => {
+    for (const box of boxes) {
+      const l = computeRoundLayout(box)
+      expect(l.cutIconSize).toBeGreaterThan(0)
+      expect(l.cutIconSize).toBeLessThan(l.cutSize)
+    }
+  })
+
+  it('넓이가 0이면 귀퉁이도 0이다', () => {
+    const l = computeRoundLayout({ width: 0, height: 100 })
+    expect(l.cutSize).toBe(0)
+    expect(l.cutIconSize).toBe(0)
+  })
+})

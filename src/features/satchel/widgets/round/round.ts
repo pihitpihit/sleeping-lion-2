@@ -12,6 +12,10 @@ export interface RoundLayout {
   labelSize: number
   /** 이름표를 낼 자리가 있는가. 좁으면 숫자가 먼저다. */
   showLabel: boolean
+  /** 왼쪽 위를 사선으로 자른 길이(px). 그 삼각형이 곧 '처음으로' 단추다. */
+  cutSize: number
+  /** 삼각형 안에 놓을 아이콘 한 변(px). */
+  cutIconSize: number
 }
 
 /** 이보다 작아지면 이름표를 뺀다. 숫자가 먼저다. */
@@ -22,7 +26,9 @@ const MAX_NUMBER = 96
 export function computeRoundLayout(box: { width: number; height: number }): RoundLayout {
   const width = Number.isFinite(box.width) ? box.width : 0
   const height = Number.isFinite(box.height) ? box.height : 0
-  if (width <= 0 || height <= 0) return { numberSize: 0, labelSize: 0, showLabel: false }
+  if (width <= 0 || height <= 0) {
+    return { numberSize: 0, labelSize: 0, showLabel: false, cutSize: 0, cutIconSize: 0 }
+  }
 
   const showLabel = Math.min(width, height) >= LABEL_THRESHOLD
 
@@ -30,5 +36,29 @@ export function computeRoundLayout(box: { width: number; height: number }): Roun
   const forNumber = showLabel ? height * 0.62 : height * 0.82
   const numberSize = Math.max(MIN_NUMBER, Math.min(MAX_NUMBER, forNumber, width * 0.52))
 
-  return { numberSize, labelSize: Math.max(9, numberSize * 0.22), showLabel }
+  /*
+    잘린 귀퉁이의 크기.
+
+    손끝으로 짚을 만해야 하므로 아래로는 34px에서 멈추고, 위로는 판을 잡아먹지
+    않게 56px에서 멈춘다.
+  */
+  const cutSize = Math.max(34, Math.min(56, Math.min(width, height) * 0.3))
+
+  return {
+    numberSize,
+    labelSize: Math.max(9, numberSize * 0.22),
+    showLabel,
+    cutSize,
+    cutIconSize: cutSize * ICON_IN_CUT,
+  }
 }
+
+/**
+ * 삼각형 안에서 아이콘이 차지하는 비율.
+ *
+ * 직각삼각형의 두 변이 `L`이면 빗변은 `x + y = L`이다. 아이콘을 `(0.3L, 0.3L)`에
+ * 앉히면 오른쪽 아래 모서리가 `0.6L + s`이므로, `s`가 `0.4L`보다 작아야 빗변을
+ * 넘지 않는다. 여유를 두어 0.36으로 잡았다 — 이 값과 아래 CSS의 위치(30%)는
+ * 함께 움직여야 한다.
+ */
+const ICON_IN_CUT = 0.36

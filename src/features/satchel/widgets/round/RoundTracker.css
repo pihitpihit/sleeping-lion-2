@@ -28,7 +28,13 @@
   gap: 0.15em;
   padding: 4%;
   border: 1px solid var(--sl-border-strong);
-  border-radius: 4px;
+  /*
+    왼쪽 위를 사선으로 자른다. 그 자리에 '처음으로'가 앉는다.
+
+    `clip-path`를 쓰면 `border-radius`가 보이지 않으므로 굳이 주지 않는다 —
+    바깥 테두리는 위젯 틀이 이미 둥글게 잡아준다.
+  */
+  clip-path: polygon(var(--round-cut) 0, 100% 0, 100% 100%, 0 100%, 0 var(--round-cut));
   background:
     radial-gradient(ellipse 70% 55% at 50% 22%, rgba(201, 162, 39, 0.13), transparent 70%),
     linear-gradient(180deg, var(--sl-raised), var(--sl-void));
@@ -78,52 +84,69 @@
   color: var(--sl-text-faint);
 }
 
-/* 첫 라운드에만 낸다. 한 번 넘겨 보면 알게 되므로 계속 붙어 있을 이유가 없다. */
-.round__hint {
-  position: absolute;
-  left: 50%;
-  bottom: 4%;
-  transform: translateX(-50%);
-  padding: 0 0.4em;
-  font-size: var(--round-label);
-  white-space: nowrap;
-  color: var(--sl-text-faint);
-  opacity: 0.75;
-  pointer-events: none;
-}
-
 /*
-  판을 새로 시작하는 문.
+  판을 새로 시작하는 문 — 잘려 나간 삼각형이 그대로 단추다.
 
   큰 단추 위에 얹히므로 **자기 자리에서만 포인터를 받는다.** 판 전체가 라운드를
-  넘기는 자리라, 이 조각까지 그 일을 하면 실수로 판이 넘어간다.
+  넘기는 자리라, 이 조각까지 그 일을 하면 실수로 판이 넘어간다. 삼각형으로
+  잘라두면 빗변 바깥은 아예 받지 않는다.
 */
 .round__restart {
   position: absolute;
-  left: 50%;
-  bottom: 4%;
-  transform: translateX(-50%);
-  padding: 0.15em 0.6em;
-  border: 1px solid var(--sl-border);
-  border-radius: 3px;
-  background: rgba(0, 0, 0, 0.55);
+  left: 0;
+  top: 0;
+  width: var(--round-cut);
+  height: var(--round-cut);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  /* 판과 정확히 맞물리는 직각삼각형. */
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  /*
+    빗변에 선을 긋는다. 선이 없으면 잘린 것이 아니라 색이 다른 조각을 얹은 것처럼
+    보인다.
+
+    135도 그라디언트의 등고선이 곧 빗변이다 — 그 방향의 진행도는 `x + y`에만
+    달렸고 빗변이 바로 `x + y = L`이기 때문이다. 다만 정사각형에서 그 대각선
+    길이는 `L√2`이므로 **빗변은 100%가 아니라 50% 자리**에 있다. 100%에 두면
+    잘려 나간 바깥에 그어져 보이지 않는다.
+  */
+  background: linear-gradient(
+    135deg,
+    var(--sl-raised) 0%,
+    var(--sl-panel) 43%,
+    rgba(232, 205, 114, 0.42) 50%
+  );
   color: var(--sl-text-faint);
-  font-family: var(--sl-font-body);
-  font-size: var(--round-label);
-  line-height: 1.6;
-  white-space: nowrap;
   cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+/*
+  아이콘은 삼각형의 **무게중심 쪽**에 앉힌다.
+
+  가운데(50%, 50%)에 두면 빗변 밖으로 반이 나간다 — 직각삼각형의 두 변이 `L`이면
+  빗변은 `x + y = L`이므로, 30%에 두어야 아이콘(0.36L)의 오른쪽 아래 모서리가
+  `0.6L + 0.36L = 0.96L`로 아슬하게 안쪽에 남는다. 이 30%와 `round.ts`의
+  `ICON_IN_CUT`은 함께 움직여야 한다.
+*/
+.round__restart svg {
+  position: absolute;
+  left: 30%;
+  top: 30%;
+  transform: translate(-50%, -50%);
+  display: block;
 }
 
 .round__restart:hover,
 .round__restart:focus-visible {
-  border-color: var(--sl-ember);
   color: var(--sl-ember);
 }
 
 .round__restart:focus-visible {
-  outline: 2px solid var(--sl-gold);
-  outline-offset: 2px;
+  /* 삼각형으로 잘려 바깥 윤곽선은 보이지 않는다. 안쪽 그림자로 대신한다. */
+  outline: none;
+  box-shadow: inset 2px 2px 0 var(--sl-gold);
 }
 
 .round__end {

@@ -2,7 +2,8 @@ import { useBoardSize } from '../../useBoardSize'
 import { NumberReel } from '../reel/NumberReel'
 import type { WidgetProps } from '../types'
 import { computeRoundLayout } from './round'
-import { FIRST_ROUND, MAX_ROUND, useRoundStore } from './roundStore'
+import { MAX_ROUND, useRoundStore } from './roundStore'
+import { RestartIcon } from './roundIcons'
 import './RoundTracker.css'
 
 /**
@@ -33,6 +34,7 @@ export function RoundTracker({ mode }: WidgetProps) {
         {
           '--round-number': `${layout.numberSize}px`,
           '--round-label': `${layout.labelSize}px`,
+          '--round-cut': `${layout.cutSize}px`,
         } as React.CSSProperties
       }
     >
@@ -61,20 +63,16 @@ export function RoundTracker({ mode }: WidgetProps) {
         </span>
       )}
 
-      {round === FIRST_ROUND && layout.showLabel && (
-        <span className="round__hint" aria-hidden="true">
-          누르면 원소가 내려간다
-        </span>
-      )}
-
       {/*
-        판을 새로 시작하는 문. **첫 라운드에는 내지 않는다** — 이미 처음이라
-        누를 이유가 없고, 자리만 차지하면 잘못 눌릴 일만 생긴다.
+        판을 새로 시작하는 문 — **왼쪽 위를 사선으로 자른 그 삼각형이 단추다.**
 
-        판을 넘기는 큰 단추 위에 겹쳐 두되 구석으로 밀어 둔다. 되돌릴 수 없는
-        일이므로 한 번 더 묻는다.
+        첫 라운드에도 낸다. 라운드는 1이어도 원소가 타오르고 있을 수 있고, 그것을
+        끄는 것도 '새로 시작'이다. 무엇보다 **판의 모양이 라운드에 따라 바뀌지
+        않는다** — 2라운드가 되는 순간 귀퉁이가 잘려 나가면 눈에 거슬린다.
+
+        되돌릴 수 없는 일이므로 한 번 더 묻는다.
       */}
-      {round > FIRST_ROUND && mode === 'play' && (
+      {mode === 'play' && (
         <button
           type="button"
           className="round__restart"
@@ -84,7 +82,7 @@ export function RoundTracker({ mode }: WidgetProps) {
             restart()
           }}
         >
-          처음으로
+          <RestartIcon size={layout.cutIconSize} />
         </button>
       )}
     </div>
