@@ -1,0 +1,241 @@
+/* ==========================================================================
+   공격 보정 덱
+   --------------------------------------------------------------------------
+   카드 크기·글자 크기는 전부 `deck.ts`의 `computeDeckLayout`이 픽셀로 내려보낸다.
+   CSS가 %로 따로 정하면 계산과 어긋난다 — HP/XP에서 겪은 자리다(구현 결정 30).
+   ========================================================================== */
+
+.deck {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--deck-gap);
+  width: 100%;
+  height: 100%;
+}
+
+.deck--side-by-side {
+  flex-direction: row;
+}
+
+.deck--stacked {
+  flex-direction: column;
+}
+
+/* 좁아서 버린 덱을 접었을 때. 더미 하나가 가운데를 차지한다. */
+.deck--single {
+  flex-direction: row;
+}
+
+/* --------------------------------------------------------------------------
+   카드 자리 — 더미와 버린 덱이 같은 크기를 쓴다
+   -------------------------------------------------------------------------- */
+
+.deck__pile,
+.deck__discard {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--deck-card-w);
+  height: var(--deck-card-h);
+  padding: 0;
+  border-radius: calc(var(--deck-card-w) * 0.1);
+}
+
+.deck__pile {
+  border: none;
+  background: none;
+  cursor: pointer;
+  /* 탭 반응이 늦어 보이지 않게. 카드가 뒤집히는 것은 즉시여야 한다. */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.deck__pile:disabled {
+  cursor: default;
+}
+
+/*
+  뒤에 겹친 두 장.
+
+  더미로 보이게 하는 것은 이 두 겹뿐이다. 실제 남은 장수와 무관하게 늘 같은
+  두께로 그린다 — 장수는 숫자로 말하고 있으므로 두께까지 세게 하면 눈이 두 번
+  일한다.
+*/
+.deck__back {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--sl-raised);
+  border: 1px solid var(--sl-border);
+}
+
+.deck__back::before,
+.deck__back::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--sl-panel);
+  border: 1px solid var(--sl-border);
+  z-index: -1;
+}
+
+.deck__back::before {
+  transform: translate(2.5%, 2.5%);
+}
+
+.deck__back::after {
+  transform: translate(5%, 5%);
+}
+
+/* 카드 뒷면의 각인. 문양을 베끼지 않고 마름모 하나로 둔다. */
+.deck__crest {
+  position: relative;
+  width: 34%;
+  height: 34%;
+  border: 1px solid var(--sl-gold-dim);
+  transform: rotate(45deg);
+  opacity: 0.5;
+}
+
+.deck__pile:not(:disabled):active .deck__back {
+  border-color: var(--sl-border-strong);
+}
+
+.deck__pile:focus-visible {
+  outline: 2px solid var(--sl-gold);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   버린 덱
+   -------------------------------------------------------------------------- */
+
+.deck__discard {
+  background: var(--sl-void);
+  border: 1px dashed var(--sl-border);
+}
+
+/* 아직 아무것도 공개하지 않았을 때의 빈자리. */
+.deck__empty {
+  width: 28%;
+  height: 2px;
+  background: var(--sl-border);
+  border-radius: 1px;
+}
+
+/* --------------------------------------------------------------------------
+   카드 앞면
+   -------------------------------------------------------------------------- */
+
+.deck__face {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(160deg, var(--sl-panel), var(--sl-raised));
+  border: 1px solid var(--sl-border-strong);
+}
+
+.deck__value {
+  font-size: var(--deck-face);
+  line-height: 1;
+  color: var(--sl-text);
+  /* Pirata One은 한 벌뿐이라 굵기를 주지 않는다(구현 결정 39). */
+}
+
+.deck__face-mark {
+  position: absolute;
+  top: 6%;
+  right: 6%;
+  display: flex;
+  color: var(--sl-gold);
+}
+
+/* --------------------------------------------------------------------------
+   장수 표기
+   -------------------------------------------------------------------------- */
+
+.deck__count {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translate(-50%, 50%);
+  padding: 0 0.4em;
+  font-size: var(--deck-count);
+  line-height: 1.5;
+  color: var(--sl-text-muted);
+  background: var(--sl-bg);
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   섞기 표시가 떴을 때
+   -------------------------------------------------------------------------- */
+
+.deck--marked .deck__discard,
+.deck--marked .deck__face {
+  border-color: var(--sl-gold);
+}
+
+.deck__pending {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  max-width: 100%;
+  padding: 0.1em 0.5em;
+  font-size: max(9px, var(--deck-count));
+  color: var(--sl-gold);
+  background: var(--sl-bg);
+  border: 1px solid var(--sl-gold-dim);
+  border-radius: 999px;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/*
+  좁은 자리에서는 글자를 접고 표식만 남긴다.
+
+  띠가 위젯보다 넓어지면 카드를 가린다. 표식 하나만으로도 "무언가 걸려 있다"는
+  것은 전해지고, 자세한 것은 읽어주는 쪽에 `role="status"`로 간다.
+*/
+.deck--single .deck__pending-text {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .deck__face {
+    animation: deck-flip 140ms ease-out;
+  }
+}
+
+/*
+  뒤집히는 시늉.
+
+  가로만 줄였다 펴서 "돌아왔다"는 느낌만 준다. 실제로 3D로 돌리면 뒷면을 따로
+  그려야 하고, 회전한 위젯(구현 결정 24) 안에서 축이 어긋난다.
+*/
+@keyframes deck-flip {
+  from {
+    transform: scaleX(0.1);
+    opacity: 0.4;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}

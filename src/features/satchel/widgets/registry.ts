@@ -6,6 +6,9 @@ import { ElementTracker } from './elements/ElementTracker'
 import { isElementTrackerSizeAllowed } from './elements/layout'
 import { ElementSettingsEditor } from './elements/ElementSettingsEditor'
 import { sanitizeElementSettings } from './elements/settings'
+import { AttackDeck } from './deck/AttackDeck'
+import { DeckSettingsEditor } from './deck/DeckSettingsEditor'
+import { sanitizeAttackDeckSettings } from './deck/settings'
 import type { WidgetDefinition } from './types'
 
 /**
@@ -50,6 +53,20 @@ const DEFINITIONS: WidgetDefinition[] = [
     // 인스턴스 제한 없음 — 사람마다 하나씩 놓는다. 값은 서로 섞이지 않는다.
     isSizeAllowed: isHpXpSizeAllowed,
     Component: HpXpTracker,
+  },
+  {
+    id: 'deck',
+    name: '공격 보정 덱',
+    // 더미와 버린 덱이 나란히 놓이는 크기. 좁히면 버린 덱을 접는다.
+    defaultSize: { w: 2, h: 2 },
+    // 한 칸까지 줄어든다 — 더미만 남고 공개된 카드가 그 자리에 겹친다.
+    minSize: { w: 1, h: 1 },
+    // 인스턴스 제한 없음. 사람마다 자기 덱을 놓는다(실물의 1·2·3·4·M과 같다).
+    settings: {
+      sanitize: sanitizeAttackDeckSettings,
+      Editor: DeckSettingsEditor,
+    },
+    Component: AttackDeck,
   },
   {
     id: 'round',

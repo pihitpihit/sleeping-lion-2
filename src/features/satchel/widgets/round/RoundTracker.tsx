@@ -45,7 +45,7 @@ export function RoundTracker({ mode }: WidgetProps) {
         type="button"
         className="round__plate sl-numeral"
         // 값을 먼저 말한다. 누르면 무슨 일이 일어나는지는 설명으로 붙인다.
-        aria-label={`${round}라운드. 누르면 다음 라운드로 넘어가고 원소가 한 단계 내려간다.`}
+        aria-label={`${round}라운드. 누르면 다음 라운드로 넘어간다. 원소가 한 단계 내려가고, 섞기 표시가 뜬 공격 보정 덱이 섞인다.`}
         aria-live="polite"
         disabled={mode !== 'play'}
         onClick={advance}
@@ -79,7 +79,7 @@ export function RoundTracker({ mode }: WidgetProps) {
         <button
           type="button"
           className="round__restart"
-          aria-label="판을 새로 시작한다. 첫 라운드로 가고 원소가 모두 꺼진다."
+          aria-label="판을 새로 시작한다. 첫 라운드로 가고, 원소가 모두 꺼지고, 공격 보정 덱이 처음으로 돌아간다."
           onClick={() => setAsking(true)}
         >
           <RestartIcon size={layout.cutIconSize} />
@@ -98,8 +98,8 @@ export function RoundTracker({ mode }: WidgetProps) {
           title="판을 새로 시작"
           description={
             round === FIRST_ROUND
-              ? '이미 첫 라운드다. 원소를 모두 끈다. 되돌릴 수 없다.'
-              : `지금 ${round}라운드다. 1라운드로 되돌리고 원소를 모두 끈다. 되돌릴 수 없다.`
+              ? '이미 첫 라운드다. 원소를 모두 끄고 공격 보정 덱을 처음으로 되돌린다. 되돌릴 수 없다.'
+              : `지금 ${round}라운드다. 1라운드로 되돌리고, 원소를 모두 끄고, 공격 보정 덱을 처음으로 되돌린다. 되돌릴 수 없다.`
           }
           confirmLabel="새로 시작"
           onCancel={() => setAsking(false)}

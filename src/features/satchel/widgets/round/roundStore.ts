@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { useElementStore } from '../elements/elementStore'
+import { useAttackDeckStore } from '../deck/deckStore'
 
 /**
  * 라운드 — **도구 런타임이다.**
@@ -51,10 +52,14 @@ export const useRoundStore = create<RoundState>((set, get) => ({
     if (get().round >= MAX_ROUND) return
     set({ round: get().round + 1 })
     useElementStore.getState().decayAll()
+    // 섞기 표시가 뜬 보정 덱만 섞인다. 표시가 없는 덱은 건드리지 않는다.
+    useAttackDeckStore.getState().shuffleMarked()
   },
 
   restart: () => {
     set({ round: FIRST_ROUND })
     useElementStore.getState().resetAll()
+    // 새 시나리오를 펴면 보정 덱도 처음으로 돌아간다 — 원소를 끄는 것과 같은 이유다.
+    useAttackDeckStore.getState().resetAll()
   },
 }))
