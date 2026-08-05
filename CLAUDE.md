@@ -55,7 +55,10 @@ Gloomhaven / Jaws of the Lion 용 웹앱. **두 축으로 구성된다** (SPEC.m
 - React + TypeScript + Vite
 - 상태: Zustand
 - 로컬 영속: IndexedDB via Dexie.js
-- 백엔드: **Supabase를 관리형으로** (Postgres) — 인증은 초대 링크+비밀번호, 접근 통제는 RLS
+- 백엔드: **Supabase를 관리형으로** (Postgres) — 인증은 초대 링크 + **진짜 이메일** + 비밀번호, 접근 통제는 RLS
+  - **지어낸 주소를 쓰지 않는다.** 나중에 비밀번호 재설정 메일을 보낼 길이 막힌다. 확인 메일·재설정은 당장 만들지 않고 필요해지면 관리형 발송 서비스를 붙인다(SPEC 4.2).
+  - **이메일은 로그인에만 쓰고 화면에 내보내지 않는다.** 표시용 이름은 `profiles`에 따로 둔다.
+- 배포: **정식도 GitHub Pages.** 레포당 사이트가 하나라 `live`가 그 자리를 쓰고 `mock`은 로컬에서만 띄운다(SPEC 3.1).
   - 2026-08-05에 **PocketBase 자가호스팅에서 바꿨다.** 절대 원칙 4(돌볼 서버를 두지 않는다)와, Broadcast가 SPEC 5.4("전투가 끝나면 어느 기기에도 남지 않는다")를 절충 없이 지키기 때문이다. SPEC 4.2가 정본.
 - 실시간: Supabase Realtime — **축 ①은 Postgres Changes, 축 ②는 Broadcast**(저장하지 않는다)
 - 테스트: Vitest
