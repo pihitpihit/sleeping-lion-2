@@ -187,34 +187,45 @@
   border-color: var(--sl-gold);
 }
 
+/*
+  섞기 대기 표식.
+
+  글자를 걷고 두 겹 원형 화살표만 남겼다. 위젯 어느 크기에서도 같은 자리에
+  같은 모양으로 앉으므로 카드를 가릴 일이 없다.
+
+  가운데가 아니라 **오른쪽 위 귀퉁이**다. 가운데 두면 카드 앞면의 숫자와 겹친다.
+*/
 .deck__pending {
   position: absolute;
   top: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 0;
   display: flex;
   align-items: center;
-  gap: 0.3em;
-  max-width: 100%;
-  padding: 0.1em 0.5em;
-  font-size: max(9px, var(--deck-count));
+  justify-content: center;
+  padding: 0.18em;
   color: var(--sl-gold);
   background: var(--sl-bg);
   border: 1px solid var(--sl-gold-dim);
   border-radius: 999px;
   pointer-events: none;
-  white-space: nowrap;
-  overflow: hidden;
 }
 
-/*
-  좁은 자리에서는 글자를 접고 표식만 남긴다.
+@media (prefers-reduced-motion: no-preference) {
+  /*
+    아주 느리게 돈다.
 
-  띠가 위젯보다 넓어지면 카드를 가린다. 표식 하나만으로도 "무언가 걸려 있다"는
-  것은 전해지고, 자세한 것은 읽어주는 쪽에 `role="status"`로 간다.
-*/
-.deck--single .deck__pending-text {
-  display: none;
+    섞기가 걸려 있다는 것만 알리면 되므로 빠르게 돌 이유가 없다. 판 내내 눈
+    가장자리에 있을 것이라 빠르면 거슬린다.
+  */
+  .deck__pending .deck__mark {
+    animation: deck-pending-spin 6s linear infinite;
+  }
+}
+
+@keyframes deck-pending-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {

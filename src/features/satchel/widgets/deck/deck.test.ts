@@ -260,6 +260,18 @@ describe('computeDeckLayout', () => {
     expect(layout.faceSize).toBeGreaterThan(0)
     expect(layout.countSize).toBeGreaterThan(0)
   })
+
+  it('대기 표식이 카드 귀퉁이 표식보다 크다 — 덱 전체의 상태이므로', () => {
+    const layout = computeDeckLayout({ width: 340, height: 200 })
+    expect(layout.pendingSize).toBeGreaterThan(layout.markSize)
+  })
+
+  it('대기 표식은 아주 작아지지도 아주 커지지도 않는다', () => {
+    // 한 칸짜리 위젯에서도 알아볼 수 있어야 한다.
+    expect(computeDeckLayout({ width: 60, height: 80 }).pendingSize).toBeGreaterThanOrEqual(12)
+    // 넓은 위젯에서 표식만 커져 카드를 덮으면 안 된다.
+    expect(computeDeckLayout({ width: 900, height: 700 }).pendingSize).toBeLessThanOrEqual(40)
+  })
 })
 
 describe('설정', () => {

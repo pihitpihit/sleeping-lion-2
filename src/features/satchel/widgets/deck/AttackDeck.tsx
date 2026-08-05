@@ -128,15 +128,23 @@ export function AttackDeck({ instanceId, mode, settings }: WidgetProps) {
       )}
 
       {/*
-        섞기 표시가 떴다는 알림.
+        섞기 대기 — **두 겹 원형 화살표 하나로 말한다.**
 
-        카드 위의 작은 표식만으로는 라운드를 넘길 때 무슨 일이 일어날지 알기
-        어렵다. 테두리를 물들여 위젯 전체가 말하게 한다.
+        처음에는 "라운드를 넘기면 섞는다"를 글자로 띄웠다. 좁은 자리에서 카드를
+        가리고, 위젯이 90도 돌면 글자가 눕고, 무엇보다 한 번 읽고 나면 그 뒤로는
+        표식만으로 충분하다. 라운드 트래커의 이름표를 `ROUND`로 둔 것과 같은
+        판단이다(구현 결정 39).
+
+        **읽어주는 쪽에는 우리말이 그대로 간다** — 화면에서 걷은 것은 글자이지
+        뜻이 아니다.
       */}
       {mustShuffle && (
-        <span className="deck__pending" role="status">
-          <ShuffleMark size={Math.max(10, layout.countSize)} />
-          <span className="deck__pending-text">라운드를 넘기면 섞는다</span>
+        <span
+          className="deck__pending"
+          role="status"
+          aria-label="섞기 표시가 떴다. 라운드를 넘기면 이 덱을 섞는다."
+        >
+          <ShuffleMark size={layout.pendingSize} />
         </span>
       )}
     </div>
