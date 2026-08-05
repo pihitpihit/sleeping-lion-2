@@ -37,8 +37,9 @@
 - **저작권:** Isaac Childres / Cephalofair Games
 - **라이선스:** [Creative Commons BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 - **원본:** https://boardgamegeek.com/thread/1733586/files-for-creation
-- **쓰는 것:** 원소 아이콘 6종(불·얼음·바람·풀·빛·어둠). Creator Pack V2의
-  `Icon Pack/Element Icons.pdf`에서 해당 쪽을 SVG로 추출했다.
+- **쓰는 것:** 원소 아이콘 6종(불·얼음·바람·풀·빛·어둠)과 HP/XP 표식 2종(체력
+  방울·경험 별). Creator Pack V2의 `Icon Pack/Element Icons.pdf`와
+  `Icon Pack/General Icons.pdf`에서 해당 쪽을 SVG로 추출했다.
 - **변경사항:** 쪽 단위 추출 외에 도형·색·비율을 바꾸지 않았다. 화면에서 흑백으로
   보일 때는 CSS 필터를 쓰며 파일 자체는 원본 색을 유지한다.
 - **파일 단위 기록:** `public/assets/creator-pack/ATTRIBUTION.md`
