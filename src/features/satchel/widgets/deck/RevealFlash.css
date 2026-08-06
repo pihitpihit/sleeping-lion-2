@@ -25,11 +25,29 @@
     가로가 긴 카드다. `vmin`으로 재면 세로로 세운 폰에서도 가로로 눕힌
     태블릿에서도 화면을 넘지 않고, 위젯이 90도 돌아 카드가 세로로 서도 마찬가지다.
   */
-  width: min(78vmin, 460px);
+  --deck-card-w: min(78vmin, 460px);
+
+  /*
+    그림 없는 종류(+3·+4)의 숫자 크기.
+
+    위젯 안에서는 `computeDeckLayout`이 픽셀로 내려보내지만 여기는 그 바깥이다.
+    비(`--deck-face-ratio`)는 `RevealFlash`가 `FACE_RATIO`에서 넘겨준다 —
+    두 곳에 적으면 반드시 어긋난다.
+  */
+  --deck-face: calc(var(--deck-card-w) * var(--deck-face-ratio, 0.26));
+
+  /*
+    **flex여야 한다.** 안에 들어오는 카드 앞면은 `<span>`이고, `<span>`은
+    inline이라 `width`·`height`가 먹지 않는다. 그러면 높이 0으로 접혀 테두리만
+    남는다. 위젯 안에서는 `.deck__pile`이 flex라 저절로 펴지고 있었다.
+  */
+  display: flex;
+
+  width: var(--deck-card-w);
   aspect-ratio: 437 / 296;
   /* 각도는 `RevealFlash`가 변수로 넘긴다. 여기 한 군데서만 transform을 만진다. */
   transform: rotate(var(--reveal-rot, 0deg));
-  border-radius: calc(min(78vmin, 460px) * 0.045);
+  border-radius: calc(var(--deck-card-w) * 0.045);
   box-shadow:
     0 0 0 1px var(--sl-void),
     0 18px 48px rgb(0 0 0 / 62%);
@@ -39,6 +57,7 @@
 
 /* 안에 들어오는 카드 앞면이 이 칸을 그대로 채운다. */
 .reveal__card > * {
+  flex: 1 1 auto;
   width: 100%;
   height: 100%;
 }

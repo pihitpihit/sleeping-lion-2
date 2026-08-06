@@ -396,8 +396,12 @@ const MIN_GAP = 4
  *
  * 그림이 없는 종류(+3·+4)에만 쓴다. 메달 홈(46.5%) 안에 앉아야 하므로 그보다
  * 작다.
+ *
+ * **내보낸다.** 크게 띄우는 팝업(`RevealFlash`)은 위젯 바깥에 그려져 `computeDeckLayout`이
+ * 낸 픽셀값을 물려받지 못한다. 거기서는 제 너비에 이 비를 곱해 쓴다 — 비를 두 곳에
+ * 적으면 반드시 어긋난다.
  */
-const FACE_RATIO = 0.26
+export const FACE_RATIO = 0.26
 const MIN_FACE = 10
 /** 카드 너비 대비 장수 표기 크기. */
 const COUNT_RATIO = 0.17

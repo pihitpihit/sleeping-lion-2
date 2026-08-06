@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import type { Rotation } from '../../layout'
-import { REVEAL_FLY_MS, REVEAL_HOLD_MS } from './deck'
+import { CARD_FACE_URL, FACE_RATIO, REVEAL_FLY_MS, REVEAL_HOLD_MS } from './deck'
 import './RevealFlash.css'
 
 interface Props {
@@ -114,11 +114,21 @@ export function RevealFlash({
         인라인 `transform`으로 걸면 등장 애니메이션과 부딪힌다 — CSS 애니메이션은
         인라인 스타일을 덮으므로, 190ms 동안 회전이 사라졌다가 돌아온다. 180도로
         돌려 둔 위젯에서는 카드가 반 바퀴 돌며 나타난다.
+
+        **카드 그림도 여기서 다시 건다.** 위젯 뿌리에 걸어 둔 `--deck-front`는
+        상속으로 내려가는데 이 팝업은 `document.body`에 그려져 위젯의 자손이
+        아니다. 그냥 두면 변수를 못 찾아 앞면이 통째로 비고 테두리만 남는다.
       */}
       <div
         ref={cardRef}
         className="reveal__card"
-        style={{ '--reveal-rot': `${rotation}deg` } as React.CSSProperties}
+        style={
+          {
+            '--reveal-rot': `${rotation}deg`,
+            '--deck-front': `url("${CARD_FACE_URL}")`,
+            '--deck-face-ratio': FACE_RATIO,
+          } as React.CSSProperties
+        }
       >
         {children}
       </div>
