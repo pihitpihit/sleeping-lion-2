@@ -5,6 +5,8 @@ import { computeGridMetrics, EMPTY_METRICS, GRID_GAP, spanOf } from './gridMetri
 const DEVICES = [
   { name: 'iPhone SE', width: 375, height: 603 },
   { name: 'iPhone 15', width: 393, height: 788 },
+  // 아이폰 15 Pro에서 화면 아래가 통째로 비어 있다는 지적을 받은 크기다.
+  { name: 'iPhone 15 Pro', width: 393, height: 634 },
   { name: '갤럭시 S24', width: 360, height: 716 },
   { name: '폰 가로', width: 852, height: 329 },
   { name: 'iPad 세로', width: 820, height: 1116 },
@@ -37,6 +39,48 @@ describe('computeGridMetrics', () => {
       const m = computeGridMetrics(device)
       expect(m.cellSize, `${device.name} (${m.columns}열)`).toBeGreaterThanOrEqual(72)
       expect(m.cellSize, `${device.name} (${m.columns}열)`).toBeLessThanOrEqual(96)
+    }
+  })
+
+  /*
+    화면을 잘 쓰는지 재는 자리다.
+
+    셀 크기를 폭에서만 뽑고 행을 내림하면 남는 높이가 최대 한 칸 가까이 버려지고,
+    그 구멍이 화면 아래에 통째로 남는다. 실제로 아이폰 15 Pro에서 화면의 6분의
+    1이 그렇게 비었다.
+  */
+  it('세로로 남는 공간은 되찾는다 — 셀 하한에 걸릴 때만 남긴다', () => {
+    for (const device of DEVICES) {
+      const m = computeGridMetrics(device)
+      const leftover = device.height - spanOf(m.rows, m.cellSize, m.gap)
+      // 반 칸 남짓(+ 위아래 최소 여백)이면 여백으로 보인다. 넘어가면 구멍이다.
+      if (leftover <= m.cellSize / 2 + 16) continue
+
+      // 남았는데 못 채웠다면, 행을 하나 더 넣을 때 셀이 하한 밑으로
+      // 떨어지는 경우뿐이어야 한다. 가로로 누운 폰이 그렇다 — 높이가 애초에
+      // 모자라 더 채우려면 글자가 뭉갠다.
+      const denser = m.rows + 1
+      const cellForDenser = Math.floor((device.height - 16 - (denser - 1) * m.gap) / denser)
+      expect(
+        cellForDenser,
+        `${device.name} (${m.rows}행 × ${m.cellSize}px): ${leftover}px를 버렸는데 더 넣을 수 있었다`,
+      ).toBeLessThan(72)
+    }
+  })
+
+  it('좁고 높은 폰에서도 격자가 화면을 채운다', () => {
+    // 되찾기가 없을 때 6행에 머물던 크기다.
+    const m = computeGridMetrics({ width: 393, height: 634 })
+    expect(m.rows).toBeGreaterThanOrEqual(7)
+    expect(m.cellSize).toBeGreaterThanOrEqual(72)
+  })
+
+  it('행을 늘리려고 셀을 하한 밑으로 줄이지는 않는다', () => {
+    for (let height = 200; height <= 1400; height += 7) {
+      const m = computeGridMetrics({ width: 393, height })
+      if (m.rows > 1) {
+        expect(m.cellSize, `높이 ${height}`).toBeGreaterThanOrEqual(72)
+      }
     }
   })
 

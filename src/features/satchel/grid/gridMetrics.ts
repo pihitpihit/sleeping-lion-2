@@ -37,7 +37,15 @@ const TARGET_CELL = 84
 export const GRID_GAP = 12
 
 /** 격자 바깥 최소 여백(px). */
-const MIN_PADDING = 12
+const MIN_PADDING = 8
+
+/**
+ * 셀 하한(px). **이보다 작아지면서까지 행을 늘리지는 않는다.**
+ *
+ * 세로를 채우려고 셀을 무한정 줄이면 위젯 속 글자와 아이콘이 뭉갠다. 기존
+ * 실측에서 어느 기기에서든 셀이 72~96px에 들어왔으므로 그 아래를 하한으로 둔다.
+ */
+const MIN_CELL = 72
 
 /** 열 수 하한. 이보다 적으면 위젯을 나란히 둘 수가 없다. */
 const MIN_COLUMNS = 4
@@ -85,6 +93,10 @@ export function spanOf(count: number, cellSize: number, gap: number): number {
  * 행 수는 구간으로 정하지 않는다. 셀이 정사각형이므로 남은 높이에 몇 개가
  * 들어가는지로 결정한다 — 세로 공간은 기기 편차가 크고 툴바 위치(M5)에 따라서도
  * 달라지므로 계산으로 뽑는 편이 맞다.
+ *
+ * **그리고 남는 세로 공간을 되찾는다.** 폭에서 뽑은 셀로 행을 내림하면 최대 한
+ * 칸에 가까운 높이가 버려지고, 그 구멍이 화면 아래에 통째로 남는다. 셀을 조금
+ * 줄여 행을 하나 더 넣는 쪽이 낫다 — 아래 되풀이가 그 일을 한다.
  */
 export function computeGridMetrics(board: Size): GridMetrics {
   const { width, height } = board
@@ -115,6 +127,36 @@ export function computeGridMetrics(board: Size): GridMetrics {
     // 최소 1행을 보장하되 셀을 줄여 보드 안에 들어오게 한다. 정사각형은 유지한다.
     rows = 1
     cellSize = Math.max(1, Math.floor(usableHeight))
+  } else {
+    /**
+     * 남는 세로 공간을 되찾는다.
+     *
+     * 셀 크기를 **폭에서만** 뽑고 행 수를 내림하면, 남는 높이가 최대 한 칸에
+     * 가깝게 버려진다. 그 구멍은 화면 아래에 통째로 남아 눈에 띈다 — 아이폰
+     * 15 Pro에서 화면의 6분의 1이 그렇게 비었다.
+     *
+     * **셀을 조금 줄여 행을 하나 더 넣는다.** 셀이 8%쯤 작아지는 대신 격자
+     * 한 줄이 통째로 생기므로 놓을 자리가 는다. 줄어든 셀이 폭에는 여유를
+     * 남기지만 그것은 좌우로 갈려 여백처럼 보이고, 세로로 뭉쳐 있던 구멍과
+     * 달리 거슬리지 않는다.
+     *
+     * 되찾을 것이 반 칸도 안 되면 그냥 둔다 — 그 정도는 여백으로 보인다.
+     * 셀 하한(`MIN_CELL`)에 걸려도 멈춘다.
+     *
+     * 셀은 매번 반드시 줄어들므로(행이 늘면 한 칸에 돌아가는 높이가 준다) 이
+     * 되풀이는 반드시 끝난다.
+     */
+    for (;;) {
+      const leftover = usableHeight - spanOf(rows, cellSize, GRID_GAP)
+      if (leftover <= cellSize / 2) break
+
+      const denser = rows + 1
+      const denserCell = Math.floor((usableHeight - (denser - 1) * GRID_GAP) / denser)
+      if (denserCell < MIN_CELL) break
+
+      rows = denser
+      cellSize = denserCell
+    }
   }
 
   const paddingX = (width - spanOf(columns, cellSize, GRID_GAP)) / 2
