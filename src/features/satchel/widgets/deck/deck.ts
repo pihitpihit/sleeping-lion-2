@@ -282,15 +282,13 @@ export interface DeckLayout {
   faceSize: number
   /** 장수 표기 글자 크기(px). */
   countSize: number
-  /** 카드 귀퉁이에 앉는 섞기 표시의 한 변(px). */
-  markSize: number
   /**
-   * 위젯 위에 뜨는 섞기 대기 표식의 한 변(px).
+   * 섞기 표시의 한 변(px).
    *
-   * 카드 귀퉁이의 것보다 크다. 이쪽은 **덱 전체의 상태**를 말하므로 카드 한 장의
-   * 속성보다 먼저 눈에 띄어야 한다.
+   * **카드에만 붙는다.** 한때 위젯 귀퉁이에도 같은 표식을 띄웠는데, 표시가 뜬
+   * 카드가 화면에 나와 있으므로 같은 것이 두 번 보였다. 하나면 된다.
    */
-  pendingSize: number
+  markSize: number
 }
 
 /** 실물 미니 카드의 비. 세로가 조금 길다. */
@@ -310,10 +308,6 @@ const COUNT_RATIO = 0.26
 const MIN_COUNT = 8
 const MARK_RATIO = 0.24
 const MIN_MARK = 7
-/** 대기 표식은 카드 너비의 이만큼. 글자를 뺀 자리를 표식이 대신 채운다. */
-const PENDING_RATIO = 0.34
-const MIN_PENDING = 12
-const MAX_PENDING = 40
 
 const EMPTY_LAYOUT: DeckLayout = {
   arrangement: 'single',
@@ -324,7 +318,6 @@ const EMPTY_LAYOUT: DeckLayout = {
   faceSize: 0,
   countSize: 0,
   markSize: 0,
-  pendingSize: 0,
 }
 
 interface CardFit {
@@ -379,7 +372,5 @@ export function computeDeckLayout(box: { width: number; height: number }): DeckL
     faceSize: cardWidth > 0 ? Math.max(MIN_FACE, cardWidth * FACE_RATIO) : 0,
     countSize: cardWidth > 0 ? Math.max(MIN_COUNT, cardWidth * COUNT_RATIO) : 0,
     markSize: cardWidth > 0 ? Math.max(MIN_MARK, cardWidth * MARK_RATIO) : 0,
-    pendingSize:
-      cardWidth > 0 ? Math.min(MAX_PENDING, Math.max(MIN_PENDING, cardWidth * PENDING_RATIO)) : 0,
   }
 }

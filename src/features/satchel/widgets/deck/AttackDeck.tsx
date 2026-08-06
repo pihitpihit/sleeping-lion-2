@@ -62,11 +62,23 @@ export function AttackDeck({ instanceId, mode, settings }: WidgetProps) {
   const mustShuffle = needsShuffle(deck)
   const playable = mode === 'play'
 
+  /**
+   * 더미를 읽어주는 말.
+   *
+   * **버린 덱을 접었을 때는 공개된 카드까지 여기서 말한다.** 접히면 카드가 이
+   * 더미 위에 겹쳐 그려지므로, 따로 말해주는 자리가 없어진다.
+   */
   const pileSpeech =
     total === 0
       ? '덱이 비어 있다.'
-      : `${total}장 중 ${remaining}장 남았다. 누르면 한 장을 공개한다.` +
-        (remaining === 0 ? ' 덱이 다 떨어져 섞은 뒤 뽑는다.' : '')
+      : [
+          `${total}장 중 ${remaining}장 남았다.`,
+          !layout.showDiscard && revealed ? `공개된 카드: ${cardSpeech(revealed)}.` : '',
+          '누르면 한 장을 공개한다.',
+          remaining === 0 ? '덱이 다 떨어져 섞은 뒤 뽑는다.' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')
 
   return (
     <div
@@ -125,27 +137,6 @@ export function AttackDeck({ instanceId, mode, settings }: WidgetProps) {
             {discarded}
           </span>
         </div>
-      )}
-
-      {/*
-        섞기 대기 — **두 겹 원형 화살표 하나로 말한다.**
-
-        처음에는 "라운드를 넘기면 섞는다"를 글자로 띄웠다. 좁은 자리에서 카드를
-        가리고, 위젯이 90도 돌면 글자가 눕고, 무엇보다 한 번 읽고 나면 그 뒤로는
-        표식만으로 충분하다. 라운드 트래커의 이름표를 `ROUND`로 둔 것과 같은
-        판단이다(구현 결정 39).
-
-        **읽어주는 쪽에는 우리말이 그대로 간다** — 화면에서 걷은 것은 글자이지
-        뜻이 아니다.
-      */}
-      {mustShuffle && (
-        <span
-          className="deck__pending"
-          role="status"
-          aria-label="섞기 표시가 떴다. 라운드를 넘기면 이 덱을 섞는다."
-        >
-          <ShuffleMark size={layout.pendingSize} />
-        </span>
       )}
     </div>
   )
