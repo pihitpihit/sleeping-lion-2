@@ -20,6 +20,7 @@ import {
   needsShuffle,
   remainingCount,
   reshuffle,
+  revealRemainingRatio,
   revealedCard,
   shuffle,
   totalCount,
@@ -274,6 +275,27 @@ describe('computeDeckLayout', () => {
     const layout = computeDeckLayout({ width: 400, height: 400 })
     expect(layout.cardWidth).toBeGreaterThan(layout.cardHeight)
     expect(layout.cardHeight / layout.cardWidth).toBeCloseTo(296 / 437, 3)
+  })
+})
+
+describe('크게 띄운 카드의 남은 뜸', () => {
+  it('막 떴으면 1, 다했으면 0이다', () => {
+    expect(revealRemainingRatio(3000, 3000)).toBe(1)
+    expect(revealRemainingRatio(0, 3000)).toBe(0)
+  })
+
+  it('가운데는 절반이다', () => {
+    expect(revealRemainingRatio(1500, 3000)).toBe(0.5)
+  })
+
+  it('울타리를 넘지 않는다 — 띠가 거꾸로 차거나 넘치지 않는다', () => {
+    expect(revealRemainingRatio(-200, 3000)).toBe(0)
+    expect(revealRemainingRatio(9000, 3000)).toBe(1)
+  })
+
+  it('총 길이가 0이면 이미 다한 것으로 본다', () => {
+    expect(revealRemainingRatio(100, 0)).toBe(0)
+    expect(revealRemainingRatio(100, -1)).toBe(0)
   })
 })
 

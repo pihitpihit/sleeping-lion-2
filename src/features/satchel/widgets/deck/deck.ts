@@ -147,6 +147,26 @@ export const REVEAL_HOLD_MS = 3000
 /** 카드가 버린 덱으로 날아가는 시간. 눈이 따라갈 만큼만. */
 export const REVEAL_FLY_MS = 420
 
+/**
+ * 남은 뜸을 다시 재는 간격.
+ *
+ * 띠가 계단으로 뛰지 않을 만큼 촘촘히. 확인 팝업의 `CONFIRM_TICK_MS`와 같은 값이며
+ * 이유도 같다.
+ */
+export const REVEAL_TICK_MS = 50
+
+/**
+ * 아직 남은 뜸의 비율 0..1.
+ *
+ * 1이면 막 떴고 0이면 닫힐 때다. **띠와 닫는 시각을 이 한 값에서 뽑는다** —
+ * CSS 애니메이션으로 띠를 돌리고 닫기는 JS 타이머에 맡기면, 탭이 뒤로 갔다 올 때
+ * 띠는 다 비었는데 팝업은 그대로 있는 꼴이 난다(구현 결정 38이 같은 자리를 짚었다).
+ */
+export function revealRemainingRatio(remaining: number, total: number): number {
+  if (!(total > 0)) return 0
+  return Math.min(1, Math.max(0, remaining / total))
+}
+
 /** 카드 면에 적는 글자. 숫자와 기호뿐이라 Pirata One으로 그린다. */
 export function cardLabel(effect: CardEffect): string {
   if (effect.kind === 'multiply') return `×${effect.value}`
@@ -403,9 +423,14 @@ const MIN_GAP = 4
  */
 export const FACE_RATIO = 0.26
 const MIN_FACE = 10
-/** 카드 너비 대비 장수 표기 크기. */
-const COUNT_RATIO = 0.17
-const MIN_COUNT = 8
+/**
+ * 카드 너비 대비 장수 표기 크기.
+ *
+ * 작다. **곁다리 정보이기 때문이다** — 판을 돌리는 것은 뽑힌 카드이고 남은
+ * 장수는 궁금할 때만 본다. 처음 0.17은 카드에 얹힌 알약이 눈에 먼저 들어왔다.
+ */
+const COUNT_RATIO = 0.12
+const MIN_COUNT = 7
 /** 설정 화면의 작은 메달 미리보기에 쓴다. */
 const MARK_RATIO = 0.24
 const MIN_MARK = 7

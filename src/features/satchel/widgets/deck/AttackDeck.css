@@ -251,10 +251,10 @@
   right: 4%;
   bottom: 0;
   transform: translateY(38%);
-  padding: 0 0.45em;
+  padding: 0 0.4em;
   font-size: var(--deck-count);
-  line-height: 1.45;
-  color: var(--sl-text-muted);
+  line-height: 1.4;
+  color: var(--sl-text-faint);
   background: var(--sl-bg);
   border: 1px solid var(--sl-border);
   border-radius: 999px;

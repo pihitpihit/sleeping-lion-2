@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import type { Rotation } from '../../layout'
-import { CARD_FACE_URL, FACE_RATIO, REVEAL_FLY_MS, REVEAL_HOLD_MS } from './deck'
+import {
+  CARD_FACE_URL,
+  FACE_RATIO,
+  REVEAL_FLY_MS,
+  REVEAL_HOLD_MS,
+  REVEAL_TICK_MS,
+  revealRemainingRatio,
+} from './deck'
 import './RevealFlash.css'
 
 interface Props {
@@ -47,14 +54,28 @@ export function RevealFlash({
 }: Props) {
   const cardRef = useRef<HTMLDivElement | null>(null)
   const [leaving, setLeaving] = useState(false)
+  const [remaining, setRemaining] = useState(holdMs)
 
   const leave = useCallback(() => setLeaving(true), [])
 
-  /** 뜸이 다하면 스스로 물러난다. */
+  /**
+   * 뜸을 재고, 다하면 스스로 물러난다.
+   *
+   * **띠와 닫는 시각이 같은 값에서 나온다.** 띠를 CSS 애니메이션으로 돌리고 닫기만
+   * JS에 맡기면 둘이 따로 흘러, 탭이 뒤로 갔다 올 때 어긋난다(구현 결정 38).
+   *
+   * 렌더 안에서 `Date.now()`를 볼 수 없으므로(`react-hooks/purity`) 시각 판정은
+   * 전부 여기서 하고 화면에는 마지막으로 잰 값만 넘긴다.
+   */
   useEffect(() => {
     if (leaving) return
-    const timer = setTimeout(leave, holdMs)
-    return () => clearTimeout(timer)
+    const deadline = Date.now() + holdMs
+    const id = setInterval(() => {
+      const left = Math.max(0, deadline - Date.now())
+      setRemaining(left)
+      if (left <= 0) leave()
+    }, REVEAL_TICK_MS)
+    return () => clearInterval(id)
   }, [leaving, holdMs, leave])
 
   /** Escape로도 걷는다. 탭이 어려운 자리에서 쓰인다. */
@@ -131,6 +152,26 @@ export function RevealFlash({
         }
       >
         {children}
+
+        {/*
+          언제 닫히는지 알리는 가느다란 띠.
+
+          **줄어든다.** 차오르는 띠는 "무언가 준비되고 있다"로 읽히는데 여기서는
+          반대다 — 남은 시간이 없어지는 것이다. 확인 팝업의 띠가 차오르는 것과
+          방향이 반대인 이유이기도 하다(저쪽은 단추가 살아나기를 기다린다).
+
+          카드 아래 귀퉁이가 둥글어 양옆을 조금 들여 앉힌다.
+        */}
+        {!leaving && (
+          <span className="reveal__bar" aria-hidden="true">
+            <span
+              className="reveal__bar-fill"
+              style={
+                { '--reveal-left': revealRemainingRatio(remaining, holdMs) } as React.CSSProperties
+              }
+            />
+          </span>
+        )}
       </div>
     </div>,
     document.body,

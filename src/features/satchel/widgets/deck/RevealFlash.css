@@ -55,11 +55,48 @@
   will-change: transform, opacity;
 }
 
-/* 안에 들어오는 카드 앞면이 이 칸을 그대로 채운다. */
-.reveal__card > * {
+/*
+  안에 들어오는 카드 앞면이 이 칸을 그대로 채운다.
+
+  띠는 뺀다 — 그것은 카드 위에 얹히는 것이지 칸을 나눠 갖는 것이 아니다.
+*/
+.reveal__card > :not(.reveal__bar) {
   flex: 1 1 auto;
   width: 100%;
   height: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   남은 뜸을 알리는 띠
+   --------------------------------------------------------------------------
+   길이는 `RevealFlash`가 `--reveal-left`(1 → 0)로 넘긴다. **닫는 시각과 같은
+   값에서 나온다** — CSS 애니메이션으로 따로 돌리면 탭이 뒤로 갔다 올 때
+   어긋난다(구현 결정 38).
+   -------------------------------------------------------------------------- */
+
+.reveal__bar {
+  position: absolute;
+  left: 9%;
+  right: 9%;
+  /* 카드 아래 귀퉁이가 둥글어 바닥에 딱 붙이면 잘린다. */
+  bottom: 5.5%;
+  height: max(2px, 0.9%);
+  border-radius: 999px;
+  /* 지나간 자리. 띠가 어디까지 있었는지 보여야 얼마나 남았는지 읽힌다. */
+  background: rgb(0 0 0 / 42%);
+  overflow: hidden;
+}
+
+.reveal__bar-fill {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--sl-gold);
+  transform: scaleX(var(--reveal-left, 1));
+  transform-origin: left center;
+  /* 50ms마다 다시 재므로 그 사이만 메운다. 길게 두면 끝에서 늘어진다. */
+  transition: transform 60ms linear;
 }
 
 @media (prefers-reduced-motion: no-preference) {
