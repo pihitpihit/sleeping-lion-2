@@ -56,11 +56,17 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      # 이 잡은 **우리 코드를 건드리지 않는다.** 아티팩트를 Pages에 넘기고
+      # 게시가 끝나기를 기다릴 뿐이다. 여기서 나는 실패는 코드와 무관하다.
+      #
+      # `timeout`을 늘리려 하지 말 것 — 액션 안에 10분 상한이 박혀 있어
+      # 그보다 큰 값은 조용히 깎인다.
+      #
+      #     const MAX_TIMEOUT = 600000
+      #     this.timeout = Math.min(timeoutInput, MAX_TIMEOUT)
+      #
+      # 2026-08-06에 20분을 줬다가 그대로 10분에 죽는 것을 보고 알았다. 그날
+      # Pages 게시가 31초에서 10분 너머로 느려졌고, 문턱을 넘는 순간부터 계속
+      # 실패했다. 기다리는 것 말고 할 수 있는 일이 없다.
       - id: deployment
         uses: actions/deploy-pages@v4
-        with:
-          # 기본 10분으로는 모자랄 때가 있다. 2026-08-06에 두 번 잇달아
-          # "Timeout reached, aborting!"으로 죽었는데, 빌드는 20초 만에 끝났고
-          # GitHub 전체 상태도 정상이었다 — Pages 쪽이 느렸을 뿐이다.
-          # 기다리는 것은 공짜이므로 넉넉히 둔다.
-          timeout: 1200000
