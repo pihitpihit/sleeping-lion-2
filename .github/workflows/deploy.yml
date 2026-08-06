@@ -23,9 +23,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -58,3 +58,9 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # 기본 10분으로는 모자랄 때가 있다. 2026-08-06에 두 번 잇달아
+          # "Timeout reached, aborting!"으로 죽었는데, 빌드는 20초 만에 끝났고
+          # GitHub 전체 상태도 정상이었다 — Pages 쪽이 느렸을 뿐이다.
+          # 기다리는 것은 공짜이므로 넉넉히 둔다.
+          timeout: 1200000
