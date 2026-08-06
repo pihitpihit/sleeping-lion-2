@@ -27,7 +27,7 @@
 
 ---
 
-## 파일 목록
+## 파일 목록 ① — 벡터 아이콘
 
 원본은 **Creator Pack V2**의 `Icon Pack/` 아래 두 파일이다. 둘 다 쪽마다 아이콘
 하나가 들어 있는 벡터 PDF다.
@@ -42,10 +42,43 @@
 | `elements/dark.svg` | 같은 파일 6쪽 | 원소 트래커 | 변경함 | 〃 |
 | `general/hp-drop.svg` | `Icon Pack/General Icons.pdf` 8쪽 | HP/XP 트래커의 체력 표식 | 변경함 | PDF 쪽 → SVG 추출 |
 | `general/xp-star.svg` | 같은 파일 17쪽 | HP/XP 트래커의 경험 표식 | 변경함 | 〃 |
+| `general/shuffle.svg` | 같은 파일 **21쪽** | 공격 보정 덱의 섞기 표식 | 변경함 | 〃 |
 
 **변경 내용 상세.** `pdftocairo -svg`로 해당 쪽을 SVG로 추출했다. 도형·색·비율은
 원본 그대로이며 다시 그리거나 색을 바꾸지 않았다. 화면에서는 CSS `filter`로
-흑백 처리하지만 **파일 자체는 원본 색을 유지한다.**
+흑백 처리하거나 밝게 물들이지만 **파일 자체는 원본 색을 유지한다.**
+
+---
+
+## 파일 목록 ② — 공격 보정 카드 그림
+
+원본은 **Creator Pack V2**의 `Attack Modifiers/` 폴더다. **벡터가 아니라 래스터**
+(JPG·PNG)이며, 팩에 벡터본이 없다.
+
+| 파일 | 원본 | 용도 | 변경 여부 | 변경 내용 |
+|---|---|---|---|---|
+| `attack-modifiers/card-back.webp` | `Attack Modifiers/Attack Modifier - Back.jpg` | 카드 뒷면(더미) | 변경함 | 폭 400px로 축소, WebP 변환 |
+| `attack-modifiers/card-face.webp` | `Attack Modifiers/Attack Modifier - Blank.jpg` | 카드 앞면 틀 | 변경함 | 〃 |
+| `attack-modifiers/x0.webp` | `Attack Modifiers/No Damage.png` | ×0 값 메달 | 변경함 | 투명 여백 잘라내고 200×200으로, WebP 변환 |
+| `attack-modifiers/m2.webp` | `Attack Modifiers/Minus 2.png` | −2 값 메달 | 변경함 | 〃 |
+| `attack-modifiers/m1.webp` | `Attack Modifiers/Minus 1.png` | −1 값 메달 | 변경함 | 〃 |
+| `attack-modifiers/p0.webp` | `Attack Modifiers/Neutral.png` | +0 값 메달 | 변경함 | 〃 |
+| `attack-modifiers/p1.webp` | `Attack Modifiers/Plus 1.png` | +1 값 메달 | 변경함 | 〃 |
+| `attack-modifiers/p2.webp` | `Attack Modifiers/Plus 2.png` | +2 값 메달 | 변경함 | 〃 |
+| `attack-modifiers/x2.webp` | `Attack Modifiers/Double Damage.png` | ×2 값 메달 | 변경함 | 〃 |
+
+**변경 내용 상세.** 축소·자르기·형식 변환만 했다. 그림을 다시 그리거나 색을
+바꾸거나 요소를 더하고 빼지 않았다. 원본은 카드가 437×296이고 메달은 그 안에
+투명 배경으로 놓여 있었는데, 여백을 잘라 메달만 남겼다. 화면에서 앞면 틀 위에
+메달을 얹어 실물 카드를 재현하며 **그 합성은 그릴 때만 일어난다** — 합쳐서 저장한
+파일은 만들지 않았다(구현 결정 15).
+
+파일 이름은 우리 코드의 카드 종류 id(`x0`·`m1`·`p1` 등)를 따랐다. 원본 이름과의
+대응은 위 표가 정본이다.
+
+**가져오지 않은 것.** `Double Damage - Bless.png`와 `No Damage - Curse.png`는
+축복·저주 카드용이라 지금 쓰지 않는다. 퍽으로 넣는 +3·+4는 **팩에 그림이 없어**
+화면에서 숫자로 그린다.
 
 추출한 원본 색(글레어 효과에 쓴다):
 
@@ -63,7 +96,7 @@
 **파일 자체는 원본 색을 유지한다.**
 
 **가져오지 않은 것.** `Element Icons.pdf`의 7쪽(소비 표시 ✗)과 8쪽(만능 원소),
-그리고 `General Icons.pdf`의 나머지 24쪽은 지금 쓰지 않아 넣지 않았다. 팩의 `Font/` 디렉토리는 저작자가 라이선스할 수 있는
+그리고 `General Icons.pdf`의 나머지 23쪽은 지금 쓰지 않아 넣지 않았다. 팩의 `Font/` 디렉토리는 저작자가 라이선스할 수 있는
 대상이 아니므로 손대지 않았다(루트 [`NOTICE.md`](../../../NOTICE.md) 참조).
 
 > **변경 여부**를 "변경함"으로 적었다면 **변경 내용**을 구체적으로 쓴다.

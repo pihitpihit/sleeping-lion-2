@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import {
+  CARD_BACK_URL,
+  CARD_FACE_URL,
   CARD_KINDS,
   MAX_PER_KIND,
+  SHUFFLE_ICON_URL,
+  medallionUrl,
   STANDARD_COMPOSITION,
   buildDeck,
   cardLabel,
@@ -242,7 +246,8 @@ describe('computeDeckLayout', () => {
     expect(layout.arrangement).not.toBe('single')
   })
 
-  it('좁으면 버린 덱을 접는다', () => {
+  it('한 칸짜리 위젯에서는 버린 덱을 접는다', () => {
+    // 격자 한 칸은 75~89px이다(구현 결정 5). 안쪽 여백을 빼면 이 정도.
     const layout = computeDeckLayout({ width: 70, height: 90 })
     expect(layout.showDiscard).toBe(false)
     expect(layout.arrangement).toBe('single')
@@ -263,6 +268,46 @@ describe('computeDeckLayout', () => {
 
   it('섞기 표식이 작아도 사라지지는 않는다', () => {
     expect(computeDeckLayout({ width: 60, height: 80 }).markSize).toBeGreaterThan(0)
+  })
+
+  it('카드가 가로로 길다 — 실물이 437×296이다', () => {
+    const layout = computeDeckLayout({ width: 400, height: 400 })
+    expect(layout.cardWidth).toBeGreaterThan(layout.cardHeight)
+    expect(layout.cardHeight / layout.cardWidth).toBeCloseTo(296 / 437, 3)
+  })
+})
+
+describe('에셋 (Creator Pack)', () => {
+  it('표준 덱의 일곱 종류는 모두 값 메달이 있다', () => {
+    for (const id of Object.keys(STANDARD_COMPOSITION)) {
+      const kind = CARD_KINDS.find((k) => k.id === id)
+      expect(kind, id).toBeDefined()
+      expect(medallionUrl(kind!), id).not.toBeNull()
+    }
+  })
+
+  it('퍽으로 넣는 +3·+4는 그림이 없다 — 팩이 실물 카드만 담고 있다', () => {
+    for (const id of ['p3', 'p4']) {
+      const kind = CARD_KINDS.find((k) => k.id === id)!
+      expect(medallionUrl(kind), id).toBeNull()
+    }
+  })
+
+  it('에셋 경로가 격리 디렉토리 안이다 (SPEC 13.1)', () => {
+    const urls = [
+      CARD_BACK_URL,
+      CARD_FACE_URL,
+      SHUFFLE_ICON_URL,
+      ...CARD_KINDS.map(medallionUrl).filter((u): u is string => u !== null),
+    ]
+    for (const url of urls) {
+      expect(url, url).toContain('assets/creator-pack/')
+    }
+  })
+
+  it('메달 파일 이름이 종류 id를 따른다', () => {
+    const kind = CARD_KINDS.find((k) => k.id === 'x2')!
+    expect(medallionUrl(kind)).toContain('attack-modifiers/x2.webp')
   })
 })
 

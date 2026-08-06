@@ -36,6 +36,14 @@ export interface CardKind {
   readonly effect: CardEffect
   /** 뽑으면 이번 라운드가 끝날 때 섞어야 한다. */
   readonly shuffleAfter: boolean
+  /**
+   * Creator Pack의 값 메달이 있는가.
+   *
+   * 있으면 `attack-modifiers/<id>.webp`를 쓴다. 표준 덱의 일곱만 있고 **퍽으로
+   * 넣는 +3·+4는 없다** — 팩이 실물 카드에 있는 것만 담고 있기 때문이다.
+   * 없는 것은 숫자를 직접 그려 채운다.
+   */
+  readonly hasArt: boolean
 }
 
 /**
@@ -46,15 +54,15 @@ export interface CardKind {
  * 해서 덱에 들어가지는 않는다.
  */
 export const CARD_KINDS: readonly CardKind[] = [
-  { id: 'x0', effect: { kind: 'multiply', value: 0 }, shuffleAfter: true },
-  { id: 'm2', effect: { kind: 'add', value: -2 }, shuffleAfter: false },
-  { id: 'm1', effect: { kind: 'add', value: -1 }, shuffleAfter: false },
-  { id: 'p0', effect: { kind: 'add', value: 0 }, shuffleAfter: false },
-  { id: 'p1', effect: { kind: 'add', value: 1 }, shuffleAfter: false },
-  { id: 'p2', effect: { kind: 'add', value: 2 }, shuffleAfter: false },
-  { id: 'p3', effect: { kind: 'add', value: 3 }, shuffleAfter: false },
-  { id: 'p4', effect: { kind: 'add', value: 4 }, shuffleAfter: false },
-  { id: 'x2', effect: { kind: 'multiply', value: 2 }, shuffleAfter: true },
+  { id: 'x0', effect: { kind: 'multiply', value: 0 }, shuffleAfter: true, hasArt: true },
+  { id: 'm2', effect: { kind: 'add', value: -2 }, shuffleAfter: false, hasArt: true },
+  { id: 'm1', effect: { kind: 'add', value: -1 }, shuffleAfter: false, hasArt: true },
+  { id: 'p0', effect: { kind: 'add', value: 0 }, shuffleAfter: false, hasArt: true },
+  { id: 'p1', effect: { kind: 'add', value: 1 }, shuffleAfter: false, hasArt: true },
+  { id: 'p2', effect: { kind: 'add', value: 2 }, shuffleAfter: false, hasArt: true },
+  { id: 'p3', effect: { kind: 'add', value: 3 }, shuffleAfter: false, hasArt: false },
+  { id: 'p4', effect: { kind: 'add', value: 4 }, shuffleAfter: false, hasArt: false },
+  { id: 'x2', effect: { kind: 'multiply', value: 2 }, shuffleAfter: true, hasArt: true },
 ]
 
 const KIND_BY_ID = new Map(CARD_KINDS.map((kind) => [kind.id, kind]))
@@ -70,6 +78,48 @@ export interface Card {
   readonly effect: CardEffect
   readonly shuffleAfter: boolean
 }
+
+/* --------------------------------------------------------------------------
+   에셋 — Creator Pack (SPEC 13.1)
+   -------------------------------------------------------------------------- */
+
+/**
+ * 카드 그림이 놓인 곳.
+ *
+ * **여기 있는 것은 전부 Creator Pack 유래이며 CC BY-NC-SA 4.0이다.** 파일은
+ * `public/assets/creator-pack/`에만 두고 `.tsx`에 인라인으로 박지 않는다 —
+ * SA가 소스 파일까지 번질 소지를 막는 격리 규칙이다(SPEC 13.1).
+ *
+ * 경로는 `BASE_URL`을 앞에 붙인다. GitHub Pages가 하위 경로에 놓이므로
+ * 절대 경로로 적으면 깨진다(SPEC 3.1).
+ */
+const ASSET_ROOT = `${import.meta.env.BASE_URL}assets/creator-pack/`
+
+/** 카드 뒷면. 부채꼴 비늘 바탕에 엇갈린 두 검. */
+export const CARD_BACK_URL = `${ASSET_ROOT}attack-modifiers/card-back.webp`
+
+/** 카드 앞면 틀. 가운데 원형 홈과 왼쪽 아래 섞기 자리가 비어 있다. */
+export const CARD_FACE_URL = `${ASSET_ROOT}attack-modifiers/card-face.webp`
+
+/** 섞기 표식. `Icon Pack/General Icons.pdf` 21쪽에서 뽑은 벡터다. */
+export const SHUFFLE_ICON_URL = `${ASSET_ROOT}general/shuffle.svg`
+
+/** 값 메달. 그림이 없는 종류(+3·+4)는 `null`이며 숫자를 직접 그린다. */
+export function medallionUrl(kind: Pick<CardKind, 'id' | 'hasArt'>): string | null {
+  return kind.hasArt ? `${ASSET_ROOT}attack-modifiers/${kind.id}.webp` : null
+}
+
+/**
+ * 카드 앞면 틀 안에서 값 메달과 섞기 표식이 앉는 자리.
+ *
+ * **`card-face.webp`를 재서 얻은 값이다.** 400×271로 줄인 그림에서 원형 홈의
+ * 중심이 (196,134)·지름 186이고, 왼쪽 아래 섞기 자리는 중심 (54,214)·지름 26이다.
+ * 카드 크기에 비례하므로 비율로 적어 둔다 — 화면이 어떤 크기든 홈에 정확히 앉는다.
+ */
+export const FACE_SLOTS = {
+  medallion: { cx: 49.0, cy: 49.4, size: 46.5 },
+  shuffle: { cx: 13.5, cy: 79.0, size: 6.5 },
+} as const
 
 /** 카드 면에 적는 글자. 숫자와 기호뿐이라 Pirata One으로 그린다. */
 export function cardLabel(effect: CardEffect): string {
@@ -291,21 +341,42 @@ export interface DeckLayout {
   markSize: number
 }
 
-/** 실물 미니 카드의 비. 세로가 조금 길다. */
-const CARD_RATIO = 1.4
+/**
+ * 높이 ÷ 너비.
+ *
+ * **실물 공격 보정 카드는 가로가 길다.** Creator Pack의 `Attack Modifier -
+ * Back.jpg`가 437×296이므로 그 비를 그대로 쓴다. 처음에는 여느 카드처럼 세로가
+ * 길 것으로 짐작해 1.4로 두었는데, 팩을 열어 보고 뒤집혔음을 알았다.
+ */
+const CARD_RATIO = 296 / 437
 /** 칸을 꽉 채우지 않고 남기는 비율. */
 const CARD_FILL = 0.9
-/** 두 자리로 갈랐을 때 카드가 이보다 좁아지면 버린 덱을 접는다. */
-const MIN_SPLIT_CARD_WIDTH = 44
-const MAX_CARD_WIDTH = 180
+/**
+ * 두 자리로 갈랐을 때 카드가 이보다 좁아지면 버린 덱을 접는다.
+ *
+ * 값 메달이 카드 너비의 46.5%이므로 64px이면 메달이 30px쯤 된다. 그 아래로는
+ * 메달 안의 숫자가 뭉갠다.
+ *
+ * **카드가 가로로 길어지면서 한 번 올렸다.** 세로 카드일 때는 44px이었는데,
+ * 가로 카드는 같은 칸에 더 잘 들어가서 한 칸짜리 위젯에도 두 장이 앉아 버렸다.
+ * 앉기는 하지만 메달이 26px이라 읽을 수가 없다.
+ */
+const MIN_SPLIT_CARD_WIDTH = 64
+const MAX_CARD_WIDTH = 240
 const GAP_RATIO = 0.08
 const MIN_GAP = 4
-/** 카드 너비 대비 숫자 크기. */
-const FACE_RATIO = 0.5
+/**
+ * 카드 너비 대비 숫자 크기.
+ *
+ * 그림이 없는 종류(+3·+4)에만 쓴다. 메달 홈(46.5%) 안에 앉아야 하므로 그보다
+ * 작다.
+ */
+const FACE_RATIO = 0.26
 const MIN_FACE = 10
 /** 카드 너비 대비 장수 표기 크기. */
-const COUNT_RATIO = 0.26
+const COUNT_RATIO = 0.17
 const MIN_COUNT = 8
+/** 설정 화면의 작은 메달 미리보기에 쓴다. */
 const MARK_RATIO = 0.24
 const MIN_MARK = 7
 

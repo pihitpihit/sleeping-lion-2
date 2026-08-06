@@ -1,11 +1,17 @@
 import { useBoardSize } from '../../useBoardSize'
 import type { WidgetProps } from '../types'
 import {
+  CARD_BACK_URL,
+  CARD_FACE_URL,
+  FACE_SLOTS,
+  SHUFFLE_ICON_URL,
+  cardKind,
   cardLabel,
   cardSpeech,
   computeDeckLayout,
   discardCount,
   freshDeck,
+  medallionUrl,
   needsShuffle,
   remainingCount,
   revealedCard,
@@ -15,7 +21,6 @@ import {
 import { useAttackDeckStore } from './deckStore'
 import { resolveComposition } from './perks'
 import { sanitizeAttackDeckSettings } from './settings'
-import { ShuffleMark } from './deckIcons'
 import './AttackDeck.css'
 
 /**
@@ -23,6 +28,10 @@ import './AttackDeck.css'
  *
  * 더미를 누르면 맨 위 한 장이 공개된다. 덱이 비면 저절로 섞고 나서 뽑는다 —
  * 실물에서 손으로 하던 일이다.
+ *
+ * **카드 그림은 Creator Pack 것이다**(SPEC 13.1). 앞면 틀 위에 값 메달을 얹고
+ * 섞기 표식을 왼쪽 아래 자리에 앉히는 것이 팩이 의도한 쓰임이다 — 실물 카드가
+ * 그렇게 짜여 있다. 자리 값은 `deck.ts`의 `FACE_SLOTS`가 정본이다.
  *
  * **셔플 표시가 뜬 카드를 뽑아도 그 자리에서 섞지 않는다.** 라운드 트래커로
  * 라운드를 넘길 때 섞인다(`roundStore`). 실물에서도 표시는 라운드가 끝날 때
@@ -83,7 +92,7 @@ export function AttackDeck({ instanceId, mode, settings }: WidgetProps) {
   return (
     <div
       ref={ref}
-      className={`deck deck--${layout.arrangement}${mustShuffle ? ' deck--marked' : ''}`}
+      className={`deck deck--${layout.arrangement}`}
       style={
         {
           '--deck-card-w': `${layout.cardWidth}px`,
@@ -91,6 +100,8 @@ export function AttackDeck({ instanceId, mode, settings }: WidgetProps) {
           '--deck-gap': `${layout.gap}px`,
           '--deck-face': `${layout.faceSize}px`,
           '--deck-count': `${layout.countSize}px`,
+          '--deck-back': `url("${CARD_BACK_URL}")`,
+          '--deck-front': `url("${CARD_FACE_URL}")`,
         } as React.CSSProperties
       }
     >
@@ -107,11 +118,10 @@ export function AttackDeck({ instanceId, mode, settings }: WidgetProps) {
         disabled={!playable || total === 0}
         onClick={() => reveal(instanceId, composition)}
       >
-        <span className="deck__back" aria-hidden="true" />
         {!layout.showDiscard && revealed ? (
-          <CardFace card={revealed} markSize={layout.markSize} />
+          <CardFace card={revealed} />
         ) : (
-          <span className="deck__crest" aria-hidden="true" />
+          <span className="deck__back" aria-hidden="true" />
         )}
         <span className="deck__count sl-numeral" aria-hidden="true">
           {remaining} / {total}
@@ -128,29 +138,58 @@ export function AttackDeck({ instanceId, mode, settings }: WidgetProps) {
             revealed ? `공개된 카드: ${cardSpeech(revealed)}` : '아직 공개한 카드가 없다.'
           }
         >
-          {revealed ? (
-            <CardFace card={revealed} markSize={layout.markSize} />
-          ) : (
-            <span className="deck__empty" aria-hidden="true" />
+          {revealed ? <CardFace card={revealed} /> : <span className="deck__empty" />}
+          {discarded > 0 && (
+            <span className="deck__count sl-numeral" aria-hidden="true">
+              {discarded}
+            </span>
           )}
-          <span className="deck__count sl-numeral" aria-hidden="true">
-            {discarded}
-          </span>
         </div>
       )}
+
+      {/*
+        섞기가 걸렸다는 것은 **카드가 말한다** — 앞면 왼쪽 아래의 섞기 표식이다.
+        위젯 쪽에 표식을 하나 더 두었다가 같은 것이 두 번 보여 걷었다.
+      */}
+      {mustShuffle && <span className="deck__marked" aria-hidden="true" />}
     </div>
   )
 }
 
-/** 카드 앞면. 숫자와 기호뿐이라 Pirata One으로 그린다(구현 결정 39). */
-function CardFace({ card, markSize }: { card: Card; markSize: number }) {
+/**
+ * 카드 앞면 — 틀 위에 값 메달을 얹는다.
+ *
+ * 그림이 없는 종류(+3·+4)는 메달 자리에 숫자를 직접 그린다. 팩이 실물에 있는
+ * 일곱만 담고 있어 퍽으로 넣는 카드는 그림이 없다.
+ */
+function CardFace({ card }: { card: Card }) {
+  const kind = cardKind(card.kindId)
+  const medallion = kind ? medallionUrl(kind) : null
+  const { medallion: slot, shuffle } = FACE_SLOTS
+
+  const slotStyle = {
+    left: `${slot.cx}%`,
+    top: `${slot.cy}%`,
+    width: `${slot.size}%`,
+  } as React.CSSProperties
+
   return (
     <span className="deck__face" aria-hidden="true">
-      <span className="deck__value sl-numeral">{cardLabel(card.effect)}</span>
-      {card.shuffleAfter && (
-        <span className="deck__face-mark">
-          <ShuffleMark size={markSize} />
+      {medallion ? (
+        <img className="deck__medallion" src={medallion} alt="" style={slotStyle} />
+      ) : (
+        <span className="deck__numeral sl-numeral" style={slotStyle}>
+          {cardLabel(card.effect)}
         </span>
+      )}
+
+      {card.shuffleAfter && (
+        <img
+          className="deck__shuffle"
+          src={SHUFFLE_ICON_URL}
+          alt=""
+          style={{ left: `${shuffle.cx}%`, top: `${shuffle.cy}%`, width: `${shuffle.size}%` }}
+        />
       )}
     </span>
   )

@@ -1,8 +1,11 @@
 /* ==========================================================================
    공격 보정 덱
    --------------------------------------------------------------------------
-   카드 크기·글자 크기는 전부 `deck.ts`의 `computeDeckLayout`이 픽셀로 내려보낸다.
-   CSS가 %로 따로 정하면 계산과 어긋난다 — HP/XP에서 겪은 자리다(구현 결정 30).
+   카드 그림은 Creator Pack 것이다(SPEC 13.1). URL은 `deck.ts`가 CSS 변수로
+   내려보낸다 — `BASE_URL`을 앞에 붙여야 하위 경로 배포에서 안 깨지기 때문이다.
+
+   카드 크기·글자 크기도 `computeDeckLayout`이 픽셀로 내려보낸다. CSS가 %로 따로
+   정하면 계산과 어긋난다 — HP/XP에서 겪은 자리다(구현 결정 30).
    ========================================================================== */
 
 .deck {
@@ -42,7 +45,8 @@
   width: var(--deck-card-w);
   height: var(--deck-card-h);
   padding: 0;
-  border-radius: calc(var(--deck-card-w) * 0.1);
+  /* 실물 카드의 둥근 귀퉁이. 그림에는 없으므로 여기서 깎는다. */
+  border-radius: calc(var(--deck-card-w) * 0.045);
 }
 
 .deck__pile {
@@ -58,57 +62,61 @@
   cursor: default;
 }
 
+.deck__pile:focus-visible {
+  outline: 2px solid var(--sl-gold);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   카드 뒷면 — 부채꼴 비늘에 엇갈린 두 검
+   -------------------------------------------------------------------------- */
+
+.deck__back,
+.deck__face {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background-size: cover;
+  background-position: center;
+  /* 그림 가장자리가 밝아 어두운 보드 위에서 떠 보인다. 테를 둘러 앉힌다. */
+  box-shadow:
+    0 0 0 1px var(--sl-void),
+    0 2px 6px rgb(0 0 0 / 45%);
+}
+
+.deck__back {
+  background-image: var(--deck-back);
+}
+
 /*
   뒤에 겹친 두 장.
 
-  더미로 보이게 하는 것은 이 두 겹뿐이다. 실제 남은 장수와 무관하게 늘 같은
-  두께로 그린다 — 장수는 숫자로 말하고 있으므로 두께까지 세게 하면 눈이 두 번
-  일한다.
+  실제 남은 장수와 무관하게 늘 같은 두께로 그린다 — 장수는 숫자로 말하고 있으므로
+  두께까지 세게 하면 눈이 두 번 일한다.
 */
-.deck__back {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--sl-raised);
-  border: 1px solid var(--sl-border);
-}
-
-.deck__back::before,
-.deck__back::after {
+.deck__pile::before,
+.deck__pile::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: var(--sl-panel);
-  border: 1px solid var(--sl-border);
+  background: var(--deck-back) center / cover;
+  box-shadow: 0 0 0 1px var(--sl-void);
   z-index: -1;
 }
 
-.deck__back::before {
-  transform: translate(2.5%, 2.5%);
+.deck__pile::before {
+  transform: translate(1.5%, 2.5%);
 }
 
-.deck__back::after {
-  transform: translate(5%, 5%);
+.deck__pile::after {
+  transform: translate(3%, 5%);
 }
 
-/* 카드 뒷면의 각인. 문양을 베끼지 않고 마름모 하나로 둔다. */
-.deck__crest {
-  position: relative;
-  width: 34%;
-  height: 34%;
-  border: 1px solid var(--sl-gold-dim);
-  transform: rotate(45deg);
-  opacity: 0.5;
-}
-
-.deck__pile:not(:disabled):active .deck__back {
-  border-color: var(--sl-border-strong);
-}
-
-.deck__pile:focus-visible {
-  outline: 2px solid var(--sl-gold);
-  outline-offset: 2px;
+.deck__pile:not(:disabled):active .deck__back,
+.deck__pile:not(:disabled):active .deck__face {
+  filter: brightness(1.12);
 }
 
 /* --------------------------------------------------------------------------
@@ -116,47 +124,77 @@
    -------------------------------------------------------------------------- */
 
 .deck__discard {
-  background: var(--sl-void);
-  border: 1px dashed var(--sl-border);
+  background: rgb(0 0 0 / 28%);
+  box-shadow: inset 0 0 0 1px var(--sl-border);
 }
 
 /* 아직 아무것도 공개하지 않았을 때의 빈자리. */
 .deck__empty {
-  width: 28%;
+  width: 26%;
   height: 2px;
-  background: var(--sl-border);
+  background: var(--sl-border-strong);
   border-radius: 1px;
 }
 
 /* --------------------------------------------------------------------------
-   카드 앞면
+   카드 앞면 — 틀 위에 값 메달을 얹는다
    -------------------------------------------------------------------------- */
 
 .deck__face {
-  position: relative;
+  background-image: var(--deck-front);
+}
+
+/*
+  값 메달과 섞기 표식.
+
+  자리는 `deck.ts`의 FACE_SLOTS가 정한다 — `card-face.webp`를 재서 얻은 값이라
+  카드가 어떤 크기든 홈에 정확히 앉는다. `translate(-50%, -50%)`로 중심을 맞추고
+  높이는 `auto`로 두어 원본 비를 지킨다.
+*/
+.deck__medallion,
+.deck__shuffle,
+.deck__numeral {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  height: auto;
+  pointer-events: none;
+}
+
+.deck__medallion {
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 45%));
+}
+
+/*
+  섞기 표식.
+
+  파일은 거의 검정(#232020)이라 어두운 홈 안에서 묻힌다. 화면에 그릴 때만 필터로
+  양피지색을 만든다 — **파일 자체는 원본 색을 지킨다**(구현 결정 15).
+
+  아주 작아지면 사라져 보이므로 최소 한 변을 둔다. 홈보다 조금 커지더라도 보이는
+  편이 낫다.
+*/
+.deck__shuffle {
+  min-width: 9px;
+  filter: brightness(0) invert(0.92) sepia(0.35) saturate(0.6);
+}
+
+/*
+  그림이 없는 종류(+3·+4)의 숫자.
+
+  메달 홈 자리를 그대로 쓰되 동그란 바탕을 깔아 다른 카드와 결을 맞춘다.
+*/
+.deck__numeral {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(160deg, var(--sl-panel), var(--sl-raised));
-  border: 1px solid var(--sl-border-strong);
-}
-
-.deck__value {
+  aspect-ratio: 1;
   font-size: var(--deck-face);
   line-height: 1;
   color: var(--sl-text);
-  /* Pirata One은 한 벌뿐이라 굵기를 주지 않는다(구현 결정 39). */
-}
-
-.deck__face-mark {
-  position: absolute;
-  top: 6%;
-  right: 6%;
-  display: flex;
-  color: var(--sl-gold);
+  background: radial-gradient(circle at 38% 32%, #4a4034, #241d15 72%);
+  border: 1px solid var(--sl-border-strong);
+  border-radius: 50%;
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 55%);
 }
 
 /* --------------------------------------------------------------------------
@@ -165,12 +203,12 @@
 
 .deck__count {
   position: absolute;
-  left: 50%;
+  right: 4%;
   bottom: 0;
-  transform: translate(-50%, 50%);
-  padding: 0 0.4em;
+  transform: translateY(38%);
+  padding: 0 0.45em;
   font-size: var(--deck-count);
-  line-height: 1.5;
+  line-height: 1.45;
   color: var(--sl-text-muted);
   background: var(--sl-bg);
   border: 1px solid var(--sl-border);
@@ -179,20 +217,19 @@
 }
 
 /* --------------------------------------------------------------------------
-   섞기 표시가 떴을 때
+   섞기가 걸렸을 때
+   --------------------------------------------------------------------------
+   표식은 카드가 이미 달고 있다. 여기서는 위젯 둘레만 물들여 멀리서도 걸린 것이
+   보이게 한다.
    -------------------------------------------------------------------------- */
 
-.deck--marked .deck__discard,
-.deck--marked .deck__face {
-  border-color: var(--sl-gold);
+.deck__marked {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--sl-gold-dim);
+  border-radius: 4px;
+  pointer-events: none;
 }
-
-/*
-  섞기 표식은 **카드 귀퉁이에만** 붙는다.
-
-  한때 위젯 귀퉁이에도 같은 표식을 띄웠으나, 표시가 뜬 카드가 화면에 나와 있으므로
-  같은 것이 두 번 보였다. 테두리 물들임만 남겨 그 카드가 눈에 걸리게 한다.
-*/
 
 @media (prefers-reduced-motion: no-preference) {
   .deck__face {

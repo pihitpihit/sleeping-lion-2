@@ -7,6 +7,7 @@ import {
   cardSpeech,
   compositionSize,
   countOf,
+  medallionUrl,
 } from './deck'
 import { isStandardComposition, sanitizeAttackDeckSettings } from './settings'
 import './DeckSettingsEditor.css'
@@ -49,9 +50,20 @@ export function DeckSettingsEditor({ value, onChange }: WidgetSettingsEditorProp
           const standard = countOf(STANDARD_COMPOSITION, kind.id)
           return (
             <li key={kind.id} className={count === 0 ? 'deck-settings__row--off' : undefined}>
-              <span className="deck-settings__card sl-numeral" aria-hidden="true">
-                {cardLabel(kind.effect)}
-              </span>
+              {/* 값 메달을 그대로 보여준다. 화면에서 뽑을 카드와 같은 그림이라
+                  무엇을 세고 있는지 헷갈릴 일이 없다. */}
+              {medallionUrl(kind) ? (
+                <img
+                  className="deck-settings__medallion"
+                  src={medallionUrl(kind) ?? undefined}
+                  alt=""
+                  aria-hidden="true"
+                />
+              ) : (
+                <span className="deck-settings__card sl-numeral" aria-hidden="true">
+                  {cardLabel(kind.effect)}
+                </span>
+              )}
 
               <span className="deck-settings__name">
                 {cardSpeech(kind)}

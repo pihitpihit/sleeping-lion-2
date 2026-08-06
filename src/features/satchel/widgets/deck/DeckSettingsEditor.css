@@ -30,19 +30,26 @@
   opacity: 0.45;
 }
 
-/* 작은 카드 모양의 미리보기. */
+/* Creator Pack의 값 메달. 실제 카드에 얹히는 것과 같은 그림이다. */
+.deck-settings__medallion {
+  flex: 0 0 auto;
+  width: 2.4rem;
+  height: 2.4rem;
+}
+
+/* 그림이 없는 종류(+3·+4)는 숫자로. 메달과 같은 자리·같은 크기를 쓴다. */
 .deck-settings__card {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.1rem;
-  height: 2.6rem;
+  width: 2.4rem;
+  height: 2.4rem;
   font-size: 1rem;
   color: var(--sl-text);
-  background: linear-gradient(160deg, var(--sl-panel), var(--sl-raised));
+  background: radial-gradient(circle at 38% 32%, #4a4034, #241d15 72%);
   border: 1px solid var(--sl-border-strong);
-  border-radius: 0.25rem;
+  border-radius: 50%;
 }
 
 .deck-settings__name {
