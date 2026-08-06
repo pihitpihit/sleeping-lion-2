@@ -120,6 +120,51 @@
 }
 
 /* --------------------------------------------------------------------------
+   다 떨어진 더미
+   --------------------------------------------------------------------------
+   **없는 카드를 그리지 않는다.** 뒷면이 남아 있으면 아직 뽑을 것이 있는 줄 안다.
+   겹쳐 둔 두 장도 함께 걷고, 빈 자리에 섞기 표식만 앉혀 다음 탭이 무슨 일을
+   할지 알린다.
+   -------------------------------------------------------------------------- */
+
+.deck__pile--exhausted::before,
+.deck__pile--exhausted::after {
+  display: none;
+}
+
+.deck__spent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  /* 카드가 놓여 있던 자리라는 것만 남긴다. */
+  background: rgb(0 0 0 / 22%);
+  box-shadow: inset 0 0 0 1px var(--sl-border);
+}
+
+.deck__spent-icon {
+  width: 34%;
+  height: auto;
+  /* 파일은 거의 검정이다. 화면에서만 물들인다 — 파일 자체는 원본 색을 지킨다. */
+  filter: brightness(0) invert(0.72) sepia(0.5) saturate(1.4) hue-rotate(3deg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* 아주 느리게 돈다. 걸려 있다는 것만 알리면 되므로 서두를 이유가 없다. */
+  .deck__spent-icon {
+    animation: deck-spent-spin 7s linear infinite;
+  }
+}
+
+@keyframes deck-spent-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --------------------------------------------------------------------------
    버린 덱
    -------------------------------------------------------------------------- */
 

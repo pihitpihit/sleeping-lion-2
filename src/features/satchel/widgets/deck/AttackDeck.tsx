@@ -1,5 +1,7 @@
+import { useCallback, useRef, useState } from 'react'
 import { useBoardSize } from '../../useBoardSize'
 import type { WidgetProps } from '../types'
+import { RevealFlash } from './RevealFlash'
 import {
   CARD_BACK_URL,
   CARD_FACE_URL,
@@ -40,12 +42,24 @@ import './AttackDeck.css'
  * **확률을 말하지 않는다.** 남은 장수는 보여주되 다음에 무엇이 나올지는 계산하지
  * 않는다(SPEC 1장).
  */
-export function AttackDeck({ instanceId, mode, settings }: WidgetProps) {
+export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps) {
   const { ref, size } = useBoardSize<HTMLDivElement>()
   const layout = computeDeckLayout(size)
 
   const stored = useAttackDeckStore((s) => s.byInstance[instanceId])
   const reveal = useAttackDeckStore((s) => s.reveal)
+
+  const pileRef = useRef<HTMLButtonElement | null>(null)
+  const discardRef = useRef<HTMLDivElement | null>(null)
+
+  /**
+   * 방금 공개해 크게 띄운 카드.
+   *
+   * `nonce`를 함께 들고 있다. 같은 값이 잇달아 나오면(+0이 여섯 장이다) 상태가
+   * 같아 보여 React가 다시 그리지 않고, 그러면 두 번째 탭에서 팝업이 뜨지 않는다.
+   */
+  const [flash, setFlash] = useState<{ card: Card; nonce: number } | null>(null)
+  const nonce = useRef(0)
 
   /**
    * 이 덱의 구성.
@@ -70,6 +84,27 @@ export function AttackDeck({ instanceId, mode, settings }: WidgetProps) {
   const total = totalCount(deck)
   const mustShuffle = needsShuffle(deck)
   const playable = mode === 'play'
+
+  /** 뽑을 것이 다 떨어졌다. 다음 탭은 섞고 나서 뽑는다. */
+  const exhausted = remaining === 0 && total > 0
+
+  function onReveal() {
+    const card = reveal(instanceId, composition)
+    if (!card) return
+    nonce.current += 1
+    setFlash({ card, nonce: nonce.current })
+  }
+
+  /**
+   * 크게 띄운 카드가 날아가 앉을 자리.
+   *
+   * 버린 덱을 접었으면 더미로 간다 — 접혔을 때는 공개된 카드가 거기 그려진다.
+   * **부를 때마다 다시 잰다.** 3초 사이에 창이 돌아가거나 위젯이 옮겨졌을 수 있다.
+   */
+  const landOn = useCallback(
+    () => (discardRef.current ?? pileRef.current)?.getBoundingClientRect() ?? null,
+    [],
+  )
 
   /**
    * 더미를 읽어주는 말.
@@ -112,13 +147,24 @@ export function AttackDeck({ instanceId, mode, settings }: WidgetProps) {
         겹쳐 보여준다. 그러지 않으면 뽑고도 무엇이 나왔는지 볼 수 없다.
       */}
       <button
+        ref={pileRef}
         type="button"
-        className="deck__pile"
+        className={`deck__pile${exhausted ? ' deck__pile--exhausted' : ''}`}
         aria-label={pileSpeech}
         disabled={!playable || total === 0}
-        onClick={() => reveal(instanceId, composition)}
+        onClick={onReveal}
       >
-        {!layout.showDiscard && revealed ? (
+        {/*
+          **다 떨어졌으면 뒷면을 그리지 않는다.**
+
+          없는 카드를 그려두면 아직 남은 줄 안다. 대신 섞기 표식을 빈 자리에
+          앉혀 다음 탭이 무슨 일을 할지 알린다. 겹쳐 둔 두 장도 함께 걷는다.
+        */}
+        {exhausted ? (
+          <span className="deck__spent" aria-hidden="true">
+            <img className="deck__spent-icon" src={SHUFFLE_ICON_URL} alt="" />
+          </span>
+        ) : !layout.showDiscard && revealed ? (
           <CardFace card={revealed} />
         ) : (
           <span className="deck__back" aria-hidden="true" />
@@ -131,6 +177,7 @@ export function AttackDeck({ instanceId, mode, settings }: WidgetProps) {
       {/* 버린 덱 — 자리가 넉넉할 때만 낸다. */}
       {layout.showDiscard && (
         <div
+          ref={discardRef}
           className="deck__discard"
           role="status"
           aria-live="polite"
@@ -152,6 +199,24 @@ export function AttackDeck({ instanceId, mode, settings }: WidgetProps) {
         위젯 쪽에 표식을 하나 더 두었다가 같은 것이 두 번 보여 걷었다.
       */}
       {mustShuffle && <span className="deck__marked" aria-hidden="true" />}
+
+      {/*
+        방금 공개한 카드를 크게 한 번 보여준다.
+
+        `key`에 `nonce`를 준다 — 같은 값이 잇달아 나오면(+0이 여섯 장이다) React가
+        같은 것으로 보고 그대로 두어, 두 번째 탭에서 뜸도 애니메이션도 다시 시작하지
+        않는다.
+      */}
+      {flash && (
+        <RevealFlash
+          key={flash.nonce}
+          rotation={rotation}
+          landOn={landOn}
+          onDone={() => setFlash(null)}
+        >
+          <CardFace card={flash.card} />
+        </RevealFlash>
+      )}
     </div>
   )
 }

@@ -1,0 +1,100 @@
+/* ==========================================================================
+   공개한 카드를 크게 보여주는 자리
+   --------------------------------------------------------------------------
+   `document.body`에 그린다(구현 결정 37). 위젯 안에 두면 회전한 조상의
+   `transform` 때문에 `position: fixed`가 갇힌다.
+   ========================================================================== */
+
+.reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* 판을 가리지 않을 만큼만 어둡게. 뒤에 무엇이 있는지 계속 보여야 한다. */
+  background: rgb(0 0 0 / 46%);
+  /* 손이 어디에 닿든 걷힌다. 닫는 단추를 찾게 하지 않는다. */
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.reveal__card {
+  /*
+    가로가 긴 카드다. `vmin`으로 재면 세로로 세운 폰에서도 가로로 눕힌
+    태블릿에서도 화면을 넘지 않고, 위젯이 90도 돌아 카드가 세로로 서도 마찬가지다.
+  */
+  width: min(78vmin, 460px);
+  aspect-ratio: 437 / 296;
+  /* 각도는 `RevealFlash`가 변수로 넘긴다. 여기 한 군데서만 transform을 만진다. */
+  transform: rotate(var(--reveal-rot, 0deg));
+  border-radius: calc(min(78vmin, 460px) * 0.045);
+  box-shadow:
+    0 0 0 1px var(--sl-void),
+    0 18px 48px rgb(0 0 0 / 62%);
+  /* 날아갈 때 자리를 정확히 재야 하므로 여백을 두지 않는다. */
+  will-change: transform, opacity;
+}
+
+/* 안에 들어오는 카드 앞면이 이 칸을 그대로 채운다. */
+.reveal__card > * {
+  width: 100%;
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .reveal {
+    animation: reveal-dim 140ms ease-out;
+  }
+
+  /*
+    떠오르며 나타난다. 뒤집히는 시늉은 위젯 안의 카드가 이미 하고 있으므로
+    여기서는 커지는 것만 보인다.
+  */
+  .reveal__card {
+    animation: reveal-pop 190ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
+  }
+
+  .reveal--leaving {
+    /* 카드가 날아가는 동안 어둠도 함께 걷힌다. */
+    transition: background-color 300ms ease-out;
+    background: rgb(0 0 0 / 0%);
+  }
+}
+
+/*
+  날아가기 시작하면 등장 애니메이션을 끊는다.
+
+  3초를 기다렸다면 이미 끝났지만, **바로 탭해서 닫으면 아직 도는 중**이다.
+  애니메이션이 인라인 `transform`을 덮으므로 그냥 두면 카드가 제자리에서
+  스러진다.
+*/
+.reveal--leaving .reveal__card {
+  animation: none;
+}
+
+/*
+  움직임을 줄이라고 한 기기에서는 날리지 않는다.
+
+  `RevealFlash`가 인라인 `transform`으로 날리므로 CSS로는 막을 수 없다. 대신
+  전환 시간을 0으로 눌러 곧바로 사라지게 한다 — 카드가 화면을 가로지르지 않는다.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .reveal--leaving .reveal__card {
+    transition-duration: 1ms !important;
+  }
+}
+
+@keyframes reveal-dim {
+  from {
+    background: rgb(0 0 0 / 0%);
+  }
+}
+
+@keyframes reveal-pop {
+  from {
+    transform: scale(0.72);
+    opacity: 0;
+  }
+}

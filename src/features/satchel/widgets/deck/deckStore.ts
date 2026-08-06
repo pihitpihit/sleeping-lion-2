@@ -6,6 +6,7 @@ import {
   needsShuffle,
   reshuffle,
   STANDARD_COMPOSITION,
+  type Card,
   type DeckComposition,
   type DeckState,
 } from './deck'
@@ -43,8 +44,12 @@ interface AttackDeckState {
    * 맨 위 한 장을 공개한다. 덱이 비었으면 저절로 섞고 나서 뽑는다.
    *
    * 구성을 함께 받는다 — 처음 뽑는 순간 그 구성으로 덱을 만들어야 하기 때문이다.
+   *
+   * **뽑은 카드를 돌려준다.** 화면이 그것을 크게 한 번 보여주기 때문이다. 스토어를
+   * 다시 읽어 가장 최근 것을 꺼내도 되지만, 그러면 "방금 이 조작으로 나온 카드"와
+   * "지금 맨 위에 있는 카드"가 같다는 보장이 코드에 남지 않는다.
    */
-  reveal: (instanceId: string, composition: DeckComposition) => void
+  reveal: (instanceId: string, composition: DeckComposition) => Card | null
 
   /** 손으로 섞는다. 공개돼 있던 카드도 함께 되돌아간다. */
   shuffleNow: (instanceId: string, composition: DeckComposition) => void
@@ -69,15 +74,15 @@ export const useAttackDeckStore = create<AttackDeckState>((set, get) => ({
 
   stateOf: (instanceId) => get().byInstance[instanceId] ?? UNTOUCHED,
 
-  reveal: (instanceId, composition) =>
-    set((s) => {
-      // 처음 뽑는 것이면 이 자리에서 덱을 만들어 섞는다. 미리 만들어 두지 않는
-      // 이유는 구성이 퍽에 따라 달라지기 때문이다 — 놓는 순간이 아니라 뽑는
-      // 순간의 구성이 맞다.
-      const base = s.byInstance[instanceId] ?? createDeck(Math.random, composition)
-      const result = drawOne(base, Math.random)
-      return { byInstance: { ...s.byInstance, [instanceId]: result.state } }
-    }),
+  reveal: (instanceId, composition) => {
+    // 처음 뽑는 것이면 이 자리에서 덱을 만들어 섞는다. 미리 만들어 두지 않는
+    // 이유는 구성이 퍽에 따라 달라지기 때문이다 — 놓는 순간이 아니라 뽑는
+    // 순간의 구성이 맞다.
+    const current = get().byInstance[instanceId] ?? createDeck(Math.random, composition)
+    const result = drawOne(current, Math.random)
+    set((s) => ({ byInstance: { ...s.byInstance, [instanceId]: result.state } }))
+    return result.card
+  },
 
   shuffleNow: (instanceId, composition) =>
     set((s) => {
