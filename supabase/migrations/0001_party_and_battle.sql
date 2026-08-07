@@ -23,11 +23,14 @@
 -- 이메일은 로그인에만 쓰고 화면에 내보내지 않는다(SPEC 4.2). 파티원 목록에 보일
 -- 이름이 따로 있어야 한다.
 
+-- **칼럼 이름은 snake_case로 적는다.** Postgres는 따옴표 없는 식별자를 소문자로
+-- 접으므로 `displayName`이라고 적으면 실제로는 `displayname`이 된다 — SQL에 적힌
+-- 이름과 실제 이름이 갈리면 코드에서 못 찾는다(0002에서 겪었다).
 create table if not exists public.profiles (
-  id          uuid primary key references auth.users (id) on delete cascade,
-  displayName text not null default '',
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now()
+  id           uuid primary key references auth.users (id) on delete cascade,
+  display_name text not null default '',
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
 );
 
 -- 가입하면 빈 프로필이 함께 생긴다. 없으면 파티원 목록에 구멍이 난다.
@@ -38,7 +41,7 @@ security definer
 set search_path = public
 as $$
 begin
-  insert into public.profiles (id, displayName)
+  insert into public.profiles (id, display_name)
   values (new.id, coalesce(split_part(new.email, '@', 1), ''))
   on conflict (id) do nothing;
   return new;
