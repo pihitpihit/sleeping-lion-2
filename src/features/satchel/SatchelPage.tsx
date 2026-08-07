@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useBoardSize } from './useBoardSize'
 import { useViewportSize } from './useViewportSize'
+import { useAuthStore } from '../auth/authStore'
 import { useSatchelStore } from './store/satchelStore'
 import { resolveToolbarPosition } from './toolbar/position'
 import { SatchelToolbar } from './toolbar/SatchelToolbar'
@@ -26,6 +27,7 @@ export function SatchelPage() {
   const notice = useSatchelStore((s) => s.notice)
   const past = useSatchelStore((s) => s.past)
   const setBoardSize = useSatchelStore((s) => s.setBoardSize)
+  const setAccount = useSatchelStore((s) => s.setAccount)
   const setMode = useSatchelStore((s) => s.setMode)
   const setToolbarPreference = useSatchelStore((s) => s.setToolbarPreference)
   const toggleWidgetTitles = useSatchelStore((s) => s.toggleWidgetTitles)
@@ -49,6 +51,20 @@ export function SatchelPage() {
 
   /** 설정 팝업을 연 위젯. 편집 모드 전용이다. */
   const [settingsTarget, setSettingsTarget] = useState<string | null>(null)
+
+  /**
+   * 누구의 행낭인지 먼저 정한다.
+   *
+   * **배치는 사람의 것이지 기기의 것이 아니다.** 열쇠가 하나였을 때는 한 기기에서
+   * 계정을 바꿔 들어가면 앞 사람의 배치가 그대로 보였다.
+   *
+   * 크기를 재기 전에 둔다 — 순서가 뒤바뀌면 남의 배치로 격자를 계산했다가
+   * 곧바로 갈아치우게 되고, 그 사이에 화면이 한 번 깜빡인다.
+   */
+  const accountId = useAuthStore((s) => s.session?.userId ?? null)
+  useEffect(() => {
+    setAccount(accountId)
+  }, [accountId, setAccount])
 
   useEffect(() => {
     if (size.width > 0 && size.height > 0) setBoardSize(size)

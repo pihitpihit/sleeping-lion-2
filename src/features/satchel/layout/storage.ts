@@ -19,12 +19,36 @@ import {
  * 섞여 들어가는 것을 막는다. SPEC 5.2 참조.
  */
 
-export const STORAGE_KEY = 'sl2.satchel'
+/**
+ * 계정마다 따로 둔다.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **행낭 배치는 사람의 것이지 기기의 것이 아니다.**                         │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 처음에는 열쇠가 하나였다. 그러니 한 기기에서 계정을 바꿔 들어가면 **앞 사람의
+ * 배치가 그대로 보였다** — 형님이 짚었다.
+ *
+ * 그래도 `localStorage`에 남기고 서버로 보내지 않는다(SPEC 5.2). 배치는 화면
+ * 크기를 타는 것이라 기기마다 다른 편이 맞고, 축 ①의 것과 물리적으로 다른 곳에
+ * 두어야 나중에 동기화 대상에 섞이지 않는다.
+ */
+const KEY_PREFIX = 'sl2.satchel'
+
+/** 열쇠가 하나였던 시절의 것. 한 번 물려받고 지운다. */
+export const LEGACY_STORAGE_KEY = KEY_PREFIX
+
+export function storageKeyFor(accountId: string | null): string {
+  // 로그인 전(그리고 `demo` 배포)에는 계정이 없다. 옛 열쇠와 겹치지 않게 둔다.
+  return accountId ? `${KEY_PREFIX}.${accountId}` : `${KEY_PREFIX}.guest`
+}
 
 /** `localStorage`와 같은 모양이면 무엇이든 받는다. 테스트가 가짜를 넣는다. */
 export interface StorageLike {
   getItem(key: string): string | null
   setItem(key: string, value: string): void
+  /** 옛 열쇠를 거둘 때만 쓴다. 가짜 저장소는 없어도 된다. */
+  removeItem?(key: string): void
 }
 
 function defaultStorage(): StorageLike | null {
@@ -110,12 +134,34 @@ function salvage(parsed: unknown): SatchelSettings {
   }
 }
 
-export function loadSettings(storage: StorageLike | null = defaultStorage()): SatchelSettings {
+export function loadSettings(
+  accountId: string | null = null,
+  storage: StorageLike | null = defaultStorage(),
+): SatchelSettings {
   if (!storage) return emptySettings()
   try {
-    const raw = storage.getItem(STORAGE_KEY)
-    if (!raw) return emptySettings()
-    return salvage(JSON.parse(raw))
+    const raw = storage.getItem(storageKeyFor(accountId))
+    if (raw) return salvage(JSON.parse(raw))
+
+    /**
+     * 옛 열쇠를 **한 번만** 물려받는다.
+     *
+     * 계정을 가르기 전에 쌓아둔 배치가 있다. 그냥 두면 처음 들어온 사람이 빈
+     * 격자를 보고 다시 짜야 한다.
+     *
+     * **물려받고 나면 지운다.** 남겨두면 계정을 바꿀 때마다 새 사람이 같은
+     * 배치를 물려받아, 가르려던 것이 도로 섞인다.
+     */
+    if (accountId !== null) {
+      const legacy = storage.getItem(LEGACY_STORAGE_KEY)
+      if (legacy) {
+        const salvaged = salvage(JSON.parse(legacy))
+        storage.setItem(storageKeyFor(accountId), JSON.stringify(salvaged))
+        storage.removeItem?.(LEGACY_STORAGE_KEY)
+        return salvaged
+      }
+    }
+    return emptySettings()
   } catch {
     return emptySettings()
   }
@@ -124,11 +170,12 @@ export function loadSettings(storage: StorageLike | null = defaultStorage()): Sa
 /** 쓰기 실패도 흡수한다. 용량 초과나 접근 거부로 도구가 멈추면 안 된다. */
 export function saveSettings(
   settings: SatchelSettings,
+  accountId: string | null = null,
   storage: StorageLike | null = defaultStorage(),
 ): boolean {
   if (!storage) return false
   try {
-    storage.setItem(STORAGE_KEY, JSON.stringify(settings))
+    storage.setItem(storageKeyFor(accountId), JSON.stringify(settings))
     return true
   } catch {
     return false

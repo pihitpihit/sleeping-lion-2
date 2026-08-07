@@ -22,4 +22,10 @@ export {
   updatePlacement,
 } from './operations'
 export { deriveLayout, layoutForColumns, pickSourceLayout, type SizeGuard } from './derive'
-export { STORAGE_KEY, loadSettings, saveSettings, type StorageLike } from './storage'
+export {
+  LEGACY_STORAGE_KEY,
+  storageKeyFor,
+  loadSettings,
+  saveSettings,
+  type StorageLike,
+} from './storage'

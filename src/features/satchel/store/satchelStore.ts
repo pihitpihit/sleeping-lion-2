@@ -52,6 +52,13 @@ import type { SatchelMode } from '../widgets/types'
 const HISTORY_LIMIT = 20
 
 interface SatchelState {
+  /**
+   * 지금 배치를 보고 있는 계정.
+   *
+   * **행낭 배치는 사람의 것이지 기기의 것이 아니다.** 열쇠가 하나였을 때는 한
+   * 기기에서 계정을 바꿔 들어가면 앞 사람의 배치가 그대로 보였다.
+   */
+  accountId: string | null
   settings: SatchelSettings
   metrics: GridMetrics
   mode: SatchelMode
@@ -60,6 +67,8 @@ interface SatchelState {
   /** 되돌리기 이력. 영속하지 않는다 — 지금 편집 중인 것에 대한 상태다. */
   past: Layout[]
 
+  /** 로그인한 사람이 바뀌면 그 사람의 배치를 다시 읽는다. */
+  setAccount: (accountId: string | null) => void
   setBoardSize: (size: Size) => void
   setMode: (mode: SatchelMode) => void
   setToolbarPreference: (preference: ToolbarPreference) => void
@@ -158,18 +167,24 @@ function pushHistory(past: Layout[], snapshot: Layout): Layout[] {
   return next.length > HISTORY_LIMIT ? next.slice(next.length - HISTORY_LIMIT) : next
 }
 
-function persist(settings: SatchelSettings, layout: Layout): SatchelSettings {
+function persist(
+  settings: SatchelSettings,
+  layout: Layout,
+  accountId: string | null,
+): SatchelSettings {
   if (layout.columns <= 0) return settings
   const next: SatchelSettings = {
     ...settings,
     layouts: { ...settings.layouts, [layout.columns]: layout },
   }
-  saveSettings(next)
+  saveSettings(next, accountId)
   return next
 }
 
 export const useSatchelStore = create<SatchelState>((set, get) => ({
-  settings: loadSettings(),
+  // 누구인지 알기 전에는 손님의 것을 본다. 세션이 붙으면 `setAccount`가 바꾼다.
+  accountId: null,
+  settings: loadSettings(null),
   metrics: EMPTY_METRICS,
   // 행낭을 여는 이유는 쓰려는 것이지 꾸미려는 것이 아니다. 마지막 모드를 기억하면
   // 편집 중 나갔다가 다음 판에 편집 모드로 열린다.
@@ -177,6 +192,12 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
   notice: null,
   past: [],
   pendingAdd: null,
+
+  setAccount: (accountId) => {
+    if (get().accountId === accountId) return
+    // 이력도 버린다 — 남의 배치로 되돌리는 일이 있어서는 안 된다.
+    set({ accountId, settings: loadSettings(accountId), past: [], notice: null })
+  },
 
   setBoardSize: (size) => {
     const metrics = computeGridMetrics(size)
@@ -195,20 +216,20 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     // 이력은 버린다 — 다른 격자에서 만든 배치로 되돌리면 좌표가 맞지 않는다.
     const settings = get().settings
     const layout = resolveLayout(settings, metrics)
-    set({ metrics, settings: persist(settings, layout), past: [] })
+    set({ metrics, settings: persist(settings, layout, get().accountId), past: [] })
   },
 
   setMode: (mode) => set({ mode, notice: null }),
 
   setToolbarPreference: (toolbarPosition) => {
     const settings = { ...get().settings, toolbarPosition }
-    saveSettings(settings)
+    saveSettings(settings, get().accountId)
     set({ settings })
   },
 
   toggleWidgetTitles: () => {
     const settings = { ...get().settings, showWidgetTitles: !get().settings.showWidgetTitles }
-    saveSettings(settings)
+    saveSettings(settings, get().accountId)
     set({ settings })
   },
 
@@ -217,7 +238,7 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
       ...get().settings,
       widgetSettings: { ...get().settings.widgetSettings, [instanceId]: next },
     }
-    saveSettings(settings)
+    saveSettings(settings, get().accountId)
     set({ settings })
   },
 
@@ -227,7 +248,7 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
       ...get().settings,
       widgetRotations: { ...get().settings.widgetRotations, [instanceId]: nextRotation(current) },
     }
-    saveSettings(settings)
+    saveSettings(settings, get().accountId)
     set({ settings })
   },
 
@@ -265,7 +286,11 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
       }
       return
     }
-    set({ settings: persist(settings, next), notice: null, past: pushHistory(get().past, layout) })
+    set({
+      settings: persist(settings, next, get().accountId),
+      notice: null,
+      past: pushHistory(get().past, layout),
+    })
   },
 
   setPendingSettings: (next) => {
@@ -311,7 +336,7 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
       widgetSettings: { ...settings.widgetSettings, [instanceId]: pendingAdd.settings },
     }
     set({
-      settings: persist(withSettings, next),
+      settings: persist(withSettings, next, get().accountId),
       pendingAdd: null,
       notice: null,
       past: pushHistory(get().past, layout),
@@ -329,7 +354,7 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     const { [instanceId]: _removedRotation, ...widgetRotations } = settings.widgetRotations
     void _removed
     set({
-      settings: persist({ ...settings, widgetSettings, widgetRotations }, next),
+      settings: persist({ ...settings, widgetSettings, widgetRotations }, next, get().accountId),
       notice: null,
       past: pushHistory(get().past, before),
     })
@@ -352,7 +377,10 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     }
     const updated = updatePlacement(before, instanceId, next, metrics)
     if (!updated) return false
-    set({ settings: persist(settings, updated), past: pushHistory(get().past, before) })
+    set({
+      settings: persist(settings, updated, get().accountId),
+      past: pushHistory(get().past, before),
+    })
     return true
   },
 
@@ -362,7 +390,7 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     const { settings, metrics } = get()
     const before = resolveLayout(settings, metrics)
     set({
-      settings: persist(settings, { columns: metrics.columns, widgets: [] }),
+      settings: persist(settings, { columns: metrics.columns, widgets: [] }, get().accountId),
       notice: null,
       past: pushHistory(get().past, before),
     })
@@ -375,7 +403,7 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     const previous = past.at(-1)
     if (!previous) return
     set({
-      settings: persist(settings, previous),
+      settings: persist(settings, previous, get().accountId),
       past: past.slice(0, -1),
       notice: null,
     })

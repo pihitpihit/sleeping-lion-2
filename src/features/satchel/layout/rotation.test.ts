@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { ROTATIONS, isRotation, nextRotation, swapsAxes, type Rotation } from './types'
-import { loadSettings, STORAGE_KEY, type StorageLike } from './storage'
+import { loadSettings, storageKeyFor, type StorageLike } from './storage'
 
 function storageWith(value: unknown): StorageLike {
   const raw = typeof value === 'string' ? value : JSON.stringify(value)
-  return { getItem: (key) => (key === STORAGE_KEY ? raw : null), setItem: () => {} }
+  return { getItem: (key) => (key === storageKeyFor(null) ? raw : null), setItem: () => {} }
 }
 
 describe('nextRotation', () => {
@@ -56,7 +56,7 @@ describe('isRotation', () => {
 describe('저장된 회전 읽기', () => {
   it('없으면 빈 것으로 시작한다 — 옛 저장분과도 맞는다', () => {
     const old = { version: 1, layouts: {}, toolbarPosition: 'auto', showWidgetTitles: true }
-    expect(loadSettings(storageWith(old)).widgetRotations).toEqual({})
+    expect(loadSettings(null, storageWith(old)).widgetRotations).toEqual({})
   })
 
   it('90도 단위만 살리고 나머지는 버린다', () => {
@@ -65,12 +65,12 @@ describe('저장된 회전 읽기', () => {
       layouts: {},
       widgetRotations: { a: 90, b: 45, c: 180, d: '270', e: null, f: 0 },
     }
-    expect(loadSettings(storageWith(stored)).widgetRotations).toEqual({ a: 90, c: 180, f: 0 })
+    expect(loadSettings(null, storageWith(stored)).widgetRotations).toEqual({ a: 90, c: 180, f: 0 })
   })
 
   it('회전이 객체가 아니어도 나머지 설정은 살아남는다', () => {
     const stored = { version: 1, layouts: {}, showWidgetTitles: false, widgetRotations: 'ㅋ' }
-    const settings = loadSettings(storageWith(stored))
+    const settings = loadSettings(null, storageWith(stored))
     expect(settings.widgetRotations).toEqual({})
     expect(settings.showWidgetTitles).toBe(false)
   })
