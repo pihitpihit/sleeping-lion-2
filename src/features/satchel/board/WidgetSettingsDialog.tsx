@@ -7,6 +7,18 @@ interface Props {
   value: unknown
   onChange: (next: unknown) => void
   onClose: () => void
+  /**
+   * **아직 놓이지 않은 위젯**의 설정일 때 준다.
+   *
+   * 자리가 모자라 놓기 전에 묻는 경우다(`pendingAdd`). 이때는 확인이 필요하다 —
+   * 이미 놓인 위젯이야 바꾸는 즉시 반영해도 되돌리기가 받아주지만, 여기서는
+   * 무엇을 되돌릴 대상 자체가 없다.
+   */
+  placing?: {
+    /** 지금 설정으로 들어갈 자리가 있는가. */
+    canPlace: boolean
+    onPlace: () => void
+  }
 }
 
 /**
@@ -18,7 +30,7 @@ interface Props {
  * 확인 버튼은 두지 않는다. 바꾸는 즉시 반영·저장하며, 되돌리고 싶으면 다시
  * 끄면 된다 — 확인/취소를 두면 되돌리기와 의미가 겹친다.
  */
-export function WidgetSettingsDialog({ definition, value, onChange, onClose }: Props) {
+export function WidgetSettingsDialog({ definition, value, onChange, onClose, placing }: Props) {
   const panelRef = useRef<HTMLDivElement | null>(null)
   const Editor = definition.settings?.Editor
 
@@ -74,7 +86,10 @@ export function WidgetSettingsDialog({ definition, value, onChange, onClose }: P
         ref={panelRef}
       >
         <header className="widget-settings__head">
-          <h2 className="widget-settings__title">{definition.name}</h2>
+          <h2 className="widget-settings__title">
+            {definition.name}
+            {placing && <span className="widget-settings__tag">놓기 전 설정</span>}
+          </h2>
           <button
             type="button"
             className="widget-settings__close"
@@ -86,8 +101,29 @@ export function WidgetSettingsDialog({ definition, value, onChange, onClose }: P
         </header>
 
         <div className="widget-settings__body">
+          {placing && (
+            <p className="widget-settings__lead">
+              남은 자리가 좁아 지금 크기로는 못 놓는다. 줄여서 놓아라.
+            </p>
+          )}
           <Editor value={value} onChange={onChange} />
         </div>
+
+        {placing && (
+          <footer className="widget-settings__foot">
+            <button type="button" className="widget-settings__cancel" onClick={onClose}>
+              그만두기
+            </button>
+            <button
+              type="button"
+              className="widget-settings__place"
+              disabled={!placing.canPlace}
+              onClick={placing.onPlace}
+            >
+              {placing.canPlace ? '놓기' : '아직 자리가 모자라다'}
+            </button>
+          </footer>
+        )}
       </div>
     </div>
   )

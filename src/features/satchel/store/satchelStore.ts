@@ -77,13 +77,33 @@ interface SatchelState {
   currentLayout: () => Layout
   countOf: (definitionId: string) => number
   /**
-   * 지금 이 위젯을 놓을 수 있는가 — 도구 띠가 단추를 잠글지 정한다.
+   * 격자에 빈칸이 하나라도 있는가 — 도구 띠가 단추를 잠글지 정한다.
    *
-   * **눌러봐야 거절당할 단추는 잠가 두는 편이 정직하다.** 다만 잠그는 판정과
-   * 실제로 놓는 판정이 같은 함수를 봐야 한다. 갈리면 "눌리는데 안 되는" 또는
-   * "안 눌리는데 될 뻔한" 자리가 생긴다.
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ **잠글 때는 다 함께 잠근다.** 위젯별로 가려 잠그지 않는다.                 │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   *
+   * 한때 "이 위젯이 지금 들어갈 수 있는가"로 하나씩 잠갔다. 그러면 띠에 켜진
+   * 단추와 꺼진 단추가 섞여 왜 이건 되고 저건 안 되는지 알 수 없다. 게다가
+   * 자리가 모자란 위젯은 이제 설정을 줄여 놓을 수 있으므로(`pendingAdd`)
+   * 잠그는 것이 사실과도 어긋난다.
+   *
+   * **빈칸이 아예 없을 때만 일괄로 잠근다.** 그때는 어떤 위젯도 못 들어간다 —
+   * 크기를 아무리 줄여도 1×1은 되어야 하기 때문이다.
    */
-  canAdd: (definitionId: string) => boolean
+  hasRoom: () => boolean
+
+  /**
+   * 자리가 모자라 **놓기 전에 설정을 묻고 있는** 위젯.
+   *
+   * 아직 격자에 없다. 사용자가 설정을 줄여 들어갈 만해지면 그때 놓는다.
+   */
+  pendingAdd: { definitionId: string; settings: unknown } | null
+  setPendingSettings: (next: unknown) => void
+  /** 지금 설정으로 놓을 수 있는가 — '놓기' 단추를 살릴지 정한다. */
+  canPlacePending: () => boolean
+  confirmPendingAdd: () => void
+  cancelPendingAdd: () => void
   /** 늘 sanitize를 거친 값. 위젯이 안심하고 자기 타입으로 받는다. */
   settingsFor: (instanceId: string, definitionId: string) => unknown
   rotationOf: (instanceId: string) => Rotation
@@ -107,6 +127,30 @@ function resolveLayout(settings: SatchelSettings, metrics: GridMetrics): Layout 
 }
 
 type Size2 = { w: number; h: number }
+
+/**
+ * 기본 크기에서 최소 크기까지 훑어 놓아 본다. 못 놓으면 `null`.
+ *
+ * **놓는 자리와 놓을 수 있는지 묻는 자리가 이 함수 하나를 본다.** 갈리면
+ * "눌리는데 안 되는" 또는 "안 눌리는데 될 뻔한" 자리가 생긴다.
+ *
+ * 눕힌 것도 후보에 들어간다(`sizeCandidates`). 원소 트래커는 긴 쪽이 6칸이어야
+ * 하는데 폰은 4열뿐이라, 돌려보지 않으면 폰에서 아예 못 쓴다.
+ */
+function placeWidget(
+  layout: Layout,
+  definition: { id: string; defaultSize: Size2; minSize: Size2 },
+  widgetSettings: unknown,
+  metrics: GridMetrics,
+  instanceId: string,
+): Layout | null {
+  for (const size of sizeCandidates(definition.defaultSize, definition.minSize, metrics)) {
+    if (!isSizeAllowedFor(definition.id, size, widgetSettings)) continue
+    const next = addWidget(layout, definition.id, size, metrics, instanceId)
+    if (next) return next
+  }
+  return null
+}
 
 /** 이력에 한 장 쌓는다. 오래된 것부터 버려 길이를 묶어 둔다. */
 function pushHistory(past: Layout[], snapshot: Layout): Layout[] {
@@ -132,6 +176,7 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
   mode: 'play',
   notice: null,
   past: [],
+  pendingAdd: null,
 
   setBoardSize: (size) => {
     const metrics = computeGridMetrics(size)
@@ -198,39 +243,79 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
       return
     }
 
-    /**
-     * **기본 크기에서 최소 크기까지 훑는다.**
-     *
-     * 처음에는 기본 크기와 그것을 눕힌 것 둘만 시도했다. 그러면 격자에 빈칸이
-     * 보이는데도 거절당한다 — 기본이 6×2인 원소 트래커는 2×2 자리가 비어 있어도
-     * 못 들어간다. 눈에 보이는 빈칸과 실제로 놓이는지가 어긋나면 단추가 고장난
-     * 것으로 읽힌다.
-     *
-     * 눕힌 것을 함께 보는 이유는 그대로다 — 원소 트래커는 긴 쪽이 6칸이어야
-     * 하는데 폰은 4열뿐이라, 돌려보지 않으면 폰에서 아예 못 쓴다.
-     */
     const fresh = definition.settings?.sanitize(undefined)
-    const candidates = sizeCandidates(definition.defaultSize, definition.minSize, metrics)
-    let next: Layout | null = null
-    for (const size of candidates) {
-      if (!isSizeAllowedFor(definitionId, size, fresh)) continue
-      next = addWidget(layout, definitionId, size, metrics, crypto.randomUUID())
-      if (next) break
-    }
+    const next = placeWidget(layout, definition, fresh, metrics, crypto.randomUUID())
 
     if (!next) {
-      // 조용히 실패하면 버튼이 고장난 것으로 보인다. **왜 안 되는지 가려서
-      // 말한다** — 자리가 없는 것과 이 위젯이 그만한 자리를 요구하는 것은
-      // 사용자가 할 일이 다르다.
-      const fits = candidates.some((size) => isSizeAllowedFor(definitionId, size, fresh))
-      set({
-        notice: fits
-          ? '자리가 없다. 다른 연장을 치우거나 크기를 줄여라.'
-          : `${definition.name}은(는) 남은 자리에 들어가기엔 크다.`,
-      })
+      /**
+       * 기본 설정으로는 안 들어간다.
+       *
+       * **설정이 있는 위젯이면 놓기 전에 묻는다.** 원소 트래커의 최소 크기는
+       * '보이는 원소 수'가 정하는데, 그 수는 인스턴스 설정이고 인스턴스는 놓아야
+       * 생긴다 — 순환이다. 설정을 먼저 받아 그 고리를 끊는다.
+       *
+       * **자리가 모자랄 때만 이 길로 온다.** 평소에는 묻지 않고 그냥 놓는다.
+       *
+       * 설정이 없는 위젯은 사용자가 손볼 것이 없으므로 그냥 알린다.
+       */
+      if (definition.settings) {
+        set({ pendingAdd: { definitionId, settings: fresh }, notice: null })
+      } else {
+        set({ notice: `${definition.name}을(를) 놓을 자리가 모자라다.` })
+      }
       return
     }
     set({ settings: persist(settings, next), notice: null, past: pushHistory(get().past, layout) })
+  },
+
+  setPendingSettings: (next) => {
+    const pending = get().pendingAdd
+    if (!pending) return
+    set({ pendingAdd: { ...pending, settings: next } })
+  },
+
+  cancelPendingAdd: () => set({ pendingAdd: null }),
+
+  canPlacePending: () => {
+    const { pendingAdd, settings, metrics } = get()
+    if (!pendingAdd) return false
+    const definition = getWidgetDefinition(pendingAdd.definitionId)
+    if (!definition) return false
+    const layout = resolveLayout(settings, metrics)
+    return placeWidget(layout, definition, pendingAdd.settings, metrics, 'probe') !== null
+  },
+
+  confirmPendingAdd: () => {
+    const { pendingAdd, settings, metrics } = get()
+    if (!pendingAdd) return
+    const definition = getWidgetDefinition(pendingAdd.definitionId)
+    if (!definition) {
+      set({ pendingAdd: null })
+      return
+    }
+
+    const layout = resolveLayout(settings, metrics)
+    const instanceId = crypto.randomUUID()
+    const next = placeWidget(layout, definition, pendingAdd.settings, metrics, instanceId)
+    if (!next) {
+      // 줄이는 중에도 아직 모자라다. 팝업은 열어 둔다 — 닫아버리면 방금 고친
+      // 것이 날아간다.
+      set({ notice: '아직 자리가 모자라다. 더 줄여라.' })
+      return
+    }
+
+    // 고른 설정을 새 인스턴스에 함께 얹는다. 이것을 빠뜨리면 놓자마자 기본값으로
+    // 돌아가 다시 크기 제약에 걸린다.
+    const withSettings: SatchelSettings = {
+      ...settings,
+      widgetSettings: { ...settings.widgetSettings, [instanceId]: pendingAdd.settings },
+    }
+    set({
+      settings: persist(withSettings, next),
+      pendingAdd: null,
+      notice: null,
+      past: pushHistory(get().past, layout),
+    })
   },
 
   removeWidgetInstance: (instanceId) => {
@@ -308,23 +393,8 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
       (w) => w.definitionId === definitionId,
     ).length,
 
-  canAdd: (definitionId) => {
+  hasRoom: () => {
     const { settings, metrics } = get()
-    const definition = getWidgetDefinition(definitionId)
-    if (!definition) return false
-
-    const layout = resolveLayout(settings, metrics)
-    const used = layout.widgets.filter((w) => w.definitionId === definitionId).length
-    if (definition.maxInstances != null && used >= definition.maxInstances) return false
-
-    // 빈칸이 아예 없으면 어떤 크기로도 못 들어간다. 값싼 판정부터 한다.
-    if (!hasFreeCell(layout.widgets, metrics)) return false
-
-    const fresh = definition.settings?.sanitize(undefined)
-    return sizeCandidates(definition.defaultSize, definition.minSize, metrics).some(
-      (size) =>
-        isSizeAllowedFor(definitionId, size, fresh) &&
-        addWidget(layout, definitionId, size, metrics, 'probe') !== null,
-    )
+    return hasFreeCell(resolveLayout(settings, metrics).widgets, metrics)
   },
 }))

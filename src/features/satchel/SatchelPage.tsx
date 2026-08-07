@@ -36,7 +36,12 @@ export function SatchelPage() {
   const undo = useSatchelStore((s) => s.undo)
   const currentLayout = useSatchelStore((s) => s.currentLayout)
   const countOf = useSatchelStore((s) => s.countOf)
-  const canAdd = useSatchelStore((s) => s.canAdd)
+  const hasRoom = useSatchelStore((s) => s.hasRoom)
+  const pendingAdd = useSatchelStore((s) => s.pendingAdd)
+  const setPendingSettings = useSatchelStore((s) => s.setPendingSettings)
+  const canPlacePending = useSatchelStore((s) => s.canPlacePending)
+  const confirmPendingAdd = useSatchelStore((s) => s.confirmPendingAdd)
+  const cancelPendingAdd = useSatchelStore((s) => s.cancelPendingAdd)
   const settingsFor = useSatchelStore((s) => s.settingsFor)
   const rotationOf = useSatchelStore((s) => s.rotationOf)
   const rotateWidget = useSatchelStore((s) => s.rotateWidget)
@@ -71,6 +76,10 @@ export function SatchelPage() {
   const targetDefinition =
     target && mode === 'edit' ? getWidgetDefinition(target.definitionId) : undefined
 
+  // 놓기 전 설정도 편집 모드의 것이다. 플레이로 돌아가면 함께 접는다.
+  const pendingDefinition =
+    pendingAdd && mode === 'edit' ? getWidgetDefinition(pendingAdd.definitionId) : undefined
+
   return (
     <div className={`satchel satchel--${position} satchel--${mode}`}>
       <SatchelToolbar
@@ -80,7 +89,7 @@ export function SatchelPage() {
         canUndo={past.length > 0}
         showWidgetTitles={settings.showWidgetTitles}
         countOf={countOf}
-        canAdd={canAdd}
+        hasRoom={hasRoom()}
         onToggleMode={() => setMode(mode === 'edit' ? 'play' : 'edit')}
         onAdd={addWidgetOfType}
         onSetPreference={setToolbarPreference}
@@ -122,6 +131,22 @@ export function SatchelPage() {
           value={settingsFor(target.instanceId, target.definitionId)}
           onChange={(next) => setWidgetSettings(target.instanceId, next)}
           onClose={() => setSettingsTarget(null)}
+        />
+      )}
+
+      {/*
+        자리가 모자라 **놓기 전에 설정을 묻는** 팝업.
+
+        아직 격자에 없는 위젯이므로 '놓기'를 눌러야 들어간다 — 이미 놓인 위젯의
+        설정 팝업이 확인 없이 바로 반영되는 것과 다르다.
+      */}
+      {pendingAdd && pendingDefinition && (
+        <WidgetSettingsDialog
+          definition={pendingDefinition}
+          value={pendingAdd.settings}
+          onChange={setPendingSettings}
+          onClose={cancelPendingAdd}
+          placing={{ canPlace: canPlacePending(), onPlace: confirmPendingAdd }}
         />
       )}
 
