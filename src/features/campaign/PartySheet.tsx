@@ -12,6 +12,13 @@ import type { Campaign } from './types'
 interface Props {
   campaign: Campaign
   onEdit: (edits: Partial<Campaign>) => void
+  /**
+   * 서버에 못 닿아 **거울을 보여주는 중**인가.
+   *
+   * 그때는 칸을 잠근다. 받아 두었다가 잃는 것보다 못 쓴다고 말하는 편이 낫다 —
+   * 오프라인 큐는 딸려 오는 덩어리가 커서 따로 둔다(SPEC 5.3).
+   */
+  readOnly?: boolean
 }
 
 /**
@@ -32,7 +39,7 @@ interface Props {
  * 이펙트로 맞추면 렌더가 꼬리를 물고, 무엇보다 남이 고친 값이 **치고 있는 글자를
  * 덮어쓴다.** 초안은 이 인스턴스가 사는 동안 사람의 것이다.
  */
-export function PartySheet({ campaign, onEdit }: Props) {
+export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   const nameId = useId()
   const placeId = useId()
   const noteId = useId()
@@ -72,6 +79,7 @@ export function PartySheet({ campaign, onEdit }: Props) {
           className="sheet__input"
           value={draft.name}
           placeholder="이름을 짓는다"
+          disabled={readOnly}
           onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
           onBlur={() => commit('name')}
         />
@@ -86,6 +94,7 @@ export function PartySheet({ campaign, onEdit }: Props) {
           className="sheet__input"
           value={draft.location}
           placeholder="어디에 있는가"
+          disabled={readOnly}
           onChange={(e) => setDraft((d) => ({ ...d, location: e.target.value }))}
           onBlur={() => commit('location')}
         />
@@ -104,7 +113,7 @@ export function PartySheet({ campaign, onEdit }: Props) {
             type="button"
             className="sheet__step"
             aria-label="평판 1 내리기"
-            disabled={campaign.reputation <= MIN_REPUTATION}
+            disabled={readOnly || campaign.reputation <= MIN_REPUTATION}
             onClick={() => onEdit({ reputation: clampReputation(campaign.reputation - 1) })}
           >
             −
@@ -118,6 +127,7 @@ export function PartySheet({ campaign, onEdit }: Props) {
             min={MIN_REPUTATION}
             max={MAX_REPUTATION}
             value={campaign.reputation}
+            disabled={readOnly}
             onChange={(e) => onEdit({ reputation: clampReputation(Number(e.target.value)) })}
           />
 
@@ -125,7 +135,7 @@ export function PartySheet({ campaign, onEdit }: Props) {
             type="button"
             className="sheet__step"
             aria-label="평판 1 올리기"
-            disabled={campaign.reputation >= MAX_REPUTATION}
+            disabled={readOnly || campaign.reputation >= MAX_REPUTATION}
             onClick={() => onEdit({ reputation: clampReputation(campaign.reputation + 1) })}
           >
             +
@@ -164,6 +174,7 @@ export function PartySheet({ campaign, onEdit }: Props) {
                   type="button"
                   className="sheet__remove"
                   aria-label={`업적 '${item}' 지우기`}
+                  disabled={readOnly}
                   onClick={() =>
                     onEdit({ achievements: campaign.achievements.filter((_, i) => i !== index) })
                   }
@@ -179,6 +190,7 @@ export function PartySheet({ campaign, onEdit }: Props) {
           <input
             className="sheet__input"
             value={newAchievement}
+            disabled={readOnly}
             placeholder="업적을 적는다"
             aria-label="새 업적"
             onChange={(e) => setNewAchievement(e.target.value)}
@@ -192,7 +204,7 @@ export function PartySheet({ campaign, onEdit }: Props) {
           <button
             type="button"
             className="sheet__add-button"
-            disabled={newAchievement.trim() === ''}
+            disabled={readOnly || newAchievement.trim() === ''}
             onClick={addAchievement}
           >
             더하기
@@ -210,6 +222,7 @@ export function PartySheet({ campaign, onEdit }: Props) {
           rows={5}
           value={draft.notes}
           placeholder="적어둘 것"
+          disabled={readOnly}
           onChange={(e) => setDraft((d) => ({ ...d, notes: e.target.value }))}
           onBlur={() => commit('notes')}
         />

@@ -48,12 +48,6 @@ const PILLARS = [
     body: '원소와 보정 덱, 주도권 순서. 싸움이 붙으면 꺼내 쓴다.',
     href: '#/satchel',
   },
-  {
-    ordinal: 'III',
-    title: '동행',
-    body: '같이 다니는 이들. 링크를 보내 부르고, 싸움이 나면 같은 것을 본다.',
-    href: '#/parties',
-  },
 ] as const
 
 export function WelcomePage() {

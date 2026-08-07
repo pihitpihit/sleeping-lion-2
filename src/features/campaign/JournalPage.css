@@ -387,3 +387,144 @@
   display: flex;
   gap: 0.5rem;
 }
+
+/* --------------------------------------------------------------------------
+   함께하는 이들 — 기록지에 딸린 파티원과 초대장
+   --------------------------------------------------------------------------
+   '동행'이라는 별도 화면에 있던 것을 기록지 안으로 옮겼다. 파티가 둘로 보이던
+   것을 하나로 합치면서 따라온 자리다.
+   -------------------------------------------------------------------------- */
+
+.crew__members {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.crew__members > li {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.9rem;
+  color: var(--sl-text);
+  background: rgb(0 0 0 / 24%);
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+}
+
+.crew__me {
+  color: var(--sl-gold-dim);
+}
+
+.crew__alone {
+  color: var(--sl-text-faint);
+  background: none;
+  border-color: transparent;
+}
+
+.crew__hint {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--sl-text-faint);
+}
+
+.crew__error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--sl-ember);
+}
+
+.crew__invites {
+  margin: 0.4rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.crew__invites > li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0.45rem 0.6rem;
+  background: rgb(0 0 0 / 24%);
+  border-left: 2px solid var(--sl-gold-dim);
+  border-radius: 0.2rem;
+}
+
+.crew__token {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  color: var(--sl-text-muted);
+}
+
+.crew__left {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  color: var(--sl-text-faint);
+}
+
+.crew__invites button,
+.crew__actions button {
+  padding: 0.35rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: var(--sl-text-muted);
+  background: var(--sl-panel);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.crew__invites button:not(:disabled):hover,
+.crew__actions button:not(:disabled):hover {
+  color: var(--sl-gold);
+  border-color: var(--sl-border-strong);
+}
+
+.crew__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+/* 되돌릴 수 있는 것과 없는 것을 색으로 가른다. */
+.crew__revoke:not(:disabled):hover,
+.crew__leave:not(:disabled):hover {
+  color: var(--sl-ember) !important;
+}
+
+/* --------------------------------------------------------------------------
+   서버에 못 닿았을 때
+   -------------------------------------------------------------------------- */
+
+.journal__offline {
+  max-width: 44rem;
+  margin: 0 auto 1rem;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--sl-text-muted);
+  background: rgb(0 0 0 / 28%);
+  border-left: 2px solid var(--sl-gold-dim);
+  border-radius: 0.2rem;
+}
+
+.journal__offline strong {
+  font-weight: 400;
+  color: var(--sl-text);
+}
+
+/* 잠긴 칸은 만질 수 없다는 것이 보여야 한다. */
+.sheet__input:disabled,
+.sheet__notes:disabled,
+.sheet__rep-value:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

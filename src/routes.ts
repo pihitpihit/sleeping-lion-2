@@ -24,9 +24,6 @@ export const LAZY_ROUTES: Record<string, ComponentType> = {
   ),
   // 로그인은 따로 떨어져 있어야 한다. `demo` 빌드는 이 청크를 아예 받지 않는다.
   '/login': lazy(() => import('./features/auth/LoginPage').then((m) => ({ default: m.LoginPage }))),
-  '/parties': lazy(() =>
-    import('./features/net/PartiesPage').then((m) => ({ default: m.PartiesPage })),
-  ),
   '/join': lazy(() => import('./features/net/JoinPage').then((m) => ({ default: m.JoinPage }))),
   // 일지 — 축 ①. 목록과 기록지 한 장을 한 화면이 함께 다룬다.
   '/journal': lazy(() =>

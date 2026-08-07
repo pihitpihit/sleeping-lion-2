@@ -4,7 +4,7 @@ import { NetError } from './adapter'
 import { partyAdapter } from './index'
 import { INVITE_STATE_MESSAGE, inviteState, parseInviteRoute } from './invite'
 import { readRoute } from '../../routes'
-import './PartiesPage.css'
+import './JoinPage.css'
 
 type Phase =
   { kind: 'checking' } | { kind: 'joined'; name: string } | { kind: 'failed'; why: string }

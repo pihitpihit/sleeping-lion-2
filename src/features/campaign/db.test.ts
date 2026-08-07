@@ -1,35 +1,20 @@
 import { describe, expect, it } from 'vitest'
-import { emptyCampaign, sanitizeCampaign } from './db'
+import { sanitizeCampaign } from './db'
 import { MAX_REPUTATION, MIN_REPUTATION } from './reputation'
 
 /*
   Dexie를 띄우지 않는다. 여기서 검증하는 것은 **레코드를 다듬는 순수 로직**이고,
   IndexedDB는 브라우저의 것이라 node에서 돌리려면 가짜를 끼워야 한다. 그 가짜가
   진짜와 다르게 굴면 시험이 거짓말을 한다 — 읽고 쓰는 것 자체는 화면에서 확인한다.
+
+  **이 함수는 서버가 준 값도 거른다.** 거울에서 읽은 것만이 아니다 — 스키마를
+  올린 뒤이거나 남이 다른 판으로 쓴 값일 수 있다.
 */
-
-describe('emptyCampaign', () => {
-  it('이름만 받고 나머지는 비운다', () => {
-    const c = emptyCampaign('잠자는 사자', 'id-1', 1000)
-    expect(c.name).toBe('잠자는 사자')
-    expect(c.location).toBe('')
-    expect(c.notes).toBe('')
-    expect(c.achievements).toEqual([])
-    expect(c.reputation).toBe(0)
-  })
-
-  it('동기화 자리를 처음부터 갖춘다 — 구현 결정 3', () => {
-    const c = emptyCampaign('파티', 'id-1', 1000)
-    expect(c.ownerUserId).toBeNull()
-    expect(c.createdAt).toBe(1000)
-    expect(c.updatedAt).toBe(1000)
-    expect(c.version).toBe(1)
-  })
-})
 
 describe('sanitizeCampaign', () => {
   it('망가진 값에서도 쓸 수 있는 기록지를 낸다', () => {
     const c = sanitizeCampaign({ id: 'id-1' })
+    expect(c.partyId).toBe('')
     expect(c.name).toBe('')
     expect(c.achievements).toEqual([])
     expect(c.reputation).toBe(0)
@@ -42,10 +27,12 @@ describe('sanitizeCampaign', () => {
       name: 42 as unknown as string,
       notes: null as unknown as string,
       reputation: '높음' as unknown as number,
+      partyId: 7 as unknown as string,
     })
     expect(c.name).toBe('')
     expect(c.notes).toBe('')
     expect(c.reputation).toBe(0)
+    expect(c.partyId).toBe('')
   })
 
   it('업적 목록에서 글자가 아닌 것을 걸러낸다', () => {
@@ -61,7 +48,7 @@ describe('sanitizeCampaign', () => {
     expect(c.achievements).toEqual([])
   })
 
-  it('평판을 눈금 안으로 들인다', () => {
+  it('평판을 눈금 안으로 들인다 — 서버도 막지만 여기가 마지막 문이다', () => {
     expect(sanitizeCampaign({ id: 'a', reputation: 99 }).reputation).toBe(MAX_REPUTATION)
     expect(sanitizeCampaign({ id: 'a', reputation: -99 }).reputation).toBe(MIN_REPUTATION)
     expect(sanitizeCampaign({ id: 'a', reputation: 7.8 }).reputation).toBe(7)
@@ -70,12 +57,12 @@ describe('sanitizeCampaign', () => {
   it('멀쩡한 값은 그대로 지난다', () => {
     const source = {
       id: 'id-1',
+      partyId: 'party-1',
       name: '잠자는 사자',
       location: '글룸헤이븐',
       notes: '문 앞에서 만나기로',
       achievements: ['첫 걸음'],
       reputation: 12,
-      ownerUserId: 'user-1',
       createdAt: 100,
       updatedAt: 200,
       version: 3,
