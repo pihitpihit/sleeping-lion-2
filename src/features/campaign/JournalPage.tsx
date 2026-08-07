@@ -4,6 +4,7 @@ import type { Identity } from '../net/types'
 import { useJournalStore } from './campaignStore'
 import { Crew } from './Crew'
 import { PartySheet } from './PartySheet'
+import { Roster } from './Roster'
 import { priceModifierLabel, shopPriceModifier } from './reputation'
 import './JournalPage.css'
 
@@ -106,6 +107,12 @@ export function JournalPage() {
               readOnly={offline}
               onEdit={(edits) => void edit(edits)}
             />
+            {/*
+              캐릭터는 **거울이 있어 오프라인에서도 보인다.** 고치는 것만 잠근다 —
+              골드와 경험은 지하에서 세 시간 하는 동안 계속 들여다보는 값이다.
+            */}
+            <Roster campaignId={current.campaign.id} me={me} readOnly={offline} />
+
             {!offline && (
               <Crew
                 partyId={current.party.id}

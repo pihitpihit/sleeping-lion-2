@@ -54,3 +54,69 @@ export interface Campaign {
 export type CampaignEdits = Partial<
   Pick<Campaign, 'name' | 'location' | 'notes' | 'achievements' | 'reputation'>
 >
+
+/* ==========================================================================
+   캐릭터 — SPEC 7장
+   --------------------------------------------------------------------------
+   **파티원은 다 보고, 고치는 것은 제 것만**(SPEC 6장). 기록지가 파티원 누구나
+   고치는 것과 다른 자리다 — 파티 상태는 함께 쓰는 것이고 캐릭터는 제 것이다.
+   막는 것은 RLS다(`0005_characters.sql`).
+   ========================================================================== */
+
+/** 캐릭터 한 벌. 서버의 `characters` 한 행과 같은 모양이다. */
+export interface Character {
+  id: string
+  /** 어느 기록지에 딸렸는가. **서버가 옮기지 못하게 막는다**(트리거). */
+  campaignId: string
+  /** 누구의 것인가. 이 값이 곧 편집 권한이다. */
+  ownerId: string
+  /** 파티원 목록에 이 이름이 뜬다. 누가 주인인지 아는 데 쓴다. */
+  ownerName: string
+
+  name: string
+  /**
+   * 클래스 — **이름 대신 아이콘 번호**.
+   *
+   * Creator Pack `Class Icons and Augments.pdf`의 쪽 번호(1~21)다. 0은 아직 안
+   * 고른 것이다. 클래스 이름은 게임 콘텐츠이고 잠긴 클래스는 이름 자체가
+   * 스포일러라 담지 않는다(SPEC 3장). SPEC 12장 1을 이렇게 닫았다.
+   */
+  classIcon: number
+
+  level: number
+  xp: number
+  gold: number
+  /** 전투 목표 체크마크. 셋이 모이면 퍽 하나다. */
+  checkmarks: number
+
+  /** 켜진 퍽 슬롯의 번호들. 어느 번호가 무엇인지는 우리가 알지 못한다. */
+  perks: number[]
+  /** 아이템 — **사용자가 친 글자**다(구현 결정 2). */
+  items: string[]
+  notes: string
+
+  /** 은퇴한 캐릭터. 지우지 않고 접어 둔다. */
+  retired: boolean
+
+  createdAt: number
+  updatedAt: number
+  /** 고친 횟수. **서버가 찍는다.** */
+  version: number
+}
+
+/** 캐릭터에서 사람이 고치는 부분. 나머지는 서버가 관리한다. */
+export type CharacterEdits = Partial<
+  Pick<
+    Character,
+    | 'name'
+    | 'classIcon'
+    | 'level'
+    | 'xp'
+    | 'gold'
+    | 'checkmarks'
+    | 'perks'
+    | 'items'
+    | 'notes'
+    | 'retired'
+  >
+>

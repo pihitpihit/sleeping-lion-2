@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie'
 import { clampReputation } from './reputation'
-import type { Campaign } from './types'
+import type { Campaign, Character } from './types'
 
 /**
  * 기록지의 **로컬 거울** — IndexedDB.
@@ -27,23 +27,28 @@ import type { Campaign } from './types'
 /**
  * 스키마 판.
  *
- * 2로 올린다. 1은 파티에 묶이지 않은 기록지를 담고 있었고, 그것들은 서버로
- * 옮길 방법이 없다 — 어느 파티의 것인지 알 수 없기 때문이다. 판을 올리며 비운다.
+ * 2에서 1의 것을 비웠다. 1은 파티에 묶이지 않은 기록지를 담고 있었고, 그것들은
+ * 서버로 옮길 방법이 없다 — 어느 파티의 것인지 알 수 없기 때문이다.
+ *
+ * 3에서 캐릭터 거울을 더한다. **비우지 않는다** — 기존 기록지 거울은 그대로
+ * 쓸 수 있고, 새 표는 비어서 시작해 다음에 서버를 볼 때 채워진다.
  */
-const SCHEMA_VERSION = 2
+const SCHEMA_VERSION = 3
 
 class SleepingLionDb extends Dexie {
   campaigns!: EntityTable<Campaign, 'id'>
+  characters!: EntityTable<Character, 'id'>
 
   constructor() {
     super('sl2')
     this.version(1).stores({ campaigns: 'id, updatedAt' })
-    this.version(SCHEMA_VERSION)
+    this.version(2)
       .stores({ campaigns: 'id, partyId, updatedAt' })
       .upgrade(async (tx) => {
         // 파티가 없던 시절의 것은 옮길 곳이 없다. 남겨두면 목록에 유령으로 뜬다.
         await tx.table('campaigns').clear()
       })
+    this.version(SCHEMA_VERSION).stores({ characters: 'id, campaignId, updatedAt' })
   }
 }
 
@@ -118,5 +123,38 @@ export async function forgetMirror(partyId: string): Promise<void> {
     await db.campaigns.where('partyId').equals(partyId).delete()
   } catch (cause) {
     console.error('[campaign] 거울을 비우지 못했다', cause)
+  }
+}
+
+/* --------------------------------------------------------------------------
+   캐릭터 거울
+   --------------------------------------------------------------------------
+   기록지와 같은 규칙이다. **정본은 서버**이고 여기 있는 것은 마지막으로 본
+   모습이다. 지하에서 세 시간씩 하는 게임이라 신호가 끊겨도 골드와 경험은
+   보여야 한다. 쓰기는 여기 하지 않는다.
+   -------------------------------------------------------------------------- */
+
+/** 서버에서 본 캐릭터를 비춰 둔다. 그 기록지의 것을 통째로 갈아 끼운다. */
+export async function mirrorCharacters(
+  campaignId: string,
+  characters: readonly Character[],
+): Promise<void> {
+  try {
+    // 지워진 캐릭터가 거울에 유령으로 남지 않게 먼저 비운다.
+    await db.characters.where('campaignId').equals(campaignId).delete()
+    await db.characters.bulkPut(characters.map((c) => ({ ...c })))
+  } catch (cause) {
+    console.error('[character] 거울에 쓰지 못했다', cause)
+  }
+}
+
+/** 마지막으로 본 그 기록지의 캐릭터들. */
+export async function mirroredCharacters(campaignId: string): Promise<Character[]> {
+  try {
+    const rows = await db.characters.where('campaignId').equals(campaignId).toArray()
+    return rows.sort((a, b) => a.createdAt - b.createdAt)
+  } catch (cause) {
+    console.error('[character] 거울을 읽지 못했다', cause)
+    return []
   }
 }

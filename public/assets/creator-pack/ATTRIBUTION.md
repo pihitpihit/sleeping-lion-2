@@ -43,6 +43,13 @@
 | `general/hp-drop.svg` | `Icon Pack/General Icons.pdf` 8쪽 | HP/XP 트래커의 체력 표식 | 변경함 | PDF 쪽 → SVG 추출 |
 | `general/xp-star.svg` | 같은 파일 17쪽 | HP/XP 트래커의 경험 표식 | 변경함 | 〃 |
 | `general/shuffle.svg` | 같은 파일 **21쪽** | 공격 보정 덱의 섞기 표식 | 변경함 | 〃 |
+| `classes/class-01.svg` ~ `class-21.svg` | `Icon Pack/Class Icons and Augments.pdf` 1~21쪽 (쪽 번호 = 파일 번호) | 캐릭터 시트의 클래스 표식 | 변경함 | PDF 쪽 → SVG 추출 |
+
+**클래스 아이콘에 대하여.** 21쪽 전부를 가져왔다. 1~17쪽이 글룸헤이븐 클래스,
+18~21쪽이 사자의 턱 클래스(색이 있는 것)다. **아이콘에는 이름이 붙어 있지 않고
+우리도 붙이지 않는다** — 사람이 그림을 보고 고른다. 클래스 이름은 게임 콘텐츠이며
+잠긴 클래스는 이름 자체가 스포일러이므로 코드에도 데이터에도 담지 않는다
+(SPEC 3장). 저장하는 값은 쪽 번호뿐이다.
 
 **변경 내용 상세.** `pdftocairo -svg`로 해당 쪽을 SVG로 추출했다. 도형·색·비율은
 원본 그대로이며 다시 그리거나 색을 바꾸지 않았다. 화면에서는 CSS `filter`로

@@ -38,10 +38,14 @@ export default defineConfig({
   base: process.env.VITE_BASE ?? '/',
   plugins: [react(), noticePublicSectionsOnly()],
   test: {
-    // 검증 대상은 순수 함수(격자 계산, 배치 판정)이므로 DOM이 필요 없다.
+    // 검증 대상은 대부분 순수 함수(격자 계산, 배치 판정)이므로 DOM이 필요 없다.
     // 컴포넌트는 헤드리스 브라우저로 실물을 확인하는 편이 낫다.
-    // jsdom이 필요해지면 그때 붙인다.
+    //
+    // `.tsx`도 받는다. **jsdom을 붙이려는 것이 아니라** `react-dom/server`로
+    // 문자열까지만 뽑기 위해서다 — 컴포넌트가 마운트 중에 터지지 않는다는 것과
+    // 권한에 따라 칸이 잠기는지는 그것으로 확인된다. 눈으로 봐야 하는 것(색·간격)은
+    // 어차피 화면에서 봐야 하므로 브라우저 환경을 들이는 값을 치르지 않는다.
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
   },
 })

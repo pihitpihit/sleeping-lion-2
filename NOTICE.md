@@ -42,6 +42,8 @@
     섞기 표식 1종 — `Icon Pack/Element Icons.pdf`와 `Icon Pack/General Icons.pdf`
     에서 해당 쪽을 SVG로 추출.
   - 공격 보정 카드 그림 9종(뒷면·앞면 틀·값 메달 7종) — `Attack Modifiers/` 폴더.
+  - 클래스 표식 21종 — `Icon Pack/Class Icons and Augments.pdf`의 21쪽 전부를
+    쪽 단위로 SVG 추출. 캐릭터 시트에서 클래스를 이름 대신 이 그림으로 고른다.
 - **변경사항:** 벡터 아이콘은 쪽 단위 추출 외에 도형·색·비율을 바꾸지 않았다.
   카드 그림은 축소·여백 잘라내기·WebP 변환만 했고 다시 그리거나 색을 바꾸지
   않았다. 화면에서 흑백으로 보이거나 앞면 틀 위에 메달이 얹히는 것은 **그릴 때만
