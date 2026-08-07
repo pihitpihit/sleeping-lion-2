@@ -38,9 +38,19 @@ export type ToolbarPosition = 'top' | 'left'
  */
 export type ToolbarPreference = ToolbarPosition | 'auto'
 
-/** `localStorage`에 실제로 들어가는 것. */
+/** 저장되는 것 — `localStorage`에도, 서버의 `satchel_settings.settings`에도. */
 export interface SatchelSettings {
   version: number
+  /**
+   * 마지막으로 고친 시각.
+   *
+   * **기기가 어긋났을 때 늦게 고친 쪽이 이기는 판정에 쓴다**(SPEC 5.3). 이것이
+   * 없으면 폰에서 짜 놓은 배치가 태블릿을 한 번 열었다는 이유로 지워진다.
+   *
+   * 옛 저장물에는 없다. 그때는 0으로 읽히는데, **빈 설정은 애초에 올려보내지
+   * 않으므로**(`satchelNet`) 0짜리가 알맹이 있는 것을 밀어내지 못한다.
+   */
+  updatedAt: number
   /** 키는 열 수. */
   layouts: Record<number, Layout>
   /** 툴바 위치 선호. `auto`면 기기·방향에 맡긴다. */
@@ -98,12 +108,31 @@ export const SETTINGS_VERSION = 1
 export function emptySettings(): SatchelSettings {
   return {
     version: SETTINGS_VERSION,
+    updatedAt: 0,
     layouts: {},
     toolbarPosition: 'auto',
     showWidgetTitles: true,
     widgetSettings: {},
     widgetRotations: {},
   }
+}
+
+/**
+ * 아직 아무것도 짜지 않은 것인가.
+ *
+ * **빈 것을 서버에 올려보내지 않기 위해 쓴다.** 새 기기에서 처음 열면 빈 설정이
+ * 만들어지는데, 그것이 올라가면 다른 기기에 있던 배치가 늦게 올라왔다는 이유로
+ * 밀린다. 놓인 위젯이 하나도 없고 화면 설정도 기본이면 지킬 것이 없는 상태다.
+ */
+export function isEmptySettings(settings: SatchelSettings): boolean {
+  const hasWidgets = Object.values(settings.layouts).some((l) => l.widgets.length > 0)
+  return (
+    !hasWidgets &&
+    settings.toolbarPosition === 'auto' &&
+    settings.showWidgetTitles &&
+    Object.keys(settings.widgetSettings).length === 0 &&
+    Object.keys(settings.widgetRotations).length === 0
+  )
 }
 
 export function emptyLayout(columns: number): Layout {

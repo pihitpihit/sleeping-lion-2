@@ -29,9 +29,12 @@ import {
  * 처음에는 열쇠가 하나였다. 그러니 한 기기에서 계정을 바꿔 들어가면 **앞 사람의
  * 배치가 그대로 보였다** — 형님이 짚었다.
  *
- * 그래도 `localStorage`에 남기고 서버로 보내지 않는다(SPEC 5.2). 배치는 화면
- * 크기를 타는 것이라 기기마다 다른 편이 맞고, 축 ①의 것과 물리적으로 다른 곳에
- * 두어야 나중에 동기화 대상에 섞이지 않는다.
+ * **2026-08-08 — 서버에도 둔다**(SPEC 5.2 개정, `satchelNet.ts`). 열쇠만 갈라
+ * 놓으면 저장소 자체가 지워질 때 다 같이 날아간다 — iOS 홈화면 아이콘을 지웠을
+ * 때 실제로 그렇게 났다.
+ *
+ * **여기가 먼저 열린다는 것은 그대로다.** 서버는 백업이자 기기 사이를 잇는
+ * 다리이며, 못 닿아도 행낭은 이것만으로 완전히 돈다(절대 원칙 3).
  */
 const KEY_PREFIX = 'sl2.satchel'
 
@@ -77,8 +80,13 @@ function isLayout(value: unknown): value is Layout {
   )
 }
 
-/** 알아볼 수 있는 부분만 건져낸다. 한 군데가 망가져도 나머지는 살린다. */
-function salvage(parsed: unknown): SatchelSettings {
+/**
+ * 알아볼 수 있는 부분만 건져낸다. 한 군데가 망가져도 나머지는 살린다.
+ *
+ * **서버가 준 것도 이걸 통과시킨다.** 저장하는 곳이 둘(로컬·서버)이 되었으므로
+ * 걸러내는 자리도 하나여야 한다 — 서버 쪽에만 따로 두면 언젠가 두 벌이 어긋난다.
+ */
+export function sanitizeSettings(parsed: unknown): SatchelSettings {
   const fallback = emptySettings()
   if (typeof parsed !== 'object' || parsed === null) return fallback
 
@@ -124,8 +132,13 @@ function salvage(parsed: unknown): SatchelSettings {
     }
   }
 
+  // 옛 저장물에는 없다. 0이면 "언제 고쳤는지 모른다"는 뜻이고, 빈 설정은
+  // 어차피 올라가지 않으므로 알맹이 있는 것을 밀어내지 못한다.
+  const updatedAt = typeof raw.updatedAt === 'number' && raw.updatedAt > 0 ? raw.updatedAt : 0
+
   return {
     version: SETTINGS_VERSION,
+    updatedAt,
     layouts,
     toolbarPosition,
     showWidgetTitles,
@@ -141,7 +154,7 @@ export function loadSettings(
   if (!storage) return emptySettings()
   try {
     const raw = storage.getItem(storageKeyFor(accountId))
-    if (raw) return salvage(JSON.parse(raw))
+    if (raw) return sanitizeSettings(JSON.parse(raw))
 
     /**
      * 옛 열쇠를 **한 번만** 물려받는다.
@@ -155,7 +168,7 @@ export function loadSettings(
     if (accountId !== null) {
       const legacy = storage.getItem(LEGACY_STORAGE_KEY)
       if (legacy) {
-        const salvaged = salvage(JSON.parse(legacy))
+        const salvaged = sanitizeSettings(JSON.parse(legacy))
         storage.setItem(storageKeyFor(accountId), JSON.stringify(salvaged))
         storage.removeItem?.(LEGACY_STORAGE_KEY)
         return salvaged

@@ -30,6 +30,7 @@ import {
   sanitizeSettingsFor,
 } from '../widgets/registry'
 import type { SatchelMode } from '../widgets/types'
+import { fetchSettings, pushSettings, reconcile } from './satchelNet'
 
 /**
  * 행낭 스토어.
@@ -167,18 +168,56 @@ function pushHistory(past: Layout[], snapshot: Layout): Layout[] {
   return next.length > HISTORY_LIMIT ? next.slice(next.length - HISTORY_LIMIT) : next
 }
 
+/* --------------------------------------------------------------------------
+   저장 — 로컬이 먼저, 서버는 뒤따라
+   --------------------------------------------------------------------------
+   **로컬 저장은 곧바로 한다.** 손을 뗀 순간 남아야 하고, 신호가 없어도 그래야
+   한다(절대 원칙 3).
+
+   **서버는 늦춰서 한 번만 보낸다.** 위젯 하나를 옮기면 여러 조작이 잇달아
+   들어오는데(놓기 → 크기 → 회전) 그때마다 요청을 띄우면 마지막 것이 먼저
+   도착하는 일이 생긴다. 잠잠해질 때까지 기다렸다가 **가장 최근 것 하나만** 보낸다.
+   -------------------------------------------------------------------------- */
+
+/** 조작이 잇달아 들어올 때 잠잠해지기를 기다리는 시간. */
+const PUSH_DELAY_MS = 1500
+
+let pushTimer: ReturnType<typeof setTimeout> | null = null
+
+function schedulePush(settings: SatchelSettings, accountId: string | null): void {
+  if (accountId === null) return
+  if (pushTimer !== null) clearTimeout(pushTimer)
+  pushTimer = setTimeout(() => {
+    pushTimer = null
+    // 실패해도 아무 말 하지 않는다. 행낭은 서버 없이 완전히 돌고, 다음에 고칠 때
+    // 뭉치째 다시 올라간다.
+    void pushSettings(accountId, settings)
+  }, PUSH_DELAY_MS)
+}
+
+/**
+ * 고쳐진 설정을 확정한다 — 시각을 찍고, 로컬에 쓰고, 서버로 보낼 것을 예약한다.
+ *
+ * **시각을 여기 한 곳에서 찍는다.** 찍는 자리가 흩어지면 어떤 경로로 고쳤을 때만
+ * 시각이 안 오르고, 그 기기는 다른 기기와 맞출 때 영영 진다.
+ */
+function commit(settings: SatchelSettings, accountId: string | null): SatchelSettings {
+  const stamped: SatchelSettings = { ...settings, updatedAt: Date.now() }
+  saveSettings(stamped, accountId)
+  schedulePush(stamped, accountId)
+  return stamped
+}
+
 function persist(
   settings: SatchelSettings,
   layout: Layout,
   accountId: string | null,
 ): SatchelSettings {
   if (layout.columns <= 0) return settings
-  const next: SatchelSettings = {
-    ...settings,
-    layouts: { ...settings.layouts, [layout.columns]: layout },
-  }
-  saveSettings(next, accountId)
-  return next
+  return commit(
+    { ...settings, layouts: { ...settings.layouts, [layout.columns]: layout } },
+    accountId,
+  )
 }
 
 export const useSatchelStore = create<SatchelState>((set, get) => ({
@@ -196,7 +235,32 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
   setAccount: (accountId) => {
     if (get().accountId === accountId) return
     // 이력도 버린다 — 남의 배치로 되돌리는 일이 있어서는 안 된다.
-    set({ accountId, settings: loadSettings(accountId), past: [], notice: null })
+    const local = loadSettings(accountId)
+    set({ accountId, settings: local, past: [], notice: null })
+
+    /**
+     * **로컬을 먼저 띄우고 서버는 뒤따라 맞춘다.**
+     *
+     * 서버를 기다렸다가 그리면 신호 없는 자리에서 행낭이 통째로 멎는다 —
+     * 절대 원칙 3이 막는 바로 그 꼴이다. 지하에서 세 시간씩 하는 게임이다.
+     *
+     * 왕복이 끝난 뒤 계정이 또 바뀌었으면 결과를 버린다. 로그아웃하고 다른
+     * 계정으로 들어간 사이에 앞 사람의 배치가 늦게 도착해 덮는 일을 막는다.
+     */
+    void (async () => {
+      const remote = await fetchSettings(accountId)
+      if (get().accountId !== accountId) return
+
+      const { adopt, push } = reconcile(get().settings, remote)
+      if (adopt) {
+        // 서버 것을 그대로 앉힌다. 시각도 그쪽 것을 물려받아야 다음 판정이
+        // 어긋나지 않는다 — `commit`으로 찍으면 이 기기가 고친 것이 되어버린다.
+        saveSettings(adopt, accountId)
+        set({ settings: adopt, past: [] })
+      } else if (push) {
+        void pushSettings(accountId, get().settings)
+      }
+    })()
   },
 
   setBoardSize: (size) => {
@@ -223,14 +287,12 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
 
   setToolbarPreference: (toolbarPosition) => {
     const settings = { ...get().settings, toolbarPosition }
-    saveSettings(settings, get().accountId)
-    set({ settings })
+    set({ settings: commit(settings, get().accountId) })
   },
 
   toggleWidgetTitles: () => {
     const settings = { ...get().settings, showWidgetTitles: !get().settings.showWidgetTitles }
-    saveSettings(settings, get().accountId)
-    set({ settings })
+    set({ settings: commit(settings, get().accountId) })
   },
 
   setWidgetSettings: (instanceId, next) => {
@@ -238,8 +300,7 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
       ...get().settings,
       widgetSettings: { ...get().settings.widgetSettings, [instanceId]: next },
     }
-    saveSettings(settings, get().accountId)
-    set({ settings })
+    set({ settings: commit(settings, get().accountId) })
   },
 
   rotateWidget: (instanceId) => {
@@ -248,8 +309,7 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
       ...get().settings,
       widgetRotations: { ...get().settings.widgetRotations, [instanceId]: nextRotation(current) },
     }
-    saveSettings(settings, get().accountId)
-    set({ settings })
+    set({ settings: commit(settings, get().accountId) })
   },
 
   addWidgetOfType: (definitionId) => {

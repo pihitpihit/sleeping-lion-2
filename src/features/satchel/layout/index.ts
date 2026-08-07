@@ -3,6 +3,7 @@ export {
   SETTINGS_VERSION,
   emptyLayout,
   emptySettings,
+  isEmptySettings,
   isRotation,
   nextRotation,
   swapsAxes,
@@ -26,6 +27,7 @@ export {
   LEGACY_STORAGE_KEY,
   storageKeyFor,
   loadSettings,
+  sanitizeSettings,
   saveSettings,
   type StorageLike,
 } from './storage'
