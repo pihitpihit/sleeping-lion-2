@@ -1,0 +1,389 @@
+/* ==========================================================================
+   일지 — 축 ① 캠페인 기록지
+   --------------------------------------------------------------------------
+   실물 파티 시트의 그림을 깔지 않는다. 종이 비율에 갇히면 폰에서 못 쓰고,
+   시트에 박힌 영문 라벨이 한국어 화면과 겉돈다. 칸 구성만 참고하고 우리 결
+   (어두운 가죽·놋쇠)로 다시 그린다 — SPEC 13장의 🟢 항목.
+   ========================================================================== */
+
+.journal {
+  min-height: 100dvh;
+  padding: calc(var(--sl-safe-top) + 0.5rem) calc(var(--sl-safe-right) + 1rem)
+    calc(var(--sl-safe-bottom) + 2rem) calc(var(--sl-safe-left) + 1rem);
+  background: linear-gradient(180deg, var(--sl-bg) 0%, var(--sl-void) 100%);
+}
+
+.journal__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 44rem;
+  margin: 0 auto 1.25rem;
+  padding: 0.5rem 0;
+}
+
+.journal__back {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 플레이 중 급하게 누르는 화면이다. 터치 목표를 확보한다. */
+  width: 44px;
+  height: 44px;
+  font-size: 1.3rem;
+  color: var(--sl-text-muted);
+  text-decoration: none;
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  background: rgb(0 0 0 / 30%);
+}
+
+.journal__back:hover {
+  color: var(--sl-gold);
+  border-color: var(--sl-border-strong);
+}
+
+.journal__title {
+  margin: 0;
+  font-family: var(--sl-font-ko-display);
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: var(--sl-text);
+  /* 이름이 길어도 줄을 넘기지 않는다 — 띠가 두꺼워지면 아래가 밀린다. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.journal__error {
+  max-width: 44rem;
+  margin: 0 auto 1rem;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+  color: var(--sl-text);
+  background: rgb(168 57 31 / 22%);
+  border-left: 2px solid var(--sl-ember);
+  border-radius: 0.2rem;
+}
+
+.journal__empty {
+  max-width: 44rem;
+  margin: 2rem auto;
+  text-align: center;
+  color: var(--sl-text-faint);
+}
+
+/* --------------------------------------------------------------------------
+   목록
+   -------------------------------------------------------------------------- */
+
+.journal__list {
+  max-width: 44rem;
+  margin: 0 auto 1.5rem;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.journal__entry {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  color: var(--sl-text);
+  text-decoration: none;
+  background: var(--sl-raised);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.3rem;
+}
+
+.journal__entry:hover {
+  border-color: var(--sl-border-strong);
+  background: var(--sl-panel);
+}
+
+.journal__entry-name {
+  font-family: var(--sl-font-ko-display);
+  font-size: 1.05rem;
+  /* 이름이 길면 줄이되 오른쪽 수치는 지킨다. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.journal__entry-meta {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--sl-text-muted);
+}
+
+.journal__entry-place {
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.journal__entry-price {
+  color: var(--sl-gold-dim);
+}
+
+/* --------------------------------------------------------------------------
+   새 파티
+   -------------------------------------------------------------------------- */
+
+.journal__new {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+.journal__new-input,
+.sheet__input,
+.sheet__notes {
+  flex: 1;
+  min-width: 0;
+  padding: 0.6rem 0.7rem;
+  font-family: var(--sl-font-body);
+  font-size: 1rem;
+  color: var(--sl-text);
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+}
+
+.journal__new-input:focus,
+.sheet__input:focus,
+.sheet__notes:focus,
+.sheet__rep-value:focus {
+  outline: 2px solid var(--sl-gold);
+  outline-offset: 1px;
+}
+
+.journal__new-button,
+.sheet__add-button {
+  flex: none;
+  padding: 0.6rem 1rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--sl-void);
+  background: var(--sl-gold);
+  border: 1px solid var(--sl-gold);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.journal__new-button:disabled,
+.sheet__add-button:disabled {
+  color: var(--sl-text-faint);
+  background: none;
+  border-color: var(--sl-border);
+  cursor: default;
+}
+
+/* --------------------------------------------------------------------------
+   기록지 한 장
+   -------------------------------------------------------------------------- */
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+.sheet__block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.9rem 1rem;
+  background: var(--sl-raised);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.3rem;
+}
+
+.sheet__label {
+  margin: 0;
+  font-family: var(--sl-font-ko-display);
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--sl-text-muted);
+}
+
+.sheet__notes {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+/* --------------------------------------------------------------------------
+   평판과 가격 보정
+   --------------------------------------------------------------------------
+   보정은 **입력이 아니라 읽는 값**이다. 평판에서 나오므로 사람이 적으면 두 곳이
+   어긋난다. 결을 달리해 눌러도 되는 것과 아닌 것을 눈으로 가른다.
+   -------------------------------------------------------------------------- */
+
+.sheet__block--rep {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'label price'
+    'rep   price';
+  align-items: center;
+  gap: 0.45rem 1rem;
+}
+
+.sheet__block--rep .sheet__label {
+  grid-area: label;
+}
+
+.sheet__rep {
+  grid-area: rep;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.sheet__step {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--sl-text);
+  background: var(--sl-panel);
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.sheet__step:disabled {
+  color: var(--sl-text-faint);
+  cursor: default;
+}
+
+.sheet__step:not(:disabled):hover {
+  border-color: var(--sl-border-strong);
+  color: var(--sl-gold);
+}
+
+.sheet__rep-value {
+  width: 4rem;
+  padding: 0.4rem;
+  font-size: 1.4rem;
+  text-align: center;
+  color: var(--sl-text);
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+}
+
+/* 숫자 입력의 위아래 화살표는 지운다 — 우리 단추가 이미 그 일을 한다. */
+.sheet__rep-value::-webkit-outer-spin-button,
+.sheet__rep-value::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.sheet__rep-value {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.sheet__price {
+  grid-area: price;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.5rem 0.9rem;
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.3rem;
+}
+
+.sheet__price-label {
+  font-size: 0.75rem;
+  color: var(--sl-text-faint);
+}
+
+.sheet__price-value {
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--sl-text-muted);
+}
+
+/* 비싸지면 잉걸빛, 싸지면 이끼색. 방향이 색으로도 읽힌다. */
+.sheet__price--up .sheet__price-value {
+  color: var(--sl-ember);
+}
+
+.sheet__price--down .sheet__price-value {
+  color: var(--sl-moss-bright);
+}
+
+/* 읽어주는 쪽에만 가는 말. 화면에서는 자리를 차지하지 않는다. */
+.sheet__hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   업적
+   -------------------------------------------------------------------------- */
+
+.sheet__achievements {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sheet__achievements > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  color: var(--sl-text);
+  background: rgb(0 0 0 / 24%);
+  border-left: 2px solid var(--sl-gold-dim);
+  border-radius: 0.2rem;
+}
+
+.sheet__remove {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--sl-text-faint);
+  background: none;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.sheet__remove:hover {
+  color: var(--sl-ember);
+}
+
+.sheet__add {
+  display: flex;
+  gap: 0.5rem;
+}

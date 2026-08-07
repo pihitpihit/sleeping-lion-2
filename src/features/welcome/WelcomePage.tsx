@@ -40,7 +40,7 @@ const PILLARS = [
     ordinal: 'I',
     title: '일지',
     body: '모험을 기록한다. 금화와 경험치, 레벨과 퍽, 손에 넣은 물건, 도시의 번영과 우리 명성까지.',
-    href: null,
+    href: '#/journal',
   },
   {
     ordinal: 'II',
