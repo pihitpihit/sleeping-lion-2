@@ -23,7 +23,7 @@ import { clearSession, loadSession, saveSession, type Session } from './session'
  * 어느 쪽도 부르지 않지만, 만에 하나 불렸을 때 조용히 성공하지 않도록
  * `notReadyAdapter`로 떨어뜨린다 — **잠기는 쪽으로 틀리는 편이 낫다**(SPEC 3.1).
  */
-const adapter: AuthAdapter =
+export const adapter: AuthAdapter =
   AUTH_MODE === 'mock' ? mockAdapter : AUTH_MODE === 'live' ? supabaseAdapter : notReadyAdapter
 
 interface AuthState {
@@ -32,6 +32,8 @@ interface AuthState {
   error: string | null
 
   signIn(id: string, password: string): Promise<boolean>
+  /** 가입. **벽은 승인이지 가입이 아니다**(0004). */
+  signUp(email: string, password: string): Promise<boolean>
   signOut(): void
   /** 만료가 지났으면 내보낸다. 타이머가 부른다. */
   pruneExpired(now: number): void
@@ -61,6 +63,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           : navigator.onLine === false
             ? '네트워크에 연결되어 있지 않습니다. 첫 로그인은 연결이 필요합니다.'
             : '로그인하지 못했습니다. 잠시 뒤 다시 시도해 주십시오.'
+      set({ signingIn: false, error: message })
+      return false
+    }
+  },
+
+  async signUp(email, password) {
+    if (get().signingIn) return false
+    set({ signingIn: true, error: null })
+
+    try {
+      const session = await adapter.signUp(email, password, Date.now())
+      saveSession(session)
+      set({ session, signingIn: false, error: null })
+      return true
+    } catch (cause) {
+      const message =
+        cause instanceof AuthError
+          ? cause.message
+          : navigator.onLine === false
+            ? '네트워크에 연결되어 있지 않습니다. 가입은 연결이 필요합니다.'
+            : '가입하지 못했습니다. 잠시 뒤 다시 시도해 주십시오.'
       set({ signingIn: false, error: message })
       return false
     }

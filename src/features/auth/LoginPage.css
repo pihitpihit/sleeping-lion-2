@@ -159,3 +159,52 @@
     transition: none;
   }
 }
+
+/* --------------------------------------------------------------------------
+   들어가기 / 문 두드리기
+   --------------------------------------------------------------------------
+   **가입은 열려 있다.** 벽은 승인이지 가입이 아니다(0004).
+   -------------------------------------------------------------------------- */
+
+.login__tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 0.9rem;
+  padding: 0.2rem;
+  background: rgb(0 0 0 / 28%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.3rem;
+}
+
+.login__tab {
+  flex: 1;
+  padding: 0.5rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--sl-text-faint);
+  background: none;
+  border: none;
+  border-radius: 0.2rem;
+  cursor: pointer;
+}
+
+.login__tab--on {
+  color: var(--sl-void);
+  background: var(--sl-gold);
+}
+
+.login__note {
+  margin: 0 0 0.9rem;
+  padding: 0.6rem 0.7rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--sl-text-muted);
+  background: rgb(0 0 0 / 24%);
+  border-left: 2px solid var(--sl-gold-dim);
+  border-radius: 0.2rem;
+}
+
+.login__note strong {
+  font-weight: 400;
+  color: var(--sl-text);
+}

@@ -26,6 +26,8 @@ export const LAZY_ROUTES: Record<string, ComponentType> = {
   '/login': lazy(() => import('./features/auth/LoginPage').then((m) => ({ default: m.LoginPage }))),
   '/join': lazy(() => import('./features/net/JoinPage').then((m) => ({ default: m.JoinPage }))),
   // 일지 — 축 ①. 목록과 기록지 한 장을 한 화면이 함께 다룬다.
+  // 문지기 — 대기자 승인. 관리자만 볼 수 있고, 서버가 다시 확인한다.
+  '/gate': lazy(() => import('./features/auth/AdminPage').then((m) => ({ default: m.AdminPage }))),
   '/journal': lazy(() =>
     import('./features/campaign/JournalPage').then((m) => ({ default: m.JournalPage })),
   ),

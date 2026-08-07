@@ -85,6 +85,53 @@ export const supabaseAdapter: AuthAdapter = {
     return toSession(user.id, user.email ?? email, now)
   },
 
+  async signUp(email, password, now) {
+    if (!isSupabaseConfigured()) {
+      throw new AuthError('서버 설정이 없다. 이 빌드로는 가입할 수 없다.')
+    }
+    const address = email.trim()
+    if (address === '') throw new AuthError('이메일을 적어라.')
+    if (password.length < 8) throw new AuthError('비밀번호는 여덟 자 이상이어야 한다.')
+
+    try {
+      const { data, error } = await supabase().auth.signUp({ email: address, password })
+      if (error) throw error
+
+      /**
+       * 세션이 안 오면 확인 메일을 기다리는 설정이다.
+       *
+       * 우리는 그것을 끄기로 했지만(SPEC 4.2) 대시보드 설정이라 코드가 강제하지
+       * 못한다. 켜져 있으면 여기서 걸리므로 무엇이 막혔는지 말해준다.
+       */
+      const user = data.user
+      if (!user || !data.session) {
+        throw new AuthError('가입은 되었으나 바로 들어갈 수 없다. 관리자에게 알려라.')
+      }
+      return toSession(user.id, user.email ?? address, now)
+    } catch (cause) {
+      if (cause instanceof AuthError) throw cause
+      const message = cause instanceof Error ? cause.message : ''
+      if (/already registered|already been registered|User already/i.test(message)) {
+        throw new AuthError('이미 가입된 이메일이다. 로그인하라.')
+      }
+      if (/password/i.test(message)) {
+        throw new AuthError('비밀번호가 조건에 맞지 않는다. 여덟 자 이상으로 하라.')
+      }
+      throw new AuthError(toMessage(cause))
+    }
+  },
+
+  /** 승인 전에도 된다 — 잠긴 계정도 제 열쇠는 갈 수 있어야 한다. */
+  async changePassword(next) {
+    if (next.length < 8) throw new AuthError('비밀번호는 여덟 자 이상이어야 한다.')
+    try {
+      const { error } = await supabase().auth.updateUser({ password: next })
+      if (error) throw error
+    } catch (cause) {
+      throw new AuthError(toMessage(cause))
+    }
+  },
+
   async signOut() {
     if (!isSupabaseConfigured()) return
     try {

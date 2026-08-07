@@ -38,4 +38,11 @@ export const mockAdapter: AuthAdapter = {
   },
 
   async signOut() {},
+
+  // 가짜에는 승인이라는 개념이 없다. 로그인과 같이 굴어 흐름만 만져보게 둔다.
+  async signUp(email: string, password: string, now: number): Promise<Session> {
+    return mockAdapter.signIn(email, password, now)
+  },
+
+  async changePassword() {},
 }

@@ -1,0 +1,257 @@
+/* ==========================================================================
+   문 앞에서 — 승인 대기와 문지기
+   ========================================================================== */
+
+.pending {
+  min-height: 100dvh;
+  max-width: 32rem;
+  margin: 0 auto;
+  padding: calc(var(--sl-safe-top) + 3rem) calc(var(--sl-safe-right) + 1.25rem)
+    calc(var(--sl-safe-bottom) + 2rem) calc(var(--sl-safe-left) + 1.25rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.pending--wide {
+  max-width: 40rem;
+  padding-top: calc(var(--sl-safe-top) + 1rem);
+}
+
+.pending__head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pending__back {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  font-size: 1.3rem;
+  color: var(--sl-text-muted);
+  text-decoration: none;
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  background: rgb(0 0 0 / 30%);
+}
+
+.pending__title {
+  margin: 0;
+  font-family: var(--sl-font-ko-display);
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: var(--sl-gold);
+}
+
+.pending__body {
+  margin: 0;
+  line-height: 1.7;
+  color: var(--sl-text);
+}
+
+.pending__hint {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--sl-text-muted);
+}
+
+.pending__warn {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+  color: var(--sl-text);
+  background: rgb(168 57 31 / 22%);
+  border-left: 2px solid var(--sl-ember);
+  border-radius: 0.2rem;
+}
+
+.pending__ticks {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--sl-text-faint);
+}
+
+.pending__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0;
+}
+
+.pending__recheck,
+.pending__out {
+  padding: 0.55rem 1rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  text-decoration: none;
+  color: var(--sl-text-muted);
+  background: var(--sl-raised);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.pending__recheck:hover {
+  color: var(--sl-gold);
+  border-color: var(--sl-border-strong);
+}
+
+/* 나가는 것은 되돌릴 수 있지만 결이 달라야 한다. */
+.pending__out:hover {
+  color: var(--sl-ember);
+  border-color: var(--sl-ember);
+}
+
+/* --------------------------------------------------------------------------
+   문지기 목록
+   -------------------------------------------------------------------------- */
+
+.admin__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin__list > li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--sl-raised);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.3rem;
+}
+
+.admin__email {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--sl-text);
+}
+
+.admin__approve {
+  flex: none;
+  padding: 0.45rem 0.9rem;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: var(--sl-void);
+  background: var(--sl-gold);
+  border: 1px solid var(--sl-gold);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.admin__approve:disabled {
+  color: var(--sl-text-faint);
+  background: none;
+  border-color: var(--sl-border);
+  cursor: default;
+}
+
+/* --------------------------------------------------------------------------
+   비밀번호 바꾸기 — 잠긴 계정도 제 열쇠는 갈 수 있다
+   -------------------------------------------------------------------------- */
+
+.pwc {
+  margin: 1.5rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--sl-border);
+}
+
+.pwc--open {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.pwc__open {
+  padding: 0;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--sl-text-faint);
+  background: none;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.pwc__open:hover {
+  color: var(--sl-gold);
+}
+
+.pwc__done {
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--sl-moss-bright);
+}
+
+.pwc__label {
+  font-size: 0.85rem;
+  color: var(--sl-text-muted);
+}
+
+.pwc__input {
+  padding: 0.55rem 0.7rem;
+  font-family: var(--sl-font-body);
+  font-size: 1rem;
+  color: var(--sl-text);
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+}
+
+.pwc__hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--sl-text-faint);
+}
+
+.pwc__error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--sl-ember);
+}
+
+.pwc__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.3rem;
+}
+
+.pwc__save,
+.pwc__cancel {
+  padding: 0.45rem 0.9rem;
+  font-family: inherit;
+  font-size: 0.88rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.pwc__save {
+  color: var(--sl-void);
+  background: var(--sl-gold);
+  border: 1px solid var(--sl-gold);
+}
+
+.pwc__save:disabled {
+  color: var(--sl-text-faint);
+  background: none;
+  border-color: var(--sl-border);
+  cursor: default;
+}
+
+.pwc__cancel {
+  color: var(--sl-text-muted);
+  background: none;
+  border: 1px solid var(--sl-border);
+}

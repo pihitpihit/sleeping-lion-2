@@ -2,9 +2,11 @@ import { Suspense, useEffect, useState } from 'react'
 import { HOME_ROUTE, LAZY_ROUTES, readRoute, routeKey } from './routes'
 import { WelcomePage } from './features/welcome/WelcomePage'
 import { AUTH_MODE } from './features/auth/mode'
-import { guardRoute } from './features/auth/guard'
+import { guardRoute, PUBLIC_ROUTES } from './features/auth/guard'
 import { useAuthStore } from './features/auth/authStore'
 import { setPendingRoute } from './features/auth/pendingRoute'
+import { useApprovalStore } from './features/auth/approval'
+import { PendingPage } from './features/auth/PendingPage'
 
 export default function App() {
   const [route, setRoute] = useState(() => readRoute(window.location.hash) ?? HOME_ROUTE)
@@ -44,6 +46,24 @@ export default function App() {
     return () => clearTimeout(timer)
   }, [session, pruneExpired])
 
+  /**
+   * 승인 게이트.
+   *
+   * 로그인 게이트를 지난 뒤 한 겹 더 있다 — **가입은 열려 있고 쓰는 것은
+   * 승인받은 사람만 한다**(0004). 세션이 생기면 물어보고, 나가면 잊는다.
+   */
+  const approvalPhase = useApprovalStore((s) => s.phase)
+  const checkApproval = useApprovalStore((s) => s.check)
+  const resetApproval = useApprovalStore((s) => s.reset)
+
+  useEffect(() => {
+    if (session === null) {
+      resetApproval()
+      return
+    }
+    void checkApproval()
+  }, [session, checkApproval, resetApproval])
+
   const decision = guardRoute(route, AUTH_MODE, session !== null)
   const redirectTo = decision.kind === 'redirect' ? decision.to : null
   const remember = decision.kind === 'redirect' ? decision.remember : undefined
@@ -60,6 +80,19 @@ export default function App() {
 
   // 보내는 동안에는 아무것도 그리지 않는다. 잠깐이라도 보이면 새는 것이다.
   if (redirectTo !== null) return null
+
+  /**
+   * 승인 전에는 문 앞에 세운다.
+   *
+   * **아직 안 물어봤을 때는 세우지 않는다**(`unknown`·`checking`). 물어보기도
+   * 전에 "승인되지 않았다"고 말하면 멀쩡한 사람이 매번 그 화면을 스쳐 본다.
+   *
+   * 공개 경로(`#/notice`)는 그대로 연다 — 출처표시 의무는 로그인·승인과 무관하게
+   * 배포에서 발생한다(SPEC 13.1).
+   */
+  if (session !== null && approvalPhase === 'pending' && !PUBLIC_ROUTES.includes(route)) {
+    return <PendingPage />
+  }
 
   const LazyPage = LAZY_ROUTES[routeKey(route)]
   if (LazyPage) {

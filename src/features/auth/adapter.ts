@@ -15,6 +15,17 @@ export interface AuthAdapter {
    */
   signIn(id: string, password: string, now: number): Promise<Session>
   signOut(): Promise<void>
+  /**
+   * 가입.
+   *
+   * **가입은 열려 있고 쓰는 것은 승인받은 사람만 한다**(0004). 여기서 막지
+   * 않는 이유가 그것이다 — 벽은 승인이지 가입이 아니다.
+   *
+   * 지원하지 않는 백엔드는 `AuthError`를 던진다.
+   */
+  signUp(email: string, password: string, now: number): Promise<Session>
+  /** 비밀번호 바꾸기. 승인 전에도 된다 — 잠긴 계정도 제 열쇠는 갈 수 있어야 한다. */
+  changePassword(next: string): Promise<void>
 }
 
 /** 사용자에게 그대로 보여줄 수 있는 실패. */
@@ -36,4 +47,10 @@ export const notReadyAdapter: AuthAdapter = {
     throw new AuthError('아직 서버가 붙지 않았습니다.')
   },
   async signOut() {},
+  async signUp() {
+    throw new AuthError('아직 서버가 붙지 않았습니다.')
+  },
+  async changePassword() {
+    throw new AuthError('아직 서버가 붙지 않았습니다.')
+  },
 }
