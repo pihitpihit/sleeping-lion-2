@@ -37,3 +37,51 @@
   color: var(--sl-gold);
   border-color: var(--sl-gold-dim);
 }
+
+/* --------------------------------------------------------------------------
+   문지기로 가는 문 — 관리자에게만 보인다
+   --------------------------------------------------------------------------
+   주소를 외워 치게 두면 새 요청이 온 것을 알 길이 없다.
+   -------------------------------------------------------------------------- */
+
+.account__gate {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  text-decoration: none;
+  color: var(--sl-text-muted);
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+}
+
+.account__gate:hover {
+  color: var(--sl-gold);
+  border-color: var(--sl-border-strong);
+}
+
+/* 기다리는 사람이 있으면 눈에 걸려야 한다. */
+.account__badge {
+  min-width: 1.15rem;
+  padding: 0 0.25rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--sl-void);
+  background: var(--sl-gold);
+  border-radius: 999px;
+}
+
+/* 읽어주는 쪽에만 간다. 뱃지의 숫자만으로는 무엇의 수인지 알 수 없다. */
+.account__badge-speech {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

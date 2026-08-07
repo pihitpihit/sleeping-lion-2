@@ -16,6 +16,7 @@ import './PendingPage.css'
 export function AdminPage() {
   const isAdmin = useApprovalStore((s) => s.isAdmin)
   const phase = useApprovalStore((s) => s.phase)
+  const refreshPending = useApprovalStore((s) => s.refreshPending)
 
   const [pending, setPending] = useState<PendingUser[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -39,6 +40,9 @@ export function AdminPage() {
         if (!alive) return
         setPending(rows)
         setError(null)
+        // 계정 띠의 뱃지도 같은 수를 보게 한다. 여기서 들이고 나갔는데 뱃지에
+        // 옛 수가 남아 있으면 아직 누가 기다리는 줄 안다.
+        void refreshPending()
       } catch (cause) {
         console.error('[admin]', cause)
         if (alive) setError('대기자를 불러오지 못했습니다.')
@@ -49,7 +53,7 @@ export function AdminPage() {
     return () => {
       alive = false
     }
-  }, [isAdmin, tick])
+  }, [isAdmin, tick, refreshPending])
 
   const reload = () => setTick((n) => n + 1)
 

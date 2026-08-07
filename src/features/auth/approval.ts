@@ -33,7 +33,15 @@ interface ApprovalState {
   isAdmin: boolean
   /** 이번에 막 승인된 것을 보았는가 — 한 번 알리고 내린다. */
   justApproved: boolean
+  /**
+   * 문 앞에서 기다리는 사람 수. **관리자에게만 뜻이 있다.**
+   *
+   * 주소를 외워 `#/gate`로 들어가게 두면 새 요청이 온 것을 알 길이 없다. 계정
+   * 띠에 뱃지로 띄우려고 여기 둔다.
+   */
+  pendingCount: number
   check: () => Promise<void>
+  refreshPending: () => Promise<void>
   acknowledge: () => void
   reset: () => void
 }
@@ -42,6 +50,7 @@ export const useApprovalStore = create<ApprovalState>((set, get) => ({
   phase: 'unknown',
   isAdmin: false,
   justApproved: false,
+  pendingCount: 0,
 
   check: async () => {
     /**
@@ -71,15 +80,26 @@ export const useApprovalStore = create<ApprovalState>((set, get) => ({
         // 기다리다 방금 열린 것만 알린다. 처음부터 승인된 사람에게는 알릴 것이 없다.
         justApproved: approved && wasPending,
       })
+      if (isAdmin) void get().refreshPending()
     } catch (cause) {
       console.error('[approval]', cause)
       set({ phase: 'unreachable' })
     }
   },
 
+  refreshPending: async () => {
+    if (!get().isAdmin) return
+    try {
+      set({ pendingCount: (await listPendingUsers()).length })
+    } catch (cause) {
+      // 세지 못해도 판이 멈추지 않는다. 뱃지가 잠깐 안 보일 뿐이다.
+      console.error('[approval] 대기자를 세지 못했다', cause)
+    }
+  },
+
   acknowledge: () => set({ justApproved: false }),
 
-  reset: () => set({ phase: 'unknown', isAdmin: false, justApproved: false }),
+  reset: () => set({ phase: 'unknown', isAdmin: false, justApproved: false, pendingCount: 0 }),
 }))
 
 /* --------------------------------------------------------------------------
