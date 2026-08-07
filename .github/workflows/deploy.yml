@@ -38,11 +38,20 @@ jobs:
         # 루트 도메인이나 자가호스팅으로 옮기면 이 값을 '/'로 바꾼다.
         env:
           VITE_BASE: /${{ github.event.repository.name }}/
-          # 로그인 게이트는 켜되 백엔드는 가짜다(SPEC 3.1의 `mock`).
-          # 서버가 아직 없으므로 배포된 페이지에서 로그인 흐름만 만져볼 수 있다.
-          # 이 값을 지우거나 오타를 내면 `live`가 되어 로그인은 요구하되 아무도
-          # 못 들어오는 상태가 된다 — 조용히 열리는 것보다 낫다.
-          VITE_AUTH_MODE: mock
+          # 정식이다(SPEC 3.1의 `live`). Supabase가 붙었으므로 가짜 백엔드를
+          # 내린다 — 레포 하나에 Pages 사이트가 하나뿐이라 `mock`은 여기서
+          # 사라진다. "한 곳만 살린다"가 저절로 지켜지는 자리다.
+          VITE_AUTH_MODE: live
+          # 아래 둘은 **공개해도 되는 값이다.** publishable 키(옛 anon)를 두고
+          # Supabase 문서가 "웹페이지·소스코드에 노출해도 안전"하다고 못박았다.
+          # 보호는 키를 감추는 것이 아니라 RLS가 한다(SPEC 3.1).
+          #
+          # 그래서 시크릿이 아니라 여기 그대로 적는다 — 숨겨두면 빠뜨렸을 때
+          # 빌드는 지나가고 화면에서만 조용히 안 되는 꼴이 난다.
+          #
+          # **secret 키(옛 service_role)는 절대 여기 오지 않는다.** RLS를 우회한다.
+          VITE_SUPABASE_URL: https://yuognmrpeepkbhphbgwj.supabase.co
+          VITE_SUPABASE_KEY: sb_publishable_cw6PwNcOjVCqbhWCI7CCgg_mvgwqDYK
         run: npm run build
 
       - uses: actions/upload-pages-artifact@v3
