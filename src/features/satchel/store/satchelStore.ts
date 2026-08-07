@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import {
   computeGridMetrics,
   EMPTY_METRICS,
+  hasFreeCell,
+  sizeCandidates,
   type GridMetrics,
   type Placement,
   type Size,
@@ -74,6 +76,14 @@ interface SatchelState {
 
   currentLayout: () => Layout
   countOf: (definitionId: string) => number
+  /**
+   * 지금 이 위젯을 놓을 수 있는가 — 도구 띠가 단추를 잠글지 정한다.
+   *
+   * **눌러봐야 거절당할 단추는 잠가 두는 편이 정직하다.** 다만 잠그는 판정과
+   * 실제로 놓는 판정이 같은 함수를 봐야 한다. 갈리면 "눌리는데 안 되는" 또는
+   * "안 눌리는데 될 뻔한" 자리가 생긴다.
+   */
+  canAdd: (definitionId: string) => boolean
   /** 늘 sanitize를 거친 값. 위젯이 안심하고 자기 타입으로 받는다. */
   settingsFor: (instanceId: string, definitionId: string) => unknown
   rotationOf: (instanceId: string) => Rotation
@@ -189,26 +199,35 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     }
 
     /**
-     * 기본 크기가 안 들어가면 **눕혀서** 시도한다.
+     * **기본 크기에서 최소 크기까지 훑는다.**
      *
-     * 원소 트래커는 긴 쪽이 6칸이어야 하는데 폰은 4열뿐이다. 가로로는 못 놓아도
-     * 세로로는 놓을 수 있으므로, 돌려보지 않고 "자리가 없다"고 하면 폰에서
-     * 아예 쓸 수 없는 위젯이 된다.
+     * 처음에는 기본 크기와 그것을 눕힌 것 둘만 시도했다. 그러면 격자에 빈칸이
+     * 보이는데도 거절당한다 — 기본이 6×2인 원소 트래커는 2×2 자리가 비어 있어도
+     * 못 들어간다. 눈에 보이는 빈칸과 실제로 놓이는지가 어긋나면 단추가 고장난
+     * 것으로 읽힌다.
+     *
+     * 눕힌 것을 함께 보는 이유는 그대로다 — 원소 트래커는 긴 쪽이 6칸이어야
+     * 하는데 폰은 4열뿐이라, 돌려보지 않으면 폰에서 아예 못 쓴다.
      */
-    const { defaultSize } = definition
-    const candidates = [defaultSize, { w: defaultSize.h, h: defaultSize.w }]
     const fresh = definition.settings?.sanitize(undefined)
+    const candidates = sizeCandidates(definition.defaultSize, definition.minSize, metrics)
     let next: Layout | null = null
     for (const size of candidates) {
-      if (size.w > metrics.columns || size.h > metrics.rows) continue
       if (!isSizeAllowedFor(definitionId, size, fresh)) continue
       next = addWidget(layout, definitionId, size, metrics, crypto.randomUUID())
       if (next) break
     }
 
     if (!next) {
-      // 조용히 실패하면 버튼이 고장난 것으로 보인다.
-      set({ notice: '자리가 없다. 다른 연장을 치우거나 크기를 줄여라.' })
+      // 조용히 실패하면 버튼이 고장난 것으로 보인다. **왜 안 되는지 가려서
+      // 말한다** — 자리가 없는 것과 이 위젯이 그만한 자리를 요구하는 것은
+      // 사용자가 할 일이 다르다.
+      const fits = candidates.some((size) => isSizeAllowedFor(definitionId, size, fresh))
+      set({
+        notice: fits
+          ? '자리가 없다. 다른 연장을 치우거나 크기를 줄여라.'
+          : `${definition.name}은(는) 남은 자리에 들어가기엔 크다.`,
+      })
       return
     }
     set({ settings: persist(settings, next), notice: null, past: pushHistory(get().past, layout) })
@@ -288,4 +307,24 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     resolveLayout(get().settings, get().metrics).widgets.filter(
       (w) => w.definitionId === definitionId,
     ).length,
+
+  canAdd: (definitionId) => {
+    const { settings, metrics } = get()
+    const definition = getWidgetDefinition(definitionId)
+    if (!definition) return false
+
+    const layout = resolveLayout(settings, metrics)
+    const used = layout.widgets.filter((w) => w.definitionId === definitionId).length
+    if (definition.maxInstances != null && used >= definition.maxInstances) return false
+
+    // 빈칸이 아예 없으면 어떤 크기로도 못 들어간다. 값싼 판정부터 한다.
+    if (!hasFreeCell(layout.widgets, metrics)) return false
+
+    const fresh = definition.settings?.sanitize(undefined)
+    return sizeCandidates(definition.defaultSize, definition.minSize, metrics).some(
+      (size) =>
+        isSizeAllowedFor(definitionId, size, fresh) &&
+        addWidget(layout, definitionId, size, metrics, 'probe') !== null,
+    )
+  },
 }))

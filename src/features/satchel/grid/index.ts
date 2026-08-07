@@ -8,3 +8,4 @@ export {
 } from './gridMetrics'
 export { cellsToPixels, pixelsToCell, clampToGrid, type Placement, type PixelRect } from './coords'
 export { isWithinGrid, overlaps, canPlaceAt, findFreeSpot } from './placement'
+export { sizeCandidates, hasFreeCell } from './sizing'

@@ -123,6 +123,41 @@ describe('shuffle', () => {
     const cards = buildDeck(STANDARD_COMPOSITION)
     expect(shuffle(cards, seeded(42))).toEqual(shuffle(cards, seeded(42)))
   })
+
+  /**
+   * **고르게 섞이는가.**
+   *
+   * 장수가 보존되는 것만으로는 모자란다. 흔한 실수인 `sort(() => rng() - 0.5)`도
+   * 장수는 지키지만 자리가 심하게 치우친다 — 카드가 원래 자리 언저리에 몰린다.
+   *
+   * 씨앗을 심어 돌리므로 **결과가 늘 같다.** 무작위 시험이 이따금 실패해
+   * 사람을 헷갈리게 하는 일이 없다.
+   */
+  it('각 카드가 모든 자리에 고르게 간다', () => {
+    const cards = buildDeck({ p0: 1, p1: 1, p2: 1, m1: 1, m2: 1 })
+    const size = cards.length
+    const rng = seeded(20260807)
+    const rounds = 20_000
+
+    // counts[카드][자리]
+    const counts = Array.from({ length: size }, () => new Array<number>(size).fill(0))
+    for (let round = 0; round < rounds; round += 1) {
+      const mixed = shuffle(cards, rng)
+      for (let slot = 0; slot < size; slot += 1) {
+        counts[cards.findIndex((c) => c.id === mixed[slot].id)][slot] += 1
+      }
+    }
+
+    const expected = rounds / size
+    for (let card = 0; card < size; card += 1) {
+      for (let slot = 0; slot < size; slot += 1) {
+        const drift = Math.abs(counts[card][slot] - expected) / expected
+        // 12%면 통계적 흔들림은 넉넉히 품고, 치우친 구현은 거른다
+        // (sort 방식은 30%를 훌쩍 넘는다).
+        expect(drift, `${cards[card].id} → ${slot}번 자리`).toBeLessThan(0.12)
+      }
+    }
+  })
 })
 
 describe('drawOne', () => {

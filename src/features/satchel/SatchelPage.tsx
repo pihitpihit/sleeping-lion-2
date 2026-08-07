@@ -36,6 +36,7 @@ export function SatchelPage() {
   const undo = useSatchelStore((s) => s.undo)
   const currentLayout = useSatchelStore((s) => s.currentLayout)
   const countOf = useSatchelStore((s) => s.countOf)
+  const canAdd = useSatchelStore((s) => s.canAdd)
   const settingsFor = useSatchelStore((s) => s.settingsFor)
   const rotationOf = useSatchelStore((s) => s.rotationOf)
   const rotateWidget = useSatchelStore((s) => s.rotateWidget)
@@ -79,6 +80,7 @@ export function SatchelPage() {
         canUndo={past.length > 0}
         showWidgetTitles={settings.showWidgetTitles}
         countOf={countOf}
+        canAdd={canAdd}
         onToggleMode={() => setMode(mode === 'edit' ? 'play' : 'edit')}
         onAdd={addWidgetOfType}
         onSetPreference={setToolbarPreference}

@@ -12,6 +12,8 @@ interface Props {
   canUndo: boolean
   showWidgetTitles: boolean
   countOf: (definitionId: string) => number
+  /** 지금 놓을 수 있는가. 눌러봐야 거절당할 단추는 잠근다. */
+  canAdd: (definitionId: string) => boolean
   onToggleMode: () => void
   onAdd: (definitionId: string) => void
   onSetPreference: (preference: ToolbarPreference) => void
@@ -35,6 +37,7 @@ export function SatchelToolbar({
   canUndo,
   showWidgetTitles,
   countOf,
+  canAdd,
   onToggleMode,
   onAdd,
   onSetPreference,
@@ -107,13 +110,17 @@ export function SatchelToolbar({
               const count = countOf(definition.id)
               const isToggle = definition.maxInstances === 1
               const full = definition.maxInstances != null && count >= definition.maxInstances
+              // 자리가 없어 못 놓는 것과 개수가 찬 것을 함께 잠근다. 다만
+              // 토글 위젯은 켜고 끄는 것이므로 놓여 있으면 잠그지 않는다.
+              const roomless = !full && !canAdd(definition.id)
               return (
                 <li key={definition.id}>
                   <button
                     type="button"
                     className="satchel-bar__widget"
                     aria-pressed={isToggle ? count > 0 : undefined}
-                    disabled={full}
+                    disabled={full || roomless}
+                    title={roomless ? `${definition.name}을(를) 놓을 자리가 없다` : undefined}
                     onClick={() => onAdd(definition.id)}
                   >
                     {definition.name}
