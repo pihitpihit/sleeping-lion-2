@@ -3,6 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!--
+      iOS 홈화면 아이콘.
+
+      **아이폰은 홈화면 아이콘으로 SVG를 쓰지 않는다.** 이것이 없으면 화면을
+      캡처하거나 제목의 첫 글자('잠')로 대신 그린다 — 실제로 그렇게 났다.
+      PNG 하나가 있어야 하고 180×180이 요즘 기기의 기준이다.
+
+      모서리는 **각지게** 둔다. iOS가 제 마스크로 둥글리므로 둥근 것을 넣으면
+      귀퉁이가 두 번 깎여 파인다. 그래서 파비콘(rx=14)과 같은 그림이지만 다른
+      파일이다.
+    -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- 안드로이드·데스크톱은 매니페스트에서 아이콘을 읽는다. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
     <!-- viewport-fit=cover: 아이폰 노치/다이나믹 아일랜드 영역까지 배경을 채우고,
          내용은 CSS의 env(safe-area-inset-*)로 밀어낸다. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
