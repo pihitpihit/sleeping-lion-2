@@ -2,7 +2,24 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!--
+      파비콘 — **작은 자리는 사자 얼굴만 쓴다.**
+
+      간판 원반을 그대로 줄이면 16px에서 글자와 룬이 뭉개져 갈색 얼룩이 된다.
+      실제로 줄여 보고 알았다. 그래서 잠든 사자의 얼굴만 오려 금테를 둘렀다 —
+      32px에서 감은 눈과 주둥이가 살아 있고, 16px에서도 금테 덕에 다른 탭과
+      갈린다.
+
+      **48까지 준다.** 브라우저가 알아서 고르는데, 없는 크기를 만들 때 줄이는
+      쪽보다 키우는 쪽이 더 뭉갠다. 큰 자리(홈화면·설치 아이콘)에서는 원반이
+      통째로 읽히므로 매니페스트 쪽에 통짜를 둔다.
+
+      벡터 파비콘은 두지 않는다. 원본이 래스터 그림이라 SVG로 옮길 것이 없고,
+      SVG를 함께 걸어 두면 브라우저가 그쪽을 먼저 골라 옛 그림이 뜬다.
+    -->
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
     <!--
       iOS 홈화면 아이콘.
 
@@ -11,8 +28,7 @@
       PNG 하나가 있어야 하고 180×180이 요즘 기기의 기준이다.
 
       모서리는 **각지게** 둔다. iOS가 제 마스크로 둥글리므로 둥근 것을 넣으면
-      귀퉁이가 두 번 깎여 파인다. 그래서 파비콘(rx=14)과 같은 그림이지만 다른
-      파일이다.
+      귀퉁이가 두 번 깎여 파인다.
     -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <!-- 안드로이드·데스크톱은 매니페스트에서 아이콘을 읽는다. -->

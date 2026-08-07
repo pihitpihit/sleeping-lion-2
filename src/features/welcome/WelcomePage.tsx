@@ -1,6 +1,6 @@
 import { LOCALE, messages } from '../../i18n/messages'
 import { AccountStrip } from '../auth/AccountStrip'
-import { LionCrest } from './LionCrest'
+import { SignMedallion } from './SignMedallion'
 import './WelcomePage.css'
 
 /**
@@ -54,7 +54,7 @@ export function WelcomePage() {
   return (
     <div className="welcome">
       <main className="welcome__sign">
-        <LionCrest className="welcome__crest" />
+        <SignMedallion className="welcome__crest" />
 
         {/* 'Lion II'만 nbsp로 묶어 서수가 혼자 다음 줄로 떨어지지 않게 한다.
             전체를 묶으면 아주 좁은 화면에서 접힐 여지가 사라진다. */}

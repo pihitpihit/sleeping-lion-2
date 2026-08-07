@@ -50,8 +50,16 @@
   일어나며** 파일 자체는 원본 그대로다.
 - **파일 단위 기록:** `public/assets/creator-pack/ATTRIBUTION.md`
 
-**이 에셋을 개변한 결과물도 CC BY-NC-SA 4.0이다.** 그 밖의 화면 요소(사자 문장,
-파비콘 등)는 직접 그린 것이라 이 조건과 무관하다.
+**이 에셋을 개변한 결과물도 CC BY-NC-SA 4.0이다.** 그 밖의 화면 요소는 이
+조건과 무관하다.
+
+### 간판 원반 — *우리 것*
+
+- **저작권:** plastics
+- **쓰는 곳:** 첫 화면의 간판(`public/assets/sign/`), 파비콘과 앱 아이콘
+  (`public/favicon-*.png`, `icon-*.png`, `apple-touch-icon.png`)
+- Creator Pack에서 온 것이 아니며 위 CC BY-NC-SA 조건이 걸리지 않는다. 카드
+  그림·아이콘과 섞이지 않도록 디렉토리를 따로 둔다.
 
 ## 상표
 

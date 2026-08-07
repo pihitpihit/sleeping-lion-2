@@ -75,11 +75,27 @@
   text-align: center;
 }
 
+/* 간판 원반.
+
+   도형으로 그린 문장(LionCrest)을 대신한다. 그림이라 여백을 스스로 갖고 있지
+   않으므로, 앞의 SVG보다 크게 걸어야 간판 노릇을 한다.
+
+   **빛무리는 CSS로 얹는다.** 원본의 후광은 원 밖으로 번지는데 원으로 자를 때
+   함께 잘렸다. drop-shadow로 메우면 어떤 크기에서도 같은 두께로 번지고 파일이
+   커지지 않는다. 두 겹인 이유는 안쪽 진한 것이 테를 살리고 바깥 옅은 것이
+   벽에 스미는 빛을 만들기 때문이다.
+
+   `height`를 폭과 같이 못박는다. 원본이 정사각형이므로 `auto`로 두어도 같지만,
+   그림이 아직 안 왔을 때 높이가 0이라 아래 것들이 위로 튀어 올랐다가 내려앉는다. */
 .welcome__crest {
-  width: clamp(5.5rem, 20vw, 9rem);
-  height: auto;
-  margin-bottom: clamp(1rem, 3vh, 1.75rem);
-  filter: drop-shadow(0 0 18px rgba(201, 162, 39, 0.25));
+  width: clamp(8rem, 30vw, 13rem);
+  height: clamp(8rem, 30vw, 13rem);
+  margin-bottom: clamp(0.75rem, 2.2vh, 1.35rem);
+  filter: drop-shadow(0 0 22px rgba(201, 162, 39, 0.34))
+    drop-shadow(0 0 60px rgba(201, 162, 39, 0.16));
+  /* 그림이라 길게 누르면 iOS가 저장 메뉴를 띄운다. 간판은 만질 것이 아니다. */
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .welcome__wordmark {
@@ -365,9 +381,14 @@
     padding-bottom: calc(var(--sl-safe-bottom) + 1rem);
   }
 
+  /* 가로 폰에서는 원반이 세로를 다 먹는다. 카드까지 한 화면에 들어와야 하므로
+     여기서만 작게 건다 — 원반 속 글자는 어차피 이 크기에서 안 읽히고, 읽는
+     글자는 아래 워드마크와 한글 이름줄이 맡는다. */
   .welcome__crest {
-    width: 3.5rem;
-    margin-bottom: 0.4rem;
+    width: 4.5rem;
+    height: 4.5rem;
+    margin-bottom: 0.35rem;
+    filter: drop-shadow(0 0 12px rgba(201, 162, 39, 0.3));
   }
 
   /* 가로 폰은 폭이 넓어 9vw가 76px까지 치솟는다. 세로가 없는 화면에서는
