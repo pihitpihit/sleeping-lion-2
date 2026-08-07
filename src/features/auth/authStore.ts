@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { AUTH_MODE } from './mode'
 import { AuthError, notReadyAdapter, type AuthAdapter } from './adapter'
 import { mockAdapter } from './mockAdapter'
+import { supabaseAdapter } from './supabaseAdapter'
 import { clearSession, loadSession, saveSession, type Session } from './session'
 
 /**
@@ -15,7 +16,15 @@ import { clearSession, loadSession, saveSession, type Session } from './session'
  * 된다.
  */
 
-const adapter: AuthAdapter = AUTH_MODE === 'mock' ? mockAdapter : notReadyAdapter
+/**
+ * 이 빌드가 쓰는 인증.
+ *
+ * `mock`은 브라우저 안의 가짜, `live`는 Supabase다. `demo`는 로그인이 없으므로
+ * 어느 쪽도 부르지 않지만, 만에 하나 불렸을 때 조용히 성공하지 않도록
+ * `notReadyAdapter`로 떨어뜨린다 — **잠기는 쪽으로 틀리는 편이 낫다**(SPEC 3.1).
+ */
+const adapter: AuthAdapter =
+  AUTH_MODE === 'mock' ? mockAdapter : AUTH_MODE === 'live' ? supabaseAdapter : notReadyAdapter
 
 interface AuthState {
   session: Session | null

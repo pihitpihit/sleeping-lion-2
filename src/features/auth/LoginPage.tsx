@@ -48,17 +48,23 @@ export function LoginPage() {
         )}
 
         <form className="login__form" onSubmit={onSubmit}>
+          {/*
+            `live`는 **진짜 이메일 주소**로 로그인한다(SPEC 4.2). 지어낸 주소로
+            계정을 만들면 나중에 비밀번호 재설정 메일을 보낼 길이 막힌다.
+            `mock`은 여전히 아무 이름이나 받으므로 라벨을 갈라 적는다.
+          */}
           <label className="login__field">
-            <span>이름</span>
+            <span>{isTrial(AUTH_MODE) ? '이름' : '이메일'}</span>
             <input
               ref={idRef}
-              type="text"
+              type={isTrial(AUTH_MODE) ? 'text' : 'email'}
+              inputMode={isTrial(AUTH_MODE) ? undefined : 'email'}
               value={id}
               onChange={(e) => {
                 setId(e.target.value)
                 if (error) clearError()
               }}
-              autoComplete="username"
+              autoComplete={isTrial(AUTH_MODE) ? 'username' : 'email'}
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}

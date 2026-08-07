@@ -15,6 +15,7 @@
     "check": "npm run lint && npm run format:check && npm run test && npm run build"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.2",
     "dexie": "^4.4.4",
     "marked": "^18.0.7",
     "react": "^19.2.8",
