@@ -1,0 +1,97 @@
+name: Keepalive
+
+# ============================================================================
+# Supabase 무료 등급을 깨워둔다.
+# ----------------------------------------------------------------------------
+# 약 1주일 쓰지 않으면 프로젝트가 잠든다. 판이 뜸한 사이에 잠들면 **다음 판의
+# 첫 로그인이 실패한다** — 하필 사람들이 모여 앉은 순간이다.
+#
+# 예약 작업은 서버가 아니므로 SPEC 4.2의 정책("우리가 돌볼 서버를 두지 않는다")을
+# 어기지 않는다. GitHub Actions는 이미 배포에 쓰고 있어 새로 돌볼 것은 이 파일
+# 하나뿐이고, 파티 넷이 쓰는 도구에 유료 등급 월 $25는 과하다.
+# ============================================================================
+
+on:
+  schedule:
+    # 매일 한 번. 잠드는 기준이 일주일이므로 **엿새를 잇달아 걸러도 버틴다.**
+    # 예약 실행은 GitHub이 바쁘면 늦거나 거르므로 여유를 넉넉히 둔다.
+    #
+    # 03:17 UTC — 정각을 피한다. 전 세계 워크플로가 정각에 몰려 그때가 가장
+    # 잘 밀린다.
+    - cron: '17 3 * * *'
+  # 손으로도 돌릴 수 있게 둔다. 잠든 것 같을 때 기다리지 않고 깨우는 길이다.
+  workflow_dispatch:
+
+# 읽을 것도 쓸 것도 없다. 바깥으로 요청 하나를 보낼 뿐이다.
+permissions: {}
+
+# 겹쳐 도는 것을 막는다. 늦은 실행과 다음 실행이 만나도 하나만 남는다.
+concurrency:
+  group: keepalive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    # 닿지 않으면 오래 매달리지 않는다. 조용히 죽는 것이 이 부품의 유일한
+    # 실패 방식이라, 빨리 실패해서 알림이 가는 편이 낫다.
+    timeout-minutes: 5
+    steps:
+      - name: Supabase 찌르기
+        env:
+          # **공개해도 되는 값이다.** publishable 키(옛 anon)를 두고 Supabase
+          # 문서가 "웹페이지·소스코드·GitHub Actions에 노출해도 안전"하다고
+          # 못박았다. 보호는 키를 감추는 것이 아니라 RLS가 한다.
+          #
+          # secret 키(옛 service_role)는 여기 오지 않는다. 깨우는 데 필요하지도
+          # 않고, RLS를 우회한다.
+          SUPABASE_URL: https://yuognmrpeepkbhphbgwj.supabase.co
+          SUPABASE_KEY: sb_publishable_cw6PwNcOjVCqbhWCI7CCgg_mvgwqDYK
+        run: |
+          set -euo pipefail
+
+          # 가장 싼 질의로 찌른다. **무엇을 읽으려는 것이 아니다** — RLS에 걸려
+          # 빈 배열이 와도 상관없고, 요청이 Postgres까지 닿았다는 사실이 전부다.
+          # 그래서 `limit=1`이고 고르는 칸도 하나다.
+          url="$SUPABASE_URL/rest/v1/profiles?select=id&limit=1"
+
+          code=$(curl -sS -o /tmp/body -w '%{http_code}' --max-time 30 \
+            -H "apikey: $SUPABASE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_KEY" \
+            "$url")
+
+          echo "HTTP $code"
+          head -c 200 /tmp/body || true
+          echo
+
+          # 200이 아니면 **실패로 남긴다.** 조용히 지나가면 몇 달 뒤 판을 벌이려는
+          # 순간에야 잠든 것을 안다.
+          if [ "$code" != "200" ]; then
+            echo "::error::Supabase가 200을 주지 않았다 (HTTP $code). 프로젝트가 잠들었거나 키가 바뀌었을 수 있다."
+            exit 1
+          fi
+
+      # ----------------------------------------------------------------------
+      # 60일 함정
+      # ----------------------------------------------------------------------
+      # **GitHub은 레포에 60일간 커밋이 없으면 예약 워크플로를 스스로 끈다.**
+      # 판이 뜸한 기간은 대개 레포도 조용한 기간이므로, 깨우려고 둔 것이 같은
+      # 이유로 먼저 잠든다.
+      #
+      # 막을 방법은 없다. 대신 다가오는 것을 미리 알린다 — 그때 아무 커밋이나
+      # 하나 밀거나 이 워크플로를 손으로 한 번 돌리면 시계가 되감긴다.
+      - name: 예약이 꺼질 때가 되었는지 본다
+        env:
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          pushed=$(curl -sS "https://api.github.com/repos/$GH_REPO" \
+            | grep -o '"pushed_at": *"[^"]*"' | head -1 | cut -d'"' -f4)
+          [ -n "$pushed" ] || { echo "마지막 푸시 시각을 읽지 못했다. 넘어간다."; exit 0; }
+
+          days=$(( ( $(date -u +%s) - $(date -u -d "$pushed" +%s) ) / 86400 ))
+          echo "마지막 푸시: $pushed ($days일 전)"
+
+          if [ "$days" -ge 45 ]; then
+            echo "::warning::커밋이 없은 지 ${days}일이다. 60일이 되면 GitHub이 이 예약을 스스로 끈다 — 아무 커밋이나 하나 밀거나 이 워크플로를 손으로 돌려라."
+          fi
