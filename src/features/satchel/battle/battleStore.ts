@@ -1,9 +1,6 @@
 import { create } from 'zustand'
-import { useAttackDeckStore } from '../widgets/deck/deckStore'
-import { useElementStore } from '../widgets/elements/elementStore'
-import { useHpXpStore } from '../widgets/hpxp/hpxpStore'
-import { useRoundStore } from '../widgets/round/roundStore'
-import { captureRuntime, restoreRuntime, type RuntimeSnapshot } from '../runtime/snapshot'
+import { enterRoom, leaveRoom, type RoomBackend } from '../runtime/room'
+import { soloRoom } from '../runtime/soloNet'
 import {
   closeBattle,
   fetchBattleState,
@@ -16,7 +13,6 @@ import {
   openChannel,
   pushBattleState,
   sweepStaleBattles,
-  type BattleChannel,
   type BattleRow,
   type Participant,
 } from './battleNet'
@@ -57,57 +53,32 @@ interface BattleState {
   /** 자리에서 일어난다. 판은 남는다. */
   leave: (userId: string) => Promise<void>
   /** 판을 접는다 — 행이 지워지고 값도 함께 간다. */
-  close: () => Promise<void>
+  close: (userId: string) => Promise<void>
+  /**
+   * 내 계정 방으로 들어간다.
+   *
+   * **전투에 앉지 않아도 기기끼리는 맞춰진다.** 전투는 다른 사람과 나누라고
+   * 있는 것이지, 같은 사람의 기기 둘 사이에 협상할 것은 없다.
+   */
+  enterSolo: (userId: string) => Promise<void>
   clearError: () => void
 }
 
 /* --------------------------------------------------------------------------
-   판을 잇는 다리
+   방 옮기기
    --------------------------------------------------------------------------
-   스토어 넷이 바뀌면 뜬 뭉치를 통로로 보내고 표에 얹는다. 통로로 받은 것은
-   스토어에 앉힌다.
-
-   **받아서 앉히는 동안에는 보내지 않는다.** 안 그러면 앉히는 것이 다시 바뀜으로
-   읽혀 되돌아 나가고, 둘이 서로 메아리를 주고받는다.
+   구독과 통로를 붙이는 일은 `runtime/room.ts` 한 곳이 한다. 여기서는 **어느
+   방으로 갈지만** 정한다 — 앉으면 전투 방, 일어나면 다시 내 계정 방이다.
    -------------------------------------------------------------------------- */
 
-/** 표에 얹는 것은 늦춘다. 통로가 이미 즉시 나르므로 급하지 않다. */
-const PUSH_DELAY_MS = 1200
-
-let channel: BattleChannel | null = null
-let unsubscribes: (() => void)[] = []
-let applying = false
-let pushTimer: ReturnType<typeof setTimeout> | null = null
-
-/**
- * 받은 판을 앉힌다.
- *
- * **앉히는 동안 빗장을 지른다.** Zustand의 구독 콜백은 `set` 안에서 **동기로**
- * 불리므로, 이 함수가 돌아올 때쯤이면 네 스토어의 알림이 이미 다 지나갔다.
- * 빗장이 없으면 그 알림들이 "내가 고쳤다"로 읽혀 되돌아 나가고, 두 기기가 서로
- * 메아리를 주고받는다.
- *
- * `finally`로 푸는 것은 복원 중에 하나가 던져도 빗장이 남지 않게 하기 위해서다 —
- * 남으면 그 뒤로 내 조작이 영영 안 나간다.
- */
-function apply(snapshot: RuntimeSnapshot): void {
-  applying = true
-  try {
-    restoreRuntime(snapshot)
-  } finally {
-    applying = false
+/** 전투 방. 값은 `battles.state`에 담기고 통로는 그 전투의 것이다. */
+function battleRoom(battleId: string): RoomBackend {
+  return {
+    key: `battle:${battleId}`,
+    channelName: `battle:${battleId}`,
+    fetch: () => fetchBattleState(battleId),
+    push: (snapshot) => pushBattleState(battleId, snapshot),
   }
-}
-
-function detach(): void {
-  if (pushTimer !== null) {
-    clearTimeout(pushTimer)
-    pushTimer = null
-  }
-  for (const off of unsubscribes) off()
-  unsubscribes = []
-  channel?.close()
-  channel = null
 }
 
 /**
@@ -122,33 +93,22 @@ async function refreshParticipants(): Promise<void> {
   useBattleStore.setState({ participants: await listParticipants(battle.id) })
 }
 
-function attach(battleId: string): void {
-  detach()
+function goToBattle(battleId: string): Promise<void> {
+  return enterRoom(battleRoom(battleId), openChannel, () => void refreshParticipants())
+}
 
-  channel = openChannel(
-    battleId,
-    (snapshot) => apply(snapshot),
-    () => void refreshParticipants(),
-  )
-
-  const relay = () => {
-    if (applying) return
-    const snapshot = captureRuntime()
-    channel?.send(snapshot)
-
-    if (pushTimer !== null) clearTimeout(pushTimer)
-    pushTimer = setTimeout(() => {
-      pushTimer = null
-      void pushBattleState(battleId, captureRuntime())
-    }, PUSH_DELAY_MS)
+/**
+ * 전투에서 나와 내 계정 방으로 돌아간다.
+ *
+ * **판은 스토어에 그대로 남는다.** 자리에서 일어난다고 상 위의 것이 사라지지
+ * 않는다 — 다만 이제부터는 내 방에만 쌓인다.
+ */
+function goToSolo(userId: string | null): Promise<void> {
+  if (userId === null) {
+    leaveRoom()
+    return Promise.resolve()
   }
-
-  unsubscribes = [
-    useElementStore.subscribe(relay),
-    useRoundStore.subscribe(relay),
-    useHpXpStore.subscribe(relay),
-    useAttackDeckStore.subscribe(relay),
-  ]
+  return enterRoom(soloRoom(userId), openChannel)
 }
 
 function messageOf(cause: unknown): string {
@@ -180,9 +140,7 @@ export const useBattleStore = create<BattleState>((set, get) => ({
 
     // 서버에 남아 있는 값이 사실이다. 내 화면 것을 올려보내지 않는다 — 자리를
     // 비운 사이에 남들이 굴린 판을 덮으면 안 된다.
-    const state = await fetchBattleState(mine.id)
-    if (state) apply(state)
-    attach(mine.id)
+    await goToBattle(mine.id)
     set({ battle: mine, participants: await listParticipants(mine.id) })
   },
 
@@ -193,11 +151,11 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       /**
        * **연 사람의 판이 첫 판이 된다.**
        *
-       * 상 위에 이미 원소가 놓여 있는데 판을 펴면서 비우면 실물과 어긋난다.
-       * 여기서는 표가 비어 있으므로 곧바로 지금 것을 얹는다.
+       * 상 위에 이미 원소가 놓여 있는데 펴면서 비우면 실물과 어긋난다. 새 전투는
+       * 표가 비어 있으므로 `enterRoom`의 맞추기가 알아서 내 것을 올린다 —
+       * 빈 쪽이 알맹이를 밀어내지 못한다.
        */
-      await pushBattleState(battle.id, captureRuntime())
-      attach(battle.id)
+      await goToBattle(battle.id)
       set({ battle, participants: await listParticipants(battle.id) })
     } catch (cause) {
       set({ error: messageOf(cause) })
@@ -210,14 +168,9 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     set({ busy: true, error: null })
     try {
       await joinBattle(battle.id, userId)
-      /**
-       * **앉으면 판을 물려받는다.** 내 화면의 값이 아니라 상 위의 값이 사실이다.
-       * 표를 먼저 읽고 앉힌 뒤에 통로를 연다 — 순서가 뒤면 물려받는 사이에 들어온
-       * 갱신을 표에 있던 옛것이 덮는다.
-       */
-      const state = await fetchBattleState(battle.id)
-      if (state) apply(state)
-      attach(battle.id)
+      // **앉으면 판을 물려받는다.** 표를 먼저 읽고 맞춘 뒤 통로를 여는 것은
+      // `enterRoom`이 한다.
+      await goToBattle(battle.id)
       set({ battle, participants: await listParticipants(battle.id) })
     } catch (cause) {
       set({ error: messageOf(cause) })
@@ -229,8 +182,9 @@ export const useBattleStore = create<BattleState>((set, get) => ({
   leave: async (userId) => {
     const battle = get().battle
     if (!battle) return
-    detach()
     set({ battle: null, participants: [] })
+    // 판은 그대로 두고 방만 내 것으로 옮긴다.
+    await goToSolo(userId)
     try {
       await leaveBattle(battle.id, userId)
     } catch {
@@ -238,11 +192,11 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     }
   },
 
-  close: async () => {
+  close: async (userId) => {
     const battle = get().battle
     if (!battle) return
     set({ busy: true, error: null })
-    detach()
+    await goToSolo(userId)
     try {
       await closeBattle(battle.id)
       set({ battle: null, participants: [] })
@@ -251,6 +205,12 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     } finally {
       set({ busy: false })
     }
+  },
+
+  /** 로그인한 사람이 정해지면 내 계정 방으로 들어간다. 전투 중이면 그대로 둔다. */
+  enterSolo: async (userId) => {
+    if (get().battle !== null) return
+    await goToSolo(userId)
   },
 
   clearError: () => set({ error: null }),

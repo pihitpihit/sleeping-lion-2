@@ -101,8 +101,12 @@ export function BattlePanel({ onClose }: Props) {
         <h2 className="battle__title">전투</h2>
 
         <p className="battle__lead">
-          같이 앉으면 <strong>원소판·라운드·체력·보정 덱</strong>을 함께 본다. 판을 접으면 어디에도
-          남지 않는다.
+          <strong>다른 사람과</strong> 판을 나누는 자리다. 같이 앉으면 원소판·라운드·체력·보정 덱을
+          함께 본다. 판을 접으면 어디에도 남지 않는다.
+        </p>
+        <p className="battle__lead">
+          내 기기끼리는 <strong>전투를 열지 않아도 저절로 맞춰진다</strong> — 같은 계정이면 판이
+          하나다.
         </p>
 
         {error && (
@@ -132,7 +136,7 @@ export function BattlePanel({ onClose }: Props) {
                 type="button"
                 className="battle__fold"
                 disabled={busy}
-                onClick={() => void close()}
+                onClick={() => void close(session.userId)}
               >
                 판을 접는다
               </button>

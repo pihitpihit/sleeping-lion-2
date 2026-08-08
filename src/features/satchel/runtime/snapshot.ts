@@ -36,6 +36,17 @@ export const RUNTIME_VERSION = 1
 
 export interface RuntimeSnapshot {
   v: number
+  /**
+   * 이 판을 마지막으로 건드린 시각. 기기가 찍는다.
+   *
+   * **방에 들어갈 때 어느 쪽을 쓸지 가리는 데만 쓴다.** 방 안에서 오가는 동안에는
+   * 늦게 온 것이 그냥 이긴다 — 몇 초 단위로 여럿이 만지는 자리라 시각을 견주면
+   * 손가락이 미끄러진다(구현 결정 22).
+   *
+   * 옛 저장물에는 없다. 그때는 0이고, **빈 판은 어차피 남의 것을 밀어내지
+   * 못하므로** 0짜리가 알맹이 있는 것을 지우지 않는다.
+   */
+  at: number
   /** 원소 여섯. 꺼진 것은 담지 않는다 — 없는 것을 꺼짐으로 읽는다. */
   elements: Record<string, ElementState>
   round: number
@@ -45,7 +56,7 @@ export interface RuntimeSnapshot {
 }
 
 export function emptyRuntime(): RuntimeSnapshot {
-  return { v: RUNTIME_VERSION, elements: {}, round: FIRST_ROUND, hpxp: {}, decks: {} }
+  return { v: RUNTIME_VERSION, at: 0, elements: {}, round: FIRST_ROUND, hpxp: {}, decks: {} }
 }
 
 /* --------------------------------------------------------------------------
@@ -56,6 +67,7 @@ export function emptyRuntime(): RuntimeSnapshot {
 export function captureRuntime(): RuntimeSnapshot {
   return {
     v: RUNTIME_VERSION,
+    at: Date.now(),
     elements: useElementStore.getState().elements,
     round: useRoundStore.getState().round,
     hpxp: useHpXpStore.getState().byInstance,
@@ -177,5 +189,44 @@ export function sanitizeRuntime(parsed: unknown): RuntimeSnapshot {
     }
   }
 
-  return { v: RUNTIME_VERSION, elements, round, hpxp, decks }
+  const at = typeof raw.at === 'number' && Number.isFinite(raw.at) && raw.at > 0 ? raw.at : 0
+
+  return { v: RUNTIME_VERSION, at, elements, round, hpxp, decks }
+}
+
+/* --------------------------------------------------------------------------
+   방에 들어갈 때 — 어느 쪽 판을 쓸 것인가
+   -------------------------------------------------------------------------- */
+
+/** 맞춘 결과. `adopt`가 있으면 그것을 앉히고, `push`면 내 것을 올린다. */
+export interface RuntimeReconciled {
+  adopt: RuntimeSnapshot | null
+  push: boolean
+}
+
+/**
+ * 방의 판과 내 판을 맞춘다.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **빈 것이 알맹이를 밀어내지 못한다.**                                     │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 새 기기에서 처음 열면 빈 판이 만들어지는데, 그것이 올라가면 다른 기기에서
+ * 돌리던 게임이 지워진다. **잃지 않으려고 서버에 두는 것인데 그 길로 잃는다** —
+ * 행낭 설정에서 겪은 것과 같은 자리다.
+ *
+ * 그 뒤로는 늦게 건드린 쪽이 이긴다. 시각을 모르는 옛 저장물(0)은 진다.
+ */
+export function reconcileRuntime(
+  local: RuntimeSnapshot,
+  remote: RuntimeSnapshot | null,
+): RuntimeReconciled {
+  const localEmpty = isEmptyRuntime(local)
+
+  if (remote === null || isEmptyRuntime(remote)) return { adopt: null, push: !localEmpty }
+  if (localEmpty) return { adopt: remote, push: false }
+
+  if (local.at > remote.at) return { adopt: null, push: true }
+  if (local.at === remote.at) return { adopt: null, push: false }
+  return { adopt: remote, push: false }
 }

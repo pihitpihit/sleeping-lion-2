@@ -9,6 +9,7 @@ import {
   captureRuntime,
   emptyRuntime,
   isEmptyRuntime,
+  reconcileRuntime,
   restoreRuntime,
   RUNTIME_VERSION,
   sanitizeRuntime,
@@ -225,5 +226,54 @@ describe('그물 — sessionStorage', () => {
   it('저장소가 아예 없어도 던지지 않는다', () => {
     expect(readKept(null)).toBeNull()
     expect(() => writeKept(emptyRuntime(), null)).not.toThrow()
+  })
+})
+
+describe('방에 들어갈 때 맞추기', () => {
+  const filled = (at: number) => ({ ...emptyRuntime(), at, round: 5 })
+
+  it('방이 비었으면 내 것을 올린다', () => {
+    expect(reconcileRuntime(filled(10), null)).toEqual({ adopt: null, push: true })
+    expect(reconcileRuntime(filled(10), emptyRuntime())).toEqual({ adopt: null, push: true })
+  })
+
+  it('둘 다 비었으면 올릴 것이 없다', () => {
+    expect(reconcileRuntime(emptyRuntime(), null)).toEqual({ adopt: null, push: false })
+  })
+
+  it('내가 비었으면 방 것을 가져온다 — 새 기기가 이러려고 방에 든다', () => {
+    const remote = filled(10)
+    expect(reconcileRuntime(emptyRuntime(), remote)).toEqual({ adopt: remote, push: false })
+  })
+
+  it('늦게 건드린 쪽이 이긴다', () => {
+    const older = filled(10)
+    expect(reconcileRuntime(filled(20), older)).toEqual({ adopt: null, push: true })
+
+    const newer = filled(30)
+    expect(reconcileRuntime(filled(20), newer)).toEqual({ adopt: newer, push: false })
+  })
+
+  it('같으면 가만둔다', () => {
+    expect(reconcileRuntime(filled(20), filled(20))).toEqual({ adopt: null, push: false })
+  })
+
+  it('빈 방이 알맹이 있는 내 것을 밀어내지 못한다', () => {
+    /**
+     * 다른 기기가 갓 열려 빈 것을 올려 둔 상황. 시각은 그쪽이 늦다.
+     * 잃지 않으려고 서버에 두는 것인데 그 길로 잃으면 안 된다.
+     */
+    const remote = { ...emptyRuntime(), at: 9_999 }
+    expect(reconcileRuntime(filled(10), remote)).toEqual({ adopt: null, push: true })
+  })
+
+  it('시각을 모르는 옛 저장물은 진다', () => {
+    const remote = filled(10)
+    expect(reconcileRuntime(filled(0), remote)).toEqual({ adopt: remote, push: false })
+  })
+
+  it('시각은 빈 판 판정에 끼어들지 않는다', () => {
+    // `at`만 있고 알맹이가 없으면 여전히 빈 판이다.
+    expect(isEmptyRuntime({ ...emptyRuntime(), at: 12_345 })).toBe(true)
   })
 })

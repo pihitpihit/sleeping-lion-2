@@ -63,6 +63,7 @@ export function SatchelPage() {
   const [battleOpen, setBattleOpen] = useState(false)
   const inBattle = useBattleStore((s) => s.battle !== null)
   const resumeBattle = useBattleStore((s) => s.resume)
+  const enterSolo = useBattleStore((s) => s.enterSolo)
 
   /**
    * 누구의 행낭인지 먼저 정한다.
@@ -86,8 +87,18 @@ export function SatchelPage() {
    */
   useEffect(() => {
     if (accountId === null) return
-    void resumeBattle(accountId)
-  }, [accountId, resumeBattle])
+    /**
+     * **앉아 있던 전투를 먼저 살피고, 없으면 내 계정 방으로 들어간다.**
+     *
+     * 순서가 중요하다. 내 방에 먼저 들어갔다가 전투로 옮기면 그 사이에 내
+     * 판이 계정 방에 올라가는데, 전투 값을 물려받은 뒤라면 **남들이 굴린 판이
+     * 내 계정 방에 새어 든다.**
+     */
+    void (async () => {
+      await resumeBattle(accountId)
+      await enterSolo(accountId)
+    })()
+  }, [accountId, resumeBattle, enterSolo])
 
   useEffect(() => {
     if (size.width > 0 && size.height > 0) setBoardSize(size)
