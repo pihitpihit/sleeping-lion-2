@@ -1,3 +1,4 @@
+import { CharacterPicker } from '../CharacterPicker'
 import type { WidgetSettingsEditorProps } from '../types'
 import {
   CARD_KINDS,
@@ -35,11 +36,22 @@ export function DeckSettingsEditor({ value, onChange }: WidgetSettingsEditorProp
     const updated = { ...composition, [kindId]: clamped }
     // 한 장도 없는 덱은 만들지 못하게 막는다. 뽑을 것이 없으면 고장으로 보인다.
     if (compositionSize(updated) === 0) return
-    onChange({ composition: updated })
+    onChange({ ...settings, composition: updated })
   }
 
   return (
     <div className="deck-settings">
+      {/*
+        누구의 덱인지 먼저 고른다. 구성을 정하는 퍽이 그 캐릭터의 것이고,
+        전투에서 뽑은 카드가 모일 열쇠도 그 id다.
+      */}
+      <CharacterPicker
+        value={settings.characterId}
+        onChange={(characterId) => onChange({ ...settings, characterId })}
+      />
+
+      <hr className="deck-settings__rule" />
+
       <p className="deck-settings__hint">
         퍽으로 바뀐 덱을 여기에 옮겨 적는다. 표준 덱은 20장이다.
       </p>

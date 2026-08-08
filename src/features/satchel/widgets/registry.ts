@@ -2,6 +2,8 @@ import { TestWidget } from './TestWidget'
 import { HpXpTracker } from './hpxp/HpXpTracker'
 import { RoundTracker } from './round/RoundTracker'
 import { isHpXpSizeAllowed } from './hpxp/hpxp'
+import { HpXpSettingsEditor } from './hpxp/HpXpSettingsEditor'
+import { sanitizeHpXpSettings } from './hpxp/settings'
 import { ElementTracker } from './elements/ElementTracker'
 import { isElementTrackerSizeAllowed } from './elements/layout'
 import { ElementSettingsEditor } from './elements/ElementSettingsEditor'
@@ -52,6 +54,8 @@ const DEFINITIONS: WidgetDefinition[] = [
     minSize: { w: 1, h: 1 },
     // 인스턴스 제한 없음 — 사람마다 하나씩 놓는다. 값은 서로 섞이지 않는다.
     isSizeAllowed: isHpXpSizeAllowed,
+    // 누구의 다이얼인지 고른다. 골라야 전투에서 파티원과 값이 이어진다.
+    settings: { sanitize: sanitizeHpXpSettings, Editor: HpXpSettingsEditor },
     Component: HpXpTracker,
   },
   {

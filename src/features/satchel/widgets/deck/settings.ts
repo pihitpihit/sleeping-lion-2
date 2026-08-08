@@ -6,6 +6,7 @@ import {
   countOf,
   type DeckComposition,
 } from './deck'
+import { sanitizeCharacterId } from '../../roster'
 
 /**
  * 공격 보정 덱의 인스턴스별 설정.
@@ -32,10 +33,18 @@ import {
 export interface AttackDeckSettings {
   /** 종류 id → 장수. */
   composition: Record<string, number>
+  /**
+   * 어느 캐릭터의 덱인가. 안 골랐으면 `null`.
+   *
+   * **두 가지를 한 번에 푼다.** 퍽을 읽어 구성을 정할 캐릭터가 이 사람이고,
+   * 전투에서 뽑은 카드가 모일 열쇠도 이 id다. 위젯 인스턴스 id를 열쇠로 쓰면
+   * 기기마다 달라 판을 나눠도 서로 다른 덱을 본다.
+   */
+  characterId: string | null
 }
 
 export function defaultAttackDeckSettings(): AttackDeckSettings {
-  return { composition: { ...STANDARD_COMPOSITION } }
+  return { composition: { ...STANDARD_COMPOSITION }, characterId: null }
 }
 
 function clampCount(raw: unknown): number | null {
@@ -53,8 +62,10 @@ export function sanitizeAttackDeckSettings(raw: unknown): AttackDeckSettings {
   if (typeof raw !== 'object' || raw === null) return defaultAttackDeckSettings()
 
   const value = raw as Partial<AttackDeckSettings>
+  const characterId = sanitizeCharacterId(value.characterId)
+
   if (typeof value.composition !== 'object' || value.composition === null) {
-    return defaultAttackDeckSettings()
+    return { ...defaultAttackDeckSettings(), characterId }
   }
 
   const source = value.composition as Record<string, unknown>
@@ -65,9 +76,9 @@ export function sanitizeAttackDeckSettings(raw: unknown): AttackDeckSettings {
   }
 
   // 한 장도 없는 덱은 만들지 않는다. 뽑을 것이 없으면 위젯이 고장난 것처럼 보인다.
-  if (compositionSize(composition) === 0) return defaultAttackDeckSettings()
+  if (compositionSize(composition) === 0) return { ...defaultAttackDeckSettings(), characterId }
 
-  return { composition }
+  return { composition, characterId }
 }
 
 /** 지금 구성이 표준 덱 그대로인가 — '표준으로 되돌리기'를 낼지 정한다. */

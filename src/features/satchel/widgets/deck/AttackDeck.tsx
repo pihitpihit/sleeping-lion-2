@@ -23,6 +23,7 @@ import {
 import { useAttackDeckStore } from './deckStore'
 import { resolveComposition } from './perks'
 import { sanitizeAttackDeckSettings } from './settings'
+import { slotKeyFor } from '../../roster'
 import './AttackDeck.css'
 
 /**
@@ -43,10 +44,19 @@ import './AttackDeck.css'
  * 않는다(SPEC 1장).
  */
 export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps) {
+  const deckSettings = sanitizeAttackDeckSettings(settings)
+  /**
+   * 덱이 담기는 열쇠.
+   *
+   * 캐릭터를 골랐으면 그 id다 — 전투에서 넷이 앉았을 때 **누가 무엇을 뽑았는지**
+   * 서로 보이려면 같은 열쇠여야 한다. 실물에서도 뽑은 카드는 상 위에 펼쳐져
+   * 다 보인다. 안 골랐으면 종전대로 인스턴스 id다.
+   */
+  const slot = slotKeyFor(deckSettings.characterId, instanceId)
   const { ref, size } = useBoardSize<HTMLDivElement>()
   const layout = computeDeckLayout(size)
 
-  const stored = useAttackDeckStore((s) => s.byInstance[instanceId])
+  const stored = useAttackDeckStore((s) => s.byInstance[slot])
   const reveal = useAttackDeckStore((s) => s.reveal)
 
   const pileRef = useRef<HTMLButtonElement | null>(null)
@@ -67,7 +77,7 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
    * 퍽을 읽을 수 있으면 그것이 이긴다. 축 ①이 아직 없어 지금은 늘 `null`이고
    * 설정값이 쓰인다 — `perks.ts` 참조.
    */
-  const composition = resolveComposition(sanitizeAttackDeckSettings(settings).composition, null)
+  const composition = resolveComposition(deckSettings.composition, null)
 
   /**
    * 아직 한 번도 안 뽑았으면 구성대로 편 덱을 보여준다.
@@ -89,7 +99,7 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
   const exhausted = remaining === 0 && total > 0
 
   function onReveal() {
-    const card = reveal(instanceId, composition)
+    const card = reveal(slot, composition)
     if (!card) return
     nonce.current += 1
     setFlash({ card, nonce: nonce.current })

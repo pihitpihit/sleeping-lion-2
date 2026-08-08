@@ -12,6 +12,8 @@ import {
   type HpXpTrack,
 } from './hpxp'
 import { useHpXpStore } from './hpxpStore'
+import { sanitizeHpXpSettings } from './settings'
+import { slotKeyFor } from '../../roster'
 import { NumberReel } from '../reel/NumberReel'
 import './HpXpTracker.css'
 
@@ -34,10 +36,18 @@ import './HpXpTracker.css'
  *
  * **룰을 돌리지 않는다.** 최대 체력이 얼마인지, 레벨업에 몇이 필요한지 모른다.
  */
-export function HpXpTracker({ instanceId, mode, rotation }: WidgetProps) {
+export function HpXpTracker({ instanceId, mode, rotation, settings }: WidgetProps) {
+  /**
+   * 값이 담기는 열쇠.
+   *
+   * 캐릭터를 골랐으면 그 id다 — **파티원 모두가 같은 열쇠를 보아야** 한 사람의
+   * 체력이 한 자리에 모인다. 안 골랐으면 종전대로 인스턴스 id이며, 그때는 이
+   * 기기 안에서만 센다(절대 원칙 3).
+   */
+  const slot = slotKeyFor(sanitizeHpXpSettings(settings).characterId, instanceId)
   const { ref, size } = useBoardSize<HTMLDivElement>()
   const layout = computeHpXpLayout(size)
-  const values = useHpXpStore((s) => s.valuesOf(instanceId))
+  const values = useHpXpStore((s) => s.valuesOf(slot))
   const adjust = useHpXpStore((s) => s.adjust)
 
   return (
@@ -61,7 +71,7 @@ export function HpXpTracker({ instanceId, mode, rotation }: WidgetProps) {
           value={values[track]}
           rotation={rotation}
           disabled={mode !== 'play'}
-          onAdjust={(delta) => adjust(instanceId, track, delta)}
+          onAdjust={(delta) => adjust(slot, track, delta)}
         />
       ))}
     </div>

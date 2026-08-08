@@ -1,0 +1,104 @@
+/* ==========================================================================
+   캐릭터 고르기 — HP/XP·보정 덱 설정 안에 들어간다
+   ========================================================================== */
+
+.charpick {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.charpick__lead,
+.charpick__empty {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--sl-text-faint);
+}
+
+.charpick__lead strong {
+  font-weight: 400;
+  color: var(--sl-text-muted);
+}
+
+.charpick__empty a {
+  color: var(--sl-gold);
+}
+
+.charpick__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.charpick__row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  /* 플레이 중 급하게 누르는 화면이다. 터치 목표를 확보한다. */
+  min-height: 44px;
+  padding: 0.3rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  color: var(--sl-text);
+  background: rgb(0 0 0 / 24%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.charpick__row:hover {
+  border-color: var(--sl-border-strong);
+}
+
+.charpick__row--on {
+  border-color: var(--sl-gold);
+  box-shadow: inset 0 0 0 1px var(--sl-gold-dim);
+}
+
+/* 양피지 원반. 아이콘 색을 건드리지 않는다 — 글룸헤이븐 열일곱은 거의 검정이고
+   사자의 턱 넷은 색 있는 원반이라, 흰빛으로 물들이면 뒤쪽 넷이 표백된다
+   (구현 결정 41). */
+.charpick__badge {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sl-void);
+  background: #d8cbaa;
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.charpick__badge img {
+  width: 76%;
+  height: 76%;
+  object-fit: contain;
+}
+
+.charpick__badge--none {
+  color: var(--sl-text-faint);
+  background: none;
+}
+
+.charpick__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.charpick__owner {
+  flex: none;
+  font-size: 0.75rem;
+  color: var(--sl-text-faint);
+}
