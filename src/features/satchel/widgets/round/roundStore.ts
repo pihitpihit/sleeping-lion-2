@@ -43,6 +43,14 @@ interface RoundState {
    * 라운드와 원소를 잇는 자리가 이미 여기이므로 함께 둔다.
    */
   restart: () => void
+  /**
+   * 뜬 판의 라운드를 그대로 앉힌다(`runtime/snapshot.ts`).
+   *
+   * **`advance`를 되풀이하지 않는다.** `advance`는 원소를 하강시키고 덱을
+   * 섞으므로(구현 결정 34), 5라운드를 복원하려고 네 번 부르면 원소가 다 꺼지고
+   * 덱이 네 번 섞인다. 복원은 판을 굴리는 것이 아니라 옮겨 놓는 것이다.
+   */
+  hydrate: (round: number) => void
 }
 
 export const useRoundStore = create<RoundState>((set, get) => ({
@@ -62,4 +70,6 @@ export const useRoundStore = create<RoundState>((set, get) => ({
     // 새 시나리오를 펴면 보정 덱도 처음으로 돌아간다 — 원소를 끄는 것과 같은 이유다.
     useAttackDeckStore.getState().resetAll()
   },
+
+  hydrate: (round) => set({ round: Math.min(MAX_ROUND, Math.max(FIRST_ROUND, round)) }),
 }))

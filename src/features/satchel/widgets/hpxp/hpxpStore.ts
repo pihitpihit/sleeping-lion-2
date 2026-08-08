@@ -24,6 +24,8 @@ interface HpXpState {
   valuesOf: (instanceId: string) => HpXp
   adjust: (instanceId: string, track: HpXpTrack, delta: number) => void
   reset: (instanceId: string) => void
+  /** 뜬 판을 통째로 앉힌다. */
+  hydrate: (byInstance: Record<string, HpXp>) => void
 }
 
 export const useHpXpStore = create<HpXpState>((set, get) => ({
@@ -48,4 +50,6 @@ export const useHpXpStore = create<HpXpState>((set, get) => ({
       delete next[instanceId]
       return { byInstance: next }
     }),
+
+  hydrate: (byInstance) => set({ byInstance }),
 }))

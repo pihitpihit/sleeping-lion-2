@@ -35,6 +35,13 @@ interface ElementTrackerState {
   decayAll: () => void
   /** 전부 꺼짐으로. */
   resetAll: () => void
+  /**
+   * 뜬 판을 통째로 앉힌다(`runtime/snapshot.ts`).
+   *
+   * **탭 순서를 타지 않고 값을 바로 놓는다.** `setState`를 여러 번 부르면
+   * 부르는 사이사이에 화면이 반쯤 맞은 판을 본다.
+   */
+  hydrate: (elements: Record<string, ElementState>) => void
 }
 
 export const useElementStore = create<ElementTrackerState>((set, get) => ({
@@ -61,4 +68,6 @@ export const useElementStore = create<ElementTrackerState>((set, get) => ({
     }),
 
   resetAll: () => set({ elements: {} }),
+
+  hydrate: (elements) => set({ elements }),
 }))

@@ -67,6 +67,9 @@ interface AttackDeckState {
 
   /** 이 인스턴스만 처음으로. */
   reset: (instanceId: string) => void
+
+  /** 뜬 판을 통째로 앉힌다. */
+  hydrate: (byInstance: Record<string, DeckState>) => void
 }
 
 export const useAttackDeckStore = create<AttackDeckState>((set, get) => ({
@@ -116,4 +119,6 @@ export const useAttackDeckStore = create<AttackDeckState>((set, get) => ({
       delete next[instanceId]
       return { byInstance: next }
     }),
+
+  hydrate: (byInstance) => set({ byInstance }),
 }))
