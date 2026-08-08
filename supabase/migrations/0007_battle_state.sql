@@ -97,3 +97,20 @@ $$;
 
 -- 로그인한 사람이면 부를 수 있다. 하는 일이 '낡은 것 지우기'뿐이라 해를 못 끼친다.
 grant execute on function public.sweep_stale_battles() to authenticated;
+
+-- ----------------------------------------------------------------------------
+-- 참여자의 이름을 함께 읽을 수 있게
+-- ----------------------------------------------------------------------------
+-- `battle_participants.user_id`가 `auth.users`를 가리키고 있었다. **PostgREST는
+-- 자기가 보는 스키마 안의 외래키만 따라간다** — `auth`는 그 바깥이라 앉은 사람
+-- 목록을 읽으면서 이름을 함께 가져올 수 없고, 사람마다 따로 물어야 한다.
+-- 구현 결정 45에서 캐릭터로 같은 것을 겪었다.
+--
+-- `profiles.id`가 `auth.users.id`를 참조하므로 가리키는 값은 그대로다.
+
+alter table public.battle_participants
+  drop constraint if exists battle_participants_user_id_fkey;
+
+alter table public.battle_participants
+  add constraint battle_participants_user_id_fkey
+  foreign key (user_id) references public.profiles (id) on delete cascade;
