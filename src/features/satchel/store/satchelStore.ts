@@ -30,6 +30,8 @@ import {
   sanitizeSettingsFor,
 } from '../widgets/registry'
 import type { SatchelMode } from '../widgets/types'
+import { openBroadcast, type Broadcast } from '../broadcast'
+import { sanitizeSettings } from '../layout'
 import { fetchSettings, pushSettings, reconcile } from './satchelNet'
 
 /**
@@ -184,6 +186,52 @@ const PUSH_DELAY_MS = 1500
 
 let pushTimer: ReturnType<typeof setTimeout> | null = null
 
+/* --------------------------------------------------------------------------
+   기기끼리 바로 나르기
+   --------------------------------------------------------------------------
+   **표에 얹는 것만으로는 부족하다.** 다른 기기는 다시 열기 전까지 표를 읽지
+   않으므로, 한쪽에서 위젯을 옮겨도 옆에 켜 둔 기기는 계속 옛 배치를 보여준다.
+
+   판(원소·라운드)이 통로로 즉시 오가는 것과 같은 방식을 쓴다. 통로 이름에만
+   계정 id가 들어가고, 오가는 것은 나 자신뿐이다.
+
+   **받은 것은 시각을 견주지 않고 그냥 앉힌다.** 같은 계정의 내 기기가 방금
+   보낸 것이므로 그것이 가장 최근이다.
+   -------------------------------------------------------------------------- */
+
+const SETTINGS_EVENT = 'settings'
+
+let wire: Broadcast<SatchelSettings> | null = null
+/** 받아서 앉히는 중 — 되돌려 보내지 않는다. */
+let applyingRemote = false
+
+function broadcastSettings(settings: SatchelSettings): void {
+  if (applyingRemote) return
+  wire?.send(settings)
+}
+
+function openWire(accountId: string | null): void {
+  wire?.close()
+  wire = null
+  if (accountId === null) return
+
+  wire = openBroadcast<SatchelSettings>(
+    `satchel-settings:${accountId}`,
+    SETTINGS_EVENT,
+    sanitizeSettings,
+    (incoming) => {
+      applyingRemote = true
+      try {
+        // 로컬에도 남긴다. 다음에 이 기기를 열 때 서버를 못 읽어도 최신이다.
+        saveSettings(incoming, accountId)
+        useSatchelStore.setState({ settings: incoming, past: [] })
+      } finally {
+        applyingRemote = false
+      }
+    },
+  )
+}
+
 function schedulePush(settings: SatchelSettings, accountId: string | null): void {
   if (accountId === null) return
   if (pushTimer !== null) clearTimeout(pushTimer)
@@ -196,7 +244,7 @@ function schedulePush(settings: SatchelSettings, accountId: string | null): void
 }
 
 /**
- * 고쳐진 설정을 확정한다 — 시각을 찍고, 로컬에 쓰고, 서버로 보낼 것을 예약한다.
+ * 사람이 고친 것을 확정한다 — 시각을 찍고, 로컬에 쓰고, 서버로 보낼 것을 예약한다.
  *
  * **시각을 여기 한 곳에서 찍는다.** 찍는 자리가 흩어지면 어떤 경로로 고쳤을 때만
  * 시각이 안 오르고, 그 기기는 다른 기기와 맞출 때 영영 진다.
@@ -205,7 +253,39 @@ function commit(settings: SatchelSettings, accountId: string | null): SatchelSet
   const stamped: SatchelSettings = { ...settings, updatedAt: Date.now() }
   saveSettings(stamped, accountId)
   schedulePush(stamped, accountId)
+  broadcastSettings(stamped)
   return stamped
+}
+
+/**
+ * 격자가 바뀌어 새로 뽑아낸 배치를 남긴다.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **이것은 사람이 고친 것이 아니다. 시각을 찍지도 올려보내지도 않는다.**    │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 행낭을 열면 화면 크기를 재는 순간 열 수가 정해지고, 그 열 수의 배치가 없으면
+ * 가까운 것에서 뽑아낸다. **여는 것만으로 일어나는 일이다.**
+ *
+ * 이것을 편집으로 세었더니 브라우저 두 개가 각자 열자마자 제 시각을 찍고 서로
+ * 밀어냈다 — 둘 다 "내가 방금 고쳤다"고 주장하니 어느 쪽도 남의 것을 받지
+ * 않았다. 형님이 "행낭 구성은 브라우저마다 다르다"고 짚은 자리다.
+ *
+ * 뽑아낸 결과는 로컬에만 남긴다. **다른 기기도 같은 원본에서 같은 것을 뽑아내므로**
+ * 굳이 나를 것이 없고, 화면 크기는 원래 기기마다 다르다.
+ */
+function derive(
+  settings: SatchelSettings,
+  layout: Layout,
+  accountId: string | null,
+): SatchelSettings {
+  if (layout.columns <= 0) return settings
+  const next: SatchelSettings = {
+    ...settings,
+    layouts: { ...settings.layouts, [layout.columns]: layout },
+  }
+  saveSettings(next, accountId)
+  return next
 }
 
 function persist(
@@ -237,6 +317,7 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     // 이력도 버린다 — 남의 배치로 되돌리는 일이 있어서는 안 된다.
     const local = loadSettings(accountId)
     set({ accountId, settings: local, past: [], notice: null })
+    openWire(accountId)
 
     /**
      * **로컬을 먼저 띄우고 서버는 뒤따라 맞춘다.**
@@ -280,7 +361,7 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     // 이력은 버린다 — 다른 격자에서 만든 배치로 되돌리면 좌표가 맞지 않는다.
     const settings = get().settings
     const layout = resolveLayout(settings, metrics)
-    set({ metrics, settings: persist(settings, layout, get().accountId), past: [] })
+    set({ metrics, settings: derive(settings, layout, get().accountId), past: [] })
   },
 
   setMode: (mode) => set({ mode, notice: null }),

@@ -1,5 +1,5 @@
-import type { RealtimeChannel } from '@supabase/supabase-js'
 import { isSupabaseConfigured, supabase } from '../../auth/supabase'
+import { openBroadcast } from '../broadcast'
 import { sanitizeRuntime, type RuntimeSnapshot } from '../runtime/snapshot'
 
 /**
@@ -240,62 +240,17 @@ export async function pushBattleState(
 
 /* --------------------------------------------------------------------------
    판 위의 값 — Broadcast
+   --------------------------------------------------------------------------
+   통로 자체는 `satchel/broadcast.ts`가 연다. 행낭 구성도 같은 방식을 쓰므로
+   한 곳에 두었다.
    -------------------------------------------------------------------------- */
 
-/**
- * 값이 오가는 통로.
- *
- * **Broadcast는 저장되지 않는다.** 그래서 SPEC 5.4가 이것을 골랐다 — 지나가는
- * 것은 지나가는 대로 두는 것이 "전투가 끝나면 어느 기기에도 남지 않는다"를
- * 절충 없이 지킨다.
- *
- * `self: false`로 둔다. 내가 보낸 것이 나에게 돌아오면 방금 앉힌 값을 다시
- * 앉히느라 화면이 한 번 튄다.
- */
 const EVENT = 'state'
 
-export interface BattleChannel {
-  send: (snapshot: RuntimeSnapshot) => void
-  close: () => void
-}
-
 export function openChannel(
-  battleId: string,
+  channelName: string,
   onState: (snapshot: RuntimeSnapshot) => void,
   onPresenceChange?: () => void,
-): BattleChannel {
-  let channel: RealtimeChannel | null = null
-
-  try {
-    channel = supabase()
-      .channel(`battle:${battleId}`, { config: { broadcast: { self: false } } })
-      .on('broadcast', { event: EVENT }, (message) => {
-        // 남이 보낸 것도 거른다. 오래된 판을 쓰는 기기가 섞여 있을 수 있다.
-        onState(sanitizeRuntime((message as { payload?: unknown }).payload))
-      })
-      .on('presence', { event: 'sync' }, () => onPresenceChange?.())
-      .subscribe()
-  } catch {
-    channel = null
-  }
-
-  return {
-    send: (snapshot) => {
-      if (!channel) return
-      try {
-        void channel.send({ type: 'broadcast', event: EVENT, payload: snapshot })
-      } catch {
-        // 통로가 끊겼다. 표에 쓰는 쪽이 뒤따르므로 판은 이어진다.
-      }
-    },
-    close: () => {
-      if (!channel) return
-      try {
-        void supabase().removeChannel(channel)
-      } catch {
-        // 이미 닫혔다.
-      }
-      channel = null
-    },
-  }
+) {
+  return openBroadcast(channelName, EVENT, sanitizeRuntime, onState, onPresenceChange)
 }
