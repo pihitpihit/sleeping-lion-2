@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { BattlePanel } from './battle/BattlePanel'
+import { useBattleStore } from './battle/battleStore'
 import { useBoardSize } from './useBoardSize'
 import { useViewportSize } from './useViewportSize'
 import { useAuthStore } from '../auth/authStore'
@@ -51,6 +53,15 @@ export function SatchelPage() {
 
   /** 설정 팝업을 연 위젯. 편집 모드 전용이다. */
   const [settingsTarget, setSettingsTarget] = useState<string | null>(null)
+
+  /**
+   * 전투 팝업.
+   *
+   * **편집 모드와 무관하다.** 판에 앉는 것은 배치를 고치는 일이 아니라 놀이를
+   * 시작하는 일이다 — 플레이 중에 열려야 한다.
+   */
+  const [battleOpen, setBattleOpen] = useState(false)
+  const inBattle = useBattleStore((s) => s.battle !== null)
 
   /**
    * 누구의 행낭인지 먼저 정한다.
@@ -111,6 +122,8 @@ export function SatchelPage() {
         onSetPreference={setToolbarPreference}
         onToggleWidgetTitles={toggleWidgetTitles}
         onUndo={undo}
+        onOpenBattle={() => setBattleOpen(true)}
+        inBattle={inBattle}
       />
 
       <div
@@ -165,6 +178,8 @@ export function SatchelPage() {
           placing={{ canPlace: canPlacePending(), onPlace: confirmPendingAdd }}
         />
       )}
+
+      {battleOpen && <BattlePanel onClose={() => setBattleOpen(false)} />}
 
       {notice && (
         <div className="satchel__notice" role="status">

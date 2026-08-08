@@ -118,6 +118,34 @@
   color: var(--sl-void);
 }
 
+/* 전투에 앉아 있음.
+
+   이끼색으로 둔다 — 금색은 이미 편집 모드가 쓰고 있어서, 같은 색으로 하면
+   "지금 뭘 하는 중인지"를 두 가지가 같은 신호로 말하게 된다. 숨 쉬듯 밝기가
+   오르내려 멎어 있는 표식과 갈린다. */
+.satchel-bar__control--seated {
+  color: var(--sl-moss-bright);
+  border-color: var(--sl-moss);
+  animation: sl-seated-breathe 2.8s ease-in-out infinite;
+}
+
+@keyframes sl-seated-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* 움직임을 줄여 달라고 한 사람에게는 멎은 채로 둔다. */
+@media (prefers-reduced-motion: reduce) {
+  .satchel-bar__control--seated {
+    animation: none;
+  }
+}
+
 /* 제어와 연장 사이의 금. 두 갈래가 다른 것임을 눈으로 가른다. */
 .satchel-bar__divider {
   flex: none;

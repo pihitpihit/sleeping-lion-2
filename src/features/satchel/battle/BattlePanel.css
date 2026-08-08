@@ -1,0 +1,166 @@
+/* ==========================================================================
+   전투 팝업
+   --------------------------------------------------------------------------
+   `createPortal`로 body에 그리므로 위젯 틀의 `transform` 밖이다. 여기서만
+   `position: fixed`가 화면 기준으로 먹는다(구현 결정 37).
+   ========================================================================== */
+
+.battle-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--sl-safe-top) + 1rem) calc(var(--sl-safe-right) + 1rem)
+    calc(var(--sl-safe-bottom) + 1rem) calc(var(--sl-safe-left) + 1rem);
+  background: rgb(0 0 0 / 62%);
+}
+
+.battle {
+  width: min(100%, 26rem);
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.1rem;
+  color: var(--sl-text);
+  background: var(--sl-raised);
+  border: 1px solid var(--sl-border-strong);
+  border-radius: 0.35rem;
+  box-shadow: 0 18px 50px -20px rgb(0 0 0 / 90%);
+}
+
+.battle__title {
+  margin: 0;
+  font-family: var(--sl-font-ko-display);
+  font-size: 1.2rem;
+  font-weight: 400;
+  color: var(--sl-gold-bright);
+}
+
+.battle__lead,
+.battle__hint {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--sl-text-faint);
+}
+
+.battle__lead strong,
+.battle__hint strong {
+  font-weight: 400;
+  color: var(--sl-text-muted);
+}
+
+.battle__error {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--sl-ember);
+}
+
+.battle__label {
+  margin: 0.3rem 0 0;
+  font-family: var(--sl-font-ko-display);
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--sl-text-muted);
+}
+
+.battle__select {
+  padding: 0.55rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--sl-text);
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+}
+
+.battle__seats {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.battle__seats > li {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.88rem;
+  background: rgb(0 0 0 / 24%);
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+}
+
+.battle__me {
+  color: var(--sl-gold-dim);
+}
+
+.battle__alone {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--sl-text-faint);
+  background: none;
+  border-color: transparent;
+}
+
+.battle__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.3rem;
+}
+
+.battle__actions button {
+  padding: 0.5rem 0.9rem;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: var(--sl-text-muted);
+  background: var(--sl-panel);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.battle__actions button:not(:disabled):hover {
+  color: var(--sl-gold);
+  border-color: var(--sl-border-strong);
+}
+
+.battle__actions button:disabled {
+  color: var(--sl-text-faint);
+  cursor: default;
+}
+
+/* 판을 여는 것이 이 화면의 본 일이다. 눈이 먼저 가야 한다. */
+.battle__go {
+  color: var(--sl-void) !important;
+  background: var(--sl-gold) !important;
+  border-color: var(--sl-gold) !important;
+}
+
+/* 접는 것은 되돌릴 수 없다. 일어나는 것과 한눈에 갈려야 한다. */
+.battle__fold:not(:disabled):hover {
+  color: var(--sl-ember) !important;
+  border-color: var(--sl-ember) !important;
+}
+
+.battle__close {
+  align-self: flex-end;
+  margin-top: 0.2rem;
+  padding: 0.35rem 0.8rem;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: var(--sl-text-faint);
+  background: none;
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.battle a {
+  color: var(--sl-gold);
+}

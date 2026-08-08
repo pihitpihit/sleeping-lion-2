@@ -1,0 +1,254 @@
+import type { RealtimeChannel } from '@supabase/supabase-js'
+import { isSupabaseConfigured, supabase } from '../../auth/supabase'
+import { sanitizeRuntime, type RuntimeSnapshot } from '../runtime/snapshot'
+
+/**
+ * 전투의 서버 쪽.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **두 갈래로 오간다 — 즉시는 Broadcast, 따라잡기는 표.**                   │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 원소판은 판이 도는 몇 초 단위로 여럿이 만진다. 표에 쓰고 그것이 돌아오기를
+ * 기다려 그리면 손가락이 미끄러진다(구현 결정 22). 그래서 **탭은 로컬에서 즉시
+ * 먹고 Broadcast로 곧장 퍼뜨린다.**
+ *
+ * 표는 뒤따라간다. **새로 들어오거나 새로고침한 사람이 따라잡는 자리**다 —
+ * Broadcast는 지나가는 것이라 그때 아무도 만지지 않으면 빈 화면이 된다.
+ *
+ * **판이 끝나면 남지 않는다는 선은 그대로다.** 표의 수명이 전투와 같고, 전투를
+ * 접으면 행이 지워진다(`0007_battle_state.sql`).
+ *
+ * 막는 것은 RLS다 — 참여자만 얹는다.
+ */
+
+export interface BattleRow {
+  id: string
+  partyId: string
+  openedBy: string
+  openedAt: number
+}
+
+export interface Participant {
+  userId: string
+  displayName: string
+}
+
+function ready(): boolean {
+  return isSupabaseConfigured()
+}
+
+/* --------------------------------------------------------------------------
+   방 — 열고 들고 나고 접고
+   -------------------------------------------------------------------------- */
+
+interface RawBattle {
+  id: string
+  party_id: string
+  opened_by: string
+  opened_at: string
+}
+
+function toBattle(row: RawBattle): BattleRow {
+  return {
+    id: row.id,
+    partyId: row.party_id,
+    openedBy: row.opened_by,
+    openedAt: Date.parse(row.opened_at) || 0,
+  }
+}
+
+const BATTLE_COLUMNS = 'id, party_id, opened_by, opened_at'
+
+/**
+ * 이 파티에 열려 있는 판. 없으면 `null`.
+ *
+ * 여럿이면 가장 최근 것을 준다. **막지는 않는다** — 한 파티가 두 판을 동시에
+ * 돌릴 일은 없지만, 실수로 둘이 열렸을 때 앱이 멎는 것보다 최근 것으로 모이는
+ * 편이 낫다.
+ */
+export async function findOpenBattle(partyId: string): Promise<BattleRow | null> {
+  if (!ready()) return null
+  const { data, error } = await supabase()
+    .from('battles')
+    .select(BATTLE_COLUMNS)
+    .eq('party_id', partyId)
+    .order('opened_at', { ascending: false })
+    .limit(1)
+  if (error || !data || data.length === 0) return null
+  return toBattle(data[0] as RawBattle)
+}
+
+/** 판을 편다. 연 사람은 곧바로 앉는다 — 열어 놓고 안 앉는 일은 없다. */
+export async function openBattle(partyId: string, userId: string): Promise<BattleRow> {
+  const { data, error } = await supabase()
+    .from('battles')
+    .insert({ party_id: partyId, opened_by: userId })
+    .select(BATTLE_COLUMNS)
+    .single()
+  if (error) throw error
+  const battle = toBattle(data as RawBattle)
+  await joinBattle(battle.id, userId)
+  return battle
+}
+
+/** 앉는다. **참여는 고르는 것이다**(SPEC 6.2) — 남을 끌어들이지 못한다. */
+export async function joinBattle(battleId: string, userId: string): Promise<void> {
+  const { error } = await supabase()
+    .from('battle_participants')
+    .upsert({ battle_id: battleId, user_id: userId }, { onConflict: 'battle_id,user_id' })
+  if (error) throw error
+}
+
+/** 자리에서 일어난다. 판은 남는다 — 나머지가 계속 돈다. */
+export async function leaveBattle(battleId: string, userId: string): Promise<void> {
+  await supabase()
+    .from('battle_participants')
+    .delete()
+    .eq('battle_id', battleId)
+    .eq('user_id', userId)
+}
+
+/**
+ * 판을 접는다 — **행을 지운다.**
+ *
+ * `closed_at`을 찍고 남겨 두면 "어디에도 남지 않는다"가 아니게 된다. 참여자를
+ * 함께 지우는 것은 외래키의 `on delete cascade`가 한다.
+ */
+export async function closeBattle(battleId: string): Promise<void> {
+  const { error } = await supabase().from('battles').delete().eq('id', battleId)
+  if (error) throw error
+}
+
+/** 이 판에 앉은 사람들. */
+export async function listParticipants(battleId: string): Promise<Participant[]> {
+  if (!ready()) return []
+  const { data, error } = await supabase()
+    .from('battle_participants')
+    .select('user_id, profile:profiles!battle_participants_user_id_fkey(display_name)')
+    .eq('battle_id', battleId)
+  if (error || !data) return []
+  return (data as unknown as { user_id: string; profile: { display_name: string | null } | null }[])
+    .map((row) => ({ userId: row.user_id, displayName: row.profile?.display_name ?? '' }))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName))
+}
+
+/**
+ * 잊힌 판을 거둔다.
+ *
+ * 사람은 판을 접지 않고 그냥 앱을 닫는다. 하루 지난 것은 서버가 지운다 —
+ * 한 판이 하루를 넘길 일은 없다. 실패해도 삼킨다: 청소가 안 됐다고 판을 못
+ * 펴면 곤란하다.
+ */
+export async function sweepStaleBattles(): Promise<void> {
+  if (!ready()) return
+  try {
+    await supabase().rpc('sweep_stale_battles')
+  } catch {
+    // 조용히 넘긴다.
+  }
+}
+
+/* --------------------------------------------------------------------------
+   판 위의 값 — 표
+   -------------------------------------------------------------------------- */
+
+/** 표에 남아 있는 판. 없거나 못 읽으면 `null`. */
+export async function fetchBattleState(battleId: string): Promise<RuntimeSnapshot | null> {
+  if (!ready()) return null
+  try {
+    const { data, error } = await supabase()
+      .from('battles')
+      .select('state')
+      .eq('id', battleId)
+      .maybeSingle()
+    if (error || !data) return null
+    return sanitizeRuntime((data as { state: unknown }).state)
+  } catch {
+    return null
+  }
+}
+
+/**
+ * 표에 얹는다.
+ *
+ * **실패해도 아무 말 하지 않는다.** Broadcast로 이미 상대에게 갔고, 다음에 누가
+ * 만질 때 뭉치째 다시 올라간다. 신호가 흔들린다고 판이 멎으면 안 된다.
+ */
+export async function pushBattleState(
+  battleId: string,
+  snapshot: RuntimeSnapshot,
+): Promise<boolean> {
+  if (!ready()) return false
+  try {
+    const { error } = await supabase()
+      .from('battles')
+      .update({ state: snapshot, state_at: new Date().toISOString() })
+      .eq('id', battleId)
+    return !error
+  } catch {
+    return false
+  }
+}
+
+/* --------------------------------------------------------------------------
+   판 위의 값 — Broadcast
+   -------------------------------------------------------------------------- */
+
+/**
+ * 값이 오가는 통로.
+ *
+ * **Broadcast는 저장되지 않는다.** 그래서 SPEC 5.4가 이것을 골랐다 — 지나가는
+ * 것은 지나가는 대로 두는 것이 "전투가 끝나면 어느 기기에도 남지 않는다"를
+ * 절충 없이 지킨다.
+ *
+ * `self: false`로 둔다. 내가 보낸 것이 나에게 돌아오면 방금 앉힌 값을 다시
+ * 앉히느라 화면이 한 번 튄다.
+ */
+const EVENT = 'state'
+
+export interface BattleChannel {
+  send: (snapshot: RuntimeSnapshot) => void
+  close: () => void
+}
+
+export function openChannel(
+  battleId: string,
+  onState: (snapshot: RuntimeSnapshot) => void,
+  onPresenceChange?: () => void,
+): BattleChannel {
+  let channel: RealtimeChannel | null = null
+
+  try {
+    channel = supabase()
+      .channel(`battle:${battleId}`, { config: { broadcast: { self: false } } })
+      .on('broadcast', { event: EVENT }, (message) => {
+        // 남이 보낸 것도 거른다. 오래된 판을 쓰는 기기가 섞여 있을 수 있다.
+        onState(sanitizeRuntime((message as { payload?: unknown }).payload))
+      })
+      .on('presence', { event: 'sync' }, () => onPresenceChange?.())
+      .subscribe()
+  } catch {
+    channel = null
+  }
+
+  return {
+    send: (snapshot) => {
+      if (!channel) return
+      try {
+        void channel.send({ type: 'broadcast', event: EVENT, payload: snapshot })
+      } catch {
+        // 통로가 끊겼다. 표에 쓰는 쪽이 뒤따르므로 판은 이어진다.
+      }
+    },
+    close: () => {
+      if (!channel) return
+      try {
+        void supabase().removeChannel(channel)
+      } catch {
+        // 이미 닫혔다.
+      }
+      channel = null
+    },
+  }
+}

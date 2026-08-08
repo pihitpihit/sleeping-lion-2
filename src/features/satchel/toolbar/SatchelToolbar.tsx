@@ -3,7 +3,7 @@ import type { ToolbarPosition, ToolbarPreference } from '../layout'
 import { nextToolbarPreference, TOOLBAR_PREFERENCE_LABEL } from './position'
 import { widgetDefinitions } from '../widgets/registry'
 import type { SatchelMode } from '../widgets/types'
-import { EditIcon, MenuIcon, SaveIcon, UndoIcon } from './icons'
+import { EditIcon, MenuIcon, SaveIcon, SeatedIcon, UndoIcon } from './icons'
 
 interface Props {
   position: ToolbarPosition
@@ -25,6 +25,10 @@ interface Props {
   onSetPreference: (preference: ToolbarPreference) => void
   onToggleWidgetTitles: () => void
   onUndo: () => void
+  /** 전투 팝업을 연다. */
+  onOpenBattle: () => void
+  /** 지금 판에 앉아 있는가 — 띠에 표를 낸다. */
+  inBattle: boolean
 }
 
 /**
@@ -49,6 +53,8 @@ export function SatchelToolbar({
   onSetPreference,
   onToggleWidgetTitles,
   onUndo,
+  onOpenBattle,
+  inBattle,
 }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
@@ -93,6 +99,22 @@ export function SatchelToolbar({
         >
           {editing ? <SaveIcon /> : <EditIcon />}
         </button>
+
+        {/*
+          앉아 있다는 것은 **플레이 중에도 보여야 한다.** 남들과 판을 나누고
+          있는지 모른 채 만지면, 내 화면만 고치는 줄 알고 남의 판을 굴린다.
+        */}
+        {inBattle && (
+          <button
+            type="button"
+            className="satchel-bar__control satchel-bar__control--seated"
+            aria-label="전투에 앉아 있다"
+            title="전투에 앉아 있다"
+            onClick={onOpenBattle}
+          >
+            <SeatedIcon />
+          </button>
+        )}
 
         {editing && (
           <button
@@ -149,6 +171,17 @@ export function SatchelToolbar({
           <a className="satchel-menu__item" href="#/" role="menuitem">
             나가기
           </a>
+          <button
+            type="button"
+            className="satchel-menu__item"
+            role="menuitem"
+            onClick={() => {
+              setMenuOpen(false)
+              onOpenBattle()
+            }}
+          >
+            전투{inBattle && <span className="satchel-menu__hint"> (앉아 있음)</span>}
+          </button>
           <button
             type="button"
             className="satchel-menu__item"

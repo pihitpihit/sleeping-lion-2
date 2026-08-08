@@ -57,3 +57,21 @@ export function UndoIcon() {
     </svg>
   )
 }
+
+/**
+ * 상 둘레에 둘러앉은 사람들 — 전투에 앉아 있음.
+ *
+ * 가운데 둥근 상 하나에 네 자리. 앉는 자리가 넷이라는 것이 이 앱의 여러 곳에
+ * 이미 박혀 있다(위젯 회전, 구현 결정 24).
+ */
+export function SeatedIcon() {
+  return (
+    <svg {...BASE} width="22" height="22">
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="12" cy="3.6" r="1.9" />
+      <circle cx="12" cy="20.4" r="1.9" />
+      <circle cx="3.6" cy="12" r="1.9" />
+      <circle cx="20.4" cy="12" r="1.9" />
+    </svg>
+  )
+}
