@@ -7,6 +7,7 @@ import { captureRuntime, restoreRuntime, type RuntimeSnapshot } from '../runtime
 import {
   closeBattle,
   fetchBattleState,
+  findMyBattle,
   findOpenBattle,
   joinBattle,
   leaveBattle,
@@ -44,6 +45,13 @@ interface BattleState {
 
   /** 이 파티에 열린 판이 있는지 살핀다. 앉지는 않는다. */
   look: (partyId: string) => Promise<BattleRow | null>
+  /**
+   * 새로고침 뒤 이미 앉아 있던 판으로 되돌아간다.
+   *
+   * 화면은 새로고침하면 전투를 잊지만 서버에는 앉아 있다고 남아 있다. 그대로
+   * 두면 **본인은 공유 중인 줄 아는데 조작이 아무에게도 안 가는** 상태가 된다.
+   */
+  resume: (userId: string) => Promise<void>
   open: (partyId: string, userId: string) => Promise<void>
   join: (battle: BattleRow, userId: string) => Promise<void>
   /** 자리에서 일어난다. 판은 남는다. */
@@ -163,6 +171,19 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     } catch {
       return null
     }
+  },
+
+  resume: async (userId) => {
+    if (get().battle !== null) return
+    const mine = await findMyBattle(userId)
+    if (!mine || get().battle !== null) return
+
+    // 서버에 남아 있는 값이 사실이다. 내 화면 것을 올려보내지 않는다 — 자리를
+    // 비운 사이에 남들이 굴린 판을 덮으면 안 된다.
+    const state = await fetchBattleState(mine.id)
+    if (state) apply(state)
+    attach(mine.id)
+    set({ battle: mine, participants: await listParticipants(mine.id) })
   },
 
   open: async (partyId, userId) => {

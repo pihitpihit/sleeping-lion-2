@@ -79,8 +79,28 @@ export async function findOpenBattle(partyId: string): Promise<BattleRow | null>
   return toBattle(data[0] as RawBattle)
 }
 
-/** 판을 편다. 연 사람은 곧바로 앉는다 — 열어 놓고 안 앉는 일은 없다. */
+/**
+ * 판을 편다. 연 사람은 곧바로 앉는다 — 열어 놓고 안 앉는 일은 없다.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **이미 열린 판이 있으면 새로 만들지 않고 거기 앉는다.**                   │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 둘이 거의 동시에 '판을 편다'를 누르면 방이 두 개 생기고, 각자 다른 방에 앉아
+ * **공유가 도는 것처럼 보이는데 아무것도 안 겹친다.** 화면이 "이미 열린 판이
+ * 있다"를 미처 못 읽은 사이에 그렇게 된다.
+ *
+ * 완전히 막지는 못한다 — 두 삽입이 진짜 같은 순간에 들어오면 둘 다 통과한다.
+ * 그 자리는 `findOpenBattle`이 가장 최근 것을 주므로 다음에 여는 사람부터
+ * 한쪽으로 모인다. 흔한 쪽(몇 초 차이)을 여기서 막는다.
+ */
 export async function openBattle(partyId: string, userId: string): Promise<BattleRow> {
+  const existing = await findOpenBattle(partyId)
+  if (existing) {
+    await joinBattle(existing.id, userId)
+    return existing
+  }
+
   const { data, error } = await supabase()
     .from('battles')
     .insert({ party_id: partyId, opened_by: userId })
@@ -90,6 +110,33 @@ export async function openBattle(partyId: string, userId: string): Promise<Battl
   const battle = toBattle(data as RawBattle)
   await joinBattle(battle.id, userId)
   return battle
+}
+
+/**
+ * 내가 이미 앉아 있는 판. 없으면 `null`.
+ *
+ * **새로고침하면 화면은 전투를 잊는다.** 스토어가 메모리에만 있기 때문이다.
+ * 그런데 서버에는 내가 앉아 있다고 남아 있으므로, 그대로 두면 판에 앉은 채로
+ * 조작하는데 아무에게도 안 가는 상태가 된다 — 본인은 공유 중인 줄 안다.
+ *
+ * 그래서 행낭을 열 때 이것으로 확인하고 자동으로 다시 잇는다.
+ */
+export async function findMyBattle(userId: string): Promise<BattleRow | null> {
+  if (!ready()) return null
+  try {
+    const { data, error } = await supabase()
+      .from('battle_participants')
+      .select(
+        'battle:battles!battle_participants_battle_id_fkey(id, party_id, opened_by, opened_at)',
+      )
+      .eq('user_id', userId)
+      .limit(1)
+    if (error || !data || data.length === 0) return null
+    const row = (data as unknown as { battle: RawBattle | null }[])[0]
+    return row.battle ? toBattle(row.battle) : null
+  } catch {
+    return null
+  }
 }
 
 /** 앉는다. **참여는 고르는 것이다**(SPEC 6.2) — 남을 끌어들이지 못한다. */

@@ -62,6 +62,7 @@ export function SatchelPage() {
    */
   const [battleOpen, setBattleOpen] = useState(false)
   const inBattle = useBattleStore((s) => s.battle !== null)
+  const resumeBattle = useBattleStore((s) => s.resume)
 
   /**
    * 누구의 행낭인지 먼저 정한다.
@@ -76,6 +77,17 @@ export function SatchelPage() {
   useEffect(() => {
     setAccount(accountId)
   }, [accountId, setAccount])
+
+  /**
+   * 앉아 있던 판으로 되돌아간다.
+   *
+   * 새로고침하면 화면은 전투를 잊지만 서버에는 앉아 있다고 남아 있다. 그대로
+   * 두면 **본인은 공유 중인 줄 아는데 조작이 아무에게도 안 가는** 상태가 된다.
+   */
+  useEffect(() => {
+    if (accountId === null) return
+    void resumeBattle(accountId)
+  }, [accountId, resumeBattle])
 
   useEffect(() => {
     if (size.width > 0 && size.height > 0) setBoardSize(size)
