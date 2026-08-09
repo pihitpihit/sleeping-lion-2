@@ -45,7 +45,10 @@ $$;
 -- 두 갈래를 따로 적는다. **행낭은 제 계정 하나**이고, **전투는 그 판에 앉은
 -- 사람들**이다 — 자격을 정하는 근거가 다르므로 한 줄에 섞지 않는다.
 
-alter table realtime.messages enable row level security;
+-- **RLS를 켜는 줄은 두지 않는다.** `realtime.messages`는 Supabase가 소유한
+-- 테이블이라 `alter table`이 `42501 must be owner of table messages`로 거절된다.
+-- 그리고 켤 필요도 없다 — Supabase가 이미 켜 둔 채로 내준다. 정책을 붙이는 것만
+-- 우리 몫이다.
 
 -- 행낭 — 계정 하나에 통로 하나. 배치도 판도 여기로 다닌다.
 drop policy if exists "행낭 통로: 제 것만 듣는다" on realtime.messages;
