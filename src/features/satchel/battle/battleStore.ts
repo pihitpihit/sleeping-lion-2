@@ -78,10 +78,10 @@ function battleRoom(battleId: string): RoomBackend {
     key: `battle:${battleId}`,
     fetch: () => fetchBattleState(battleId),
     push: (snapshot) => pushBattleState(battleId, snapshot),
-    connect: (onState) => {
-      const wire = openBattleWire(battleId, onState)
+    connect: (onChanged) => {
+      const wire = openBattleWire(battleId, onChanged)
       return {
-        send: (snapshot) => wire.send(STATE_EVENT, snapshot),
+        ping: () => wire.ping(STATE_EVENT),
         // 전투 통로는 이 방만 쓰므로 통째로 닫는다.
         close: () => wire.close(),
       }

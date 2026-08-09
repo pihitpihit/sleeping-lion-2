@@ -31,7 +31,6 @@ import {
 } from '../widgets/registry'
 import type { SatchelMode } from '../widgets/types'
 import { accountWire, closeAccountWire, SETTINGS_EVENT } from '../accountChannel'
-import { sanitizeSettings } from '../layout'
 import { fetchSettings, pushSettings, reconcile } from './satchelNet'
 
 /**
@@ -181,8 +180,14 @@ function pushHistory(past: Layout[], snapshot: Layout): Layout[] {
    도착하는 일이 생긴다. 잠잠해질 때까지 기다렸다가 **가장 최근 것 하나만** 보낸다.
    -------------------------------------------------------------------------- */
 
-/** 조작이 잇달아 들어올 때 잠잠해지기를 기다리는 시간. */
-const PUSH_DELAY_MS = 1500
+/**
+ * 조작이 잇달아 들어올 때 잠잠해지기를 기다리는 시간.
+ *
+ * **표에 쓰는 것이 이제 길목이다.** 통로는 "바뀌었다"만 알리고 값은 표에서
+ * 읽어 가므로, 여기서 오래 끌면 다른 기기가 그만큼 늦게 따라온다. 위젯 하나를
+ * 옮기면 조작이 잇달아 들어오므로(놓기 → 크기 → 회전) 묶기는 해야 한다.
+ */
+const PUSH_DELAY_MS = 600
 
 let pushTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -199,13 +204,21 @@ let pushTimer: ReturnType<typeof setTimeout> | null = null
    보낸 것이므로 그것이 가장 최근이다.
    -------------------------------------------------------------------------- */
 
-/** 받아서 앉히는 중 — 되돌려 보내지 않는다. */
+/** 받아서 앉히는 중 — 되돌려 알리지 않는다. */
 let applyingRemote = false
 let wiredAccount: string | null = null
 
-function broadcastSettings(settings: SatchelSettings): void {
+/**
+ * 다른 기기에 "구성이 바뀌었다"고 알린다. **값은 싣지 않는다.**
+ *
+ * 통로를 잠글 수 없으므로(`broadcast.ts`) 알맹이를 보내지 않는다. 받는 쪽은
+ * 신호를 보고 표에서 읽어 간다 — 표에는 제 것만 읽는 RLS가 걸려 있다.
+ *
+ * **표에 쓴 뒤에 알린다.** 순서가 뒤바뀌면 받은 쪽이 옛 값이 든 표를 읽는다.
+ */
+function pingSettings(): void {
   if (applyingRemote || wiredAccount === null) return
-  accountWire(wiredAccount).send(SETTINGS_EVENT, settings)
+  accountWire(wiredAccount).ping(SETTINGS_EVENT)
 }
 
 function listenForSettings(accountId: string | null): void {
@@ -214,16 +227,26 @@ function listenForSettings(accountId: string | null): void {
     closeAccountWire()
     return
   }
-  accountWire(accountId).on(SETTINGS_EVENT, (raw) => {
-    const incoming = sanitizeSettings(raw)
-    applyingRemote = true
-    try {
-      // 로컬에도 남긴다. 다음에 이 기기를 열 때 서버를 못 읽어도 최신이다.
-      saveSettings(incoming, accountId)
-      useSatchelStore.setState({ settings: incoming, past: [] })
-    } finally {
-      applyingRemote = false
-    }
+  accountWire(accountId).on(SETTINGS_EVENT, () => {
+    void (async () => {
+      const remote = await fetchSettings(accountId)
+      // 못 읽었거나 그새 계정이 바뀌었으면 버린다.
+      if (!remote || wiredAccount !== accountId) return
+
+      /**
+       * **시각을 견주지 않고 그냥 앉힌다.** 내 다른 기기가 방금 쓴 것이므로
+       * 그것이 가장 최근이다. 견주면 이 기기의 시계가 앞서 있을 때 남의 것을
+       * 영영 안 받는다.
+       */
+      applyingRemote = true
+      try {
+        // 로컬에도 남긴다. 다음에 이 기기를 열 때 서버를 못 읽어도 최신이다.
+        saveSettings(remote.settings, accountId)
+        useSatchelStore.setState({ settings: remote.settings, past: [] })
+      } finally {
+        applyingRemote = false
+      }
+    })()
   })
 }
 
@@ -232,9 +255,13 @@ function schedulePush(settings: SatchelSettings, accountId: string | null): void
   if (pushTimer !== null) clearTimeout(pushTimer)
   pushTimer = setTimeout(() => {
     pushTimer = null
-    // 실패해도 아무 말 하지 않는다. 행낭은 서버 없이 완전히 돌고, 다음에 고칠 때
-    // 뭉치째 다시 올라간다.
-    void pushSettings(accountId, settings)
+    void (async () => {
+      // 실패해도 아무 말 하지 않는다. 행낭은 서버 없이 완전히 돌고, 다음에 고칠 때
+      // 뭉치째 다시 올라간다.
+      const ok = await pushSettings(accountId, settings)
+      // 못 썼으면 알리지 않는다. 알려 봐야 상대가 옛 값을 읽는다.
+      if (ok) pingSettings()
+    })()
   }, PUSH_DELAY_MS)
 }
 
@@ -248,7 +275,6 @@ function commit(settings: SatchelSettings, accountId: string | null): SatchelSet
   const stamped: SatchelSettings = { ...settings, updatedAt: Date.now() }
   saveSettings(stamped, accountId)
   schedulePush(stamped, accountId)
-  broadcastSettings(stamped)
   return stamped
 }
 

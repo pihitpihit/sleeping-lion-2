@@ -67,11 +67,11 @@ export function soloRoom(userId: string): RoomBackend {
     key: `solo:${userId}`,
     fetch: () => fetchSolo(userId),
     push: (snapshot) => pushSolo(userId, snapshot),
-    connect: (onState) => {
+    connect: (onChanged) => {
       const wire = accountWire(userId)
-      wire.on(STATE_EVENT, (raw) => onState(sanitizeRuntime(raw)))
+      wire.on(STATE_EVENT, onChanged)
       return {
-        send: (snapshot) => wire.send(STATE_EVENT, snapshot),
+        ping: () => wire.ping(STATE_EVENT),
         close: () => wire.on(STATE_EVENT, () => {}),
       }
     },
