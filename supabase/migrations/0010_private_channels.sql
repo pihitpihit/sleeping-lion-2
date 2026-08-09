@@ -45,10 +45,20 @@ $$;
 -- 두 갈래를 따로 적는다. **행낭은 제 계정 하나**이고, **전투는 그 판에 앉은
 -- 사람들**이다 — 자격을 정하는 근거가 다르므로 한 줄에 섞지 않는다.
 
--- **RLS를 켜는 줄은 두지 않는다.** `realtime.messages`는 Supabase가 소유한
--- 테이블이라 `alter table`이 `42501 must be owner of table messages`로 거절된다.
--- 그리고 켤 필요도 없다 — Supabase가 이미 켜 둔 채로 내준다. 정책을 붙이는 것만
--- 우리 몫이다.
+-- ┌──────────────────────────────────────────────────────────────────────────┐
+-- │ **`realtime.messages`는 우리 테이블이 아니다. 역할을 바꿔야 손이 닿는다.** │
+-- └──────────────────────────────────────────────────────────────────────────┘
+--
+-- 그냥 돌리면 `42501 must be owner of table messages`로 거절된다. `alter table`도
+-- `create policy`도 소유자만 할 수 있기 때문이다.
+--
+-- `supabase_admin`으로는 바꿀 수 없다(그 역할의 구성원이 아니다). 대신
+-- **`supabase_privileged_role`**이 있다 — Supabase가 이런 자리를 위해 둔 것이다.
+--
+-- **RLS를 켜는 줄은 두지 않는다.** 켤 필요가 없다 — Supabase가 이미 켜 둔 채로
+-- 내준다. 우리 몫은 정책을 붙이는 것뿐이다.
+
+set role supabase_privileged_role;
 
 -- 행낭 — 계정 하나에 통로 하나. 배치도 판도 여기로 다닌다.
 drop policy if exists "행낭 통로: 제 것만 듣는다" on realtime.messages;
@@ -76,3 +86,6 @@ create policy "전투 통로: 앉은 사람만 보낸다"
   on realtime.messages for insert
   to authenticated
   with check (public.is_battle_participant(public.topic_battle_id(realtime.topic())));
+
+-- 빌린 역할을 돌려준다. 이 뒤로는 평소 권한으로 돈다.
+reset role;
