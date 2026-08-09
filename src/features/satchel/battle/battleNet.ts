@@ -1,5 +1,6 @@
 import { isSupabaseConfigured, supabase } from '../../auth/supabase'
-import { openBroadcast } from '../broadcast'
+import { STATE_EVENT } from '../accountChannel'
+import { openWire } from '../broadcast'
 import { sanitizeRuntime, type RuntimeSnapshot } from '../runtime/snapshot'
 
 /**
@@ -245,12 +246,14 @@ export async function pushBattleState(
    한 곳에 두었다.
    -------------------------------------------------------------------------- */
 
-const EVENT = 'state'
-
-export function openChannel(
-  channelName: string,
-  onState: (snapshot: RuntimeSnapshot) => void,
-  onPresenceChange?: () => void,
-) {
-  return openBroadcast(channelName, EVENT, sanitizeRuntime, onState, onPresenceChange)
+/**
+ * 전투 통로.
+ *
+ * **계정 통로와 달리 판마다 따로 연다.** 자격을 정하는 근거가 다르기 때문이다 —
+ * 계정 통로는 "내 것"이고 이쪽은 "그 판에 앉았는가"다. 전투에서 일어나면 닫는다.
+ */
+export function openBattleWire(battleId: string, onState: (s: RuntimeSnapshot) => void) {
+  const wire = openWire(`battle:${battleId}`, [STATE_EVENT])
+  wire.on(STATE_EVENT, (raw) => onState(sanitizeRuntime(raw)))
+  return wire
 }

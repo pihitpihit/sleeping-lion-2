@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from '../../auth/supabase'
+import { accountWire, STATE_EVENT } from '../accountChannel'
 import type { RoomBackend } from './room'
 import { isEmptyRuntime, sanitizeRuntime, type RuntimeSnapshot } from './snapshot'
 
@@ -54,12 +55,25 @@ async function pushSolo(userId: string, snapshot: RuntimeSnapshot): Promise<bool
   }
 }
 
-/** 내 계정 방. */
+/**
+ * 내 계정 방.
+ *
+ * **통로는 계정 통로에 얹혀 간다.** 배치와 같은 길을 쓰므로 새로 열지 않고,
+ * 방에서 나올 때도 닫지 않는다 — 닫으면 배치가 오갈 길까지 끊긴다. 손잡이만
+ * 빈 것으로 갈아 끼운다.
+ */
 export function soloRoom(userId: string): RoomBackend {
   return {
     key: `solo:${userId}`,
-    channelName: `satchel:${userId}`,
     fetch: () => fetchSolo(userId),
     push: (snapshot) => pushSolo(userId, snapshot),
+    connect: (onState) => {
+      const wire = accountWire(userId)
+      wire.on(STATE_EVENT, (raw) => onState(sanitizeRuntime(raw)))
+      return {
+        send: (snapshot) => wire.send(STATE_EVENT, snapshot),
+        close: () => wire.on(STATE_EVENT, () => {}),
+      }
+    },
   }
 }

@@ -30,7 +30,7 @@ import {
   sanitizeSettingsFor,
 } from '../widgets/registry'
 import type { SatchelMode } from '../widgets/types'
-import { openBroadcast, type Broadcast } from '../broadcast'
+import { accountWire, closeAccountWire, SETTINGS_EVENT } from '../accountChannel'
 import { sanitizeSettings } from '../layout'
 import { fetchSettings, pushSettings, reconcile } from './satchelNet'
 
@@ -199,37 +199,32 @@ let pushTimer: ReturnType<typeof setTimeout> | null = null
    보낸 것이므로 그것이 가장 최근이다.
    -------------------------------------------------------------------------- */
 
-const SETTINGS_EVENT = 'settings'
-
-let wire: Broadcast<SatchelSettings> | null = null
 /** 받아서 앉히는 중 — 되돌려 보내지 않는다. */
 let applyingRemote = false
+let wiredAccount: string | null = null
 
 function broadcastSettings(settings: SatchelSettings): void {
-  if (applyingRemote) return
-  wire?.send(settings)
+  if (applyingRemote || wiredAccount === null) return
+  accountWire(wiredAccount).send(SETTINGS_EVENT, settings)
 }
 
-function openWire(accountId: string | null): void {
-  wire?.close()
-  wire = null
-  if (accountId === null) return
-
-  wire = openBroadcast<SatchelSettings>(
-    `satchel-settings:${accountId}`,
-    SETTINGS_EVENT,
-    sanitizeSettings,
-    (incoming) => {
-      applyingRemote = true
-      try {
-        // 로컬에도 남긴다. 다음에 이 기기를 열 때 서버를 못 읽어도 최신이다.
-        saveSettings(incoming, accountId)
-        useSatchelStore.setState({ settings: incoming, past: [] })
-      } finally {
-        applyingRemote = false
-      }
-    },
-  )
+function listenForSettings(accountId: string | null): void {
+  wiredAccount = accountId
+  if (accountId === null) {
+    closeAccountWire()
+    return
+  }
+  accountWire(accountId).on(SETTINGS_EVENT, (raw) => {
+    const incoming = sanitizeSettings(raw)
+    applyingRemote = true
+    try {
+      // 로컬에도 남긴다. 다음에 이 기기를 열 때 서버를 못 읽어도 최신이다.
+      saveSettings(incoming, accountId)
+      useSatchelStore.setState({ settings: incoming, past: [] })
+    } finally {
+      applyingRemote = false
+    }
+  })
 }
 
 function schedulePush(settings: SatchelSettings, accountId: string | null): void {
@@ -317,7 +312,7 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     // 이력도 버린다 — 남의 배치로 되돌리는 일이 있어서는 안 된다.
     const local = loadSettings(accountId)
     set({ accountId, settings: local, past: [], notice: null })
-    openWire(accountId)
+    listenForSettings(accountId)
 
     /**
      * **로컬을 먼저 띄우고 서버는 뒤따라 맞춘다.**

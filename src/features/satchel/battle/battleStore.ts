@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { STATE_EVENT } from '../accountChannel'
 import { enterRoom, leaveRoom, type RoomBackend } from '../runtime/room'
 import { soloRoom } from '../runtime/soloNet'
 import {
@@ -10,7 +11,7 @@ import {
   leaveBattle,
   listParticipants,
   openBattle,
-  openChannel,
+  openBattleWire,
   pushBattleState,
   sweepStaleBattles,
   type BattleRow,
@@ -75,9 +76,16 @@ interface BattleState {
 function battleRoom(battleId: string): RoomBackend {
   return {
     key: `battle:${battleId}`,
-    channelName: `battle:${battleId}`,
     fetch: () => fetchBattleState(battleId),
     push: (snapshot) => pushBattleState(battleId, snapshot),
+    connect: (onState) => {
+      const wire = openBattleWire(battleId, onState)
+      return {
+        send: (snapshot) => wire.send(STATE_EVENT, snapshot),
+        // 전투 통로는 이 방만 쓰므로 통째로 닫는다.
+        close: () => wire.close(),
+      }
+    },
   }
 }
 
@@ -94,7 +102,8 @@ async function refreshParticipants(): Promise<void> {
 }
 
 function goToBattle(battleId: string): Promise<void> {
-  return enterRoom(battleRoom(battleId), openChannel, () => void refreshParticipants())
+  void refreshParticipants()
+  return enterRoom(battleRoom(battleId))
 }
 
 /**
@@ -108,7 +117,7 @@ function goToSolo(userId: string | null): Promise<void> {
     leaveRoom()
     return Promise.resolve()
   }
-  return enterRoom(soloRoom(userId), openChannel)
+  return enterRoom(soloRoom(userId))
 }
 
 function messageOf(cause: unknown): string {

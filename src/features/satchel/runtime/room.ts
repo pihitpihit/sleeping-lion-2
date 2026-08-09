@@ -26,26 +26,26 @@ import { captureRuntime, reconcileRuntime, restoreRuntime, type RuntimeSnapshot 
  * 바꾸는 일이며, 두 곳에서 각자 구독을 붙이면 어느 쪽이 지금 방인지 흐려진다.
  */
 
-/** 방이 판을 담고 나르는 방식. 방마다 다른 것은 이것뿐이다. */
-export interface RoomBackend {
-  /** 같은 방을 두 번 붙이지 않기 위한 이름. */
-  key: string
-  channelName: string
-  fetch: () => Promise<RuntimeSnapshot | null>
-  push: (snapshot: RuntimeSnapshot) => Promise<boolean>
-}
-
-/** 통로. `battleNet.openChannel`이 내주는 모양이다. */
+/** 통로에 붙은 결과. `close`는 이 방이 쓰던 손잡이만 거둔다. */
 export interface RoomChannel {
   send: (snapshot: RuntimeSnapshot) => void
   close: () => void
 }
 
-export type ChannelFactory = (
-  channelName: string,
-  onState: (snapshot: RuntimeSnapshot) => void,
-  onPresenceChange?: () => void,
-) => RoomChannel
+/**
+ * 방이 판을 담고 나르는 방식. 방마다 다른 것은 이것뿐이다.
+ *
+ * **통로를 여는 것도 방이 한다.** 계정 방은 계정 통로에 얹혀 가고(배치와 함께
+ * 쓰므로 닫지 않는다), 전투 방은 제 통로를 따로 연다 — 자격을 정하는 근거가
+ * 다르기 때문이다.
+ */
+export interface RoomBackend {
+  /** 같은 방을 두 번 붙이지 않기 위한 이름. */
+  key: string
+  fetch: () => Promise<RuntimeSnapshot | null>
+  push: (snapshot: RuntimeSnapshot) => Promise<boolean>
+  connect: (onState: (snapshot: RuntimeSnapshot) => void) => RoomChannel
+}
 
 /** 표에 얹는 것은 늦춘다. 통로가 이미 즉시 나르므로 급하지 않다. */
 const PUSH_DELAY_MS = 1200
@@ -102,11 +102,7 @@ export function leaveRoom(): void {
  * 같은 방을 다시 부르면 아무 일도 하지 않는다 — 화면이 다시 그려질 때마다
  * 구독이 겹치면 한 번 만진 것이 여러 번 나간다.
  */
-export async function enterRoom(
-  backend: RoomBackend,
-  openChannel: ChannelFactory,
-  onPresenceChange?: () => void,
-): Promise<void> {
+export async function enterRoom(backend: RoomBackend): Promise<void> {
   if (current?.key === backend.key) return
   leaveRoom()
   current = backend
@@ -118,15 +114,11 @@ export async function enterRoom(
   const { adopt, push } = reconcileRuntime(captureRuntime(), remote)
   if (adopt) apply(adopt)
 
-  channel = openChannel(
-    backend.channelName,
-    (snapshot) => {
-      // 방 안에서는 늦게 온 것이 그냥 이긴다. 몇 초 단위로 여럿이 만지는 자리라
-      // 시각을 견주면 손가락이 미끄러진다(구현 결정 22).
-      apply(snapshot)
-    },
-    onPresenceChange,
-  )
+  channel = backend.connect((snapshot) => {
+    // 방 안에서는 늦게 온 것이 그냥 이긴다. 몇 초 단위로 여럿이 만지는 자리라
+    // 시각을 견주면 손가락이 미끄러진다(구현 결정 22).
+    apply(snapshot)
+  })
 
   const relay = () => {
     if (applying) return
