@@ -1,6 +1,5 @@
 import { isSupabaseConfigured, supabase } from '../../auth/supabase'
-import { STATE_EVENT } from '../accountChannel'
-import { openWire } from '../broadcast'
+import { EchoGuard, watchRow } from '../changes'
 import { sanitizeRuntime, type RuntimeSnapshot } from '../runtime/snapshot'
 
 /**
@@ -201,14 +200,19 @@ export async function sweepStaleBattles(): Promise<void> {
    판 위의 값 — 표
    -------------------------------------------------------------------------- */
 
-/** 표에 남아 있는 판. 없거나 못 읽으면 `null`. */
+/**
+ * 표에 남아 있는 판. 없거나 못 읽으면 `null`.
+ *
+ * **`battles`가 아니라 `battle_state`다.** `battles`를 읽는 정책은 파티원 전체라
+ * 거기 값을 두면 앉지도 않은 파티원에게 판이 통째로 간다(`0010`).
+ */
 export async function fetchBattleState(battleId: string): Promise<RuntimeSnapshot | null> {
   if (!ready()) return null
   try {
     const { data, error } = await supabase()
-      .from('battles')
+      .from('battle_state')
       .select('state')
-      .eq('id', battleId)
+      .eq('battle_id', battleId)
       .maybeSingle()
     if (error || !data) return null
     return sanitizeRuntime((data as { state: unknown }).state)
@@ -229,31 +233,40 @@ export async function pushBattleState(
 ): Promise<boolean> {
   if (!ready()) return false
   try {
+    // 올리기 **전에** 적어 둔다. 서버가 밀어주는 것이 응답보다 먼저 올 수 있다.
+    battleEcho.remember(snapshot.at)
     const { error } = await supabase()
-      .from('battles')
-      .update({ state: snapshot, state_at: new Date().toISOString() })
-      .eq('id', battleId)
+      .from('battle_state')
+      .upsert({ battle_id: battleId, state: snapshot }, { onConflict: 'battle_id' })
     return !error
   } catch {
     return false
   }
 }
 
+/** 내가 올린 것이 되돌아오는 것을 가려낸다. */
+const battleEcho = new EchoGuard()
+
 /* --------------------------------------------------------------------------
-   판 위의 값 — Broadcast
-   --------------------------------------------------------------------------
-   통로 자체는 `satchel/broadcast.ts`가 연다. 행낭 구성도 같은 방식을 쓰므로
-   한 곳에 두었다.
+   판 위의 값 — 서버가 밀어준다
    -------------------------------------------------------------------------- */
 
 /**
- * 전투 통로.
+ * 이 판이 바뀔 때마다 받는다.
  *
- * **계정 통로와 달리 판마다 따로 연다.** 자격을 정하는 근거가 다르기 때문이다 —
- * 계정 통로는 "내 것"이고 이쪽은 "그 판에 앉았는가"다. 전투에서 일어나면 닫는다.
+ * **자격은 `battle_state`의 정책이 본다** — 앉은 사람만이다. 파티원이라도 앉지
+ * 않았으면 밀려오지 않는다.
  */
-export function openBattleWire(battleId: string, onChanged: () => void) {
-  const wire = openWire(`battle:${battleId}`, [STATE_EVENT])
-  wire.on(STATE_EVENT, onChanged)
-  return wire
+export function watchBattleState(battleId: string, onState: (s: RuntimeSnapshot) => void) {
+  return watchRow(
+    `battle-state:${battleId}`,
+    'battle_state',
+    `battle_id=eq.${battleId}`,
+    (row) => sanitizeRuntime(row.state),
+    (snapshot) => {
+      // 내가 올린 그것이 돌아온 것이면 버린다.
+      if (battleEcho.isEcho(snapshot.at)) return
+      onState(snapshot)
+    },
+  )
 }

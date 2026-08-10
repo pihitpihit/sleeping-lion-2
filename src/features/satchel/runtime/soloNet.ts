@@ -1,5 +1,5 @@
 import { isSupabaseConfigured, supabase } from '../../auth/supabase'
-import { accountWire, STATE_EVENT } from '../accountChannel'
+import { EchoGuard, watchRow } from '../changes'
 import type { RoomBackend } from './room'
 import { isEmptyRuntime, sanitizeRuntime, type RuntimeSnapshot } from './snapshot'
 
@@ -39,12 +39,17 @@ async function fetchSolo(userId: string): Promise<RuntimeSnapshot | null> {
   }
 }
 
+/** 내가 올린 것이 되돌아오는 것을 가려낸다. */
+const echo = new EchoGuard()
+
 async function pushSolo(userId: string, snapshot: RuntimeSnapshot): Promise<boolean> {
   if (!isSupabaseConfigured()) return false
   // 빈 판은 올리지 않는다. 새 기기에서 처음 열면 빈 것이 만들어지는데, 그것이
   // 올라가면 다른 기기에서 돌리던 게임이 지워진다.
   if (isEmptyRuntime(snapshot)) return false
   try {
+    // 올리기 **전에** 적어 둔다. 서버가 밀어주는 것이 응답보다 먼저 올 수 있다.
+    echo.remember(snapshot.at)
     // `updated_at`은 보내지 않는다. 하루 규칙의 기준이므로 서버가 찍는다.
     const { error } = await supabase()
       .from('satchel_runtime')
@@ -67,13 +72,18 @@ export function soloRoom(userId: string): RoomBackend {
     key: `solo:${userId}`,
     fetch: () => fetchSolo(userId),
     push: (snapshot) => pushSolo(userId, snapshot),
-    connect: (onChanged) => {
-      const wire = accountWire(userId)
-      wire.on(STATE_EVENT, onChanged)
-      return {
-        ping: () => wire.ping(STATE_EVENT),
-        close: () => wire.on(STATE_EVENT, () => {}),
-      }
-    },
+    connect: (onState) =>
+      watchRow(
+        `satchel-runtime:${userId}`,
+        'satchel_runtime',
+        `user_id=eq.${userId}`,
+        (row) => sanitizeRuntime(row.state),
+        (snapshot) => {
+          // 내가 올린 그것이 돌아온 것이면 버린다. 그대로 앉히면 그새 또 만진
+          // 것이 옛 값으로 덮인다.
+          if (echo.isEcho(snapshot.at)) return
+          onState(snapshot)
+        },
+      ),
   }
 }

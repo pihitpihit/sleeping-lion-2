@@ -26,10 +26,8 @@ import { captureRuntime, reconcileRuntime, restoreRuntime, type RuntimeSnapshot 
  * 바꾸는 일이며, 두 곳에서 각자 구독을 붙이면 어느 쪽이 지금 방인지 흐려진다.
  */
 
-/** 통로에 붙은 결과. `close`는 이 방이 쓰던 손잡이만 거둔다. */
+/** 붙어 있는 동안 쓰는 손잡이. `close`는 이 방이 쓰던 것만 거둔다. */
 export interface RoomChannel {
-  /** "바뀌었다"고 알린다. **값은 싣지 않는다** — 받는 쪽이 표에서 읽는다. */
-  ping: () => void
   close: () => void
 }
 
@@ -45,17 +43,23 @@ export interface RoomBackend {
   key: string
   fetch: () => Promise<RuntimeSnapshot | null>
   push: (snapshot: RuntimeSnapshot) => Promise<boolean>
-  connect: (onChanged: () => void) => RoomChannel
+  /**
+   * 서버가 밀어주는 변경을 받는다.
+   *
+   * **값이 함께 온다** — Postgres Changes는 밀기 전에 RLS로 자격을 보므로
+   * 값을 실어도 안전하다(`changes.ts`).
+   */
+  connect: (onState: (snapshot: RuntimeSnapshot) => void) => RoomChannel
 }
 
 /**
  * 조작이 잇달아 들어올 때 잠잠해지기를 기다리는 시간.
  *
- * **표에 쓰는 것이 이제 길목이다.** 통로는 "바뀌었다"만 알리고 값은 표에서
- * 읽어 가므로, 여기서 오래 끌면 옆 사람 화면이 그만큼 늦게 바뀐다. 라운드를
- * 넘기면 원소 여섯과 덱이 잇달아 움직이므로 묶기는 해야 한다.
+ * **표에 쓰는 것이 곧 남에게 가는 것이다.** 여기서 오래 끌면 옆 사람 화면이
+ * 그만큼 늦게 바뀐다. 라운드를 넘기면 원소 여섯과 덱이 잇달아 움직이므로 묶기는
+ * 해야 한다.
  */
-const PUSH_DELAY_MS = 350
+const PUSH_DELAY_MS = 300
 
 let current: RoomBackend | null = null
 let channel: RoomChannel | null = null
@@ -122,39 +126,26 @@ export async function enterRoom(backend: RoomBackend): Promise<void> {
   if (adopt) apply(adopt)
 
   /**
-   * 누가 만졌다는 신호가 왔다. **값은 표에서 읽어 온다.**
+   * 남이 만진 판이 왔다.
    *
-   * 통로에 알맹이를 싣지 않는 까닭은 그 통로를 잠글 수 없기 때문이다
-   * (`broadcast.ts`). 표에는 우리가 건 RLS가 있으므로 자격은 거기서 본다.
+   * 방 안에서는 **늦게 온 것이 그냥 이긴다.** 몇 초 단위로 여럿이 만지는 자리라
+   * 시각을 견주면 손가락이 미끄러진다(구현 결정 22).
    *
-   * 방 안에서는 **늦게 읽은 것이 그냥 이긴다.** 몇 초 단위로 여럿이 만지는
-   * 자리라 시각을 견주면 손가락이 미끄러진다(구현 결정 22).
+   * **내가 올린 것이 돌아온 경우는 여기 오지 않는다** — 방 쪽에서 걸러낸다
+   * (`EchoGuard`).
    */
-  channel = backend.connect(() => {
-    void (async () => {
-      const fresh = await backend.fetch()
-      // 읽어 오는 사이에 다른 방으로 옮겨 갔으면 버린다.
-      if (!fresh || current?.key !== backend.key) return
-      apply(fresh)
-    })()
+  channel = backend.connect((snapshot) => {
+    if (current?.key !== backend.key) return
+    apply(snapshot)
   })
 
-  /**
-   * 내가 만졌다 — **표에 먼저 쓰고 그다음에 알린다.**
-   *
-   * 순서가 뒤바뀌면 받은 쪽이 아직 옛 값이 들어 있는 표를 읽는다. 알맹이를
-   * 실어 보내던 때는 순서가 상관없었지만 이제는 표가 정본이다.
-   */
+  /** 내가 만졌다 — 표에 쓴다. 서버가 알아서 남에게 밀어준다. */
   const relay = () => {
     if (applying) return
     if (pushTimer !== null) clearTimeout(pushTimer)
     pushTimer = setTimeout(() => {
       pushTimer = null
-      void (async () => {
-        const ok = await backend.push(captureRuntime())
-        // 못 썼으면 알리지 않는다. 알려 봐야 상대가 옛 값을 읽는다.
-        if (ok && current?.key === backend.key) channel?.ping()
-      })()
+      void backend.push(captureRuntime())
     }, PUSH_DELAY_MS)
   }
 

@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { STATE_EVENT } from '../accountChannel'
 import { enterRoom, leaveRoom, type RoomBackend } from '../runtime/room'
 import { soloRoom } from '../runtime/soloNet'
 import {
@@ -11,7 +10,7 @@ import {
   leaveBattle,
   listParticipants,
   openBattle,
-  openBattleWire,
+  watchBattleState,
   pushBattleState,
   sweepStaleBattles,
   type BattleRow,
@@ -72,20 +71,18 @@ interface BattleState {
    방으로 갈지만** 정한다 — 앉으면 전투 방, 일어나면 다시 내 계정 방이다.
    -------------------------------------------------------------------------- */
 
-/** 전투 방. 값은 `battles.state`에 담기고 통로는 그 전투의 것이다. */
+/**
+ * 전투 방.
+ *
+ * 값은 `battle_state`에 담긴다 — `battles`가 아니다. `battles`를 읽는 정책은
+ * 파티원 전체라, 거기 두면 앉지도 않은 파티원에게 판이 통째로 간다(`0010`).
+ */
 function battleRoom(battleId: string): RoomBackend {
   return {
     key: `battle:${battleId}`,
     fetch: () => fetchBattleState(battleId),
     push: (snapshot) => pushBattleState(battleId, snapshot),
-    connect: (onChanged) => {
-      const wire = openBattleWire(battleId, onChanged)
-      return {
-        ping: () => wire.ping(STATE_EVENT),
-        // 전투 통로는 이 방만 쓰므로 통째로 닫는다.
-        close: () => wire.close(),
-      }
-    },
+    connect: (onState) => watchBattleState(battleId, onState),
   }
 }
 

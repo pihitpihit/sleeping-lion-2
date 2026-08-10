@@ -30,7 +30,8 @@ import {
   sanitizeSettingsFor,
 } from '../widgets/registry'
 import type { SatchelMode } from '../widgets/types'
-import { accountWire, closeAccountWire, SETTINGS_EVENT } from '../accountChannel'
+import { EchoGuard, watchRow, type Subscription } from '../changes'
+import { sanitizeSettings } from '../layout'
 import { fetchSettings, pushSettings, reconcile } from './satchelNet'
 
 /**
@@ -183,55 +184,66 @@ function pushHistory(past: Layout[], snapshot: Layout): Layout[] {
 /**
  * 조작이 잇달아 들어올 때 잠잠해지기를 기다리는 시간.
  *
- * **표에 쓰는 것이 이제 길목이다.** 통로는 "바뀌었다"만 알리고 값은 표에서
- * 읽어 가므로, 여기서 오래 끌면 다른 기기가 그만큼 늦게 따라온다. 위젯 하나를
- * 옮기면 조작이 잇달아 들어오므로(놓기 → 크기 → 회전) 묶기는 해야 한다.
+ * **표에 쓰는 것이 곧 다른 기기로 가는 것이다.** 여기서 오래 끌면 그만큼 늦게
+ * 따라온다. 위젯 하나를 옮기면 조작이 잇달아 들어오므로(놓기 → 크기 → 회전)
+ * 묶기는 해야 한다.
  */
 const PUSH_DELAY_MS = 600
 
 let pushTimer: ReturnType<typeof setTimeout> | null = null
 
-/* --------------------------------------------------------------------------
-   기기끼리 바로 나르기
-   --------------------------------------------------------------------------
-   **표에 얹는 것만으로는 부족하다.** 다른 기기는 다시 열기 전까지 표를 읽지
-   않으므로, 한쪽에서 위젯을 옮겨도 옆에 켜 둔 기기는 계속 옛 배치를 보여준다.
-
-   판(원소·라운드)이 통로로 즉시 오가는 것과 같은 방식을 쓴다. 통로 이름에만
-   계정 id가 들어가고, 오가는 것은 나 자신뿐이다.
-
-   **받은 것은 시각을 견주지 않고 그냥 앉힌다.** 같은 계정의 내 기기가 방금
-   보낸 것이므로 그것이 가장 최근이다.
-   -------------------------------------------------------------------------- */
-
-/** 받아서 앉히는 중 — 되돌려 알리지 않는다. */
-let applyingRemote = false
-let wiredAccount: string | null = null
-
-/**
- * 다른 기기에 "구성이 바뀌었다"고 알린다. **값은 싣지 않는다.**
- *
- * 통로를 잠글 수 없으므로(`broadcast.ts`) 알맹이를 보내지 않는다. 받는 쪽은
- * 신호를 보고 표에서 읽어 간다 — 표에는 제 것만 읽는 RLS가 걸려 있다.
- *
- * **표에 쓴 뒤에 알린다.** 순서가 뒤바뀌면 받은 쪽이 옛 값이 든 표를 읽는다.
- */
-function pingSettings(): void {
-  if (applyingRemote || wiredAccount === null) return
-  accountWire(wiredAccount).ping(SETTINGS_EVENT)
+function schedulePush(settings: SatchelSettings, accountId: string | null): void {
+  if (accountId === null || applyingRemote) return
+  if (pushTimer !== null) clearTimeout(pushTimer)
+  pushTimer = setTimeout(() => {
+    pushTimer = null
+    void (async () => {
+      // 올리기 **전에** 적어 둔다. 서버가 밀어주는 것이 응답보다 먼저 올 수 있다.
+      echo.remember(settings.updatedAt)
+      // 실패해도 아무 말 하지 않는다. 행낭은 서버 없이 완전히 돌고, 다음에 고칠 때
+      // 뭉치째 다시 올라간다.
+      await pushSettings(accountId, settings)
+    })()
+  }, PUSH_DELAY_MS)
 }
 
-function listenForSettings(accountId: string | null): void {
-  wiredAccount = accountId
-  if (accountId === null) {
-    closeAccountWire()
-    return
-  }
-  accountWire(accountId).on(SETTINGS_EVENT, () => {
-    void (async () => {
-      const remote = await fetchSettings(accountId)
-      // 못 읽었거나 그새 계정이 바뀌었으면 버린다.
-      if (!remote || wiredAccount !== accountId) return
+/* --------------------------------------------------------------------------
+   다른 기기 따라가기
+   --------------------------------------------------------------------------
+   **표에 얹는 것만으로는 옆에 켜 둔 기기가 모른다.** 다시 열기 전까지 표를 읽지
+   않으므로, 한쪽에서 위젯을 옮겨도 계속 옛 배치를 보여준다.
+
+   서버가 표 변경을 직접 밀어준다(`changes.ts`). 밀기 전에 RLS로 자격을 보므로
+   **제 것만 온다.**
+   -------------------------------------------------------------------------- */
+
+/** 받아서 앉히는 중 — 되돌려 올리지 않는다. */
+let applyingRemote = false
+/** 내가 올린 것이 되돌아오는 것을 가려낸다. */
+const echo = new EchoGuard()
+let watching: Subscription | null = null
+
+/**
+ * 다른 기기가 구성을 고치면 받는다.
+ *
+ * **값이 함께 온다** — 서버가 밀기 전에 RLS로 자격을 보므로(`changes.ts`) 제
+ * 것만 온다. 예전에는 "바뀌었다"는 신호만 받고 표를 다시 읽었는데, 그 왕복이
+ * 사라졌다.
+ */
+function watchSettings(accountId: string | null): void {
+  watching?.close()
+  watching = null
+  if (accountId === null) return
+
+  watching = watchRow(
+    `satchel-settings:${accountId}`,
+    'satchel_settings',
+    `user_id=eq.${accountId}`,
+    (row) => sanitizeSettings(row.settings),
+    (incoming) => {
+      // 내가 올린 그것이 돌아온 것이면 버린다. 그대로 앉히면 그새 또 고친 것이
+      // 옛 값으로 덮인다.
+      if (echo.isEcho(incoming.updatedAt)) return
 
       /**
        * **시각을 견주지 않고 그냥 앉힌다.** 내 다른 기기가 방금 쓴 것이므로
@@ -241,28 +253,13 @@ function listenForSettings(accountId: string | null): void {
       applyingRemote = true
       try {
         // 로컬에도 남긴다. 다음에 이 기기를 열 때 서버를 못 읽어도 최신이다.
-        saveSettings(remote.settings, accountId)
-        useSatchelStore.setState({ settings: remote.settings, past: [] })
+        saveSettings(incoming, accountId)
+        useSatchelStore.setState({ settings: incoming, past: [] })
       } finally {
         applyingRemote = false
       }
-    })()
-  })
-}
-
-function schedulePush(settings: SatchelSettings, accountId: string | null): void {
-  if (accountId === null) return
-  if (pushTimer !== null) clearTimeout(pushTimer)
-  pushTimer = setTimeout(() => {
-    pushTimer = null
-    void (async () => {
-      // 실패해도 아무 말 하지 않는다. 행낭은 서버 없이 완전히 돌고, 다음에 고칠 때
-      // 뭉치째 다시 올라간다.
-      const ok = await pushSettings(accountId, settings)
-      // 못 썼으면 알리지 않는다. 알려 봐야 상대가 옛 값을 읽는다.
-      if (ok) pingSettings()
-    })()
-  }, PUSH_DELAY_MS)
+    },
+  )
 }
 
 /**
@@ -338,7 +335,7 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     // 이력도 버린다 — 남의 배치로 되돌리는 일이 있어서는 안 된다.
     const local = loadSettings(accountId)
     set({ accountId, settings: local, past: [], notice: null })
-    listenForSettings(accountId)
+    watchSettings(accountId)
 
     /**
      * **로컬을 먼저 띄우고 서버는 뒤따라 맞춘다.**
@@ -360,7 +357,10 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
         saveSettings(adopt, accountId)
         set({ settings: adopt, past: [] })
       } else if (push) {
-        void pushSettings(accountId, get().settings)
+        // 여기서도 적어 둔다. 안 적으면 방금 올린 것이 되돌아와 `past`를 비운다.
+        const mine = get().settings
+        echo.remember(mine.updatedAt)
+        void pushSettings(accountId, mine)
       }
     })()
   },
