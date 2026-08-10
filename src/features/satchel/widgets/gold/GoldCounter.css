@@ -1,0 +1,87 @@
+/* ==========================================================================
+   골드 카운터
+   --------------------------------------------------------------------------
+   한 칸짜리다. 금화가 칸을 가득 채우고 숫자가 그 위에 놓인다.
+   ========================================================================== */
+
+.gold {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  font-family: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  /* 끌어서 세는 자리다. 브라우저가 먼저 스크롤로 채가면 값이 안 움직인다. */
+  touch-action: none;
+  cursor: pointer;
+  /* 길게 누르면 iOS가 저장 메뉴를 띄운다. 세는 손을 방해한다. */
+  user-select: none;
+  -webkit-touch-callout: none;
+  /* 숫자 크기가 칸을 따라가도록 컨테이너로 삼는다. 위젯 틀이 칸 크기를 이미
+     정해 주므로 여기서 재면 된다. */
+  container-type: size;
+}
+
+.gold:disabled {
+  cursor: default;
+}
+
+/* 금화. 칸의 짧은 변에 맞춘다 — 한 칸이라 대개 정사각형이지만, 여백이 붙는
+   자리에서 넘치지 않게 한다. */
+.gold__coin {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* 바닥 그림자를 그림 안에 그렸으므로 여기서는 번짐만 얹는다. */
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 55%));
+}
+
+/* 숫자.
+
+   금화 위에 놓이므로 **어두운 잉크**로 찍는다 — 밝은 금색 위에 흰 글자를 얹으면
+   가장자리에서 묻힌다. 눌러 새긴 것처럼 보이도록 위쪽에 밝은 획을 하나 둔다.
+
+   크기를 `%`가 아니라 `cqmin`으로 잡는다. 칸의 짧은 변을 따라가므로 위젯이
+   돌아가도 같은 크기로 보인다. */
+.gold__value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40cqmin;
+  line-height: 1;
+  color: #3a2708;
+  text-shadow:
+    0 1px 0 rgb(255 235 170 / 60%),
+    0 -1px 1px rgb(0 0 0 / 25%);
+  /* 세 자리까지 들어간다. 숫자가 커져도 금화 밖으로 나가지 않게 살짝 좁힌다. */
+  letter-spacing: -0.02em;
+  pointer-events: none;
+}
+
+/* 플레이 모드가 아니면 만질 수 없다는 것이 보여야 한다. */
+.gold:disabled .gold__coin {
+  opacity: 0.75;
+}
+
+/* 눌린 동안 살짝 가라앉는다. 손끝에 반응이 있어야 몇 번 눌렀는지 안다. */
+.gold:not(:disabled):active .gold__coin {
+  transform: scale(0.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gold:not(:disabled):active .gold__coin {
+    transform: none;
+  }
+}
+
+.gold:focus-visible {
+  outline: 2px solid var(--sl-gold-bright);
+  outline-offset: -2px;
+  border-radius: 999px;
+}

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { createDeck, STANDARD_COMPOSITION } from '../widgets/deck/deck'
 import { useAttackDeckStore } from '../widgets/deck/deckStore'
 import { useElementStore } from '../widgets/elements/elementStore'
+import { useGoldStore } from '../widgets/gold/goldStore'
 import { useHpXpStore } from '../widgets/hpxp/hpxpStore'
 import { FIRST_ROUND, MAX_ROUND, useRoundStore } from '../widgets/round/roundStore'
 import { readKept, writeKept } from './keep'
@@ -40,6 +41,7 @@ function clearStores() {
   useRoundStore.getState().hydrate(FIRST_ROUND)
   useHpXpStore.getState().hydrate({})
   useAttackDeckStore.getState().hydrate({})
+  useGoldStore.getState().hydrate({})
 }
 
 beforeEach(clearStores)
@@ -61,6 +63,10 @@ describe('뜨고 되돌리기', () => {
     clearStores()
     useHpXpStore.getState().adjust('w1', 'hp', 5)
     expect(isEmptyRuntime(captureRuntime())).toBe(false)
+
+    clearStores()
+    useGoldStore.getState().adjust('w1', 3)
+    expect(isEmptyRuntime(captureRuntime())).toBe(false)
   })
 
   it('뜬 판을 그대로 되돌려 놓는다', () => {
@@ -69,6 +75,7 @@ describe('뜨고 되돌리기', () => {
     useHpXpStore.getState().adjust('w1', 'hp', 8)
     useHpXpStore.getState().adjust('w1', 'xp', 3)
     useAttackDeckStore.getState().hydrate({ d1: createDeck(seeded(7), STANDARD_COMPOSITION) })
+    useGoldStore.getState().adjust('w1', 17)
     useRoundStore.getState().hydrate(5)
 
     const snapshot = captureRuntime()
@@ -82,6 +89,7 @@ describe('뜨고 되돌리기', () => {
     expect(useHpXpStore.getState().valuesOf('w1')).toEqual({ hp: 8, xp: 3 })
     expect(useRoundStore.getState().round).toBe(5)
     expect(useAttackDeckStore.getState().stateOf('d1').draw).toHaveLength(20)
+    expect(useGoldStore.getState().amountOf('w1')).toBe(17)
   })
 
   it('복원이 판을 굴리지 않는다 — 라운드를 앉혀도 원소가 하강하지 않는다', () => {
@@ -120,6 +128,16 @@ describe('거르기', () => {
       elements: { fire: 'strong', ice: 'inert', air: '타오름' },
     })
     expect(out.elements).toEqual({ fire: 'strong' })
+  })
+
+  it('금화를 눈금 안에 가두고 0은 버린다', () => {
+    // 0은 없는 것과 같다 — `amountOf`가 없는 것을 0으로 읽으므로 결과는 같고
+    // 저장물만 부푼다.
+    const out = sanitizeRuntime({
+      ...emptyRuntime(),
+      gold: { a: -5, b: 5000, c: 0, d: 12, e: '금화' },
+    })
+    expect(out.gold).toEqual({ b: 999, d: 12 })
   })
 
   it('라운드를 눈금 안에 가둔다', () => {

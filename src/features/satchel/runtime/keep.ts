@@ -1,5 +1,6 @@
 import { useAttackDeckStore } from '../widgets/deck/deckStore'
 import { useElementStore } from '../widgets/elements/elementStore'
+import { useGoldStore } from '../widgets/gold/goldStore'
 import { useHpXpStore } from '../widgets/hpxp/hpxpStore'
 import { useRoundStore } from '../widgets/round/roundStore'
 import {
@@ -116,6 +117,7 @@ export function keepRuntime(): () => void {
     useRoundStore.subscribe(save),
     useHpXpStore.subscribe(save),
     useAttackDeckStore.subscribe(save),
+    useGoldStore.subscribe(save),
   ]
 
   stop = () => {

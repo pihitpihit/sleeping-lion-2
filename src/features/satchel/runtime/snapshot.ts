@@ -4,6 +4,8 @@ import type { ElementState } from '../widgets/elements/elements'
 import { useElementStore } from '../widgets/elements/elementStore'
 import { clampValue, type HpXp } from '../widgets/hpxp/hpxp'
 import { useHpXpStore } from '../widgets/hpxp/hpxpStore'
+import { clampGold } from '../widgets/gold/gold'
+import { useGoldStore } from '../widgets/gold/goldStore'
 import { FIRST_ROUND, MAX_ROUND, useRoundStore } from '../widgets/round/roundStore'
 
 /**
@@ -53,10 +55,20 @@ export interface RuntimeSnapshot {
   /** 지금은 위젯 인스턴스가 열쇠다. 전투 공유에서 캐릭터로 옮긴다. */
   hpxp: Record<string, HpXp>
   decks: Record<string, DeckState>
+  /** 주운 금화. 열쇠는 HP/XP와 같다(캐릭터를 골랐으면 그 id). */
+  gold: Record<string, number>
 }
 
 export function emptyRuntime(): RuntimeSnapshot {
-  return { v: RUNTIME_VERSION, at: 0, elements: {}, round: FIRST_ROUND, hpxp: {}, decks: {} }
+  return {
+    v: RUNTIME_VERSION,
+    at: 0,
+    elements: {},
+    round: FIRST_ROUND,
+    hpxp: {},
+    decks: {},
+    gold: {},
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -72,6 +84,7 @@ export function captureRuntime(): RuntimeSnapshot {
     round: useRoundStore.getState().round,
     hpxp: useHpXpStore.getState().byInstance,
     decks: useAttackDeckStore.getState().byInstance,
+    gold: useGoldStore.getState().bySlot,
   }
 }
 
@@ -81,7 +94,8 @@ export function isEmptyRuntime(snapshot: RuntimeSnapshot): boolean {
     Object.keys(snapshot.elements).length === 0 &&
     snapshot.round === FIRST_ROUND &&
     Object.keys(snapshot.hpxp).length === 0 &&
-    Object.keys(snapshot.decks).length === 0
+    Object.keys(snapshot.decks).length === 0 &&
+    Object.keys(snapshot.gold).length === 0
   )
 }
 
@@ -101,6 +115,7 @@ export function restoreRuntime(snapshot: RuntimeSnapshot): void {
   useElementStore.getState().hydrate(snapshot.elements)
   useHpXpStore.getState().hydrate(snapshot.hpxp)
   useAttackDeckStore.getState().hydrate(snapshot.decks)
+  useGoldStore.getState().hydrate(snapshot.gold)
   useRoundStore.getState().hydrate(snapshot.round)
 }
 
@@ -189,9 +204,18 @@ export function sanitizeRuntime(parsed: unknown): RuntimeSnapshot {
     }
   }
 
+  const gold: Record<string, number> = {}
+  if (typeof raw.gold === 'object' && raw.gold !== null) {
+    for (const [key, value] of Object.entries(raw.gold)) {
+      // 0은 담지 않는다 — 없는 것을 0으로 읽으므로 결과는 같고 쌓이지 않는다.
+      const amount = clampGold(typeof value === 'number' ? value : 0)
+      if (amount > 0) gold[key] = amount
+    }
+  }
+
   const at = typeof raw.at === 'number' && Number.isFinite(raw.at) && raw.at > 0 ? raw.at : 0
 
-  return { v: RUNTIME_VERSION, at, elements, round, hpxp, decks }
+  return { v: RUNTIME_VERSION, at, elements, round, hpxp, decks, gold }
 }
 
 /* --------------------------------------------------------------------------

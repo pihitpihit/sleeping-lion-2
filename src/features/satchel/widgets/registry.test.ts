@@ -17,9 +17,23 @@ const STUB = {
 } satisfies WidgetDefinition
 
 describe('레지스트리', () => {
-  it('Test 위젯이 등록돼 있다', () => {
-    expect(isKnownWidget('test')).toBe(true)
-    expect(getWidgetDefinition('test')?.name).toBe('Test')
+  it('채택 도구가 등록돼 있다', () => {
+    for (const id of ['elements', 'deck', 'hpxp', 'round', 'gold']) {
+      expect(isKnownWidget(id), id).toBe(true)
+    }
+  })
+
+  it('개발용 Test 위젯은 걷어냈다', () => {
+    // 도구 띠에 쓸 일 없는 것이 섞여 있으면 고르는 데 방해만 된다.
+    expect(isKnownWidget('test')).toBe(false)
+  })
+
+  it('골드 카운터는 한 칸에서 크지 않는다', () => {
+    const gold = getWidgetDefinition('gold')
+    expect(gold?.defaultSize).toEqual({ w: 1, h: 1 })
+    expect(gold?.maxSize).toEqual({ w: 1, h: 1 })
+    // 파생 경로로도 다른 크기가 새어 들지 않게 훅이 함께 막는다.
+    expect(gold?.isSizeAllowed?.({ w: 2, h: 1 }, undefined)).toBe(false)
   })
 
   it('모르는 id는 undefined', () => {

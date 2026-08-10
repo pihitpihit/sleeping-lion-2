@@ -1,5 +1,6 @@
 import { useAttackDeckStore } from '../widgets/deck/deckStore'
 import { useElementStore } from '../widgets/elements/elementStore'
+import { useGoldStore } from '../widgets/gold/goldStore'
 import { useHpXpStore } from '../widgets/hpxp/hpxpStore'
 import { useRoundStore } from '../widgets/round/roundStore'
 import { captureRuntime, reconcileRuntime, restoreRuntime, type RuntimeSnapshot } from './snapshot'
@@ -154,6 +155,7 @@ export async function enterRoom(backend: RoomBackend): Promise<void> {
     useRoundStore.subscribe(relay),
     useHpXpStore.subscribe(relay),
     useAttackDeckStore.subscribe(relay),
+    useGoldStore.subscribe(relay),
   ]
 
   if (push) void backend.push(captureRuntime())

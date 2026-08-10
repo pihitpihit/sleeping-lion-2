@@ -1,4 +1,3 @@
-import { TestWidget } from './TestWidget'
 import { HpXpTracker } from './hpxp/HpXpTracker'
 import { RoundTracker } from './round/RoundTracker'
 import { isHpXpSizeAllowed } from './hpxp/hpxp'
@@ -8,6 +7,10 @@ import { ElementTracker } from './elements/ElementTracker'
 import { isElementTrackerSizeAllowed } from './elements/layout'
 import { ElementSettingsEditor } from './elements/ElementSettingsEditor'
 import { sanitizeElementSettings } from './elements/settings'
+import { GoldCounter } from './gold/GoldCounter'
+import { GoldSettingsEditor } from './gold/GoldSettingsEditor'
+import { isGoldSizeAllowed } from './gold/gold'
+import { sanitizeGoldSettings } from './gold/settings'
 import { AttackDeck } from './deck/AttackDeck'
 import { DeckSettingsEditor } from './deck/DeckSettingsEditor'
 import { sanitizeAttackDeckSettings } from './deck/settings'
@@ -16,19 +19,11 @@ import type { WidgetDefinition } from './types'
 /**
  * 위젯 레지스트리.
  *
- * SPEC 1장이 채택 도구를 셋으로 한정하지만 Test는 개발용 예외다. 실제 도구
- * (원소 트래커 / 공격 보정 덱 / 주도권 정렬)가 갖춰지면 뺄지 판단한다.
+ * **여기 있는 것이 곧 채택 도구다**(SPEC 1장). 배치를 시험하려고 두었던 Test
+ * 위젯은 실제 도구가 갖춰져 걷어냈다(2026-08-10) — 도구 띠에 쓸 일 없는 것이
+ * 섞여 있으면 고르는 데 방해만 된다.
  */
 const DEFINITIONS: WidgetDefinition[] = [
-  {
-    id: 'test',
-    name: 'Test',
-    defaultSize: { w: 2, h: 2 },
-    minSize: { w: 1, h: 1 },
-    // 최대 제한 없음 — 격자 전체까지 늘릴 수 있어야 크기 조절을 시험할 수 있다.
-    // 인스턴스 제한도 없음 — 여러 개 놓고 겹침·재배치를 봐야 한다.
-    Component: TestWidget,
-  },
   {
     id: 'elements',
     // 도구 이름은 무엇인지 즉시 알아야 하는 정보다. 정취보다 명확함이 먼저다.
@@ -43,6 +38,22 @@ const DEFINITIONS: WidgetDefinition[] = [
       Editor: ElementSettingsEditor,
     },
     Component: ElementTracker,
+  },
+  {
+    id: 'gold',
+    // 무엇인지 즉시 알아야 하는 이름이다. HP/XP 트래커와 같은 선.
+    name: '골드 카운터',
+    // **한 칸에서 크지 않는다.** 담는 것이 숫자 하나뿐이라 넓혀도 빈 자리만
+    // 생긴다. 대신 격자가 꽉 차 가도 끼워 넣을 틈이 있다.
+    defaultSize: { w: 1, h: 1 },
+    minSize: { w: 1, h: 1 },
+    maxSize: { w: 1, h: 1 },
+    // 크기 손잡이가 아예 안 나오도록 여기서도 못박는다 — 최대·최소만으로는
+    // 파생 경로에서 다른 크기가 새어 들 수 있다.
+    isSizeAllowed: isGoldSizeAllowed,
+    // 인스턴스 제한 없음 — 사람마다 하나씩 놓는다.
+    settings: { sanitize: sanitizeGoldSettings, Editor: GoldSettingsEditor },
+    Component: GoldCounter,
   },
   {
     id: 'hpxp',

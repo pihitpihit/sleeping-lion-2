@@ -160,6 +160,17 @@ export function WidgetFrame({
    * 갈래를 하나로 유지한다 — 회전이 0일 때만 다른 길을 타면 그 길에서만 나는
    * 어긋남이 생긴다.
    */
+  /**
+   * 크기를 바꿀 수 있는가.
+   *
+   * 최소와 최대가 같으면 끌어도 갈 곳이 없다. 손잡이를 내면 **눌리는데 아무 일도
+   * 안 일어나는** 자리가 되므로 아예 안 낸다.
+   */
+  const resizable =
+    definition.maxSize === undefined ||
+    definition.maxSize.w !== definition.minSize.w ||
+    definition.maxSize.h !== definition.minSize.h
+
   const rotorStyle = {
     width: `${swapsAxes(rotation) ? rect.height : rect.width}px`,
     height: `${swapsAxes(rotation) ? rect.width : rect.height}px`,
@@ -259,14 +270,20 @@ export function WidgetFrame({
           >
             <CloseIcon />
           </button>
-          <span
-            className="widget-frame__resize"
-            role="presentation"
-            onPointerDown={(e) => begin('resize', e)}
-            onPointerMove={move}
-            onPointerUp={end}
-            onPointerCancel={cancel}
-          />
+          {/*
+            **크기가 하나뿐인 위젯에는 손잡이를 내지 않는다.** 골드 카운터가
+            그렇다 — 끌 수 있게 보이는데 아무 일도 안 일어나면 고장으로 읽힌다.
+          */}
+          {resizable && (
+            <span
+              className="widget-frame__resize"
+              role="presentation"
+              onPointerDown={(e) => begin('resize', e)}
+              onPointerMove={move}
+              onPointerUp={end}
+              onPointerCancel={cancel}
+            />
+          )}
         </>
       )}
     </div>
