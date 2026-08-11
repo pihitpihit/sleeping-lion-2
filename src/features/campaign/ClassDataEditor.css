@@ -1,0 +1,187 @@
+/* ==========================================================================
+   클래스 수치 넣기 — 관리자 화면 안
+   --------------------------------------------------------------------------
+   실물 카드의 값이 들어오는 자리다. 저장소에는 없고 여기서만 들어간다.
+   ========================================================================== */
+
+.classdata {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--sl-border);
+}
+
+.classdata__title {
+  margin: 0;
+  font-family: var(--sl-font-ko-display);
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--sl-gold-bright);
+}
+
+.classdata__hint,
+.classdata__empty {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: var(--sl-text-faint);
+}
+
+.classdata__hint strong {
+  font-weight: 400;
+  color: var(--sl-text-muted);
+}
+
+.classdata__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.classdata__list > li {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0.5rem;
+  background: rgb(0 0 0 / 24%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+}
+
+/* 양피지 원반. 아이콘 색을 건드리지 않는다(구현 결정 41). */
+.classdata__badge {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sl-void);
+  background: #d8cbaa;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.classdata__badge img {
+  width: 76%;
+  height: 76%;
+  object-fit: contain;
+}
+
+.classdata__name {
+  flex: 1;
+  min-width: 0;
+  color: var(--sl-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.classdata__meta {
+  flex: none;
+  font-size: 0.78rem;
+  color: var(--sl-text-faint);
+}
+
+.classdata__remove {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  font-size: 1.05rem;
+  line-height: 1;
+  color: var(--sl-text-faint);
+  background: none;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.classdata__remove:hover {
+  color: var(--sl-ember);
+}
+
+.classdata__label {
+  margin-top: 0.4rem;
+  font-family: var(--sl-font-ko-display);
+  font-size: 0.85rem;
+  color: var(--sl-text-muted);
+}
+
+/* 붙여넣는 자리. 줄이 어긋나면 눈에 띄어야 하므로 고정폭이다. */
+.classdata__box {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--sl-text);
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+  resize: vertical;
+  /* 자동 교정이 따옴표를 곡선으로 바꾸면 JSON이 깨진다. */
+  -webkit-text-size-adjust: 100%;
+}
+
+.classdata__box:focus {
+  outline: 2px solid var(--sl-gold);
+  outline-offset: 1px;
+}
+
+.classdata__problems {
+  margin: 0;
+  padding: 0 0 0 1.1rem;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  color: var(--sl-ember);
+}
+
+.classdata__ok {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--sl-moss-bright);
+}
+
+.classdata__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.classdata__save,
+.classdata__fill {
+  padding: 0.5rem 0.9rem;
+  font-family: inherit;
+  font-size: 0.88rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.classdata__save {
+  color: var(--sl-void);
+  background: var(--sl-gold);
+  border: 1px solid var(--sl-gold);
+}
+
+.classdata__save:disabled {
+  color: var(--sl-text-faint);
+  background: none;
+  border-color: var(--sl-border);
+  cursor: default;
+}
+
+.classdata__fill {
+  color: var(--sl-text-muted);
+  background: var(--sl-panel);
+  border: 1px solid var(--sl-border);
+}
+
+.classdata__fill:hover:not(:disabled) {
+  color: var(--sl-gold);
+  border-color: var(--sl-border-strong);
+}

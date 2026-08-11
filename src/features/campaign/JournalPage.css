@@ -1061,3 +1061,19 @@
   color: var(--sl-ember);
   border-color: var(--sl-ember);
 }
+
+/* 클래스 수치에서 온 것들 — 관리자가 넣어 두었을 때만 뜬다. */
+.char__class {
+  color: var(--sl-gold-dim);
+}
+
+.char__maxhp {
+  margin: 0.3rem 0 0;
+  font-size: 0.82rem;
+  color: var(--sl-text-faint);
+}
+
+.char__maxhp strong {
+  font-weight: 400;
+  color: var(--sl-text-muted);
+}

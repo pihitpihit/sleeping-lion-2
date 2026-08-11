@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import {
   MAX_CHECKMARKS,
   XP_THRESHOLDS,
@@ -14,6 +14,7 @@ import {
   xpToNextLevel,
 } from './character'
 import { ClassPicker } from './ClassPicker'
+import { classInfoOf, maxHpFor, useClassStore } from './classStore'
 import type { Character, CharacterEdits } from './types'
 
 interface Props {
@@ -67,6 +68,20 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
   const earned = perksEarned(character.level, character.checkmarks)
   const iconUrl = classIconUrl(character.classIcon)
 
+  /**
+   * 클래스 수치. 관리자가 넣어 두었으면 이름·핸드 사이즈·최대 체력이 온다.
+   *
+   * **없어도 화면은 그대로 돈다** — 넣기 전에는 아이콘만 보이던 종전 모습이다.
+   * 값이 레포에 없고 DB에만 있으므로(절대 원칙 1) 이쪽이 기본 상태다.
+   */
+  const classes = useClassStore((s) => s.byIcon)
+  const loadClasses = useClassStore((s) => s.load)
+  useEffect(() => {
+    void loadClasses()
+  }, [loadClasses])
+  const info = classInfoOf(classes, character.classIcon)
+  const maxHp = maxHpFor(info, character.level)
+
   function commit(field: 'name' | 'notes') {
     if (draft[field] === character[field]) return
     onEdit({ [field]: draft[field] })
@@ -108,7 +123,20 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
             onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
             onBlur={() => commit('name')}
           />
-          <p className="char__owner">{character.ownerName || '이름 없음'}의 캐릭터</p>
+          <p className="char__owner">
+            {character.ownerName || '이름 없음'}의 캐릭터
+            {info && (
+              <>
+                {' · '}
+                <span className="char__class">{info.name}</span>
+                {info.handSize > 0 && (
+                  <>
+                    {' · '}손 <span className="sl-numeral">{info.handSize}</span>장
+                  </>
+                )}
+              </>
+            )}
+          </p>
         </div>
       </div>
 
@@ -165,6 +193,19 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
           **올려주지 않고 알리기만 한다.** 레벨업은 퍽을 고르고 능력 카드를 바꾸는
           일이라 실물에서도 사람이 멈춰서 한다.
         */}
+        {/*
+          최대 체력은 **읽어주기만 한다.** 규칙을 판정하지 않는다는 선은 그대로다 —
+          피해를 깎지도, 상한을 강제하지도 않는다.
+
+          클래스 수치를 안 넣었으면 아예 뜨지 않는다. **모르면 모른다고 한다** —
+          짐작해서 숫자를 내면 사람이 그것을 믿는다.
+        */}
+        {maxHp !== null && (
+          <p className="char__maxhp">
+            이 레벨의 최대 체력 <strong className="sl-numeral">{maxHp}</strong>
+          </p>
+        )}
+
         {ready && mine && (
           <p className="char__ready" role="status">
             경험이 <strong className="sl-numeral">{reached}</strong> 레벨에 닿았다. 올릴 때가
