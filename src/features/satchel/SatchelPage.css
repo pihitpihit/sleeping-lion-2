@@ -41,10 +41,12 @@
   background: var(--sl-raised);
 }
 
-/* 띠의 두께는 **모드와 무관하게 고정**한다.
-   편집 모드에서 위젯 목록이 붙으면 띠가 두꺼워지는데, 그러면 보드가 좁아지고
-   격자가 다시 계산된다. 편집하다 플레이로 돌아갈 때마다 배치가 흔들린다는 뜻이다.
-   목록은 띠 안에서만 스크롤시키고 두께는 건드리지 않는다. */
+/* 띠의 두께는 **모드와 무관하게 고정**한다(구현 결정 7).
+   두꺼워지면 보드가 좁아지고 격자가 다시 계산된다 — 편집하다 플레이로 돌아갈
+   때마다 배치가 흔들린다는 뜻이다.
+
+   2026-08-10에 연장 목록을 메뉴로 접으면서 **띠에는 아이콘 단추만 남았다.**
+   목록이 길어져도 띠는 그대로다 — 메뉴가 띠 바깥에 떠서 스스로 스크롤한다. */
 .satchel-bar--top {
   flex-direction: row;
   height: 3.75rem;
@@ -54,11 +56,13 @@
 .satchel-bar--left {
   flex-direction: column;
   align-items: stretch;
-  width: 6.5rem;
+  /* 아이콘 단추 하나(44px)에 좌우 여백만 더한 폭이다. 연장 목록이 띠에
+     붙어 있던 시절에는 이름이 들어가느라 6.5rem이었다 — 목록을 메뉴로 접으면서
+     그만큼 보드에 돌려주었다. */
+  width: 4.75rem;
   border-right: 1px solid var(--sl-border);
   /* 띠 자체는 넘침을 자르지 않는다. 메뉴가 띠 바깥(left: 100%)에 열리므로
-     여기서 overflow를 걸면 메뉴가 통째로 잘려 안 보인다 — 실제로 그렇게 났다.
-     넘치는 것은 아래 위젯 목록뿐이므로 스크롤도 그쪽에 건다. */
+     여기서 overflow를 걸면 메뉴가 통째로 잘려 안 보인다 — 실제로 그렇게 났다. */
   overflow: visible;
 }
 
@@ -91,11 +95,6 @@
 
 /* 어두운 테마에서 기본 초점 링은 잘 보이지 않는다. 직접 그린다. */
 .satchel-bar__control:focus-visible,
-.satchel-bar__widget:focus-visible {
-  outline: 2px solid var(--sl-gold);
-  outline-offset: 2px;
-}
-
 .satchel-bar__control:disabled {
   opacity: 0.35;
   cursor: default;
@@ -147,26 +146,14 @@
 }
 
 /* 제어와 연장 사이의 금. 두 갈래가 다른 것임을 눈으로 가른다. */
-.satchel-bar__divider {
-  flex: none;
-  background: var(--sl-border);
-}
-
-.satchel-bar--top .satchel-bar__divider {
-  width: 1px;
-  align-self: stretch;
-  margin: 0.4rem 0.15rem;
-}
-
-.satchel-bar--left .satchel-bar__divider {
-  height: 1px;
-  margin: 0.15rem 0.4rem;
-}
 
 .satchel-bar__controls {
   flex: none;
   display: flex;
   gap: 0.4rem;
+  /* 메뉴가 이 안에 그려진다. 기준이 없으면 띠 전체를 기준 삼아 단추와 떨어진
+     자리에 뜬다. */
+  position: relative;
 }
 
 .satchel-bar--top .satchel-bar__controls {
@@ -179,85 +166,6 @@
 }
 
 /* 연장 버튼 — 꺼내 놓는 물건. 이름을 쓴 판이라 제어와 결이 다르다. */
-.satchel-bar__widget {
-  min-height: 40px;
-  width: 100%;
-  padding: 0.35rem 0.7rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  border: 1px solid var(--sl-border);
-  border-radius: 3px;
-  background: linear-gradient(160deg, rgba(201, 162, 39, 0.06), transparent 60%), var(--sl-panel);
-  box-shadow: inset 0 1px 0 rgba(232, 205, 114, 0.06);
-  color: var(--sl-text-muted);
-  font-family: var(--sl-font-ko-display);
-  font-size: 0.8rem;
-  letter-spacing: 0.03em;
-  line-height: 1.25;
-  /* 한글은 기본적으로 낱말 중간에서 꺾인다. 좁은 세로 띠에서 '원소 트/래커'처럼
-     갈라지므로 낱말 단위로 접는다. */
-  word-break: keep-all;
-  cursor: pointer;
-  transition:
-    color 0.15s ease,
-    border-color 0.15s ease;
-}
-
-.satchel-bar--top .satchel-bar__widget {
-  white-space: nowrap;
-}
-
-.satchel-bar__widget:hover:not(:disabled) {
-  color: var(--sl-gold-bright);
-  border-color: var(--sl-gold-dim);
-}
-
-.satchel-bar__widget:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.satchel-bar__widget[aria-pressed='true'] {
-  color: var(--sl-gold-bright);
-  border-color: var(--sl-gold-dim);
-}
-
-.satchel-bar__widgets {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  gap: 0.4rem;
-  min-width: 0;
-}
-
-.satchel-bar__widgets li {
-  display: flex;
-}
-
-.satchel-bar--top .satchel-bar__widgets {
-  flex-direction: row;
-  overflow-x: auto;
-  /* 목록이 넘쳐도 보드를 밀어내지 않는다 */
-  flex: 1;
-}
-
-.satchel-bar--left .satchel-bar__widgets {
-  flex-direction: column;
-  /* 목록만 스크롤한다. 띠 두께는 그대로 유지돼 격자가 다시 계산되지 않는다. */
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: none;
-}
-
-.satchel-bar--left .satchel-bar__widgets::-webkit-scrollbar,
-.satchel-bar--top .satchel-bar__widgets::-webkit-scrollbar {
-  display: none;
-}
 
 .satchel-bar__count {
   min-width: 1.2em;
@@ -288,12 +196,48 @@
 
 .satchel-bar--top .satchel-menu {
   top: calc(100% + 0.4rem);
-  left: clamp(0.5rem, 2vw, 0.9rem);
+  left: 0;
 }
 
 .satchel-bar--left .satchel-menu {
   left: calc(100% + 0.4rem);
-  top: clamp(0.5rem, 2vw, 0.9rem);
+  top: 0;
+}
+
+/* 연장 메뉴는 길어질 수 있다. 화면을 넘기지 않게 스스로 스크롤한다 —
+   띠 두께는 그대로여야 격자가 다시 계산되지 않는다(구현 결정 7). */
+.satchel-menu--widgets {
+  max-height: min(70vh, 26rem);
+  overflow-y: auto;
+}
+
+.satchel-menu__item--widget {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  /* 플레이 중 급하게 누르는 화면이다. 터치 목표를 확보한다. */
+  min-height: 44px;
+}
+
+.satchel-menu__item--widget:disabled {
+  opacity: 0.4;
+  cursor: default;
+  background: none;
+  color: var(--sl-text-faint);
+}
+
+.satchel-menu__label {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 왜 다 잠겼는지 한 줄로 말해 준다. 잠긴 단추만 있으면 고장으로 읽힌다. */
+.satchel-menu__note {
+  margin: 0;
+  padding: 0.6rem 0.9rem 0.4rem;
+  font-size: 0.78rem;
+  color: var(--sl-text-faint);
+  border-bottom: 1px solid var(--sl-border);
 }
 
 .satchel-menu__item {

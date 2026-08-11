@@ -75,3 +75,13 @@ export function SeatedIcon() {
     </svg>
   )
 }
+
+/** 더하기 — 연장 꺼내기 */
+export function PlusIcon() {
+  return (
+    <svg {...BASE} width="22" height="22">
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+    </svg>
+  )
+}
