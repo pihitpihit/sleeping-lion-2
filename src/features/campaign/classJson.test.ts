@@ -19,7 +19,7 @@ describe('클래스 JSON 읽기', () => {
   it('제대로 된 것을 읽는다', () => {
     const out = parseClassJson(ONE)
     expect(out.problems).toEqual([])
-    expect(out.classes).toEqual([{ icon: 3, name: '가', handSize: 10, hp: HP }])
+    expect(out.classes).toEqual([{ icon: 3, name: '가', handSize: 10, hp: HP, sort: 0 }])
   })
 
   it('이름 앞뒤 공백은 다듬는다', () => {
@@ -43,17 +43,38 @@ describe('클래스 JSON 읽기', () => {
     }
   })
 
-  it('같은 아이콘이 두 번 나오면 잡는다 — 나중 것이 앞 것을 지운다', () => {
+  /*
+    Creator Pack의 21쪽은 글룸헤이븐 것이고 **사자의 턱 넷은 거기 없다.** 그림이
+    없다고 클래스를 못 담을 이유가 없다(`0012`).
+  */
+  it('아이콘은 없어도 된다', () => {
+    const out = parseClassJson(JSON.stringify([{ name: '가', handSize: 9, hp: HP }]))
+    expect(out.problems).toEqual([])
+    expect(out.classes[0].icon).toBeNull()
+  })
+
+  it('같은 이름이 두 번 나오면 잡는다 — 이름이 열쇠다', () => {
+    const out = parseClassJson(
+      JSON.stringify([
+        { name: '가', handSize: 9, hp: HP },
+        { name: '가', handSize: 9, hp: HP },
+      ]),
+    )
+    expect(out.problems[0]).toMatch(/이미 나왔/)
+  })
+
+  it('같은 아이콘을 두 클래스가 쓰면 잡는다 — 고를 때 어느 쪽인지 알 수 없다', () => {
     const out = parseClassJson(
       JSON.stringify([
         { icon: 3, name: '가', handSize: 9, hp: HP },
         { icon: 3, name: '나', handSize: 9, hp: HP },
       ]),
     )
-    expect(out.problems[0]).toMatch(/이미 나왔/)
+    expect(out.problems[0]).toMatch(/이미 씁니다/)
+    expect(out.classes.map((c) => c.name)).toEqual(['가'])
   })
 
-  it('이름이 비면 잡는다', () => {
+  it('이름이 비면 잡는다 — 열쇠가 될 수 없다', () => {
     const out = parseClassJson(JSON.stringify([{ icon: 3, name: '   ', handSize: 9, hp: HP }]))
     expect(out.problems[0]).toMatch(/name/)
   })

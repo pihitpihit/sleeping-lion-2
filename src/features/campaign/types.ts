@@ -82,6 +82,15 @@ export interface Character {
    * 스포일러라 담지 않는다(SPEC 3장). SPEC 12장 1을 이렇게 닫았다.
    */
   classIcon: number
+  /**
+   * 고른 클래스. 아직 클래스 수치를 안 넣었으면 `null`.
+   *
+   * **아이콘 번호와 함께 든다.** 아이콘만으로는 팩에 그림이 없는 클래스를 가리킬
+   * 수 없고(`0012`), 반대로 클래스 표가 비어 있을 때는 아이콘만으로 골라야 한다.
+   * 클래스를 고르면 그 클래스의 아이콘을 `classIcon`에도 적어 두므로 축 ②의
+   * 이름표가 종전대로 그림을 찾는다.
+   */
+  classId: string | null
 
   level: number
   xp: number
@@ -110,6 +119,7 @@ export type CharacterEdits = Partial<
     Character,
     | 'name'
     | 'classIcon'
+    | 'classId'
     | 'level'
     | 'xp'
     | 'gold'

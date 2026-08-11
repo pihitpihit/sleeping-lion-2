@@ -74,12 +74,12 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
    * **없어도 화면은 그대로 돈다** — 넣기 전에는 아이콘만 보이던 종전 모습이다.
    * 값이 레포에 없고 DB에만 있으므로(절대 원칙 1) 이쪽이 기본 상태다.
    */
-  const classes = useClassStore((s) => s.byIcon)
+  const classes = useClassStore((s) => s.list)
   const loadClasses = useClassStore((s) => s.load)
   useEffect(() => {
     void loadClasses()
   }, [loadClasses])
-  const info = classInfoOf(classes, character.classIcon)
+  const info = classInfoOf(classes, character.classId, character.classIcon)
   const maxHp = maxHpFor(info, character.level)
 
   function commit(field: 'name' | 'notes') {
@@ -144,9 +144,11 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
         <section className="sheet__block">
           <h3 className="sheet__label">클래스 표식</h3>
           <ClassPicker
-            value={character.classIcon}
+            classId={character.classId}
+            icon={character.classIcon}
             disabled={locked}
-            onChange={(index) => onEdit({ classIcon: index })}
+            /* 아이콘도 함께 적어 둔다 — 축 ②의 이름표가 그 번호로 그림을 찾는다. */
+            onChange={(next) => onEdit({ classId: next.classId, classIcon: next.icon })}
           />
         </section>
       )}

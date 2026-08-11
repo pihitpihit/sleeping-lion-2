@@ -13,27 +13,39 @@ import { MAX_LEVEL, clampLevel } from './character'
  */
 
 interface ClassState {
-  byIcon: Record<number, ClassInfo>
+  /** 넣어 둔 클래스. 보여줄 차례대로다. */
+  list: ClassInfo[]
   loaded: boolean
   load: (force?: boolean) => Promise<void>
 }
 
 export const useClassStore = create<ClassState>((set, get) => ({
-  byIcon: {},
+  list: [],
   loaded: false,
 
   load: async (force = false) => {
     if (get().loaded && !force) return
-    const list = await fetchClasses()
-    const byIcon: Record<number, ClassInfo> = {}
-    for (const info of list) byIcon[info.icon] = info
-    set({ byIcon, loaded: true })
+    set({ list: await fetchClasses(), loaded: true })
   },
 }))
 
-/** 그 아이콘의 클래스 수치. 안 넣었으면 `null`. */
-export function classInfoOf(byIcon: Record<number, ClassInfo>, icon: number): ClassInfo | null {
-  return byIcon[icon] ?? null
+/**
+ * 캐릭터가 가리키는 클래스.
+ *
+ * **id로 먼저 찾고, 없으면 아이콘 번호로 찾는다.** 클래스 표가 생기기 전에 만든
+ * 캐릭터는 아이콘만 들고 있다 — 그 사람들도 이름과 최대 체력을 보게 한다.
+ */
+export function classInfoOf(
+  list: readonly ClassInfo[],
+  classId: string | null,
+  icon: number,
+): ClassInfo | null {
+  if (classId) {
+    const byId = list.find((c) => c.id === classId)
+    if (byId) return byId
+  }
+  if (icon > 0) return list.find((c) => c.icon === icon) ?? null
+  return null
 }
 
 /**

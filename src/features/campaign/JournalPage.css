@@ -1077,3 +1077,94 @@
   font-weight: 400;
   color: var(--sl-text-muted);
 }
+
+/* --------------------------------------------------------------------------
+   클래스 고르기 — 넣어 둔 클래스가 있을 때의 모습
+   --------------------------------------------------------------------------
+   그림만 늘어놓던 격자와 달리 이름이 보인다. 팩에 그림이 없는 클래스도 여기서는
+   고를 수 있다.
+   -------------------------------------------------------------------------- */
+
+.classpick--named {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.classpick__row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  /* 플레이 중 급하게 누르는 화면이다. 터치 목표를 확보한다. */
+  min-height: 44px;
+  padding: 0.3rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  color: var(--sl-text);
+  background: rgb(0 0 0 / 24%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.classpick__row:hover:not(:disabled) {
+  border-color: var(--sl-border-strong);
+}
+
+.classpick__row--on {
+  border-color: var(--sl-gold);
+  box-shadow: inset 0 0 0 1px var(--sl-gold-dim);
+}
+
+.classpick__row:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 양피지 원반. 아이콘 색을 건드리지 않는다(구현 결정 41). */
+.classpick__badge {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sl-void);
+  background: #d8cbaa;
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.classpick__badge img {
+  width: 76%;
+  height: 76%;
+  object-fit: contain;
+}
+
+/* 그림이 없는 클래스 — 이름 첫 글자로 대신한다. */
+.classpick__badge--plain {
+  font-family: var(--sl-font-ko-display);
+  font-size: 0.95rem;
+}
+
+.classpick__label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 손에 드는 카드 수. 어느 클래스인지 가리는 데 도움이 된다. */
+.classpick__hand {
+  flex: none;
+  min-width: 1.6em;
+  padding: 0 0.35em;
+  font-size: 0.75rem;
+  text-align: center;
+  color: var(--sl-void);
+  background: var(--sl-gold-dim);
+  border-radius: 999px;
+}

@@ -185,3 +185,10 @@
   color: var(--sl-gold);
   border-color: var(--sl-border-strong);
 }
+
+/* 그림이 없는 클래스 — 이름 첫 글자로 대신한다. */
+.classdata__badge--plain {
+  color: var(--sl-void);
+  font-family: var(--sl-font-ko-display);
+  font-size: 0.95rem;
+}

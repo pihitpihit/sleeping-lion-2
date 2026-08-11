@@ -26,7 +26,7 @@ import './ClassDataEditor.css'
  */
 
 export function ClassDataEditor() {
-  const byIcon = useClassStore((s) => s.byIcon)
+  const stored = useClassStore((s) => s.list)
   const load = useClassStore((s) => s.load)
 
   const [text, setText] = useState('')
@@ -38,7 +38,6 @@ export function ClassDataEditor() {
     void load(true)
   }, [load])
 
-  const stored = Object.values(byIcon).sort((a, b) => a.icon - b.icon)
   const parsed = text.trim() === '' ? null : parseClassJson(text)
 
   async function save() {
@@ -59,11 +58,11 @@ export function ClassDataEditor() {
     }
   }
 
-  async function remove(icon: number) {
+  async function remove(id: string) {
     setBusy(true)
     setError(null)
     try {
-      await deleteClass(icon)
+      await deleteClass(id)
       await load(true)
     } catch (cause) {
       console.error('[classes]', cause)
@@ -79,7 +78,7 @@ export function ClassDataEditor() {
       `[\n${stored
         .map(
           (c) =>
-            `  { "icon": ${c.icon}, "name": ${JSON.stringify(c.name)}, "handSize": ${c.handSize}, "hp": [${c.hp.join(', ')}] }`,
+            `  { "name": ${JSON.stringify(c.name)}, "handSize": ${c.handSize}, "hp": [${c.hp.join(', ')}]${c.icon === null ? '' : `, "icon": ${c.icon}`} }`,
         )
         .join(',\n')}\n]`,
     )
@@ -98,11 +97,17 @@ export function ClassDataEditor() {
       {stored.length > 0 && (
         <ul className="classdata__list">
           {stored.map((c) => {
-            const url = classIconUrl(c.icon)
+            const url = c.icon === null ? null : classIconUrl(c.icon)
             return (
-              <li key={c.icon}>
-                <span className="classdata__badge">
-                  {url ? <img src={url} alt="" draggable={false} /> : <span>?</span>}
+              <li key={c.id}>
+                {/* 그림이 없는 클래스는 이름 첫 글자로 대신한다 — 팩의 21쪽은
+                    글룸헤이븐 것이고 사자의 턱 넷은 거기 없다. */}
+                <span className={`classdata__badge${url ? '' : ' classdata__badge--plain'}`}>
+                  {url ? (
+                    <img src={url} alt="" draggable={false} />
+                  ) : (
+                    <span aria-hidden="true">{c.name.slice(0, 1)}</span>
+                  )}
                 </span>
                 <span className="classdata__name">{c.name}</span>
                 <span className="classdata__meta sl-numeral">
@@ -113,7 +118,7 @@ export function ClassDataEditor() {
                   className="classdata__remove"
                   aria-label={`${c.name} 지우기`}
                   disabled={busy}
-                  onClick={() => void remove(c.icon)}
+                  onClick={() => void remove(c.id)}
                 >
                   ×
                 </button>

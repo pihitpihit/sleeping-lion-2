@@ -36,7 +36,13 @@ interface CharacterState {
   error: string | null
 
   load: (campaignId: string) => Promise<void>
-  add: (campaignId: string, ownerId: string, name: string, classIcon: number) => Promise<void>
+  add: (
+    campaignId: string,
+    ownerId: string,
+    name: string,
+    classIcon: number,
+    classId: string | null,
+  ) => Promise<void>
   edit: (id: string, edits: CharacterEdits) => Promise<void>
   remove: (id: string) => Promise<void>
   clearError: () => void
@@ -84,7 +90,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     }
   },
 
-  add: async (campaignId, ownerId, name, classIcon) => {
+  add: async (campaignId, ownerId, name, classIcon, classId) => {
     const trimmed = name.trim()
     if (trimmed === '') return
     if (get().offline) {
@@ -94,7 +100,7 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
 
     set({ busy: true, error: null })
     try {
-      const made = await createCharacter(campaignId, ownerId, trimmed, classIcon)
+      const made = await createCharacter(campaignId, ownerId, trimmed, classIcon, classId)
       const next = [...get().characters, made]
       await mirrorCharacters(campaignId, next)
       set({ characters: next })

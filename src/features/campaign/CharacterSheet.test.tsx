@@ -22,6 +22,7 @@ function fixture(over: Partial<Character> = {}): Character {
     ownerName: '형님',
     name: '이름',
     classIcon: 3,
+    classId: null,
     level: 2,
     xp: 60,
     gold: 120,

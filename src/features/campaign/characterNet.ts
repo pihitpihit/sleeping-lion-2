@@ -26,6 +26,7 @@ interface Row {
   owner_id: string
   name: string
   class_icon: number
+  class_id: string | null
   level: number
   xp: number
   gold: number
@@ -42,7 +43,7 @@ interface Row {
 }
 
 const COLUMNS =
-  'id, campaign_id, owner_id, name, class_icon, level, xp, gold, checkmarks, perks, items, notes, retired, created_at, updated_at, version, owner:profiles!characters_owner_id_fkey(display_name)'
+  'id, campaign_id, owner_id, name, class_icon, class_id, level, xp, gold, checkmarks, perks, items, notes, retired, created_at, updated_at, version, owner:profiles!characters_owner_id_fkey(display_name)'
 
 /**
  * 어디서 온 값이든 쓸 수 있는 캐릭터로 다듬는다.
@@ -59,6 +60,7 @@ export function sanitizeCharacter(row: Row): Character {
     ownerName: row.owner?.display_name ?? '',
     name: typeof row.name === 'string' ? row.name : '',
     classIcon: hasClassIcon(row.class_icon) ? row.class_icon : 0,
+    classId: typeof row.class_id === 'string' && row.class_id !== '' ? row.class_id : null,
     level: clampLevel(row.level),
     xp: clampXp(row.xp),
     gold: clampGold(row.gold),
@@ -96,6 +98,7 @@ export async function createCharacter(
   ownerId: string,
   name: string,
   classIcon: number,
+  classId: string | null,
 ): Promise<Character> {
   const { data, error } = await supabase()
     .from('characters')
@@ -104,6 +107,7 @@ export async function createCharacter(
       owner_id: ownerId,
       name,
       class_icon: hasClassIcon(classIcon) ? classIcon : 0,
+      class_id: classId,
     })
     .select(COLUMNS)
     .single()
@@ -118,6 +122,7 @@ export async function pushCharacterEdits(id: string, edits: CharacterEdits): Pro
   if (edits.classIcon !== undefined) {
     patch.class_icon = hasClassIcon(edits.classIcon) ? edits.classIcon : 0
   }
+  if (edits.classId !== undefined) patch.class_id = edits.classId
   if (edits.level !== undefined) patch.level = clampLevel(edits.level)
   if (edits.xp !== undefined) patch.xp = clampXp(edits.xp)
   if (edits.gold !== undefined) patch.gold = clampGold(edits.gold)

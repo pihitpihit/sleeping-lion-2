@@ -44,6 +44,7 @@ export function Roster({ campaignId, me, readOnly = false }: Props) {
   const [making, setMaking] = useState(false)
   const [newName, setNewName] = useState('')
   const [newIcon, setNewIcon] = useState(0)
+  const [newClassId, setNewClassId] = useState<string | null>(null)
   const [showRetired, setShowRetired] = useState(false)
 
   useEffect(() => {
@@ -57,9 +58,10 @@ export function Roster({ campaignId, me, readOnly = false }: Props) {
   const shown = showRetired ? [...active, ...retired] : active
 
   async function onCreate() {
-    await add(campaignId, me.userId, newName, newIcon)
+    await add(campaignId, me.userId, newName, newIcon, newClassId)
     setNewName('')
     setNewIcon(0)
+    setNewClassId(null)
     setMaking(false)
   }
 
@@ -170,7 +172,14 @@ export function Roster({ campaignId, me, readOnly = false }: Props) {
                 }
               }}
             />
-            <ClassPicker value={newIcon} onChange={setNewIcon} />
+            <ClassPicker
+              classId={newClassId}
+              icon={newIcon}
+              onChange={(next) => {
+                setNewClassId(next.classId)
+                setNewIcon(next.icon)
+              }}
+            />
             <div className="roster__new-actions">
               <button
                 type="button"
@@ -187,6 +196,7 @@ export function Roster({ campaignId, me, readOnly = false }: Props) {
                   setMaking(false)
                   setNewName('')
                   setNewIcon(0)
+                  setNewClassId(null)
                 }}
               >
                 그만
