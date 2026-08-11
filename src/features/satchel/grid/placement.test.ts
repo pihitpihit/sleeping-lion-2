@@ -7,7 +7,8 @@ import { canPlaceAt, findFreeSpot, isWithinGrid, overlaps } from './placement'
 const GRID: GridMetrics = {
   columns: 4,
   rows: 3,
-  cellSize: 80,
+  cellWidth: 80,
+  cellHeight: 80,
   gap: 12,
   paddingX: 0,
   paddingY: 0,

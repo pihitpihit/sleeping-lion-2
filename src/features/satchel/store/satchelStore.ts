@@ -371,7 +371,8 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
     if (
       metrics.columns === previous.columns &&
       metrics.rows === previous.rows &&
-      metrics.cellSize === previous.cellSize
+      metrics.cellWidth === previous.cellWidth &&
+      metrics.cellHeight === previous.cellHeight
     ) {
       // 여백만 달라진 경우에도 그리기에는 반영돼야 한다.
       set({ metrics })

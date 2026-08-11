@@ -15,7 +15,19 @@
   height: 100dvh;
   display: flex;
   overflow: hidden;
-  padding: var(--sl-safe-top) var(--sl-safe-right) var(--sl-safe-bottom) var(--sl-safe-left);
+  /*
+    아래쪽 안전영역은 **절반만 비운다.**
+
+    아이폰에서 그 자리는 34px인데, 통째로 비우면 격자 아래에 45px짜리 띠가
+    남는다(여기에 격자 자체의 여백이 더해진다). 화면 모서리가 둥근 자리라
+    그 띠가 더 크게 보인다 — 형님이 짚었다.
+
+    홈 인디케이터 막대는 아래에서 8px쯤 되는 자리에 5px 두께로 눕는다. 절반을
+    남기면 그 막대 위로 위젯이 오지 않으면서 띠는 절반으로 준다. 위아래와
+    좌우는 그대로 다 비운다 — 노치와 곡면이 실제로 화면을 먹는 자리다.
+  */
+  padding: var(--sl-safe-top) var(--sl-safe-right) calc(var(--sl-safe-bottom) / 2)
+    var(--sl-safe-left);
   background: linear-gradient(180deg, var(--sl-bg) 0%, var(--sl-void) 100%);
 }
 

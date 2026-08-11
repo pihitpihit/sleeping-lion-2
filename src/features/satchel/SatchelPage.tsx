@@ -148,7 +148,7 @@ export function SatchelPage() {
         onOpenBattle={() => setBattleOpen(true)}
         inBattle={inBattle}
         /* 기기에서 실제로 잡힌 값. 손으로 셈해 맞히려다 두 번 빗나갔다. */
-        gridInfo={`격자 ${metrics.columns}×${metrics.rows} · 칸 ${metrics.cellSize}px · 보드 ${Math.round(size.width)}×${Math.round(size.height)}`}
+        gridInfo={`격자 ${metrics.columns}×${metrics.rows} · 칸 ${metrics.cellWidth}×${metrics.cellHeight} · 보드 ${Math.round(size.width)}×${Math.round(size.height)}`}
       />
 
       <div

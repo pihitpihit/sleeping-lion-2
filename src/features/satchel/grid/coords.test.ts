@@ -9,14 +9,14 @@ describe('cellsToPixels', () => {
     const rect = cellsToPixels({ x: 0, y: 0, w: 1, h: 1 }, METRICS)
     expect(rect.left).toBe(METRICS.paddingX)
     expect(rect.top).toBe(METRICS.paddingY)
-    expect(rect.width).toBe(METRICS.cellSize)
-    expect(rect.height).toBe(METRICS.cellSize)
+    expect(rect.width).toBe(METRICS.cellWidth)
+    expect(rect.height).toBe(METRICS.cellHeight)
   })
 
   it('여러 칸을 차지하면 사이 간격까지 먹는다', () => {
     const rect = cellsToPixels({ x: 0, y: 0, w: 2, h: 3 }, METRICS)
-    expect(rect.width).toBe(spanOf(2, METRICS.cellSize, METRICS.gap))
-    expect(rect.height).toBe(spanOf(3, METRICS.cellSize, METRICS.gap))
+    expect(rect.width).toBe(spanOf(2, METRICS.cellWidth, METRICS.gap))
+    expect(rect.height).toBe(spanOf(3, METRICS.cellHeight, METRICS.gap))
   })
 
   it('마지막 칸이 격자 오른쪽 끝에 닿는다', () => {

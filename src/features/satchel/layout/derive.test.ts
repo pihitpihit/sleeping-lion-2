@@ -7,7 +7,7 @@ const MIN_1x1 = () => ({ w: 1, h: 1 })
 const MIN_2x2 = () => ({ w: 2, h: 2 })
 
 function grid(columns: number, rows: number): GridMetrics {
-  return { columns, rows, cellSize: 80, gap: 12, paddingX: 0, paddingY: 0 }
+  return { columns, rows, cellWidth: 80, cellHeight: 80, gap: 12, paddingX: 0, paddingY: 0 }
 }
 
 function widget(id: string, x: number, y: number, w: number, h: number): WidgetInstance {

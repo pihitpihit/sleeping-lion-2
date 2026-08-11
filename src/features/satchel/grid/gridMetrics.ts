@@ -14,8 +14,22 @@ export interface Size {
 export interface GridMetrics {
   columns: number
   rows: number
-  /** 셀 한 변(px). 정사각형이다. */
-  cellSize: number
+  /**
+   * 셀의 가로·세로(px).
+   *
+   * ┌──────────────────────────────────────────────────────────────────────┐
+   * │ **정사각형이 아니다. 두 축을 따로 채운다.**                           │
+   * └──────────────────────────────────────────────────────────────────────┘
+   *
+   * 한 변으로 두었더니 **한쪽을 채우면 다른 쪽이 남았다.** 아이폰 15 Pro에서
+   * 여덟 줄에 맞춰 높이를 74px로 줄이자 폭에도 같은 값이 쓰여 45px가 남았고,
+   * 그것이 좌우로 갈려 빈 띠가 되었다 — 형님이 짚은 자리다.
+   *
+   * 가로는 폭을, 세로는 높이를 각자 채운다. 대신 아래 `MAX_ASPECT`로 한쪽이
+   * 지나치게 길어지는 것은 막는다.
+   */
+  cellWidth: number
+  cellHeight: number
   /** 셀 사이 간격(px). */
   gap: number
   /** 격자를 가운데 두기 위한 좌우·상하 여백(px). */
@@ -47,6 +61,20 @@ const MIN_PADDING = 8
  */
 const MIN_CELL = 72
 
+/**
+ * 셀이 정사각형에서 벗어날 수 있는 한도.
+ *
+ * 두 축을 따로 채우면 셀이 조금 길쭉해진다 — 아이폰 15 Pro에서 85×74(0.87)
+ * 정도다. 그만큼은 눈에 띄지 않지만, 가로로 누운 폰처럼 높이가 크게 남는 자리에서
+ * 그냥 두면 셀이 82×140처럼 어긋난다. **한도를 넘는 만큼은 여백으로 돌린다.**
+ *
+ * 아래쪽 한도는 줄을 하나 더 넣을지 정할 때도 본다. 15 Pro Max에서 아홉 줄까지
+ * 가면 셀이 94×76으로 납작해지는데, 여덟 줄이면 94×87로 반듯하다 — **줄 하나보다
+ * 반듯한 칸이 낫다.**
+ */
+const MIN_ASPECT = 0.85
+const MAX_ASPECT = 1.25
+
 /** 열 수 하한. 이보다 적으면 위젯을 나란히 둘 수가 없다. */
 const MIN_COLUMNS = 4
 /** 열 수 상한. 아주 넓은 화면에서 셀이 잘게 부서지는 것을 막는다. */
@@ -65,7 +93,8 @@ const MAX_GRID_WIDTH = 1600
 export const EMPTY_METRICS: GridMetrics = {
   columns: 0,
   rows: 0,
-  cellSize: 0,
+  cellWidth: 0,
+  cellHeight: 0,
   gap: GRID_GAP,
   paddingX: 0,
   paddingY: 0,
@@ -117,61 +146,63 @@ export function computeGridMetrics(board: Size): GridMetrics {
     MAX_COLUMNS,
   )
 
-  // 셀 크기는 내림한다. 반올림하면 누적 오차로 마지막 열이 삐져나온다.
-  // 남는 픽셀은 아래에서 여백으로 흡수된다.
-  let cellSize = Math.max(1, Math.floor((usableWidth - (columns - 1) * GRID_GAP) / columns))
+  // 가로는 폭을 그대로 채운다. 내림하는 것은 반올림하면 누적 오차로 마지막
+  // 열이 삐져나오기 때문이며, 남는 몇 픽셀은 아래에서 여백으로 흡수된다.
+  const cellWidth = Math.max(1, Math.floor((usableWidth - (columns - 1) * GRID_GAP) / columns))
 
-  let rows = Math.floor((usableHeight + GRID_GAP) / (cellSize + GRID_GAP))
+  /** 이 줄 수로 나눴을 때의 셀 높이. 세로를 그대로 채운다. */
+  const heightFor = (count: number) =>
+    Math.max(1, Math.floor((usableHeight - (count - 1) * GRID_GAP) / count))
+
+  // 정사각형에 가까운 줄 수에서 출발한다. 목표 크기에 가장 가까운 자리다.
+  let rows = Math.floor((usableHeight + GRID_GAP) / (cellWidth + GRID_GAP))
+
   if (rows < 1) {
-    // 높이가 정사각형 한 칸도 못 담는 극단(가로 폰에서 툴바가 상단일 때).
-    // 최소 1행을 보장하되 셀을 줄여 보드 안에 들어오게 한다. 정사각형은 유지한다.
+    // 높이가 한 칸도 못 담는 극단(가로 폰에서 툴바가 상단일 때). 최소 한 줄은 둔다.
     rows = 1
-    cellSize = Math.max(1, Math.floor(usableHeight))
   } else {
     /**
-     * 남는 세로 공간을 되찾는다.
+     * 남는 세로를 되찾는다.
      *
-     * 셀 크기를 **폭에서만** 뽑고 행 수를 내림하면, 남는 높이가 최대 한 칸에
-     * 가깝게 버려진다. 그 구멍은 화면 아래에 통째로 남아 눈에 띈다 — 아이폰
-     * 15 Pro에서 화면의 6분의 1이 그렇게 비었다.
-     *
-     * **셀을 조금 줄여 행을 하나 더 넣는다.** 셀이 8%쯤 작아지는 대신 격자
-     * 한 줄이 통째로 생기므로 놓을 자리가 는다. 줄어든 셀이 폭에는 여유를
-     * 남기지만 그것은 좌우로 갈려 여백처럼 보이고, 세로로 뭉쳐 있던 구멍과
-     * 달리 거슬리지 않는다.
-     *
-     * ┌────────────────────────────────────────────────────────────────────┐
-     * │ **멈추는 것은 셀 하한(`MIN_CELL`) 하나뿐이다.**                     │
-     * └────────────────────────────────────────────────────────────────────┘
+     * ┌──────────────────────────────────────────────────────────────────┐
+     * │ **멈추는 것은 셀 하한(`MIN_CELL`) 하나뿐이다.**                   │
+     * └──────────────────────────────────────────────────────────────────┘
      *
      * "얼마나 남았는가"로 멈추는 조건을 두 번 두었다가 두 번 다 걷어냈다.
      * 처음에는 반 칸, 다음에는 간격 한 칸이었는데 **둘 다 아이폰 15 Pro의
-     * 여덟째 줄을 막았다** — 셀이 74px로 하한을 넘기는데도 남는 높이가 모자라
-     * 멎었다. 형님이 두 번 짚었다.
+     * 여덟째 줄을 막았다** — 셀이 하한을 넘기는데도 남는 높이가 모자라 멎었다.
      *
      * 남은 높이가 얼마인지는 **줄을 더 넣을 수 있는가와 아무 상관이 없다.**
-     * 물어야 할 것은 "칸이 아직 쓸 만한가" 하나다. 그 답이 `MIN_CELL`이다.
+     * 물어야 할 것은 "칸이 아직 쓸 만한가" 하나이고, 그 답이 `MIN_CELL`이다.
      *
-     * 대가는 좌우 여백이다. 셀이 정사각형이라 세로에 맞춰 줄이면 가로도 함께
-     * 줄고, 남는 폭이 양옆으로 갈린다. 세로로 뭉쳐 있던 구멍과 달리 좌우로
-     * 갈린 여백은 격자를 가운데 둔 것처럼 보인다 — 화면을 세로로 쓰는 도구라
-     * 줄을 얻는 쪽이 낫다.
-     *
-     * 셀은 매번 반드시 줄어들므로(행이 늘면 한 칸에 돌아가는 높이가 준다) 이
-     * 되풀이는 반드시 끝난다.
+     * 셀 높이는 줄이 늘 때마다 반드시 줄어들므로 이 되풀이는 반드시 끝난다.
      */
-    for (;;) {
-      const denser = rows + 1
-      const denserCell = Math.floor((usableHeight - (denser - 1) * GRID_GAP) / denser)
-      if (denserCell < MIN_CELL) break
-
-      rows = denser
-      cellSize = denserCell
-    }
+    /**
+     * 칸이 얼마나 납작해져도 되는가.
+     *
+     * 셀 하한만 보면 넓은 폰에서 셀이 24%까지 납작해진다. 폭에 견준 한도를 함께
+     * 두어 반듯한 쪽을 고른다.
+     */
+    const minCellHeight = Math.max(MIN_CELL, Math.round(cellWidth * MIN_ASPECT))
+    while (heightFor(rows + 1) >= minCellHeight) rows += 1
   }
 
-  const paddingX = (width - spanOf(columns, cellSize, GRID_GAP)) / 2
-  const paddingY = (height - spanOf(rows, cellSize, GRID_GAP)) / 2
+  /**
+   * 세로를 채우되 지나치게 길쭉해지지는 않게 한다.
+   *
+   * 한도를 넘는 만큼은 위아래 여백으로 돌린다 — 가로로 누운 폰처럼 높이가 크게
+   * 남는 자리에서 셀이 82×140으로 어긋나는 것을 막는다.
+   */
+  const cellHeight = clamp(
+    heightFor(rows),
+    // 한 줄밖에 못 넣는 극단(가로 폰에서 툴바가 상단)에서는 하한을 못 지킨다.
+    // 그때는 있는 높이를 그대로 쓴다.
+    Math.min(MIN_CELL, cellWidth, heightFor(rows)),
+    Math.round(cellWidth * MAX_ASPECT),
+  )
 
-  return { columns, rows, cellSize, gap: GRID_GAP, paddingX, paddingY }
+  const paddingX = (width - spanOf(columns, cellWidth, GRID_GAP)) / 2
+  const paddingY = (height - spanOf(rows, cellHeight, GRID_GAP)) / 2
+
+  return { columns, rows, cellWidth, cellHeight, gap: GRID_GAP, paddingX, paddingY }
 }

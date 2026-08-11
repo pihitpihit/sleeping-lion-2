@@ -34,13 +34,15 @@ export function previewResize(
   minSize: { w: number; h: number },
   maxSize?: { w: number; h: number },
 ): Placement {
-  const step = metrics.cellSize + metrics.gap
-  if (step <= 0 || metrics.cellSize <= 0) return start
+  if (metrics.cellWidth <= 0 || metrics.cellHeight <= 0) return start
 
   const rect = cellsToPixels(start, metrics)
-  // n칸의 길이는 n*(cell+gap) - gap 이므로 역산하면 이 꼴이 된다.
-  const rawW = Math.round((rect.width + delta.dx + metrics.gap) / step)
-  const rawH = Math.round((rect.height + delta.dy + metrics.gap) / step)
+  // n칸의 길이는 n*(cell+gap) - gap 이므로 역산하면 이 꼴이 된다. 셀이 정사각형이
+  // 아니므로 축마다 따로 센다.
+  const rawW = Math.round((rect.width + delta.dx + metrics.gap) / (metrics.cellWidth + metrics.gap))
+  const rawH = Math.round(
+    (rect.height + delta.dy + metrics.gap) / (metrics.cellHeight + metrics.gap),
+  )
 
   const maxW = Math.min(maxSize?.w ?? metrics.columns, metrics.columns - start.x)
   const maxH = Math.min(maxSize?.h ?? metrics.rows, metrics.rows - start.y)

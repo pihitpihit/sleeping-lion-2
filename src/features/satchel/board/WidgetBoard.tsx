@@ -36,7 +36,8 @@ export function WidgetBoard({
 }: Props) {
   if (metrics.columns <= 0 || metrics.rows <= 0) return null
 
-  const step = metrics.cellSize + metrics.gap
+  const stepX = metrics.cellWidth + metrics.gap
+  const stepY = metrics.cellHeight + metrics.gap
 
   /**
    * 격자는 셀마다 점을 찍는다.
@@ -53,16 +54,16 @@ export function WidgetBoard({
    * SVG로 그리는 이유는 두 가지다. CSS 그라디언트로는 진짜 점선을 만들 수 없고,
    * 선은 열+행+2개뿐이라 칸마다 DOM을 만드는 것(14×9면 126개)과 비교가 안 된다.
    */
-  const boardWidth = metrics.paddingX * 2 + spanOf(metrics.columns, metrics.cellSize, metrics.gap)
-  const boardHeight = metrics.paddingY * 2 + spanOf(metrics.rows, metrics.cellSize, metrics.gap)
+  const boardWidth = metrics.paddingX * 2 + spanOf(metrics.columns, metrics.cellWidth, metrics.gap)
+  const boardHeight = metrics.paddingY * 2 + spanOf(metrics.rows, metrics.cellHeight, metrics.gap)
   const half = metrics.gap / 2
   const verticals = Array.from(
     { length: metrics.columns + 1 },
-    (_, k) => metrics.paddingX - half + k * step,
+    (_, k) => metrics.paddingX - half + k * stepX,
   )
   const horizontals = Array.from(
     { length: metrics.rows + 1 },
-    (_, k) => metrics.paddingY - half + k * step,
+    (_, k) => metrics.paddingY - half + k * stepY,
   )
 
   return (

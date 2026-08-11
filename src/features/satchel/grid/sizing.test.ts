@@ -3,7 +3,7 @@ import { GRID_GAP, type GridMetrics } from './gridMetrics'
 import { hasFreeCell, sizeCandidates } from './sizing'
 
 function grid(columns: number, rows: number): GridMetrics {
-  return { columns, rows, cellSize: 84, gap: GRID_GAP, paddingX: 0, paddingY: 0 }
+  return { columns, rows, cellWidth: 84, cellHeight: 84, gap: GRID_GAP, paddingX: 0, paddingY: 0 }
 }
 
 describe('sizeCandidates', () => {

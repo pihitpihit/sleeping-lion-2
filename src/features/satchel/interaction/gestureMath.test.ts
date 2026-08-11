@@ -12,14 +12,14 @@ describe('previewMove', () => {
   })
 
   it('한 칸 폭만큼 끌면 한 칸 옮겨진다', () => {
-    const step = M.cellSize + M.gap
+    const step = M.cellWidth + M.gap
     const moved = previewMove({ x: 0, y: 0, w: 1, h: 1 }, { dx: step, dy: step }, M)
     expect(moved).toMatchObject({ x: 1, y: 1 })
   })
 
   // 반올림 경계. 절반을 못 넘으면 원래 칸에 머물러야 손이 흔들려도 안 튄다.
   it('절반을 넘어야 다음 칸으로 넘어간다', () => {
-    const step = M.cellSize + M.gap
+    const step = M.cellWidth + M.gap
     expect(previewMove({ x: 0, y: 0, w: 1, h: 1 }, { dx: step * 0.49, dy: 0 }, M).x).toBe(0)
     expect(previewMove({ x: 0, y: 0, w: 1, h: 1 }, { dx: step * 0.51, dy: 0 }, M).x).toBe(1)
   })
@@ -44,7 +44,7 @@ describe('previewResize', () => {
   })
 
   it('한 칸 폭만큼 끌면 한 칸 커진다', () => {
-    const step = M.cellSize + M.gap
+    const step = M.cellWidth + M.gap
     const r = previewResize({ x: 0, y: 0, w: 1, h: 1 }, { dx: step, dy: step }, M, MIN)
     expect(r).toMatchObject({ w: 2, h: 2 })
   })
@@ -82,7 +82,8 @@ describe('previewResize', () => {
     const empty: GridMetrics = {
       columns: 0,
       rows: 0,
-      cellSize: 0,
+      cellWidth: 0,
+      cellHeight: 0,
       gap: 12,
       paddingX: 0,
       paddingY: 0,

@@ -3,7 +3,15 @@ import type { GridMetrics } from '../grid'
 import { addWidget, dropUnknownWidgets, removeWidget, updatePlacement } from './operations'
 import type { Layout } from './types'
 
-const GRID: GridMetrics = { columns: 4, rows: 3, cellSize: 80, gap: 12, paddingX: 0, paddingY: 0 }
+const GRID: GridMetrics = {
+  columns: 4,
+  rows: 3,
+  cellWidth: 80,
+  cellHeight: 80,
+  gap: 12,
+  paddingX: 0,
+  paddingY: 0,
+}
 
 function base(): Layout {
   return {

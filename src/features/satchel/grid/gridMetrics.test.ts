@@ -18,7 +18,7 @@ describe('computeGridMetrics', () => {
   it('격자가 보드 폭에 정확히 들어맞는다', () => {
     for (const device of DEVICES) {
       const m = computeGridMetrics(device)
-      const used = m.paddingX * 2 + spanOf(m.columns, m.cellSize, m.gap)
+      const used = m.paddingX * 2 + spanOf(m.columns, m.cellWidth, m.gap)
       expect(used, device.name).toBeCloseTo(device.width, 6)
     }
   })
@@ -26,7 +26,7 @@ describe('computeGridMetrics', () => {
   it('격자가 보드 높이 안에 들어온다', () => {
     for (const device of DEVICES) {
       const m = computeGridMetrics(device)
-      const used = spanOf(m.rows, m.cellSize, m.gap)
+      const used = spanOf(m.rows, m.cellHeight, m.gap)
       expect(used, device.name).toBeLessThanOrEqual(device.height)
       expect(m.paddingY, device.name).toBeGreaterThanOrEqual(0)
     }
@@ -37,8 +37,13 @@ describe('computeGridMetrics', () => {
   it('모든 기기에서 셀이 아이콘 크기 범위에 들어온다', () => {
     for (const device of DEVICES) {
       const m = computeGridMetrics(device)
-      expect(m.cellSize, `${device.name} (${m.columns}열)`).toBeGreaterThanOrEqual(72)
-      expect(m.cellSize, `${device.name} (${m.columns}열)`).toBeLessThanOrEqual(96)
+      for (const [axis, size] of [
+        ['가로', m.cellWidth],
+        ['세로', m.cellHeight],
+      ] as const) {
+        expect(size, `${device.name} ${axis} (${m.columns}열)`).toBeGreaterThanOrEqual(72)
+        expect(size, `${device.name} ${axis} (${m.columns}열)`).toBeLessThanOrEqual(96)
+      }
     }
   })
 
@@ -52,7 +57,7 @@ describe('computeGridMetrics', () => {
   it('세로로 남는 공간은 되찾는다 — 셀 하한에 걸릴 때만 남긴다', () => {
     for (const device of DEVICES) {
       const m = computeGridMetrics(device)
-      const leftover = device.height - spanOf(m.rows, m.cellSize, m.gap)
+      const leftover = device.height - spanOf(m.rows, m.cellHeight, m.gap)
       /*
         남는 띠가 간격 한 칸보다 얇으면 칸 사이의 틈과 구별되지 않는다. 위아래
         최소 여백(8+8)까지 더한 만큼은 봐준다.
@@ -70,7 +75,7 @@ describe('computeGridMetrics', () => {
       const cellForDenser = Math.floor((device.height - 16 - (denser - 1) * m.gap) / denser)
       expect(
         cellForDenser,
-        `${device.name} (${m.rows}행 × ${m.cellSize}px): ${leftover}px를 버렸는데 더 넣을 수 있었다`,
+        `${device.name} (${m.rows}행 × ${m.cellHeight}px): ${leftover}px를 버렸는데 더 넣을 수 있었다`,
       ).toBeLessThan(72)
     }
   })
@@ -85,7 +90,9 @@ describe('computeGridMetrics', () => {
     expect(m.columns).toBe(4)
     expect(m.rows).toBe(8)
     // 여덟 줄을 얻으려고 셀을 하한 밑으로 떨어뜨리지는 않았다.
-    expect(m.cellSize).toBeGreaterThanOrEqual(72)
+    expect(m.cellHeight).toBeGreaterThanOrEqual(72)
+    // 그리고 폭은 꽉 찬다 — 좌우에 남는 띠가 최소 여백을 넘지 않는다.
+    expect(m.paddingX).toBeLessThanOrEqual(10)
   })
 
   /*
@@ -115,22 +122,53 @@ describe('computeGridMetrics', () => {
     // 되찾기가 없을 때 6행에 머물던 크기다.
     const m = computeGridMetrics({ width: 393, height: 634 })
     expect(m.rows).toBeGreaterThanOrEqual(7)
-    expect(m.cellSize).toBeGreaterThanOrEqual(72)
+    expect(m.cellHeight).toBeGreaterThanOrEqual(72)
   })
 
   it('행을 늘리려고 셀을 하한 밑으로 줄이지는 않는다', () => {
     for (let height = 200; height <= 1400; height += 7) {
       const m = computeGridMetrics({ width: 393, height })
       if (m.rows > 1) {
-        expect(m.cellSize, `높이 ${height}`).toBeGreaterThanOrEqual(72)
+        expect(m.cellHeight, `높이 ${height}`).toBeGreaterThanOrEqual(72)
       }
     }
   })
 
-  it('셀은 정사각형이고 정수다', () => {
+  /*
+    셀은 더 이상 정사각형이 아니다 — 두 축을 각자 채우기 때문이다. 대신
+    **너무 길쭉해지지는 않아야** 한다. 위젯 안의 배치가 비율을 보고 갈리므로
+    한쪽이 크게 길면 엉뚱한 모양이 뽑힌다.
+  */
+  it('셀은 정수이고 정사각형에서 크게 벗어나지 않는다', () => {
     for (const device of DEVICES) {
       const m = computeGridMetrics(device)
-      expect(Number.isInteger(m.cellSize), device.name).toBe(true)
+      expect(Number.isInteger(m.cellWidth), device.name).toBe(true)
+      expect(Number.isInteger(m.cellHeight), device.name).toBe(true)
+
+      const aspect = m.cellHeight / m.cellWidth
+      expect(aspect, `${device.name} (${m.cellWidth}×${m.cellHeight})`).toBeGreaterThanOrEqual(0.75)
+      expect(aspect, `${device.name} (${m.cellWidth}×${m.cellHeight})`).toBeLessThanOrEqual(1.3)
+    }
+  })
+
+  /*
+    좌우 공백이 눈에 띈다는 지적을 받은 자리다. 셀이 한 변뿐이던 시절에는
+    세로에 맞춰 줄인 값이 폭에도 쓰여 45px가 남았고, 그것이 좌우로 갈렸다.
+  */
+  it('폭은 언제나 꽉 찬다', () => {
+    for (const device of DEVICES) {
+      const m = computeGridMetrics(device)
+      // 넓은 화면은 격자 폭 상한(1600) 때문에 일부러 가운데 묶는다.
+      if (device.width > 1600) continue
+      /*
+        셀 폭을 내림하므로 열 수만큼 픽셀이 남을 수 있고, 그것이 좌우로 갈린다.
+        최소 여백(8) 위로 그만큼만 봐준다.
+      */
+      const slack = 8 + m.columns / 2 + 1
+      expect(
+        m.paddingX,
+        `${device.name}: 좌우에 ${Math.round(m.paddingX)}px씩 남았다`,
+      ).toBeLessThanOrEqual(slack)
     }
   })
 
@@ -152,9 +190,9 @@ describe('computeGridMetrics', () => {
   it('아주 넓은 보드에서도 셀이 커지지 않고 격자가 가운데 놓인다', () => {
     for (const width of [1600, 2560, 3840]) {
       const m = computeGridMetrics({ width, height: 1000 })
-      expect(m.cellSize, `${width}px`).toBeLessThanOrEqual(96)
+      expect(m.cellWidth, `${width}px`).toBeLessThanOrEqual(96)
       // 좌우 여백이 같아야 가운데다
-      const used = m.paddingX * 2 + spanOf(m.columns, m.cellSize, m.gap)
+      const used = m.paddingX * 2 + spanOf(m.columns, m.cellWidth, m.gap)
       expect(used, `${width}px`).toBeCloseTo(width, 6)
     }
     // 상한을 넘으면 여백이 눈에 띄게 커진다 — 격자가 가운데 묶였다는 뜻이다
@@ -165,8 +203,9 @@ describe('computeGridMetrics', () => {
   it('높이가 한 칸도 못 담으면 셀을 줄여서라도 1행을 낸다', () => {
     const m = computeGridMetrics({ width: 852, height: 90 })
     expect(m.rows).toBe(1)
-    expect(spanOf(m.rows, m.cellSize, m.gap)).toBeLessThanOrEqual(90)
-    expect(m.cellSize).toBeGreaterThan(0)
+    expect(spanOf(m.rows, m.cellHeight, m.gap)).toBeLessThanOrEqual(90)
+    expect(m.cellHeight).toBeGreaterThan(0)
+    expect(m.cellWidth).toBeGreaterThan(0)
   })
 
   it('잴 수 없는 크기에서는 던지지 않고 빈 격자를 낸다', () => {

@@ -18,12 +18,12 @@ export interface PixelRect {
 
 /** 격자 좌표 → 픽셀 사각형. 위젯을 절대 위치로 그릴 때 쓴다. */
 export function cellsToPixels(placement: Placement, metrics: GridMetrics): PixelRect {
-  const { cellSize, gap, paddingX, paddingY } = metrics
+  const { cellWidth, cellHeight, gap, paddingX, paddingY } = metrics
   return {
-    left: paddingX + placement.x * (cellSize + gap),
-    top: paddingY + placement.y * (cellSize + gap),
-    width: spanOf(placement.w, cellSize, gap),
-    height: spanOf(placement.h, cellSize, gap),
+    left: paddingX + placement.x * (cellWidth + gap),
+    top: paddingY + placement.y * (cellHeight + gap),
+    width: spanOf(placement.w, cellWidth, gap),
+    height: spanOf(placement.h, cellHeight, gap),
   }
 }
 
@@ -40,13 +40,12 @@ export function pixelsToCell(
   point: { left: number; top: number },
   metrics: GridMetrics,
 ): { x: number; y: number } {
-  // 빈 격자(EMPTY_METRICS)는 cellSize가 0이지만 gap은 그대로라 step만 보면
-  // 0이 아니다. 셀 크기로 판단해야 한다.
-  if (metrics.cellSize <= 0) return { x: 0, y: 0 }
-  const step = metrics.cellSize + metrics.gap
+  // 빈 격자(EMPTY_METRICS)는 셀이 0이지만 gap은 그대로라 step만 보면 0이 아니다.
+  // 셀 크기로 판단해야 한다.
+  if (metrics.cellWidth <= 0 || metrics.cellHeight <= 0) return { x: 0, y: 0 }
   return {
-    x: Math.round((point.left - metrics.paddingX) / step),
-    y: Math.round((point.top - metrics.paddingY) / step),
+    x: Math.round((point.left - metrics.paddingX) / (metrics.cellWidth + metrics.gap)),
+    y: Math.round((point.top - metrics.paddingY) / (metrics.cellHeight + metrics.gap)),
   }
 }
 
