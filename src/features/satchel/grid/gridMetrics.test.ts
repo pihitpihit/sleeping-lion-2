@@ -89,14 +89,26 @@ describe('computeGridMetrics', () => {
   })
 
   /*
-    반대쪽 한계도 못박는다. 조건을 아예 걷어내면 15 Pro Max가 아홉 줄까지 가면서
-    셀이 74px로 주저앉는데, 그 화면은 여덟 줄에 84px로 딱 맞는다 — **목표 크기에
-    가까운 쪽이 낫다.**
+    되찾기를 멈추는 것은 **셀 하한 하나뿐이다.**
+
+    "얼마나 남았는가"로 멈추는 조건을 두 번 두었다가 두 번 다 걷어냈다(반 칸,
+    그다음 간격 한 칸). 둘 다 아이폰 15 Pro의 여덟째 줄을 막았다 — 셀이 하한을
+    넘기는데도 남는 높이가 모자라 멎었다.
   */
-  it('되찾기가 목표 크기를 지나쳐 짜내지 않는다', () => {
-    const m = computeGridMetrics({ width: 430, height: 932 - 60 - 59 - 34 })
-    expect(m.rows).toBe(8)
-    expect(m.cellSize).toBeGreaterThanOrEqual(80)
+  it('줄은 셀 하한이 허락하는 만큼 채운다', () => {
+    for (const device of DEVICES) {
+      const m = computeGridMetrics(device)
+      if (m.rows <= 1) continue
+
+      // 한 줄 더 넣으면 반드시 하한 밑으로 떨어져야 한다 — 그렇지 않다면
+      // 넣을 수 있었는데 안 넣은 것이다.
+      const denser = m.rows + 1
+      const cellForDenser = Math.floor((device.height - 16 - (denser - 1) * m.gap) / denser)
+      expect(
+        cellForDenser,
+        `${device.name}: ${m.rows}행에서 멎었는데 ${denser}행도 ${cellForDenser}px로 들어갔다`,
+      ).toBeLessThan(72)
+    }
   })
 
   it('좁고 높은 폰에서도 격자가 화면을 채운다', () => {

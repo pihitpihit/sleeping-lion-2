@@ -743,3 +743,11 @@
   color: var(--sl-text-faint);
   text-wrap: pretty;
 }
+
+/* 메뉴 맨 아래의 격자 정보. 위쪽 알림선과 달리 아래에 붙는다. */
+.satchel-menu__note--foot {
+  padding: 0.4rem 0.9rem 0.6rem;
+  border-bottom: none;
+  border-top: 1px solid var(--sl-border);
+  font-variant-numeric: tabular-nums;
+}

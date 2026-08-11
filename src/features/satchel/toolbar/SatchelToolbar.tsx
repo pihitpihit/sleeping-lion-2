@@ -29,6 +29,13 @@ interface Props {
   onOpenBattle: () => void
   /** 지금 판에 앉아 있는가 — 띠에 표를 낸다. */
   inBattle: boolean
+  /**
+   * 지금 격자가 어떻게 잡혔는가 — 메뉴 아래에 한 줄로 적는다.
+   *
+   * **기기에서 실제로 얼마가 나오는지 알 길이 이것뿐이다.** 화면 크기와 안전영역은
+   * 기기·브라우저·홈화면 여부마다 다르고, 손으로 셈해 맞히려다 두 번 빗나갔다.
+   */
+  gridInfo: string
 }
 
 /**
@@ -55,6 +62,7 @@ export function SatchelToolbar({
   onUndo,
   onOpenBattle,
   inBattle,
+  gridInfo,
 }: Props) {
   /**
    * 열려 있는 메뉴. 한 번에 하나만 연다.
@@ -199,6 +207,7 @@ export function SatchelToolbar({
               도구 띠 — {TOOLBAR_PREFERENCE_LABEL[preference]}
               {preference === 'auto' && <span className="satchel-menu__hint"> ({position})</span>}
             </button>
+            <p className="satchel-menu__note satchel-menu__note--foot">{gridInfo}</p>
           </div>
         )}
 
