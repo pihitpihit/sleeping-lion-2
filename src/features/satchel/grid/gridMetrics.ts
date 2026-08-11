@@ -140,7 +140,21 @@ export function computeGridMetrics(board: Size): GridMetrics {
      * 남기지만 그것은 좌우로 갈려 여백처럼 보이고, 세로로 뭉쳐 있던 구멍과
      * 달리 거슬리지 않는다.
      *
-     * 되찾을 것이 반 칸도 안 되면 그냥 둔다 — 그 정도는 여백으로 보인다.
+     * **남는 띠가 간격 한 칸보다 얇으면 멈춘다.** 그보다 얇으면 칸과 칸 사이에
+     * 원래 있는 틈과 구별되지 않아, 더 짜내 봐야 눈에 보이는 것이 없다.
+     *
+     * 한때 여기 "반 칸"을 두었는데 그것이 **아이폰 15 Pro에서 여덟째 줄을
+     * 막고 있었다** — 남은 높이가 16px이라 반 칸(42px)에 못 미쳤다. 셀은 74px로
+     * 하한을 넘겼는데도 그랬다. 형님이 짚었다.
+     *
+     * 조건을 아예 걷어내는 것은 지나쳤다. 15 Pro Max가 아홉 줄까지 가면서 셀이
+     * 74px로 주저앉았는데, 그 화면은 여덟 줄에 84px로 딱 맞는다 — **목표 크기에
+     * 가까운 쪽이 낫다.**
+     *
+     * 대가는 좌우 여백이다. 셀이 정사각형이라 세로에 맞춰 줄이면 가로도 함께
+     * 줄고, 남는 폭이 양옆으로 갈린다. 세로로 뭉쳐 있던 구멍과 달리 좌우로
+     * 갈린 여백은 격자를 가운데 둔 것처럼 보인다.
+     *
      * 셀 하한(`MIN_CELL`)에 걸려도 멈춘다.
      *
      * 셀은 매번 반드시 줄어들므로(행이 늘면 한 칸에 돌아가는 높이가 준다) 이
@@ -148,7 +162,7 @@ export function computeGridMetrics(board: Size): GridMetrics {
      */
     for (;;) {
       const leftover = usableHeight - spanOf(rows, cellSize, GRID_GAP)
-      if (leftover <= cellSize / 2) break
+      if (leftover <= GRID_GAP) break
 
       const denser = rows + 1
       const denserCell = Math.floor((usableHeight - (denser - 1) * GRID_GAP) / denser)

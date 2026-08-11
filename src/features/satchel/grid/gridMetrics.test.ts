@@ -53,8 +53,15 @@ describe('computeGridMetrics', () => {
     for (const device of DEVICES) {
       const m = computeGridMetrics(device)
       const leftover = device.height - spanOf(m.rows, m.cellSize, m.gap)
-      // 반 칸 남짓(+ 위아래 최소 여백)이면 여백으로 보인다. 넘어가면 구멍이다.
-      if (leftover <= m.cellSize / 2 + 16) continue
+      /*
+        남는 띠가 간격 한 칸보다 얇으면 칸 사이의 틈과 구별되지 않는다. 위아래
+        최소 여백(8+8)까지 더한 만큼은 봐준다.
+
+        2026-08-10에 여기 기준을 **반 칸에서 간격 한 칸으로** 좁혔다. 반 칸으로는
+        아이폰 15 Pro의 여덟째 줄이 막혔다 — 남은 높이가 16px이라 반 칸(42px)에
+        못 미쳤는데, 셀은 74px로 하한을 넘겼는데도 그랬다.
+      */
+      if (leftover <= GRID_GAP + 16) continue
 
       // 남았는데 못 채웠다면, 행을 하나 더 넣을 때 셀이 하한 밑으로
       // 떨어지는 경우뿐이어야 한다. 가로로 누운 폰이 그렇다 — 높이가 애초에
@@ -66,6 +73,30 @@ describe('computeGridMetrics', () => {
         `${device.name} (${m.rows}행 × ${m.cellSize}px): ${leftover}px를 버렸는데 더 넣을 수 있었다`,
       ).toBeLessThan(72)
     }
+  })
+
+  /*
+    형님이 짚은 자리다 — "아이폰 15 Pro 기준 세로 7개가 되는데 8개까지 가능하지
+    않을까". 되찾기 기준이 반 칸이던 시절에는 7행에서 멎었다.
+  */
+  it('아이폰 15 Pro의 세로 여덟 줄을 지킨다', () => {
+    // 상단 띠(60)와 안전영역(위 59·아래 34)을 뺀 보드 크기.
+    const m = computeGridMetrics({ width: 393, height: 852 - 60 - 59 - 34 })
+    expect(m.columns).toBe(4)
+    expect(m.rows).toBe(8)
+    // 여덟 줄을 얻으려고 셀을 하한 밑으로 떨어뜨리지는 않았다.
+    expect(m.cellSize).toBeGreaterThanOrEqual(72)
+  })
+
+  /*
+    반대쪽 한계도 못박는다. 조건을 아예 걷어내면 15 Pro Max가 아홉 줄까지 가면서
+    셀이 74px로 주저앉는데, 그 화면은 여덟 줄에 84px로 딱 맞는다 — **목표 크기에
+    가까운 쪽이 낫다.**
+  */
+  it('되찾기가 목표 크기를 지나쳐 짜내지 않는다', () => {
+    const m = computeGridMetrics({ width: 430, height: 932 - 60 - 59 - 34 })
+    expect(m.rows).toBe(8)
+    expect(m.cellSize).toBeGreaterThanOrEqual(80)
   })
 
   it('좁고 높은 폰에서도 격자가 화면을 채운다', () => {
