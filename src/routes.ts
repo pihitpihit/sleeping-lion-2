@@ -27,11 +27,12 @@ export const LAZY_ROUTES: Record<string, ComponentType> = {
   '/join': lazy(() => import('./features/net/JoinPage').then((m) => ({ default: m.JoinPage }))),
   // 일지 — 축 ①. 목록과 기록지 한 장을 한 화면이 함께 다룬다.
   /*
-    문지기 — 대기자 승인과 클래스 수치. 관리자만 볼 수 있고, 서버가 다시 확인한다.
+    주인장 — 대기자 승인·클래스 수치·특혜 표. 관리자만 볼 수 있고, 서버가 다시
+    확인한다.
 
-    **두 주소가 같은 화면을 연다.** 화면에서 가는 길은 계정 띠의 단추뿐이지만,
-    주소를 직접 치는 사람은 `/admin`을 먼저 떠올린다 — 실제로 그렇게 찾다가 빈
-    화면을 봤다. 한 줄로 막을 수 있는 헛걸음이다.
+    **두 주소가 같은 화면을 연다.** `/admin`이 정본이고 단추도 그리로 간다.
+    `/gate`는 「문지기」이던 시절의 주소이며 남겨 둔다 — 즐겨찾기나 손버릇으로
+    치는 사람이 빈 화면을 보지 않게 하는 한 줄이다.
   */
   '/gate': lazy(() => import('./features/auth/AdminPage').then((m) => ({ default: m.AdminPage }))),
   '/admin': lazy(() => import('./features/auth/AdminPage').then((m) => ({ default: m.AdminPage }))),

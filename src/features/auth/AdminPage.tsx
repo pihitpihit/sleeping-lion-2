@@ -5,7 +5,10 @@ import { approveUser, listPendingUsers, useApprovalStore, type PendingUser } fro
 import './PendingPage.css'
 
 /**
- * 문지기 — 대기자를 들이는 화면.
+ * 주인장 — 여관의 안살림.
+ *
+ * 대기자를 들이고, 클래스 수치와 특혜 표를 넣는다. **한때 「문지기」였다** — 승인만
+ * 있던 때의 이름인데 뒤의 둘이 들어오면서 안살림이 커졌다.
  *
  * **관리자만 볼 수 있다.** 다만 화면이 막는 것은 UX일 뿐이라 여기서 가리는 것에
  * 기대지 않는다 — 목록을 꺼내는 함수도 승인하는 함수도 서버에서 관리자인지 다시
@@ -64,8 +67,8 @@ export function AdminPage() {
   if (!isAdmin) {
     return (
       <main className="pending">
-        <h1 className="pending__title">문지기</h1>
-        <p className="pending__body">이 문은 주인장만 엽니다.</p>
+        <h1 className="pending__title">주인장</h1>
+        <p className="pending__body">이 방은 주인장만 엽니다.</p>
         <p className="pending__actions">
           <a className="pending__out" href="#/">
             여관으로
@@ -81,8 +84,10 @@ export function AdminPage() {
         <a className="pending__back" href="#/" aria-label="처음으로">
           ←
         </a>
-        <h1 className="pending__title">문지기</h1>
+        <h1 className="pending__title">주인장</h1>
       </header>
+
+      <h2 className="pending__section">문 앞에 선 사람</h2>
 
       <p className="pending__hint">
         승인하면 앱을 쓸 수 있게 됩니다. <strong>기록지는 아직 보이지 않습니다</strong> — 그것은

@@ -12,9 +12,12 @@ import './AccountStrip.css'
  * **나가기는 세션만 지운다.** 로컬 기록은 그대로 둔다 — 아직 서버에 올라가지
  * 않은 것이 있을 수 있고, 지우는 것은 따로 눌러야 하는 일이다.
  *
- * 관리자에게는 **문지기로 가는 문**이 하나 더 열린다. 주소(`#/gate`)를 외워
- * 치게 두면 새 요청이 온 것을 알 길이 없다 — 기다리는 사람이 있으면 수를 함께
- * 띄운다.
+ * 관리자에게는 **주인장 방으로 가는 문**이 하나 더 열린다. 주소를 외워 치게 두면
+ * 새 요청이 온 것을 알 길이 없다 — 기다리는 사람이 있으면 수를 함께 띄운다.
+ *
+ * **한때 「문지기」였다**(2026-08-11에 고쳤다). 대기자 승인만 있던 때의 이름인데
+ * 클래스 수치와 특혜 표가 들어오면서 "들이는 일"보다 안살림이 커졌다. 주인장은
+ * 누구를 들일지도 곳간에 무엇을 둘지도 제 몫이라 둘을 다 덮는다.
  */
 export function AccountStrip() {
   const session = useAuthStore((s) => s.session)
@@ -32,8 +35,8 @@ export function AccountStrip() {
         <strong>{session.displayName}</strong>으로 머무는 중
       </span>
       {isAdmin && (
-        <a className="account__gate" href="#/gate">
-          문지기
+        <a className="account__gate" href="#/admin">
+          주인장
           {pendingCount > 0 && (
             <span className="account__badge sl-numeral" aria-hidden="true">
               {pendingCount}
