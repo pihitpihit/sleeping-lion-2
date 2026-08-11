@@ -26,9 +26,11 @@ alter table public.character_classes
   -- 몇 번째로 보여줄지. 같으면 이름 순이다.
   add column if not exists sort smallint not null default 0;
 
--- 아이콘은 이제 **있으면 붙는 것**이다. 없으면 이름만으로 고른다.
-alter table public.character_classes alter column icon drop not null;
-
+-- ┌──────────────────────────────────────────────────────────────────────────┐
+-- │ **기본키를 먼저 뗀다.** 붙어 있는 동안에는 `not null`을 풀 수 없다.       │
+-- └──────────────────────────────────────────────────────────────────────────┘
+--
+-- 순서를 뒤집으면 `42P16: column "icon" is in a primary key`로 거절된다.
 do $$
 begin
   if exists (
@@ -40,8 +42,23 @@ begin
 end
 $$;
 
-alter table public.character_classes add primary key (id);
+-- 다시 돌릴 수 있어야 하므로 이미 있으면 그냥 둔다.
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'character_classes_pkey' and conrelid = 'public.character_classes'::regclass
+  ) then
+    alter table public.character_classes add primary key (id);
+  end if;
+end
+$$;
 
+-- 아이콘은 이제 **있으면 붙는 것**이다. 없으면 이름만으로 고른다.
+alter table public.character_classes alter column icon drop not null;
+
+-- 이름이 열쇠 노릇을 한다. 붙여넣기로 넣고 고치는 흐름이라(`ClassDataEditor`)
+-- 같은 이름이 두 번 오면 덮어써야지 새로 생기면 안 된다.
 do $$
 begin
   if not exists (
