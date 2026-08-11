@@ -156,3 +156,17 @@
   border: none;
   background: var(--sl-border);
 }
+
+/*
+  특혜가 몰 때의 장수 — 손잡이 없이 숫자만.
+
+  손잡이가 있던 자리와 **폭을 맞춘다.** 안 맞추면 특혜가 있는 덱과 없는 덱에서
+  줄이 서로 다른 데서 끝나 두 화면이 남남처럼 보인다.
+*/
+.deck-settings__fixed {
+  flex: none;
+  min-width: 5.4rem;
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--sl-gold);
+}

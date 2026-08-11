@@ -27,6 +27,17 @@ export interface WidgetProps {
 export interface WidgetSettingsEditorProps {
   value: unknown
   onChange: (next: unknown) => void
+  /**
+   * 어느 위젯의 설정인가. **아직 놓이지 않았으면 `null`.**
+   *
+   * 설정을 읽고 쓰는 데는 필요 없다. **위젯이 담고 있는 런타임 값에 손대야 할 때**
+   * 쓴다 — 보정 덱의 '덱 새로 짜기'가 그렇다. 값이 담긴 열쇠는 인스턴스(또는 고른
+   * 캐릭터)이므로 그것을 모르면 어느 덱을 다시 짤지 알 수 없다.
+   *
+   * 놓기 전에 묻는 팝업(`pendingAdd`)에는 인스턴스가 아직 없다. 그때는 다시 짤
+   * 판도 없으므로 `null`이 맞다.
+   */
+  instanceId: string | null
 }
 
 /**

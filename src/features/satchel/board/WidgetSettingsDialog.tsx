@@ -7,6 +7,8 @@ interface Props {
   value: unknown
   onChange: (next: unknown) => void
   onClose: () => void
+  /** 어느 위젯의 설정인가. 놓기 전이면 `null`. */
+  instanceId: string | null
   /**
    * **아직 놓이지 않은 위젯**의 설정일 때 준다.
    *
@@ -30,7 +32,14 @@ interface Props {
  * 확인 버튼은 두지 않는다. 바꾸는 즉시 반영·저장하며, 되돌리고 싶으면 다시
  * 끄면 된다 — 확인/취소를 두면 되돌리기와 의미가 겹친다.
  */
-export function WidgetSettingsDialog({ definition, value, onChange, onClose, placing }: Props) {
+export function WidgetSettingsDialog({
+  definition,
+  value,
+  onChange,
+  onClose,
+  instanceId,
+  placing,
+}: Props) {
   const panelRef = useRef<HTMLDivElement | null>(null)
   const Editor = definition.settings?.Editor
 
@@ -106,7 +115,7 @@ export function WidgetSettingsDialog({ definition, value, onChange, onClose, pla
               남은 자리가 좁아 지금 크기로는 못 놓는다. 줄여서 놓아라.
             </p>
           )}
-          <Editor value={value} onChange={onChange} />
+          <Editor value={value} onChange={onChange} instanceId={instanceId} />
         </div>
 
         {placing && (

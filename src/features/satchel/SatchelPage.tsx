@@ -9,6 +9,8 @@ import { resolveToolbarPosition } from './toolbar/position'
 import { SatchelToolbar } from './toolbar/SatchelToolbar'
 import { WidgetBoard } from './board/WidgetBoard'
 import { WidgetSettingsDialog } from './board/WidgetSettingsDialog'
+import { useClassStore } from '../campaign/classStore'
+import { useRosterStore } from './roster'
 import { CloseIcon } from './board/frameIcons'
 import { getWidgetDefinition } from './widgets/registry'
 import './SatchelPage.css'
@@ -100,6 +102,25 @@ export function SatchelPage() {
     })()
   }, [accountId, resumeBattle, enterSolo])
 
+  /**
+   * 행낭에 들어올 때 이름표와 클래스 표를 **다시** 읽는다.
+   *
+   * ┌──────────────────────────────────────────────────────────────────────────┐
+   * │ **기록지에서 상자를 켜고 넘어오는 것은 흔한 일이다.**                     │
+   * └──────────────────────────────────────────────────────────────────────────┘
+   *
+   * 둘 다 "한 번 읽으면 그만"이라 판 도중에는 다시 읽지 않는다 — 캐릭터가 늘거나
+   * 클래스 수치가 바뀌는 일이 없기 때문이다. 그런데 **특혜 상자는 판 사이에
+   * 바뀌고 그 값이 곧 덱 구성이다**(`perkSource.ts`). 그냥 두었더니 상자를 켜고
+   * 행낭으로 와도 옛 값을 보고, 새로고침해야만 반영됐다.
+   *
+   * 들어올 때 한 번뿐이다 — 판이 도는 동안에는 다시 읽지 않는다.
+   */
+  useEffect(() => {
+    void useRosterStore.getState().load(true)
+    void useClassStore.getState().load(true)
+  }, [])
+
   useEffect(() => {
     if (size.width > 0 && size.height > 0) setBoardSize(size)
   }, [size, setBoardSize])
@@ -184,6 +205,7 @@ export function SatchelPage() {
           definition={targetDefinition}
           value={settingsFor(target.instanceId, target.definitionId)}
           onChange={(next) => setWidgetSettings(target.instanceId, next)}
+          instanceId={target.instanceId}
           onClose={() => setSettingsTarget(null)}
         />
       )}
@@ -199,6 +221,8 @@ export function SatchelPage() {
           definition={pendingDefinition}
           value={pendingAdd.settings}
           onChange={setPendingSettings}
+          /* 아직 놓이지 않았다 — 다시 짤 판도 없다. */
+          instanceId={null}
           onClose={cancelPendingAdd}
           placing={{ canPlace: canPlacePending(), onPlace: confirmPendingAdd }}
         />

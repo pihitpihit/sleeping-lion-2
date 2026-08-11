@@ -46,7 +46,15 @@ export interface RosterEntry {
 interface RosterState {
   entries: RosterEntry[]
   loaded: boolean
-  load: () => Promise<void>
+  /**
+   * 이름표를 읽어 온다.
+   *
+   * **행낭에 들어올 때는 `force`로 다시 읽는다.** 판 도중에 캐릭터가 늘 일은
+   * 없지만 **기록지에서 특혜 상자를 켜고 행낭으로 넘어오는 것은 흔한 일**이고,
+   * 그 값이 곧 덱 구성이다(`perkSource.ts`). 한 번 읽고 마는 채로 두었더니
+   * 새로고침해야만 반영됐다.
+   */
+  load: (force?: boolean) => Promise<void>
 }
 
 interface Row {
@@ -64,9 +72,8 @@ export const useRosterStore = create<RosterState>((set, get) => ({
   entries: [],
   loaded: false,
 
-  load: async () => {
-    // 한 번 읽으면 그만이다. 캐릭터가 늘어나는 일은 판 도중에 없다.
-    if (get().loaded) return
+  load: async (force = false) => {
+    if (get().loaded && !force) return
     if (!isSupabaseConfigured()) {
       set({ loaded: true })
       return
