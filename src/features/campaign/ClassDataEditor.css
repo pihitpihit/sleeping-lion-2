@@ -192,3 +192,55 @@
   font-family: var(--sl-font-ko-display);
   font-size: 0.95rem;
 }
+
+/* ==========================================================================
+   특혜 표 넣기 — 같은 결의 화면이라 위 규칙을 그대로 쓴다
+   ========================================================================== */
+
+.classdata__select {
+  padding: 0.45rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.88rem;
+  color: var(--sl-text);
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+}
+
+.classdata__select:focus {
+  outline: 2px solid var(--sl-gold);
+  outline-offset: 1px;
+}
+
+/*
+  이 줄이 차지하는 상자 번호.
+
+  **캐릭터가 켜 두는 번호와 같은 것이다** — 시트에서 몇 번째 상자인지 여기서
+  바로 보이지 않으면, 표를 고친 뒤에 무엇이 밀렸는지 알 길이 없다.
+*/
+.classdata__slot {
+  flex: none;
+  min-width: 2.6em;
+  font-size: 0.78rem;
+  text-align: center;
+  color: var(--sl-gold-dim);
+}
+
+.classdata__empty-row {
+  color: var(--sl-text-faint);
+  font-size: 0.82rem;
+}
+
+/* 상자 수가 열다섯이 아닐 때. **막지는 않고 짚어만 준다** — 우리가 안 본
+   클래스가 다를 수 있고, 규칙을 판정하지 않는다는 선과 같은 결이다. */
+.classdata__warn {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--sl-gold);
+}
+
+.classdata__hint code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.92em;
+  color: var(--sl-text-muted);
+}

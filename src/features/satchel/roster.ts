@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { isSupabaseConfigured, supabase } from '../auth/supabase'
-import { hasClassIcon } from '../campaign/character'
+import { hasClassIcon, normalizePerks } from '../campaign/character'
 
 /**
  * 캐릭터 이름표 — 축 ②가 축 ①에서 읽는 **딱 그만큼**.
@@ -18,8 +18,13 @@ import { hasClassIcon } from '../campaign/character'
  * 겹치지 않는다. **파티원 모두가 알아보는 이름표**가 있어야 한 사람의 체력이
  * 한 자리에 모인다.
  *
- * **골드·경험·아이템·메모는 안 읽는다.** 여기 담긴 것은 고르는 데 필요한 것뿐이다.
- * 캐릭터를 고치는 일은 어느 경우에도 없다.
+ * **2026-08-11에 퍽과 클래스를 더 읽는다.** 이것이 2026-08-05에 열어 둔 그 예외
+ * 자체다 — 공격 보정 덱의 구성은 캐릭터가 켠 특혜가 정하므로, 그것을 못 읽으면
+ * 사람이 퍽을 얻을 때마다 위젯 설정에서 장수를 다시 맞춰야 한다. 특혜 표는
+ * 클래스에 딸려 있으므로 어느 클래스인지도 함께 읽는다.
+ *
+ * **골드·경험·아이템·메모는 안 읽는다.** 여기 담긴 것은 고르는 데 필요한 것과
+ * 덱 구성에 필요한 것뿐이다. 캐릭터를 고치는 일은 어느 경우에도 없다.
  *
  * 기록지 스토어(`campaignStore`)를 쓰지 않는 것도 뜻이 있다 — 그쪽을 부르면
  * 축 ②가 캠페인·파티 상태까지 끌고 들어온다. 필요한 세 칸만 따로 읽는다.
@@ -30,6 +35,10 @@ export interface RosterEntry {
   name: string
   /** Creator Pack 클래스 아이콘의 쪽 번호. 0이면 안 골랐다. */
   classIcon: number
+  /** 어느 클래스인가. 특혜 표를 찾는 열쇠다. 안 골랐으면 `null`. */
+  classId: string | null
+  /** 켜 둔 특혜 상자 번호. 1부터이며 실물 시트의 상자 차례와 같다. */
+  perks: number[]
   ownerId: string
   ownerName: string
 }
@@ -44,6 +53,8 @@ interface Row {
   id: string
   name: string
   class_icon: number
+  class_id: string | null
+  perks: number[] | null
   owner_id: string
   retired: boolean
   owner: { display_name: string | null } | null
@@ -64,7 +75,7 @@ export const useRosterStore = create<RosterState>((set, get) => ({
       const { data, error } = await supabase()
         .from('characters')
         .select(
-          'id, name, class_icon, owner_id, retired, owner:profiles!characters_owner_id_fkey(display_name)',
+          'id, name, class_icon, class_id, perks, owner_id, retired, owner:profiles!characters_owner_id_fkey(display_name)',
         )
         .order('created_at', { ascending: true })
       if (error || !data) {
@@ -78,6 +89,8 @@ export const useRosterStore = create<RosterState>((set, get) => ({
           id: row.id,
           name: typeof row.name === 'string' ? row.name : '',
           classIcon: hasClassIcon(row.class_icon) ? row.class_icon : 0,
+          classId: typeof row.class_id === 'string' && row.class_id !== '' ? row.class_id : null,
+          perks: normalizePerks(Array.isArray(row.perks) ? row.perks : []),
           ownerId: row.owner_id,
           ownerName: row.owner?.display_name ?? '',
         }))

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ClassDataEditor } from '../campaign/ClassDataEditor'
+import { ClassPerkEditor } from '../campaign/ClassPerkEditor'
 import { approveUser, listPendingUsers, useApprovalStore, type PendingUser } from './approval'
 import './PendingPage.css'
 
@@ -128,6 +129,8 @@ export function AdminPage() {
 
       {/* 카드에 인쇄된 값이 들어오는 자리. 저장소에는 넣지 않는다(절대 원칙 1). */}
       <ClassDataEditor />
+
+      <ClassPerkEditor />
     </main>
   )
 }

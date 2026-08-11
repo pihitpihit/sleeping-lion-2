@@ -22,6 +22,7 @@ import { useAttackDeckStore } from './deckStore'
 import { resolveComposition } from './perks'
 import { sanitizeAttackDeckSettings } from './settings'
 import { slotKeyFor } from '../../roster'
+import { usePerkChanges } from '../../perkSource'
 import './AttackDeck.css'
 
 /**
@@ -72,10 +73,12 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
   /**
    * 이 덱의 구성.
    *
-   * 퍽을 읽을 수 있으면 그것이 이긴다. 축 ①이 아직 없어 지금은 늘 `null`이고
-   * 설정값이 쓰인다 — `perks.ts` 참조.
+   * **퍽을 읽을 수 있으면 그것이 이긴다** — 사람이 설정에 적어 둔 값보다 캐릭터가
+   * 실제로 켠 특혜가 사실에 가깝다(`perks.ts`). 캐릭터를 안 골랐거나 그 클래스의
+   * 특혜 표가 아직 안 들어왔으면 `null`이고 설정값이 쓰인다.
    */
-  const composition = resolveComposition(deckSettings.composition, null)
+  const perkChanges = usePerkChanges(deckSettings.characterId)
+  const composition = resolveComposition(deckSettings.composition, perkChanges)
 
   /**
    * 아직 한 번도 안 뽑았으면 구성대로 편 덱을 보여준다.

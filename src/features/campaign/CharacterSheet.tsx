@@ -15,6 +15,7 @@ import {
 } from './character'
 import { ClassPicker } from './ClassPicker'
 import { classInfoOf, maxHpFor, useClassStore } from './classStore'
+import { perkRowsOf } from './perks'
 import type { Character, CharacterEdits } from './types'
 
 interface Props {
@@ -81,6 +82,15 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
   }, [loadClasses])
   const info = classInfoOf(classes, character.classId, character.classIcon)
   const maxHp = maxHpFor(info, character.level)
+
+  /**
+   * 이 클래스의 특혜 줄과 각 줄이 시작하는 상자 번호.
+   *
+   * **번호는 줄의 차례에서 나온다**(`perkBoxes`) — 캐릭터가 켜 둔 값은 지금까지도
+   * 상자 번호였으므로 표가 들어와도 그대로 맞물린다.
+   */
+  const perkTable = useClassStore((s) => s.perks)
+  const rows = perkRowsOf(info === null ? [] : (perkTable[info.id] ?? []))
 
   function commit(field: 'name' | 'notes') {
     if (draft[field] === character[field]) return
@@ -271,7 +281,7 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
       </section>
 
       {/* ------------------------------------------------------------------
-          퍽 — 번호만 켠다
+          퍽 — 표가 있으면 줄로, 없으면 번호로
           ------------------------------------------------------------------ */}
       <section className="sheet__block">
         <h3 className="sheet__label">
@@ -282,30 +292,71 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
             <span className="sl-numeral">{character.perks.length}</span>
           </span>
         </h3>
-        <p className="char__note">
-          퍽 표는 클래스마다 다르고 우리가 갖고 있지 않다. 제 시트에서 몇 번째 줄인지 보고 그 번호를
-          켠다.
-        </p>
-        <div className="char__perks">
-          {Array.from({ length: slots }, (_, i) => i + 1).map((slot) => {
-            const on = character.perks.includes(slot)
-            return (
-              <button
-                key={slot}
-                type="button"
-                aria-label={`퍽 ${slot}번`}
-                aria-pressed={on}
-                className={`char__perk${on ? ' char__perk--on' : ''}`}
-                disabled={locked}
-                onClick={() => onEdit({ perks: togglePerk(character.perks, slot) })}
-              >
-                <span className="sl-numeral" aria-hidden="true">
-                  {slot}
-                </span>
-              </button>
-            )
-          })}
-        </div>
+
+        {/*
+          **표가 있으면 줄을 보여주고, 없으면 번호만 늘어놓는다.**
+
+          특혜 글은 게임 콘텐츠라 레포에 없고 DB에만 있다(절대 원칙 1). 아무것도
+          안 넣었으면 지금까지 그랬듯 번호를 켠다 — 없어도 앱은 완전히 돈다
+          (절대 원칙 3). 어느 쪽이든 켜지는 값은 **같은 상자 번호**다.
+        */}
+        {rows.length > 0 ? (
+          <>
+            <p className="char__note">
+              시트의 줄 그대로다. 상자를 켜면 공격 보정 덱이 그만큼 맞춰진다.
+            </p>
+            <ul className="char__perkrows">
+              {rows.map(({ perk, first }) => (
+                <li key={perk.id} className="char__perkrow">
+                  <span className="char__perkboxes">
+                    {Array.from({ length: perk.count }, (_, i) => first + i).map((slot) => {
+                      const on = character.perks.includes(slot)
+                      return (
+                        <button
+                          key={slot}
+                          type="button"
+                          aria-label={`${perk.text} — ${slot}번 상자`}
+                          aria-pressed={on}
+                          className={`char__perkbox${on ? ' char__perkbox--on' : ''}`}
+                          disabled={locked}
+                          onClick={() => onEdit({ perks: togglePerk(character.perks, slot) })}
+                        />
+                      )
+                    })}
+                  </span>
+                  <span className="char__perktext">{perk.text}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <>
+            <p className="char__note">
+              퍽 표는 클래스마다 다르고 우리가 갖고 있지 않다. 제 시트에서 몇 번째 줄인지 보고 그
+              번호를 켠다.
+            </p>
+            <div className="char__perks">
+              {Array.from({ length: slots }, (_, i) => i + 1).map((slot) => {
+                const on = character.perks.includes(slot)
+                return (
+                  <button
+                    key={slot}
+                    type="button"
+                    aria-label={`퍽 ${slot}번`}
+                    aria-pressed={on}
+                    className={`char__perk${on ? ' char__perk--on' : ''}`}
+                    disabled={locked}
+                    onClick={() => onEdit({ perks: togglePerk(character.perks, slot) })}
+                  >
+                    <span className="sl-numeral" aria-hidden="true">
+                      {slot}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+          </>
+        )}
       </section>
 
       {/* ------------------------------------------------------------------

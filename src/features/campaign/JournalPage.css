@@ -1028,6 +1028,71 @@
 }
 
 /* --------------------------------------------------------------------------
+   특혜 표가 들어왔을 때 — 줄로 그린다
+   --------------------------------------------------------------------------
+   실물 시트를 그대로 옮긴 모양이다. 상자가 왼쪽에 붙고 글이 오른쪽에 온다.
+   **켜지는 값은 번호만 늘어놓을 때와 같은 상자 번호다** — 표가 없으면 번호로,
+   있으면 줄로 보일 뿐이다(절대 원칙 3).
+   -------------------------------------------------------------------------- */
+
+.char__perkrows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.char__perkrow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.3rem 0.1rem;
+  border-bottom: 1px solid var(--sl-border);
+}
+
+.char__perkrow:last-child {
+  border-bottom: none;
+}
+
+/* 상자가 셋까지 붙는다. 줄마다 수가 달라도 글의 왼쪽 끝은 맞아야 한다. */
+.char__perkboxes {
+  flex: none;
+  display: flex;
+  gap: 0.2rem;
+  width: calc(3 * 20px + 2 * 0.2rem);
+  padding-top: 0.12rem;
+}
+
+.char__perkbox {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.2rem;
+  cursor: pointer;
+}
+
+.char__perkbox--on {
+  background: var(--sl-gold);
+  border-color: var(--sl-gold);
+}
+
+.char__perkbox:disabled {
+  cursor: not-allowed;
+}
+
+.char__perktext {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--sl-text);
+}
+
+/* --------------------------------------------------------------------------
    은퇴와 거두기
    --------------------------------------------------------------------------
    은퇴는 접어두는 것이고 거두기는 없애는 것이다. 색으로 가른다 — 되돌릴 수
