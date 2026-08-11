@@ -20,8 +20,9 @@ import './GoldCounter.css'
  * **금화는 직접 그렸다.** Creator Pack이 아니므로 격리 규칙(SPEC 13.1)에 걸리지
  * 않고, 인라인 SVG로 두어도 된다. 어느 크기에서도 선명하다.
  *
- * 숫자는 Pirata One(`.sl-numeral`)이다 — 숫자만 들어가는 자리이므로 한글이
- * 대체 서체로 떨어질 일이 없다(구현 결정 39).
+ * 숫자는 Pirata One이다 — 숫자만 들어가는 자리이므로 한글이 대체 서체로 떨어질
+ * 일이 없다(구현 결정 39). **CSS에서 직접 건다** — `.sl-numeral`을 붙여 두었더니
+ * 이 위젯의 `font-family: inherit` 한 줄에 덮였다.
  *
  * **조작은 HP/XP와 같다**(`hpxp/hpxp.ts`의 함수를 그대로 쓴다).
  * - **위아래로 끌기** — 한 칸에 1
@@ -133,7 +134,7 @@ export function GoldCounter({ instanceId, mode, rotation, settings }: WidgetProp
   return (
     <button
       type="button"
-      className="gold sl-numeral"
+      className="gold"
       // 값을 읽어주는 것이 먼저다. 조작 방법은 설명으로 붙인다.
       role="spinbutton"
       aria-label="주운 금화"
