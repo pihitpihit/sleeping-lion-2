@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest'
 import {
   CARD_BACK_URL,
   CARD_FACE_URL,
-  CARD_KINDS,
   MAX_PER_KIND,
+  STANDARD_KINDS,
   SHUFFLE_ICON_URL,
+  markIconUrl,
   medallionUrl,
   STANDARD_COMPOSITION,
   buildDeck,
@@ -17,12 +18,15 @@ import {
   discardCount,
   drawOne,
   freshDeck,
+  makeCard,
+  parseCardSpec,
   needsShuffle,
   remainingCount,
   reshuffle,
   revealRemainingRatio,
   revealedCard,
   shuffle,
+  specSpeech,
   totalCount,
   type DeckState,
   type Rng,
@@ -61,12 +65,12 @@ describe('표준 덱', () => {
   })
 
   it('섞기 표시는 ×0과 ×2에만 있다', () => {
-    const marked = CARD_KINDS.filter((kind) => kind.shuffleAfter).map((kind) => kind.id)
+    const marked = STANDARD_KINDS.filter((spec) => spec.shuffleAfter).map((spec) => spec.id)
     expect(marked).toEqual(['x0', 'x2'])
   })
 
   it('퍽으로 넣을 수 있는 +3·+4도 종류로 열려 있다', () => {
-    const ids = CARD_KINDS.map((kind) => kind.id)
+    const ids = STANDARD_KINDS.map((spec) => spec.id)
     expect(ids).toContain('p3')
     expect(ids).toContain('p4')
     // 다만 표준 덱에는 들어가지 않는다.
@@ -247,7 +251,7 @@ describe('needsShuffle', () => {
     const second = drawOne(state, zeroRng)
     state = second.state
 
-    expect(needsShuffle(state)).toBe(second.card?.shuffleAfter ?? false)
+    expect(needsShuffle(state)).toBe(second.card?.spec.shuffleAfter ?? false)
   })
 })
 
@@ -261,11 +265,10 @@ describe('cardLabel / cardSpeech', () => {
   })
 
   it('읽어주는 쪽에는 우리말이 간다', () => {
-    expect(cardSpeech({ effect: { kind: 'multiply', value: 0 }, shuffleAfter: true })).toBe(
-      '빗나감, 섞기 표시',
-    )
-    expect(cardSpeech({ effect: { kind: 'add', value: 0 }, shuffleAfter: false })).toBe('보정 없음')
-    expect(cardSpeech({ effect: { kind: 'add', value: -1 }, shuffleAfter: false })).toBe('1 뺌')
+    expect(specSpeech(parseCardSpec('x0')!)).toBe('빗나감, 섞기 표시')
+    expect(specSpeech(parseCardSpec('p0')!)).toBe('보정 없음')
+    expect(specSpeech(parseCardSpec('m1')!)).toBe('1 뺌')
+    expect(cardSpeech(makeCard('a', 'p1.wound')!)).toBe('1 더함, 부상')
   })
 })
 
@@ -337,17 +340,19 @@ describe('크게 띄운 카드의 남은 뜸', () => {
 describe('에셋 (Creator Pack)', () => {
   it('표준 덱의 일곱 종류는 모두 값 메달이 있다', () => {
     for (const id of Object.keys(STANDARD_COMPOSITION)) {
-      const kind = CARD_KINDS.find((k) => k.id === id)
-      expect(kind, id).toBeDefined()
-      expect(medallionUrl(kind!), id).not.toBeNull()
+      expect(medallionUrl(id), id).not.toBeNull()
     }
   })
 
   it('퍽으로 넣는 +3·+4는 그림이 없다 — 팩이 실물 카드만 담고 있다', () => {
     for (const id of ['p3', 'p4']) {
-      const kind = CARD_KINDS.find((k) => k.id === id)!
-      expect(medallionUrl(kind), id).toBeNull()
+      expect(medallionUrl(id), id).toBeNull()
     }
+  })
+
+  it('표식이 붙어도 메달은 값에서 고른다', () => {
+    const spec = parseCardSpec('p1.wound')!
+    expect(medallionUrl(spec.valueId)).toContain('attack-modifiers/p1.webp')
   })
 
   it('에셋 경로가 격리 디렉토리 안이다 (SPEC 13.1)', () => {
@@ -355,16 +360,27 @@ describe('에셋 (Creator Pack)', () => {
       CARD_BACK_URL,
       CARD_FACE_URL,
       SHUFFLE_ICON_URL,
-      ...CARD_KINDS.map(medallionUrl).filter((u): u is string => u !== null),
+      ...STANDARD_KINDS.map((spec) => medallionUrl(spec.valueId)).filter(
+        (u): u is string => u !== null,
+      ),
+      markIconUrl(parseCardSpec('p1.fire')!.marks[0])!,
     ]
     for (const url of urls) {
       expect(url, url).toContain('assets/creator-pack/')
     }
   })
 
-  it('메달 파일 이름이 종류 id를 따른다', () => {
-    const kind = CARD_KINDS.find((k) => k.id === 'x2')!
-    expect(medallionUrl(kind)).toContain('attack-modifiers/x2.webp')
+  it('메달 파일 이름이 값 낱말을 따른다', () => {
+    expect(medallionUrl('x2')).toContain('attack-modifiers/x2.webp')
+  })
+
+  it('원소 표식은 원소 트래커와 같은 아이콘을 쓴다', () => {
+    const fire = parseCardSpec('r.p0.fire')!.marks[0]
+    expect(markIconUrl(fire)).toContain('elements/fire.svg')
+  })
+
+  it('원소가 아닌 표식에는 아이콘이 없다 — 글자로 그린다', () => {
+    expect(markIconUrl(parseCardSpec('p1.wound')!.marks[0])).toBeNull()
   })
 })
 
@@ -381,11 +397,22 @@ describe('설정', () => {
     expect(result.composition).toEqual({ p0: 2 })
   })
 
+  it('표식 붙은 종류는 지킨다 — 퍽에서 온 것이 사라지면 안 된다', () => {
+    const result = sanitizeAttackDeckSettings({ composition: { p0: 2, 'p1.wound': 1 } })
+    expect(result.composition).toEqual({ p0: 2, 'p1.wound': 1 })
+  })
+
+  it('표식 차례가 달라도 한 줄로 모인다', () => {
+    const result = sanitizeAttackDeckSettings({ composition: { 'p1.ice.fire': 2 } })
+    expect(result.composition).toEqual({ 'p1.fire.ice': 2 })
+  })
+
   it('장수를 울타리 안으로 들인다', () => {
     const result = sanitizeAttackDeckSettings({ composition: { p0: 999, p1: -4, p2: 1.7 } })
     expect(result.composition.p0).toBe(MAX_PER_KIND)
-    expect(result.composition.p1).toBe(0)
     expect(result.composition.p2).toBe(1)
+    // 0장이 된 것은 열쇠째 걷는다. 없는 것을 0으로 읽으므로 결과는 같다.
+    expect('p1' in result.composition).toBe(false)
   })
 
   it('한 장도 없는 덱은 표준으로 되돌린다', () => {
@@ -397,6 +424,8 @@ describe('설정', () => {
   it('표준인지 알아본다', () => {
     expect(isStandardComposition(STANDARD_COMPOSITION)).toBe(true)
     expect(isStandardComposition({ ...STANDARD_COMPOSITION, m1: 3 })).toBe(false)
+    // 표식 붙은 것이 한 장이라도 섞이면 표준이 아니다.
+    expect(isStandardComposition({ ...STANDARD_COMPOSITION, 'p1.wound': 1 })).toBe(false)
   })
 })
 
@@ -414,11 +443,37 @@ describe('퍽 연동', () => {
 
   it('0 밑으로 내려가지 않는다', () => {
     const next = applyPerkChanges(STANDARD_COMPOSITION, [{ kindId: 'm2', delta: -5 }])
-    expect(next.m2).toBe(0)
+    expect(countOf(next, 'm2')).toBe(0)
   })
 
   it('모르는 종류는 건너뛴다', () => {
     const next = applyPerkChanges(STANDARD_COMPOSITION, [{ kindId: '없는것', delta: 3 }])
+    expect(compositionSize(next)).toBe(20)
+  })
+
+  it('표준에 없던 종류는 새로 생긴다 — 표식 붙은 카드가 그 길로 들어온다', () => {
+    const next = applyPerkChanges(STANDARD_COMPOSITION, [
+      { kindId: 'p1.wound', delta: 1 },
+      { kindId: 'r.p0.fire', delta: 2 },
+    ])
+    expect(next['p1.wound']).toBe(1)
+    expect(next['r.p0.fire']).toBe(2)
+    expect(compositionSize(next)).toBe(23)
+  })
+
+  it('0장이 된 종류는 열쇠째 걷는다', () => {
+    const next = applyPerkChanges(STANDARD_COMPOSITION, [{ kindId: 'm2', delta: -1 }])
+    expect('m2' in next).toBe(false)
+  })
+
+  it('교체는 두 줄로 적는다 — 아홉 장짜리 시트가 그렇게 읽힌다', () => {
+    // "−1 한 장을 +1 한 장으로 교체"
+    const next = applyPerkChanges(STANDARD_COMPOSITION, [
+      { kindId: 'm1', delta: -1 },
+      { kindId: 'p1', delta: 1 },
+    ])
+    expect(next.m1).toBe(4)
+    expect(next.p1).toBe(6)
     expect(compositionSize(next)).toBe(20)
   })
 

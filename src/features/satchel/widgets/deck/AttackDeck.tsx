@@ -1,22 +1,20 @@
 import { useCallback, useRef, useState } from 'react'
 import { useBoardSize } from '../../useBoardSize'
 import type { WidgetProps } from '../types'
+import { CardStack } from './CardFace'
 import { RevealFlash } from './RevealFlash'
 import {
   CARD_BACK_URL,
   CARD_FACE_URL,
-  FACE_SLOTS,
   SHUFFLE_ICON_URL,
-  cardKind,
-  cardLabel,
-  cardSpeech,
+  chainSpeech,
   computeDeckLayout,
   discardCount,
   freshDeck,
-  medallionUrl,
   needsShuffle,
   remainingCount,
   revealedCard,
+  revealedChain,
   totalCount,
   type Card,
 } from './deck'
@@ -68,7 +66,7 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
    * `nonce`를 함께 들고 있다. 같은 값이 잇달아 나오면(+0이 여섯 장이다) 상태가
    * 같아 보여 React가 다시 그리지 않고, 그러면 두 번째 탭에서 팝업이 뜨지 않는다.
    */
-  const [flash, setFlash] = useState<{ card: Card; nonce: number } | null>(null)
+  const [flash, setFlash] = useState<{ chain: readonly Card[]; nonce: number } | null>(null)
   const nonce = useRef(0)
 
   /**
@@ -89,6 +87,8 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
   const deck = stored ?? freshDeck(composition)
 
   const revealed = revealedCard(deck)
+  /** 마지막 뽑기에 딸린 것 전부. 굴림이 없으면 한 장이다. */
+  const chain = revealedChain(deck)
   const remaining = remainingCount(deck)
   const discarded = discardCount(deck)
   const total = totalCount(deck)
@@ -99,10 +99,10 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
   const exhausted = remaining === 0 && total > 0
 
   function onReveal() {
-    const card = reveal(slot, composition)
-    if (!card) return
+    const drawn = reveal(slot, composition)
+    if (drawn.length === 0) return
     nonce.current += 1
-    setFlash({ card, nonce: nonce.current })
+    setFlash({ chain: drawn, nonce: nonce.current })
   }
 
   /**
@@ -127,7 +127,7 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
       ? '덱이 비어 있다.'
       : [
           `${total}장 중 ${remaining}장 남았다.`,
-          !layout.showDiscard && revealed ? `공개된 카드: ${cardSpeech(revealed)}.` : '',
+          !layout.showDiscard && revealed ? `공개된 카드: ${chainSpeech(chain)}.` : '',
           '누르면 한 장을 공개한다.',
           remaining === 0 ? '덱이 다 떨어져 섞은 뒤 뽑는다.' : '',
         ]
@@ -175,7 +175,7 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
             <img className="deck__spent-icon" src={SHUFFLE_ICON_URL} alt="" />
           </span>
         ) : !layout.showDiscard && revealed ? (
-          <CardFace card={revealed} />
+          <CardStack chain={chain} />
         ) : (
           <span className="deck__back" aria-hidden="true" />
         )}
@@ -191,11 +191,9 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
           className="deck__discard"
           role="status"
           aria-live="polite"
-          aria-label={
-            revealed ? `공개된 카드: ${cardSpeech(revealed)}` : '아직 공개한 카드가 없다.'
-          }
+          aria-label={revealed ? `공개된 카드: ${chainSpeech(chain)}` : '아직 공개한 카드가 없다.'}
         >
-          {revealed ? <CardFace card={revealed} /> : <span className="deck__empty" />}
+          {revealed ? <CardStack chain={chain} /> : <span className="deck__empty" />}
           {discarded > 0 && (
             <span className="deck__count sl-numeral" aria-hidden="true">
               {discarded}
@@ -224,48 +222,9 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
           landOn={landOn}
           onDone={() => setFlash(null)}
         >
-          <CardFace card={flash.card} />
+          <CardStack chain={flash.chain} />
         </RevealFlash>
       )}
     </div>
-  )
-}
-
-/**
- * 카드 앞면 — 틀 위에 값 메달을 얹는다.
- *
- * 그림이 없는 종류(+3·+4)는 메달 자리에 숫자를 직접 그린다. 팩이 실물에 있는
- * 일곱만 담고 있어 퍽으로 넣는 카드는 그림이 없다.
- */
-function CardFace({ card }: { card: Card }) {
-  const kind = cardKind(card.kindId)
-  const medallion = kind ? medallionUrl(kind) : null
-  const { medallion: slot, shuffle } = FACE_SLOTS
-
-  const slotStyle = {
-    left: `${slot.cx}%`,
-    top: `${slot.cy}%`,
-    width: `${slot.size}%`,
-  } as React.CSSProperties
-
-  return (
-    <span className="deck__face" aria-hidden="true">
-      {medallion ? (
-        <img className="deck__medallion" src={medallion} alt="" style={slotStyle} />
-      ) : (
-        <span className="deck__numeral sl-numeral" style={slotStyle}>
-          {cardLabel(card.effect)}
-        </span>
-      )}
-
-      {card.shuffleAfter && (
-        <img
-          className="deck__shuffle"
-          src={SHUFFLE_ICON_URL}
-          alt=""
-          style={{ left: `${shuffle.cx}%`, top: `${shuffle.cy}%`, width: `${shuffle.size}%` }}
-        />
-      )}
-    </span>
   )
 }

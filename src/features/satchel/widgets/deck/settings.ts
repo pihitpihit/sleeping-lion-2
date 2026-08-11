@@ -1,9 +1,10 @@
 import {
-  CARD_KINDS,
   MAX_PER_KIND,
   STANDARD_COMPOSITION,
+  STANDARD_KINDS,
   compositionSize,
   countOf,
+  parseCardSpec,
   type DeckComposition,
 } from './deck'
 import { sanitizeCharacterId } from '../../roster'
@@ -70,9 +71,14 @@ export function sanitizeAttackDeckSettings(raw: unknown): AttackDeckSettings {
 
   const source = value.composition as Record<string, unknown>
   const composition: Record<string, number> = {}
-  for (const kind of CARD_KINDS) {
-    const count = clampCount(source[kind.id])
-    if (count !== null) composition[kind.id] = count
+  for (const [key, raw] of Object.entries(source)) {
+    // **알아볼 수 있는 종류는 아홉 값 바깥이어도 지킨다.** 퍽에서 온 `p1.wound`
+    // 같은 것이 여기 앉으며, 걸러 버리면 설정 화면을 한 번 열 때마다 사라진다.
+    const spec = parseCardSpec(key)
+    if (!spec) continue
+    const count = clampCount(raw)
+    if (count === null || count === 0) continue
+    composition[spec.id] = count
   }
 
   // 한 장도 없는 덱은 만들지 않는다. 뽑을 것이 없으면 위젯이 고장난 것처럼 보인다.
@@ -83,7 +89,12 @@ export function sanitizeAttackDeckSettings(raw: unknown): AttackDeckSettings {
 
 /** 지금 구성이 표준 덱 그대로인가 — '표준으로 되돌리기'를 낼지 정한다. */
 export function isStandardComposition(composition: DeckComposition): boolean {
-  return CARD_KINDS.every(
-    (kind) => countOf(composition, kind.id) === countOf(STANDARD_COMPOSITION, kind.id),
+  // 표준에 없는 종류가 한 장이라도 섞여 있으면 표준이 아니다. 아홉 값만 견주면
+  // 퍽으로 들어온 `p1.wound` 같은 것이 있어도 표준이라고 답한다.
+  for (const [kindId, count] of Object.entries(composition)) {
+    if (count > 0 && countOf(STANDARD_COMPOSITION, kindId) !== count) return false
+  }
+  return STANDARD_KINDS.every(
+    (spec) => countOf(composition, spec.id) === countOf(STANDARD_COMPOSITION, spec.id),
   )
 }

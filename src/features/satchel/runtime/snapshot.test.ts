@@ -155,11 +155,11 @@ describe('거르기', () => {
     expect(out.hpxp).toEqual({ a: { hp: 0, xp: 99 }, b: { hp: 0, xp: 4 } })
   })
 
-  it('카드의 효과는 저장된 것이 아니라 종류표에서 다시 읽는다', () => {
+  it('카드는 열쇠만 싣는다 — 값·굴림·표식은 앉힐 때 다시 뽑는다', () => {
     /**
      * 저장물에 든 `effect`는 `kindId`에서 나온 사본이다. 사본이 표와 어긋나면
      * 화면에 뜬 그림과 실제로 셈하는 값이 달라진다 — 그림은 `kindId`로 고르고
-     * 값은 `effect`로 셈하기 때문이다.
+     * 값은 `effect`로 셈하기 때문이다. 그래서 **싣지 않는다**(구현 결정 65).
      */
     const out = sanitizeRuntime({
       ...emptyRuntime(),
@@ -172,12 +172,16 @@ describe('거르기', () => {
         },
       },
     })
-    expect(out.decks.d1.draw[0]).toEqual({
-      id: 'c1',
-      kindId: 'p1',
-      effect: { kind: 'add', value: 1 },
-      shuffleAfter: false,
+    expect(out.decks.d1.draw[0]).toEqual({ id: 'c1', kindId: 'p1' })
+  })
+
+  it('표식 붙은 카드도 그대로 실려 간다', () => {
+    const out = sanitizeRuntime({
+      ...emptyRuntime(),
+      decks: { d1: { draw: [{ id: 'c1', kindId: 'r.p0.ice.fire' }], discard: [] } },
     })
+    // 열쇠는 한 가지 꼴로 세워진다 — 표식이 사전 순으로 선다.
+    expect(out.decks.d1.draw[0]).toEqual({ id: 'c1', kindId: 'r.p0.fire.ice' })
   })
 
   it('알 수 없는 카드 종류는 걸러낸다', () => {

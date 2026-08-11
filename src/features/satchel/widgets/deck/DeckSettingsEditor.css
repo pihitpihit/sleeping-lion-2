@@ -69,6 +69,25 @@
   color: var(--sl-gold);
 }
 
+/*
+  굴림·표식 딱지.
+
+  퍽에서 들어온 줄이 아홉 값 사이에 섞여도 한눈에 갈리게 한다. 값보다 작고
+  옅어야 한다 — 세는 것은 여전히 값이다.
+*/
+.deck-settings__tag {
+  flex: 0 0 auto;
+  padding: 0 0.4em;
+  font-style: normal;
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: var(--sl-text-faint);
+  background: var(--sl-bg);
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 .deck-settings__stepper {
   flex: 0 0 auto;
   display: flex;

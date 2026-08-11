@@ -3,80 +3,73 @@
  *
  * 순수 함수로 떼어 둔다(SPEC 4.1). 화면도 스토어도 여기 산술을 다시 하지 않는다.
  *
+ * 한 종류를 어떻게 적는지는 `cardSpec.ts`가 정본이다. 여기서는 그것을 **몇 장씩
+ * 놓고 어떻게 뽑는가**만 다룬다.
+ *
  * **저작권 경계.** 표준 덱은 수치와 기호의 구성일 뿐이다(+0 여럿, ±1, ±2, ×0, ×2).
  * SPEC 3장이 "게임 메커닉의 수치 표현이지 저작물 원문이 아니다"라고 못박았다.
  * 카드 그림과 문구는 담지 않고, 화면에 그리는 것도 직접 그린 도형이다(구현 결정 31).
  *
  * **클래스별 퍽 목록은 담지 않는다.** 그것은 게임 콘텐츠다. 우리가 아는 것은
  * "이 종류를 몇 장 넣는가"까지이며, 어느 퍽이 무엇을 시키는지는 **사용자가 설정에
- * 입력한다**(SPEC 3장의 '사용자 직접 입력' 경로). 데이터팩이 생기면 그때 표를
- * 불러오는 길이 열린다.
+ * 입력하거나 DB에서 온다**(SPEC 3장의 '사용자 직접 입력' 경로).
  *
  * **확률을 계산하지 않는다.** 남은 장수는 세어 보여주되 "다음에 무엇이 나올
  * 확률"은 내지 않는다 — SPEC 1장이 축 ②에서 확률 계산을 범위 밖에 두었다.
+ * 굴림이 이어져도 **합을 내지 않는다** — 뽑힌 카드를 늘어놓을 뿐이다.
  */
+
+import {
+  VALUE_IDS,
+  parseCardSpec,
+  specSpeech,
+  valueHasArt,
+  type CardMark,
+  type CardSpec,
+} from './cardSpec'
+
+export {
+  MARKS,
+  VALUE_IDS,
+  cardLabel,
+  makeCardSpec,
+  markSpeech,
+  parseCardSpec,
+  specSpeech,
+  valueHasArt,
+} from './cardSpec'
+export type { CardEffect, CardMark, CardSpec, MarkDef, MarkKind } from './cardSpec'
 
 /* --------------------------------------------------------------------------
    카드
    -------------------------------------------------------------------------- */
 
-/** 카드가 공격에 하는 일. 곱하기와 더하기는 셈이 다르므로 갈라 둔다. */
-export type CardEffect =
-  | { readonly kind: 'add'; readonly value: number }
-  | { readonly kind: 'multiply'; readonly value: number }
-
 /**
- * 덱에 넣을 수 있는 카드 종류.
+ * 덱에 실제로 놓인 한 장.
  *
- * `id`는 **저장되는 값이다**(위젯 설정에 장수와 함께 남는다). 이름을 바꾸면
- * 기존 설정이 알 수 없는 종류가 되어 버려진다 — 위젯 정의 id와 같은 성질이다.
+ * `id`는 이 덱 안에서만 고유하다(렌더 키·셔플용). **`kindId`가 정본이고 `spec`은
+ * 거기서 뽑은 것이다** — 저장·전송할 때는 앞의 둘만 싣고 `spec`은 앉힐 때 다시
+ * 뽑는다(`runtime/snapshot.ts`).
  */
-export interface CardKind {
-  readonly id: string
-  readonly effect: CardEffect
-  /** 뽑으면 이번 라운드가 끝날 때 섞어야 한다. */
-  readonly shuffleAfter: boolean
-  /**
-   * Creator Pack의 값 메달이 있는가.
-   *
-   * 있으면 `attack-modifiers/<id>.webp`를 쓴다. 표준 덱의 일곱만 있고 **퍽으로
-   * 넣는 +3·+4는 없다** — 팩이 실물 카드에 있는 것만 담고 있기 때문이다.
-   * 없는 것은 숫자를 직접 그려 채운다.
-   */
-  readonly hasArt: boolean
-}
-
-/**
- * 다룰 수 있는 종류 전부.
- *
- * 표준 덱에 없는 것(+3·+4)도 있다. **퍽으로 넣게 되는 것들**이며, 종류를 미리
- * 열어 두어야 설정에서 고를 수 있다. 장수 0이면 없는 것과 같으므로 여기 있다고
- * 해서 덱에 들어가지는 않는다.
- */
-export const CARD_KINDS: readonly CardKind[] = [
-  { id: 'x0', effect: { kind: 'multiply', value: 0 }, shuffleAfter: true, hasArt: true },
-  { id: 'm2', effect: { kind: 'add', value: -2 }, shuffleAfter: false, hasArt: true },
-  { id: 'm1', effect: { kind: 'add', value: -1 }, shuffleAfter: false, hasArt: true },
-  { id: 'p0', effect: { kind: 'add', value: 0 }, shuffleAfter: false, hasArt: true },
-  { id: 'p1', effect: { kind: 'add', value: 1 }, shuffleAfter: false, hasArt: true },
-  { id: 'p2', effect: { kind: 'add', value: 2 }, shuffleAfter: false, hasArt: true },
-  { id: 'p3', effect: { kind: 'add', value: 3 }, shuffleAfter: false, hasArt: false },
-  { id: 'p4', effect: { kind: 'add', value: 4 }, shuffleAfter: false, hasArt: false },
-  { id: 'x2', effect: { kind: 'multiply', value: 2 }, shuffleAfter: true, hasArt: true },
-]
-
-const KIND_BY_ID = new Map(CARD_KINDS.map((kind) => [kind.id, kind]))
-
-export function cardKind(id: string): CardKind | undefined {
-  return KIND_BY_ID.get(id)
-}
-
-/** 덱에 실제로 놓인 한 장. `id`는 이 덱 안에서만 고유하다(렌더 키·셔플용). */
 export interface Card {
   readonly id: string
   readonly kindId: string
-  readonly effect: CardEffect
-  readonly shuffleAfter: boolean
+  readonly spec: CardSpec
+}
+
+/** 표준 덱에서 고를 수 있는 아홉 값. 설정 화면이 늘어놓는 차례이기도 하다. */
+export const STANDARD_KINDS: readonly CardSpec[] = VALUE_IDS.map((id) => {
+  const spec = parseCardSpec(id)
+  // 값 낱말 목록에서 온 것이라 반드시 읽힌다. 못 읽었다면 표가 어긋난 것이다.
+  if (!spec) throw new Error(`값 낱말을 읽지 못했다: ${id}`)
+  return spec
+})
+
+/** 카드 한 장을 짓는다. 알아볼 수 없는 종류면 `null`. */
+export function makeCard(id: string, kindId: string): Card | null {
+  const spec = parseCardSpec(kindId)
+  if (!spec) return null
+  return { id, kindId: spec.id, spec }
 }
 
 /* --------------------------------------------------------------------------
@@ -104,9 +97,19 @@ export const CARD_FACE_URL = `${ASSET_ROOT}attack-modifiers/card-face.webp`
 /** 섞기 표식. `Icon Pack/General Icons.pdf` 21쪽에서 뽑은 벡터다. */
 export const SHUFFLE_ICON_URL = `${ASSET_ROOT}general/shuffle.svg`
 
-/** 값 메달. 그림이 없는 종류(+3·+4)는 `null`이며 숫자를 직접 그린다. */
-export function medallionUrl(kind: Pick<CardKind, 'id' | 'hasArt'>): string | null {
-  return kind.hasArt ? `${ASSET_ROOT}attack-modifiers/${kind.id}.webp` : null
+/**
+ * 값 메달. 그림이 없는 값(+3·+4)은 `null`이며 숫자를 직접 그린다.
+ *
+ * **표식이 아니라 값으로 고른다.** `+1 부상` 카드도 메달은 그냥 `+1`이고 부상은
+ * 그 옆에 따로 붙는다 — 실물 카드가 그렇게 짜여 있다.
+ */
+export function medallionUrl(valueId: string): string | null {
+  return valueHasArt(valueId) ? `${ASSET_ROOT}attack-modifiers/${valueId}.webp` : null
+}
+
+/** 원소 표식의 아이콘. 원소 트래커와 같은 파일을 쓴다. */
+export function markIconUrl(mark: CardMark): string | null {
+  return mark.def.kind === 'element' ? `${ASSET_ROOT}elements/${mark.def.id}.svg` : null
 }
 
 /**
@@ -167,29 +170,14 @@ export function revealRemainingRatio(remaining: number, total: number): number {
   return Math.min(1, Math.max(0, remaining / total))
 }
 
-/** 카드 면에 적는 글자. 숫자와 기호뿐이라 Pirata One으로 그린다. */
-export function cardLabel(effect: CardEffect): string {
-  if (effect.kind === 'multiply') return `×${effect.value}`
-  if (effect.value > 0) return `+${effect.value}`
-  // U+2212(빼기표). 하이픈보다 획이 굵고 길이가 더하기표와 맞는다.
-  if (effect.value < 0) return `−${Math.abs(effect.value)}`
-  return '+0'
+/** 읽어주는 쪽에 가는 한국어. 화면 글자는 라틴이지만 소리는 우리말이어야 한다. */
+export function cardSpeech(card: Pick<Card, 'spec'>): string {
+  return specSpeech(card.spec)
 }
 
-/** 읽어주는 쪽에 가는 한국어. 화면 글자는 라틴이지만 소리는 우리말이어야 한다. */
-export function cardSpeech(card: Pick<Card, 'effect' | 'shuffleAfter'>): string {
-  const { effect } = card
-  let base: string
-  if (effect.kind === 'multiply') {
-    base = effect.value === 0 ? '빗나감' : `${effect.value}배`
-  } else if (effect.value === 0) {
-    base = '보정 없음'
-  } else if (effect.value > 0) {
-    base = `${effect.value} 더함`
-  } else {
-    base = `${Math.abs(effect.value)} 뺌`
-  }
-  return card.shuffleAfter ? `${base}, 섞기 표시` : base
+/** 굴림으로 이어진 뽑기 전체를 한 줄로 읽어준다. */
+export function chainSpeech(chain: readonly Card[]): string {
+  return chain.map(cardSpeech).join(' 다음 ')
 }
 
 /* --------------------------------------------------------------------------
@@ -200,8 +188,11 @@ export function cardSpeech(card: Pick<Card, 'effect' | 'shuffleAfter'>): string 
  * 종류별 장수.
  *
  * **퍽은 이 표를 고치는 것으로 표현된다.** "−1 두 장을 빼고 +1 한 장을 넣는다"
- * 같은 것이 곧 이 수치의 증감이다. 어느 퍽이 무엇을 시키는지는 우리가 알지
- * 못하고 알 필요도 없다 — 사용자가 설정에서 장수를 맞춘다.
+ * 같은 것이 곧 이 수치의 증감이다.
+ *
+ * **열쇠는 아홉 값에 갇혀 있지 않다.** `p1.wound`·`r.p0.fire`처럼 표식과 굴림이
+ * 붙은 종류도 그대로 열쇠가 된다(`cardSpec.ts`). 알아볼 수 없는 열쇠는 `buildDeck`이
+ * 조용히 건너뛴다.
  */
 export type DeckComposition = Readonly<Record<string, number>>
 
@@ -219,14 +210,64 @@ export const STANDARD_COMPOSITION: DeckComposition = {
 /** 한 종류가 가질 수 있는 최대 장수. 규칙이 아니라 입력 실수를 막는 울타리다. */
 export const MAX_PER_KIND = 20
 
+/**
+ * 한 덱이 가질 수 있는 최대 장수.
+ *
+ * 종류가 열려 있으므로 종류별 한도만으로는 위가 없다. 표준이 20장이고 퍽으로
+ * 늘어나 봐야 30장을 넘지 않는다 — 넉넉히 잡되 무한히 열어 두지는 않는다.
+ */
+export const MAX_DECK_SIZE = 120
+
 export function countOf(composition: DeckComposition, kindId: string): number {
   return composition[kindId] ?? 0
 }
 
+function clampCount(raw: number): number {
+  if (!Number.isFinite(raw)) return 0
+  return Math.max(0, Math.min(MAX_PER_KIND, Math.trunc(raw)))
+}
+
+/**
+ * 구성표에 든 종류를 **늘 같은 차례로** 늘어놓는다.
+ *
+ * 아홉 값이 먼저고 그다음이 표식 붙은 것들(낱말 사전 순)이다. 차례가 흔들리면
+ * `buildDeck`이 렌더마다 다른 결과를 내어 `react-hooks/purity`가 막는 자리가
+ * 된다(구현 결정 12).
+ */
+function orderedKinds(composition: DeckComposition): CardSpec[] {
+  const seen = new Set<string>()
+  const out: CardSpec[] = []
+
+  for (const key of Object.keys(composition)) {
+    const spec = parseCardSpec(key)
+    if (!spec || seen.has(spec.id)) continue
+    seen.add(spec.id)
+    out.push(spec)
+  }
+
+  const rank = new Map(VALUE_IDS.map((id, index) => [id, index]))
+  out.sort((a, b) => {
+    // 표식이 없는 것이 먼저다 — 늘 있던 아홉이 위에 모인다.
+    const plain =
+      Number(b.marks.length === 0 && !b.rolling) - Number(a.marks.length === 0 && !a.rolling)
+    if (plain !== 0) return plain
+    const byValue = (rank.get(a.valueId) ?? 99) - (rank.get(b.valueId) ?? 99)
+    if (byValue !== 0) return byValue
+    return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
+  })
+
+  return out
+}
+
+/** 구성표에 실제로 들어가는 종류들. 알아볼 수 없는 열쇠는 빠진다. */
+export function compositionKinds(composition: DeckComposition): CardSpec[] {
+  return orderedKinds(composition).filter((spec) => countOf(composition, spec.id) > 0)
+}
+
 export function compositionSize(composition: DeckComposition): number {
   let total = 0
-  for (const kind of CARD_KINDS) total += countOf(composition, kind.id)
-  return total
+  for (const spec of orderedKinds(composition)) total += clampCount(countOf(composition, spec.id))
+  return Math.min(MAX_DECK_SIZE, total)
 }
 
 /**
@@ -237,15 +278,11 @@ export function compositionSize(composition: DeckComposition): number {
  */
 export function buildDeck(composition: DeckComposition = STANDARD_COMPOSITION): Card[] {
   const cards: Card[] = []
-  for (const kind of CARD_KINDS) {
-    const count = Math.max(0, Math.min(MAX_PER_KIND, Math.trunc(countOf(composition, kind.id))))
+  for (const spec of orderedKinds(composition)) {
+    const count = clampCount(countOf(composition, spec.id))
     for (let n = 0; n < count; n += 1) {
-      cards.push({
-        id: `${kind.id}#${n}`,
-        kindId: kind.id,
-        effect: kind.effect,
-        shuffleAfter: kind.shuffleAfter,
-      })
+      if (cards.length >= MAX_DECK_SIZE) return cards
+      cards.push({ id: `${spec.id}#${n}`, kindId: spec.id, spec })
     }
   }
   return cards
@@ -333,9 +370,69 @@ export function drawOne(state: DeckState, rng: Rng): DrawResult {
   }
 }
 
+/**
+ * 한 번의 뽑기 — **굴림이 나오면 끝나지 않는다.**
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **굴림은 그림이 아니라 규칙이다.**                                        │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 굴림 표식이 붙은 카드를 뽑으면 그 자리에서 한 장을 더 뽑고, 굴림이 아닌 것이
+ * 나올 때까지 이어진다. 실물에서 손으로 하던 일이며 규칙을 판정하는 것이 아니다 —
+ * **합을 내지 않고 뽑힌 것을 늘어놓을 뿐이다**(SPEC 1장).
+ *
+ * 굴림만 든 덱을 만들어 두면 영영 끝나지 않으므로 **덱에 든 장수만큼에서 멎는다.**
+ * 규칙이 아니라 무한 고리를 막는 울타리다.
+ */
+export interface TurnResult {
+  readonly state: DeckState
+  /** 이번에 뽑은 것 전부. 뽑은 차례대로이며 마지막이 굴림이 아닌 카드다. */
+  readonly chain: readonly Card[]
+  /** 뽑는 도중에 한 번이라도 저절로 섞였는가. */
+  readonly reshuffled: boolean
+}
+
+export function drawTurn(state: DeckState, rng: Rng): TurnResult {
+  const limit = totalCount(state)
+  let working = state
+  let reshuffled = false
+  const chain: Card[] = []
+
+  while (chain.length < limit) {
+    const result = drawOne(working, rng)
+    working = result.state
+    reshuffled = reshuffled || result.reshuffled
+    if (!result.card) break
+    chain.push(result.card)
+    if (!result.card.spec.rolling) break
+  }
+
+  return { state: working, chain, reshuffled }
+}
+
 /** 가장 최근에 공개한 카드. 없으면 `null`. */
 export function revealedCard(state: DeckState): Card | null {
   return state.discard[0] ?? null
+}
+
+/**
+ * 가장 최근 뽑기에 딸린 카드 전부. 뽑은 차례대로.
+ *
+ * **따로 들고 있지 않고 버린 더미에서 되짚는다.** 버린 더미는 최근 것이 0번이고
+ * 굴림 카드는 언제나 마지막 카드보다 **먼저** 뽑히므로, 0번부터 굴림이 이어지는
+ * 데까지가 한 번의 뽑기다. 상태를 하나 더 두면 그것이 판을 나를 때 어긋난다.
+ */
+export function revealedChain(state: DeckState): Card[] {
+  const chain: Card[] = []
+  for (let i = 0; i < state.discard.length; i += 1) {
+    const card = state.discard[i]
+    if (!card) break
+    chain.push(card)
+    // 앞선 것이 굴림이면 그것도 이번 뽑기다. 굴림이 아니면 지난 뽑기의 끝이다.
+    const older = state.discard[i + 1]
+    if (!older || !older.spec.rolling) break
+  }
+  return chain.reverse()
 }
 
 export function remainingCount(state: DeckState): number {
@@ -357,7 +454,7 @@ export function totalCount(state: DeckState): number {
  * 않는다** — 실물에서도 표시는 라운드가 끝날 때 처리한다.
  */
 export function needsShuffle(state: DeckState): boolean {
-  return state.discard[0]?.shuffleAfter ?? false
+  return state.discard[0]?.spec.shuffleAfter ?? false
 }
 
 /* --------------------------------------------------------------------------

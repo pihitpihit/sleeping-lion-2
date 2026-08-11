@@ -1,4 +1,4 @@
-import { cardKind, type Card, type DeckState } from '../widgets/deck/deck'
+import { makeCard, type Card, type DeckState } from '../widgets/deck/deck'
 import { useAttackDeckStore } from '../widgets/deck/deckStore'
 import type { ElementState } from '../widgets/elements/elements'
 import { useElementStore } from '../widgets/elements/elementStore'
@@ -54,9 +54,47 @@ export interface RuntimeSnapshot {
   round: number
   /** 지금은 위젯 인스턴스가 열쇠다. 전투 공유에서 캐릭터로 옮긴다. */
   hpxp: Record<string, HpXp>
-  decks: Record<string, DeckState>
+  /** 덱은 **얇게** 싣는다 — `WireCard` 참조. */
+  decks: Record<string, WireDeck>
   /** 주운 금화. 열쇠는 HP/XP와 같다(캐릭터를 골랐으면 그 id). */
   gold: Record<string, number>
+}
+
+/**
+ * 실어 나르는 카드 한 장.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **값·굴림·표식은 싣지 않는다. `kindId`에서 다시 뽑는다.**                  │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 셋 다 `kindId`에서 나오는 것이라 함께 실으면 사본이 되고, **사본이 표와 어긋나면
+ * 화면에 뜬 그림과 실제로 셈하는 값이 달라진다**(구현 결정 65). 게다가 표식이
+ * 붙으면서 명세가 통통해졌다 — 스무 장이면 몇 킬로바이트고, 그것이 원소를 한 번
+ * 켤 때마다 통로로 나간다.
+ */
+export interface WireCard {
+  id: string
+  kindId: string
+}
+
+export interface WireDeck {
+  draw: WireCard[]
+  discard: WireCard[]
+}
+
+function thinCard(card: Card): WireCard {
+  return { id: card.id, kindId: card.kindId }
+}
+
+function thinDeck(deck: DeckState): WireDeck {
+  return { draw: deck.draw.map(thinCard), discard: deck.discard.map(thinCard) }
+}
+
+function thickDeck(deck: WireDeck): DeckState {
+  return {
+    draw: deck.draw.map((c) => makeCard(c.id, c.kindId)).filter((c): c is Card => c !== null),
+    discard: deck.discard.map((c) => makeCard(c.id, c.kindId)).filter((c): c is Card => c !== null),
+  }
 }
 
 export function emptyRuntime(): RuntimeSnapshot {
@@ -77,13 +115,18 @@ export function emptyRuntime(): RuntimeSnapshot {
 
 /** 지금 판 위의 사실을 한 장으로 뜬다. */
 export function captureRuntime(): RuntimeSnapshot {
+  const decks: Record<string, WireDeck> = {}
+  for (const [slot, deck] of Object.entries(useAttackDeckStore.getState().byInstance)) {
+    decks[slot] = thinDeck(deck)
+  }
+
   return {
     v: RUNTIME_VERSION,
     at: Date.now(),
     elements: useElementStore.getState().elements,
     round: useRoundStore.getState().round,
     hpxp: useHpXpStore.getState().byInstance,
-    decks: useAttackDeckStore.getState().byInstance,
+    decks,
     gold: useGoldStore.getState().bySlot,
   }
 }
@@ -114,7 +157,9 @@ export function isEmptyRuntime(snapshot: RuntimeSnapshot): boolean {
 export function restoreRuntime(snapshot: RuntimeSnapshot): void {
   useElementStore.getState().hydrate(snapshot.elements)
   useHpXpStore.getState().hydrate(snapshot.hpxp)
-  useAttackDeckStore.getState().hydrate(snapshot.decks)
+  const decks: Record<string, DeckState> = {}
+  for (const [slot, deck] of Object.entries(snapshot.decks)) decks[slot] = thickDeck(deck)
+  useAttackDeckStore.getState().hydrate(decks)
   useGoldStore.getState().hydrate(snapshot.gold)
   useRoundStore.getState().hydrate(snapshot.round)
 }
@@ -130,26 +175,28 @@ function isElementState(value: unknown): value is ElementState {
 /**
  * 카드 한 장.
  *
- * `effect`와 `shuffleAfter`는 **저장된 것을 믿지 않고 종류표에서 다시 읽는다.**
- * 둘은 `kindId`에서 나오는 값이라 저장물에 든 것은 사본일 뿐이고, 사본이 표와
- * 어긋나면 화면에 뜬 그림과 실제로 셈하는 값이 달라진다.
+ * **`kindId`가 읽히는지만 본다.** 저장물에 값이나 표식이 함께 들어 있어도 버린다 —
+ * 그것은 사본이고, 사본이 표와 어긋나면 화면에 뜬 그림과 실제로 셈하는 값이
+ * 달라진다(구현 결정 65).
  */
-function salvageCard(value: unknown): Card | null {
+function salvageCard(value: unknown): WireCard | null {
   if (typeof value !== 'object' || value === null) return null
-  const raw = value as Partial<Card>
+  const raw = value as Partial<WireCard>
   if (typeof raw.id !== 'string' || typeof raw.kindId !== 'string') return null
-  const kind = cardKind(raw.kindId)
-  if (!kind) return null
-  return { id: raw.id, kindId: kind.id, effect: kind.effect, shuffleAfter: kind.shuffleAfter }
+  // 알아볼 수 있는 종류인지 여기서 확인한다. 못 읽는 것을 앉히면 앉히는 쪽에서
+  // 조용히 사라져 장수가 어긋난다.
+  const card = makeCard(raw.id, raw.kindId)
+  if (!card) return null
+  return { id: card.id, kindId: card.kindId }
 }
 
-function salvageDeck(value: unknown): DeckState | null {
+function salvageDeck(value: unknown): WireDeck | null {
   if (typeof value !== 'object' || value === null) return null
-  const raw = value as Partial<DeckState>
+  const raw = value as Partial<WireDeck>
   if (!Array.isArray(raw.draw) || !Array.isArray(raw.discard)) return null
 
-  const draw = raw.draw.map(salvageCard).filter((c): c is Card => c !== null)
-  const discard = raw.discard.map(salvageCard).filter((c): c is Card => c !== null)
+  const draw = raw.draw.map(salvageCard).filter((c): c is WireCard => c !== null)
+  const discard = raw.discard.map(salvageCard).filter((c): c is WireCard => c !== null)
 
   // 한 장도 못 알아봤으면 덱이 아니다. 빈 덱을 앉히면 뽑을 것이 없는 채로
   // 섞기도 안 뜨는 막힌 상태가 된다.
@@ -196,7 +243,7 @@ export function sanitizeRuntime(parsed: unknown): RuntimeSnapshot {
     }
   }
 
-  const decks: Record<string, DeckState> = {}
+  const decks: Record<string, WireDeck> = {}
   if (typeof raw.decks === 'object' && raw.decks !== null) {
     for (const [key, value] of Object.entries(raw.decks)) {
       const deck = salvageDeck(value)
