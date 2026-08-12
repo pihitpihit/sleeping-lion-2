@@ -19,6 +19,11 @@ import { DeckSettingsEditor } from './DeckSettingsEditor'
  * 그 갈림의 알맹이는 이미 순수 함수 쪽에서 확인한다 — `perkDeckChanges`와
  * `resolveComposition`(`campaign/perks.test.ts`)이 "켠 상자 → 구성"을 통째로
  * 덮는다. 여기서는 **그 함수들을 못 읽을 때 화면이 서는지**만 본다.
+ *
+ * **「덱 새로 짜기」도 여기서 볼 수 없다.** 그 단추는 스토어에 담긴 판이 있을 때만
+ * 나오는데 서버 렌더에는 스토어가 안 비치므로 **어떤 입력을 주어도 늘 안 나온다** —
+ * `not.toContain`으로 적어 두면 통과하지만 코드가 맞다는 근거가 되지 못한다.
+ * 그렇게 적어 두었던 시험 둘을 걷었다(2026-08-12).
  */
 
 function render(settings: unknown, instanceId: string | null = 'w1') {
@@ -52,18 +57,5 @@ describe('특혜를 못 읽을 때', () => {
   it('망가진 설정에서도 선다', () => {
     expect(render(undefined)).toContain('deck-settings')
     expect(render('덱')).toContain('deck-settings')
-  })
-})
-
-describe('덱 새로 짜기', () => {
-  it('아직 안 뽑았으면 내지 않는다 — 다시 짤 판이 없다', () => {
-    expect(render({ composition: { p0: 6 }, characterId: null })).not.toContain('덱 새로 짜기')
-  })
-
-  /** 놓기 전에 묻는 팝업에는 인스턴스가 없다. 담긴 판도 없으므로 낼 것이 없다. */
-  it('놓기 전에는 내지 않는다', () => {
-    expect(render({ composition: { p0: 6 }, characterId: null }, null)).not.toContain(
-      '덱 새로 짜기',
-    )
   })
 })

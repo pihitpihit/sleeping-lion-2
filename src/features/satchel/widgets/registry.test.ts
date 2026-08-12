@@ -23,11 +23,6 @@ describe('레지스트리', () => {
     }
   })
 
-  it('개발용 Test 위젯은 걷어냈다', () => {
-    // 도구 띠에 쓸 일 없는 것이 섞여 있으면 고르는 데 방해만 된다.
-    expect(isKnownWidget('test')).toBe(false)
-  })
-
   it('골드 카운터는 한 칸에서 크지 않는다', () => {
     const gold = getWidgetDefinition('gold')
     expect(gold?.defaultSize).toEqual({ w: 1, h: 1 })

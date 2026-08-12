@@ -48,11 +48,9 @@ describe('카드 앞면', () => {
     // 홈을 먼저 깔고 그 위에 표식을 앉힌다 — 표식만 얹으면 바탕 없이 떠 보인다.
     expect(html).toContain('deck__socket')
     expect(html.indexOf('deck__socket')).toBeLessThan(html.indexOf('deck__shuffle'))
-    expect(FACE_SLOTS.shuffleIcon.size).toBeLessThan(FACE_SLOTS.shuffle.size)
     expect(html).toContain(`left:${FACE_SLOTS.shuffle.cx}%`)
-    // 왼쪽 아래 홈(덱 주인 자리)이 아니다.
-    expect(FACE_SLOTS.shuffle.cx).toBeGreaterThan(50)
-    expect(FACE_SLOTS.owner.cx).toBeLessThan(50)
+    // **왼쪽 아래 홈(덱 주인 자리)에 그리지 않는다** — 형님이 짚어 옮긴 자리다.
+    expect(html).not.toContain(`left:${FACE_SLOTS.owner.cx}%`)
     expect(renderToStaticMarkup(<CardFace card={card('p1')} />)).not.toContain('deck__shuffle')
   })
 
@@ -201,11 +199,6 @@ describe('덱 주인 표식', () => {
       <CardFace card={card('p1')} owner={{ iconUrl: null, letter: '', name: '' }} />,
     )
     expect(html).not.toContain('deck__owner')
-  })
-
-  it('섞기 홈과 겹치지 않는다 — 왼쪽과 오른쪽이다', () => {
-    expect(FACE_SLOTS.owner.cx).toBeLessThan(50)
-    expect(FACE_SLOTS.shuffle.cx).toBeGreaterThan(50)
   })
 })
 

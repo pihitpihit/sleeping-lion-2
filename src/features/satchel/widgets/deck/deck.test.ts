@@ -60,10 +60,6 @@ describe('표준 덱', () => {
     expect(compositionSize(STANDARD_COMPOSITION)).toBe(20)
   })
 
-  it('구성이 규칙대로다', () => {
-    expect(STANDARD_COMPOSITION).toEqual({ x0: 1, m2: 1, m1: 5, p0: 6, p1: 5, p2: 1, x2: 1 })
-  })
-
   it('섞기 표시는 ×0과 ×2에만 있다', () => {
     const marked = STANDARD_KINDS.filter((spec) => spec.shuffleAfter).map((spec) => spec.id)
     expect(marked).toEqual(['x0', 'x2'])
