@@ -24,6 +24,10 @@ import './DeckGallery.css'
  * **덱 위젯이 쓰는 `CardFace`를 그대로 쓴다.** 여기서 본 그림과 상 위에서 뽑는
  * 그림이 다르면 같은 덱이라는 것을 알 수 없다(구현 결정 162와 같은 결).
  *
+ * 나가는 길은 **× 단추와 Escape** 둘이다. 화면을 통째로 덮으므로 바깥을 눌러
+ * 닫는 길은 두지 않았다 — 빈 자리는 카드를 굴리려고 손을 얹는 자리라, 거기서
+ * 닫히면 구르다 말고 팝업이 사라진다.
+ *
  * **판은 여전히 읽지 않는다.** 구성에서 편 카드일 뿐이고 무엇이 뽑혔는지·몇 장
  * 남았는지는 여기 없다 — 그것은 축 ②의 휘발성 런타임이다(구현 결정 160).
  *
@@ -45,13 +49,12 @@ interface Props {
  */
 export function DeckGallery({ composition, onClose }: Props) {
   return createPortal(
-    <div
-      className="deckgallery"
-      /* 바깥을 눌러도 닫힌다. 훑어보기만 하는 팝업이라 나가는 길이 넓어야 한다. */
-      onPointerDown={(e) => {
-        if (e.target === e.currentTarget) onClose()
-      }}
-    >
+    /*
+      **바깥을 눌러 닫는 길은 두지 않는다.** 화면을 통째로 덮으면서 바깥이랄 것이
+      없어졌고, 남은 빈 자리는 카드를 굴리려고 손을 얹는 자리다 — 거기서 닫히면
+      구르다 말고 팝업이 사라진다. 나가는 길은 × 단추와 Escape다.
+    */
+    <div className="deckgallery">
       <DeckGalleryPanel composition={composition} onClose={onClose} />
     </div>,
     document.body,

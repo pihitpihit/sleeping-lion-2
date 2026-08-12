@@ -2,7 +2,14 @@
    덱에 든 카드를 다 늘어놓는 팝업
    --------------------------------------------------------------------------
    시트의 알약은 몇 장인지 말하고, 여기는 어떤 카드인지 보여준다. 훑어보기만
-   하는 화면이라 **나가는 길이 넓다** — × 단추·바깥 누르기·Escape 셋 다 닫는다.
+   하는 화면이라 되돌릴 것이 없다 — 나가는 길은 × 단추와 Escape다.
+
+   ┌────────────────────────────────────────────────────────────────────────┐
+   │ **테를 두르지 않고 화면을 통째로 덮는다.**                              │
+   └────────────────────────────────────────────────────────────────────────┘
+
+   상자 안에 상자를 넣으면 폰에서 카드가 앉을 자리가 그만큼 준다. 대신 **뒤쪽
+   화면이 살짝 비치게** 두어, 덮은 것이지 딴 화면으로 넘어온 것이 아님을 알린다.
    ========================================================================== */
 
 .deckgallery {
@@ -10,37 +17,40 @@
   inset: 0;
   z-index: 60;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: calc(var(--sl-safe-top) + 0.75rem) calc(var(--sl-safe-right) + 0.75rem)
-    calc(var(--sl-safe-bottom) + 0.75rem) calc(var(--sl-safe-left) + 0.75rem);
-  background: rgb(0 0 0 / 68%);
+  flex-direction: column;
+  /* 뒤쪽 시트가 어렴풋이 비친다. 더 옅게 두면 카드 위로 글자가 비쳐 읽기 어렵다. */
+  background: rgb(6 5 4 / 86%);
 }
 
 /*
-  판 자체는 늘어나지 않는다 — **구르는 것은 안쪽 격자뿐이다.**
+  판은 화면을 다 쓴다 — **구르는 것은 안쪽 격자뿐이다.**
 
   머리(제목과 × 단추)가 함께 굴러 올라가면 카드를 한참 내린 뒤에 닫으려고
   도로 올라와야 한다.
 */
 .deckgallery__panel {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  width: min(100%, 32rem);
-  max-height: 100%;
-  background: var(--sl-panel);
-  border: 1px solid var(--sl-border-strong);
-  border-radius: 0.4rem;
-  overflow: hidden;
+  width: 100%;
 }
 
+/*
+  머리.
+
+  판이 비치므로 **제 바탕을 깐다** — 카드가 그 밑을 지나가면 글자가 겹쳐 읽힌다.
+  안전영역은 여기서 비운다(노치 아래로 제목이 들어가면 안 된다).
+*/
 .deckgallery__head {
   flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.7rem 0.9rem;
+  padding: calc(var(--sl-safe-top) + 0.6rem) calc(var(--sl-safe-right) + 0.9rem) 0.6rem
+    calc(var(--sl-safe-left) + 0.9rem);
+  background: rgb(6 5 4 / 82%);
   border-bottom: 1px solid var(--sl-border);
 }
 
@@ -85,8 +95,13 @@
 */
 .deckgallery__grid {
   flex: 1;
-  margin: 0;
-  padding: 0.75rem;
+  min-height: 0;
+  /* 카드가 무한정 커지지 않게 가운데로 모은다. 화면은 덮되 카드는 손에 맞는다. */
+  width: 100%;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 0.75rem calc(var(--sl-safe-right) + 0.75rem) calc(var(--sl-safe-bottom) + 0.75rem)
+    calc(var(--sl-safe-left) + 0.75rem);
   list-style: none;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
