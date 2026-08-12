@@ -340,14 +340,8 @@ export function CharacterSheet({
               type="button"
               aria-label={`체크마크 ${n}개까지`}
               aria-pressed={n <= shown.checkmarks}
-              className={[
-                'char__check',
-                n <= shown.checkmarks ? 'char__check--on' : '',
-                // 세 칸마다 사이를 벌려 실물의 묶음이 그대로 보이게 한다.
-                n % 3 === 0 ? 'char__check--last' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
+              /* 묶음은 격자가 낸다 — 한 줄에 셋이므로 줄 하나가 곧 한 묶음이다. */
+              className={`char__check${n <= shown.checkmarks ? ' char__check--on' : ''}`}
               disabled={!editing}
               /* 켜진 마지막 칸을 다시 누르면 하나 줄인다 — 잘못 짚었을 때의 길이다. */
               onClick={() => set('checkmarks', n === shown.checkmarks ? n - 1 : n)}

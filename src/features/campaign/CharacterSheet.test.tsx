@@ -119,6 +119,30 @@ describe('혼자 서는 시트', () => {
   })
 })
 
+/**
+ * 실물 시트는 **세 칸짜리 여섯 묶음**이다(구현 결정 42). 흘려 넣고 셋째마다 여백을
+ * 주었더니 한 줄에 몇 개가 들어가느냐가 화면 폭에 따라 달라져 묶음이 줄을 넘어가
+ * 끊겼다. 격자로 못박아 **줄 하나가 곧 한 묶음**이 되게 했다.
+ *
+ * 줄이 실제로 셋씩 끊기는지는 격자가 하는 일이라 여기서 볼 수 없다 — 칸이 열여덟
+ * 개인 것과 묶음 여백을 주던 손질이 사라진 것까지가 여기 몫이다.
+ */
+describe('전투 목표', () => {
+  it('칸이 열여덟이다', () => {
+    const html = render(fixture(), true)
+    expect((html.match(/class="char__check[ "]/g) ?? []).length).toBe(18)
+  })
+
+  it('묶음 여백을 주던 손질은 사라졌다 — 이제 격자가 묶는다', () => {
+    expect(render(fixture(), true)).not.toContain('char__check--last')
+  })
+
+  it('채운 만큼만 켜진다', () => {
+    const html = render(fixture({ checkmarks: 7 }), true)
+    expect((html.match(/char__check--on/g) ?? []).length).toBe(7)
+  })
+})
+
 describe('그 밖', () => {
   it('경험이 다음 눈금에 닿으면 알리기만 한다 — 레벨을 올려주지 않는다', () => {
     const html = render(fixture({ level: 1, xp: 100 }), true)
