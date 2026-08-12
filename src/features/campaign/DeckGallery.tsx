@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { CardFace, type CardOwner } from '../satchel/widgets/deck/CardFace'
 import {
   CARD_FACE_URL,
-  buildDeck,
+  buildDeckMarked,
   cardSpeech,
   compositionSize,
   type DeckComposition,
@@ -70,8 +70,9 @@ export function DeckGalleryPanel({ composition, owner, onClose }: Props) {
 
   // 카드는 **섞지 않는다.** 종류 차례대로 늘어놓아야 무엇이 몇 장인지 훑어진다 —
   // 섞으면 실물 덱과 같아지지만 그것은 이 화면이 하려는 일이 아니다.
-  const cards = buildDeck(composition)
+  const cards = buildDeckMarked(composition)
   const total = compositionSize(composition)
+  const added = cards.filter((c) => c.added).length
 
   useEffect(() => {
     closeRef.current?.focus()
@@ -94,6 +95,13 @@ export function DeckGalleryPanel({ composition, owner, onClose }: Props) {
       <header className="deckgallery__head">
         <h2 className="deckgallery__title" id={titleId}>
           공격 보정 덱<span className="deckgallery__count sl-numeral"> {total}</span>장
+          {added > 0 && (
+            /* 금빛 테가 무엇인지 한 번만 알려 준다. 카드마다 적지 않는다. */
+            <span className="deckgallery__legend">
+              <span className="deckgallery__legend-chip" aria-hidden="true" />
+              특혜 <span className="sl-numeral">{added}</span>장
+            </span>
+          )}
         </h2>
         <button
           ref={closeRef}
@@ -125,8 +133,18 @@ export function DeckGalleryPanel({ composition, owner, onClose }: Props) {
           } as React.CSSProperties
         }
       >
-        {cards.map((card) => (
-          <li key={card.id} className="deckgallery__cell" aria-label={cardSpeech(card)}>
+        {cards.map(({ card, added: fromPerk }) => (
+          <li
+            key={card.id}
+            /*
+              **퍽으로 더해진 카드에만 금빛 테를 두른다.** 글자를 붙이지 않는 것은
+              카드가 작아 읽을 자리가 없어서이고, 원래 있던 것을 흐리지 않는 것은
+              스무 장이 한꺼번에 죽어 보이기 때문이다.
+            */
+            className={`deckgallery__cell${fromPerk ? ' deckgallery__cell--added' : ''}`}
+            /* 읽어주는 쪽에는 글자로 간다 — 테는 눈에만 보인다. */
+            aria-label={fromPerk ? `${cardSpeech(card)} (특혜로 더한 것)` : cardSpeech(card)}
+          >
             <CardFace card={card} owner={owner} />
           </li>
         ))}

@@ -396,6 +396,45 @@ export function buildDeck(composition: DeckComposition = STANDARD_COMPOSITION): 
   return cards
 }
 
+/**
+ * 카드 한 장이 **어디서 왔는가.**
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **표준 덱과 견주면 갈린다. 따로 표시해 둘 것이 없다.**                    │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 퍽으로 더해진 것은 둘 중 하나다 — ① 표준 덱에 **없던 종류**(`p1.wound`·
+ * `r.p0.fire`·`+3`…) ② 표준보다 **더 놓인 것**(`+1`이 표준 다섯인데 일곱이면
+ * 뒤의 둘). 종류마다 표준 장수까지가 원래 있던 것이고 그 뒤가 더해진 것이다.
+ *
+ * **카드에 꼬리표를 달지 않는다.** 구성표와 표준 덱만 있으면 언제든 다시 셀 수
+ * 있는 것을 저장하면, 저장물이 표와 어긋날 자리가 하나 더 생긴다(구현 결정 65와
+ * 같은 결).
+ */
+export interface CardOrigin {
+  readonly card: Card
+  /** 퍽으로 더해진 것인가. */
+  readonly added: boolean
+}
+
+/**
+ * 구성표를 펴면서 카드마다 어디서 왔는지 함께 낸다.
+ *
+ * 차례는 `buildDeck`과 같다 — 같은 구성이면 늘 같은 결과다(구현 결정 12).
+ */
+export function buildDeckMarked(composition: DeckComposition = STANDARD_COMPOSITION): CardOrigin[] {
+  const out: CardOrigin[] = []
+  for (const spec of orderedKinds(composition)) {
+    const count = clampCount(countOf(composition, spec.id))
+    const standard = countOf(STANDARD_COMPOSITION, spec.id)
+    for (let n = 0; n < count; n += 1) {
+      if (out.length >= MAX_DECK_SIZE) return out
+      out.push({ card: { id: `${spec.id}#${n}`, kindId: spec.id, spec }, added: n >= standard })
+    }
+  }
+  return out
+}
+
 /* --------------------------------------------------------------------------
    덱 상태
    -------------------------------------------------------------------------- */

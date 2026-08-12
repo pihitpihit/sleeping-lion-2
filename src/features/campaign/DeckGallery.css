@@ -66,6 +66,28 @@
   color: var(--sl-gold);
 }
 
+/* 금빛 테가 무엇인지 한 번만 알려 준다. 카드마다 적지 않는다. */
+.deckgallery__legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.6rem;
+  font-family: var(--sl-font-body);
+  font-size: 0.8rem;
+  color: var(--sl-text-faint);
+}
+
+.deckgallery__legend-chip {
+  width: 14px;
+  height: 10px;
+  border-radius: 2px;
+  background: rgb(0 0 0 / 40%);
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 85%),
+    0 0 0 3px var(--sl-gold-bright),
+    0 0 8px rgb(198 154 58 / 55%);
+}
+
 .deckgallery__close {
   flex: none;
   /* 급하게 누르는 자리다. 터치 목표를 확보한다. */
@@ -124,6 +146,28 @@
   aspect-ratio: 437 / 296;
   /* 실물 카드의 둥근 귀퉁이. `deck__face`가 `inherit`으로 받아 간다. */
   border-radius: 0.3rem;
+}
+
+/*
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ **퍽으로 더해진 카드에만 금빛 테를 두른다.**                            │
+  └────────────────────────────────────────────────────────────────────────┘
+
+  글자를 붙이지 않는 것은 카드가 작아 읽을 자리가 없어서다. **원래 있던 것을
+  흐리지 않는 것**은 스무 장이 한꺼번에 죽어 보이기 때문이다 — 더한 쪽을
+  밝히는 편이 낫다.
+
+  금색은 이 앱이 "이쪽을 보라"고 말할 때 쓰는 색이다(편집 모드·저장 단추).
+*/
+.deckgallery__cell--added {
+  /*
+    **어두운 선을 한 겹 먼저 두른다.** 카드 그림이 갈색·놋쇠라 금테를 바로
+    붙이면 묻힌다 — 카드 앞면이 보드 위에서 뜨지 않게 쓰는 수법과 같다.
+  */
+  box-shadow:
+    0 0 0 1px rgb(0 0 0 / 85%),
+    0 0 0 3px var(--sl-gold-bright),
+    0 0 16px rgb(198 154 58 / 55%);
 }
 
 /*

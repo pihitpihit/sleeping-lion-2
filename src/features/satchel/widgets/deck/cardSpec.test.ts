@@ -9,7 +9,9 @@ import {
   valueHasArt,
 } from './cardSpec'
 import {
+  STANDARD_COMPOSITION,
   buildDeck,
+  buildDeckMarked,
   compositionKinds,
   compositionSize,
   createDeck,
@@ -140,6 +142,42 @@ describe('표식 붙은 구성', () => {
   it('같은 입력에 같은 결과다 — 렌더 중에 불려도 안전하다', () => {
     const composition = { 'r.p0.fire': 2, p0: 3, 'p1.wound': 1 }
     expect(buildDeck(composition)).toEqual(buildDeck(composition))
+  })
+})
+
+/**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **어디서 온 카드인지는 표준 덱과 견주면 갈린다.**                         │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 카드에 꼬리표를 달지 않는다 — 구성표와 표준 덱만 있으면 언제든 다시 셀 수 있는
+ * 것을 저장하면 저장물이 표와 어긋날 자리가 하나 더 생긴다(구현 결정 65와 같은 결).
+ */
+describe('표준인가 퍽으로 더한 것인가', () => {
+  it('표준 덱은 한 장도 더한 것이 없다', () => {
+    expect(buildDeckMarked(STANDARD_COMPOSITION).every((c) => !c.added)).toBe(true)
+  })
+
+  it('표준에 없던 종류는 통째로 더한 것이다', () => {
+    const marked = buildDeckMarked({ 'p1.wound': 2, p3: 1 })
+    expect(marked.every((c) => c.added)).toBe(true)
+    expect(marked).toHaveLength(3)
+  })
+
+  /** 종류마다 **표준 장수까지가 원래 있던 것**이고 그 뒤가 더한 것이다. */
+  it('표준보다 더 놓인 것만 더한 것으로 센다', () => {
+    // +1은 표준이 다섯이다. 일곱이면 뒤의 둘이 더한 것.
+    const marked = buildDeckMarked({ p1: 7 })
+    expect(marked.map((c) => c.added)).toEqual([false, false, false, false, false, true, true])
+  })
+
+  it('표준보다 적게 놓이면 더한 것이 없다', () => {
+    expect(buildDeckMarked({ p1: 2 }).every((c) => !c.added)).toBe(true)
+  })
+
+  it('차례는 `buildDeck`과 같다 — 같은 구성이면 늘 같은 결과다', () => {
+    const composition = { p0: 3, 'p1.wound': 1, 'r.p0.fire': 2 }
+    expect(buildDeckMarked(composition).map((c) => c.card)).toEqual(buildDeck(composition))
   })
 })
 
