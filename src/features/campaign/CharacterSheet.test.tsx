@@ -234,11 +234,21 @@ function topLevelClasses(html: string): string[] {
 }
 
 describe('시트의 짜임 — 한 장의 종이', () => {
-  it('맨 윗줄에는 머리·두 단·띠만 선다', () => {
+  it('맨 윗줄에는 두 단과 띠만 선다', () => {
     const kinds = topLevelClasses(render(fixture(), true, false, true)).map((c) =>
       c.split(' ').find((k) => k !== 'char__col'),
     )
-    expect(kinds).toEqual(['char__head', 'char__col--a', 'char__col--b', 'sheet__bar'])
+    expect(kinds).toEqual(['char__col--a', 'char__col--b', 'sheet__bar'])
+  })
+
+  /**
+   * **혼자 설 때는 머리를 페이지의 붙박이 띠가 그린다.** 시트가 또 그리면 이름이
+   * 두 줄로 겹친다. 매달릴 줄이 있는 로스터에서는 위에 아무것도 없으므로 시트가
+   * 제 머리를 갖는다.
+   */
+  it('매달릴 때만 제 머리를 그린다', () => {
+    expect(render(fixture(), true, false, true)).not.toContain('char__head')
+    expect(render(fixture(), true, false, false)).toContain('char__head')
   })
 
   it('모든 칸이 두 단 안에 든다 — 밖에 남으면 선을 못 받는다', () => {

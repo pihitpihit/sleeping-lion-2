@@ -212,45 +212,57 @@ export function CharacterSheet({
     >
       {/* ------------------------------------------------------------------
           이름과 클래스 표식
+          ------------------------------------------------------------------
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **혼자 설 때는 페이지의 고정 띠가 대신 그린다.**                  │
+          └──────────────────────────────────────────────────────────────────┘
+
+          캐릭터 한 장짜리 화면에는 뒤로가기와 이름을 인 띠가 이미 위에 붙어
+          있다. 시트가 제 머리를 또 그리면 **같은 정보가 두 줄로 겹친다** —
+          형님이 짚었다. 매달릴 줄이 있는 로스터에서는 위에 아무것도 없으므로
+          여기서 그린다.
           ------------------------------------------------------------------ */}
-      <div className="char__head">
-        <div className="char__badge" aria-hidden={iconUrl === null}>
-          {iconUrl ? (
-            <img src={iconUrl} alt={`클래스 표식 ${character.classIcon}번`} draggable={false} />
-          ) : (
-            <span className="char__badge-empty" aria-hidden="true">
-              ?
-            </span>
-          )}
-        </div>
-
-        <div className="char__names">
-          {/*
-            ┌────────────────────────────────────────────────────────────────┐
-            │ **이름은 생성할 때 정한다. 여기서는 읽기만 한다.**              │
-            └────────────────────────────────────────────────────────────────┘
-
-            파티원은 이름으로 서로를 부른다 — 축 ②의 이름표도 그것이고, 전투에서
-            누구의 체력·덱인지 가리는 것도 그것이다. **판 도중에 바뀌면 옆 사람이
-            보던 것이 딴 사람이 된다.** 막는 것은 서버다(`0017`).
-          */}
-          <h2 className="char__name">{character.name || '이름 없음'}</h2>
-          <p className="char__owner">
-            {character.ownerName || '이름 없음'}의 캐릭터
-            {info && (
-              <>
-                {' · '}
-                <span className="char__class">{info.name}</span>
-                {info.handSize > 0 && (
-                  <>
-                    {' · '}손 <span className="sl-numeral">{info.handSize}</span>장
-                  </>
-                )}
-              </>
+      {!standalone && (
+        <div className="char__head">
+          <div className="char__badge" aria-hidden={iconUrl === null}>
+            {iconUrl ? (
+              <img src={iconUrl} alt={`클래스 표식 ${character.classIcon}번`} draggable={false} />
+            ) : (
+              <span className="char__badge-empty" aria-hidden="true">
+                ?
+              </span>
             )}
-          </p>
+          </div>
+
+          <div className="char__names">
+            {/*
+              ┌──────────────────────────────────────────────────────────────┐
+              │ **이름은 생성할 때 정한다. 여기서는 읽기만 한다.**            │
+              └──────────────────────────────────────────────────────────────┘
+
+              파티원은 이름으로 서로를 부른다 — 축 ②의 이름표도 그것이고,
+              전투에서 누구의 체력·덱인지 가리는 것도 그것이다. **판 도중에
+              바뀌면 옆 사람이 보던 것이 딴 사람이 된다.** 막는 것은 서버다
+              (`0017`).
+            */}
+            <h2 className="char__name">{character.name || '이름 없음'}</h2>
+            <p className="char__owner">
+              {character.ownerName || '이름 없음'}의 캐릭터
+              {info && (
+                <>
+                  {' · '}
+                  <span className="char__class">{info.name}</span>
+                  {info.handSize > 0 && (
+                    <>
+                      {' · '}손 <span className="sl-numeral">{info.handSize}</span>장
+                    </>
+                  )}
+                </>
+              )}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/*
         ┌────────────────────────────────────────────────────────────────────┐
