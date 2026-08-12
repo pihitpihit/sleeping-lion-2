@@ -487,6 +487,13 @@
    업적
    -------------------------------------------------------------------------- */
 
+/* 아직 없다고 말해 준다 — 빈 칸만 있으면 고장으로 읽힌다. 시트 두 곳이 함께 쓴다. */
+.sheet__empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--sl-text-faint);
+}
+
 .sheet__achievements {
   margin: 0;
   padding: 0;
@@ -1483,11 +1490,14 @@
 /* --------------------------------------------------------------------------
    시트 아래 띠 — 고치기 · 저장 · 그만두기
    --------------------------------------------------------------------------
+   **캐릭터 시트와 파티 기록지가 함께 쓴다.** 같은 일을 하는 띠를 두 벌 그리면
+   반드시 어긋난다 — 그래서 `char__`가 아니라 `sheet__`다.
+   --------------------------------------------------------------------------
    **아래에 붙어 따라온다.** 시트가 길어 저장을 누르려고 끝까지 내려야 하면
    잊는다. 정산은 여러 칸을 함께 고치는 일이라 더 그렇다.
    -------------------------------------------------------------------------- */
 
-.char__bar {
+.sheet__bar {
   position: sticky;
   bottom: 0;
   z-index: 2;
@@ -1501,9 +1511,9 @@
   background: linear-gradient(180deg, transparent 0%, var(--sl-void) 35%);
 }
 
-.char__edit,
-.char__save,
-.char__cancel {
+.sheet__edit,
+.sheet__save,
+.sheet__cancel {
   padding: 0.55rem 1.1rem;
   font-family: inherit;
   font-size: 0.95rem;
@@ -1511,8 +1521,8 @@
   cursor: pointer;
 }
 
-.char__edit,
-.char__save {
+.sheet__edit,
+.sheet__save {
   color: var(--sl-void);
   background: var(--sl-gold);
   border: 1px solid var(--sl-gold);
@@ -1524,33 +1534,34 @@
   **사라지지 않고 자리를 지킨다** — 없어지면 저장이 어디 있었는지 다시 찾아야
   하고, 눌러도 안 되는 까닭이 화면에 남지 않는다. 그래서 글자로도 말한다.
 */
-.char__save:disabled {
+.sheet__save:disabled {
   color: var(--sl-text-faint);
   background: none;
   border-color: var(--sl-border);
   cursor: default;
 }
 
-.char__cancel {
+.sheet__cancel {
   color: var(--sl-text-muted);
   background: var(--sl-panel);
   border: 1px solid var(--sl-border);
 }
 
-.char__cancel:hover {
+.sheet__cancel:hover {
   color: var(--sl-ember);
   border-color: var(--sl-border-strong);
 }
 
 /* 왜 고칠 수 없는지. 단추를 그냥 없애면 까닭이 화면에 남지 않는다. */
-.char__locked {
+.sheet__locked {
   margin: 0;
   font-size: 0.85rem;
   color: var(--sl-text-faint);
 }
 
 /* 편집 중인 시트는 테를 금색으로 물들인다 — 어느 모드인지 한눈에 갈려야 한다. */
-.char--editing {
+.char--editing,
+.sheet--editing {
   outline: 1px solid var(--sl-gold-dim);
   outline-offset: 0.5rem;
   border-radius: 0.3rem;

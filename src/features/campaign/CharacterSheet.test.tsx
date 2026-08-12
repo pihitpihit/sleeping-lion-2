@@ -71,7 +71,7 @@ describe('열람 모드', () => {
     expect(html).not.toContain('아이템을 적는다')
     expect(html).not.toContain('은퇴시킨다')
     expect(html).not.toContain('classpick__cell')
-    expect(html).not.toContain('char__save')
+    expect(html).not.toContain('sheet__save')
   })
 
   it('내 것이면 고치기 문이 있다', () => {

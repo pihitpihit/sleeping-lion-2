@@ -555,14 +555,14 @@ export function CharacterSheet({
         열람 중에는 편집으로 들어가는 문 하나뿐이다. 남의 시트이거나 서버에
         못 닿는 중이면 그 문도 없다 — **왜 없는지 대신 적는다.**
       */}
-      <div className="char__bar">
+      <div className="sheet__bar">
         {!editing ? (
           canEdit ? (
-            <button type="button" className="char__edit" onClick={startEditing}>
+            <button type="button" className="sheet__edit" onClick={startEditing}>
               고치기
             </button>
           ) : (
-            <p className="char__locked">
+            <p className="sheet__locked">
               {!mine ? '남의 시트라 보기만 한다.' : '서버에 닿지 못해 지금은 고칠 수 없다.'}
             </p>
           )
@@ -570,13 +570,13 @@ export function CharacterSheet({
           <>
             <button
               type="button"
-              className="char__cancel"
+              className="sheet__cancel"
               /* 고친 것이 있으면 한 번 묻는다. 없으면 버릴 것도 없다. */
               onClick={() => (dirty ? setAsking('discard') : stopEditing())}
             >
               그만두기
             </button>
-            <button type="button" className="char__save" disabled={!dirty} onClick={save}>
+            <button type="button" className="sheet__save" disabled={!dirty} onClick={save}>
               {dirty ? '저장' : '고친 것 없음'}
             </button>
           </>
