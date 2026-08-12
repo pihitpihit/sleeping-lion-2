@@ -2,9 +2,16 @@ import { useEffect, useState } from 'react'
 import { useAuthStore } from '../auth/authStore'
 import type { Identity } from '../net/types'
 import { useJournalStore } from './campaignStore'
+import { useCharacterStore } from './characterStore'
+import { classInfoOf, useClassStore } from './classStore'
+import { classIconUrl } from './character'
+import { CharacterSheet } from './CharacterSheet'
 import { Crew } from './Crew'
+import type { MyCharacter } from './mineNet'
+import { useMineStore } from './mineStore'
 import { PartySheet } from './PartySheet'
 import { Roster } from './Roster'
+import { backHref, readJournalRoute } from './journalRoute'
 import { priceModifierLabel, shopPriceModifier } from './reputation'
 import './JournalPage.css'
 
@@ -12,15 +19,26 @@ import './JournalPage.css'
  * 일지 — 축 ①.
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ **항목 하나 = 파티 하나 = 기록지 하나.**                                  │
+ * │ **캐릭터가 먼저고, 파티는 그 캐릭터가 속한 곳이다.**                      │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
- * 처음에는 '동행'(사람들의 파티)을 따로 두었다. 그러면 화면에 파티가 둘이 되어
- * 어느 쪽을 만들라는 것인지 알 수 없다 — 형님이 "두 개가 따로 논다"고 짚었다.
- * 실물에서는 하나다. 파티 시트가 곧 그 파티이고, 파티원 관리도 그 시트에 딸린다.
+ * 2026-08-12까지는 파티가 먼저 보이고 그 안에 캐릭터가 있었다. 사람이 앱을 여는
+ * 까닭은 **제 캐릭터를 보려는 것**이므로 순서를 뒤집었다. 파티 목록은 아래에
+ * 그대로 남는다 — 파티 시트·초대·평판으로 가는 길이 그것뿐이다.
  *
- * 경로는 `#/journal`(목록)과 `#/journal/<파티 id>`(기록지)다. 초대 링크와 같은
- * 방식이라 라우터를 새로 들이지 않는다(`routes.ts`).
+ * **표는 안 바꿨다.** 캐릭터는 여전히 기록지에 달려 있고 기록지는 파티에 달려
+ * 있다. 파티 하나에 기록지 하나뿐이라 `campaign_id`가 사실상 "어느 파티"와
+ * 같으므로, 뒤집을 것은 화면이지 표가 아니었다.
+ *
+ * 갈래가 셋이다.
+ *
+ * | 주소 | 보이는 것 |
+ * |---|---|
+ * | `#/journal` | 내 캐릭터 + 파티 목록 |
+ * | `#/journal/<파티>` | 파티 시트 · 무리 · 동행 |
+ * | `#/journal/<파티>/<캐릭터>` | 그 캐릭터 시트 한 장 |
+ *
+ * 초대 링크와 같은 방식이라 라우터를 새로 들이지 않는다(`routes.ts`).
  */
 export function JournalPage() {
   const session = useAuthStore((s) => s.session)
@@ -38,27 +56,43 @@ export function JournalPage() {
   const edit = useJournalStore((s) => s.edit)
   const leave = useJournalStore((s) => s.leave)
 
+  const mine = useMineStore((s) => s.characters)
+  const mineLoaded = useMineStore((s) => s.loaded)
+  const loadMine = useMineStore((s) => s.load)
+
   const [newName, setNewName] = useState('')
-  const [openId, setOpenId] = useState(() => idFromHash(window.location.hash))
+  const [route, setRoute] = useState(() => readJournalRoute(window.location.hash))
 
   useEffect(() => {
-    const onHash = () => setOpenId(idFromHash(window.location.hash))
+    const onHash = () => setRoute(readJournalRoute(window.location.hash))
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
   const userId = session?.userId ?? null
   const displayName = session?.displayName ?? ''
+  const { partyId, characterId } = route
 
   useEffect(() => {
     if (userId === null) return
     const me: Identity = { userId, displayName }
-    if (openId) void open(openId, me)
+    if (partyId) void open(partyId, me)
     else {
       close()
       void refresh(me)
     }
-  }, [openId, userId, displayName, open, close, refresh])
+  }, [partyId, userId, displayName, open, close, refresh])
+
+  /**
+   * 내 캐릭터는 **목록으로 돌아올 때마다** 다시 읽는다.
+   *
+   * 기록지 안에서 캐릭터를 세우거나 거두고 나오면 목록이 달라져 있다. 한 번 읽고
+   * 마는 채로 두면 방금 만든 캐릭터가 첫 화면에 없다.
+   */
+  useEffect(() => {
+    if (userId === null || partyId) return
+    void loadMine(userId)
+  }, [userId, partyId, loadMine])
 
   if (session === null) return null
   const me: Identity = { userId: session.userId, displayName: session.displayName }
@@ -70,15 +104,16 @@ export function JournalPage() {
     window.location.hash = `#/journal/${id}`
   }
 
-  const title = openId && current ? current.campaign?.name || current.party.name : '일지'
+  const partyTitle = current ? current.campaign?.name || current.party.name : ''
+  const title = partyId ? partyTitle : '일지'
 
   return (
     <div className="journal">
       <header className="journal__bar">
         <a
           className="journal__back"
-          href={openId ? '#/journal' : '#/'}
-          aria-label={openId ? '일지 목록으로' : '처음으로'}
+          href={backHref(route)}
+          aria-label={partyId ? '일지 목록으로' : '처음으로'}
         >
           ←
         </a>
@@ -98,38 +133,12 @@ export function JournalPage() {
         </p>
       )}
 
-      {openId ? (
-        current?.campaign ? (
-          <>
-            <PartySheet
-              key={current.campaign.id}
-              campaign={current.campaign}
-              readOnly={offline}
-              onEdit={(edits) => void edit(edits)}
-            />
-            {/*
-              캐릭터는 **거울이 있어 오프라인에서도 보인다.** 고치는 것만 잠근다 —
-              골드와 경험은 지하에서 세 시간 하는 동안 계속 들여다보는 값이다.
-            */}
-            <Roster campaignId={current.campaign.id} me={me} readOnly={offline} />
-
-            {!offline && (
-              <Crew
-                partyId={current.party.id}
-                partyName={current.party.name}
-                me={me}
-                onLeave={() => {
-                  void leave(current.party.id, me)
-                  window.location.hash = '#/journal'
-                }}
-              />
-            )}
-          </>
-        ) : (
-          loaded && <p className="journal__empty">그런 기록지가 없다.</p>
-        )
-      ) : (
+      {!partyId ? (
         <>
+          <MyCharacters characters={mine} loaded={mineLoaded} hasParty={entries.length > 0} />
+
+          <h2 className="journal__section">파티</h2>
+
           {loaded && entries.length === 0 && (
             <p className="journal__empty">아직 적어둔 것이 없다. 파티를 하나 세워라.</p>
           )}
@@ -189,13 +198,188 @@ export function JournalPage() {
             </div>
           )}
         </>
+      ) : !current?.campaign ? (
+        loaded && <p className="journal__empty">그런 기록지가 없다.</p>
+      ) : characterId ? (
+        /*
+          캐릭터 한 장.
+
+          **기록지로 가는 문을 함께 낸다.** 정산할 때는 파티 시트와 남의 캐릭터를
+          같이 봐야 하는데, 여기서 되돌아가는 길이 뒤로가기뿐이면 한 번 더 돌아야
+          한다.
+        */
+        <OneCharacter
+          campaignId={current.campaign.id}
+          characterId={characterId}
+          partyId={current.party.id}
+          partyTitle={partyTitle}
+          me={me}
+          readOnly={offline}
+        />
+      ) : (
+        <>
+          <PartySheet
+            key={current.campaign.id}
+            campaign={current.campaign}
+            readOnly={offline}
+            onEdit={(edits) => void edit(edits)}
+          />
+          {/*
+            캐릭터는 **거울이 있어 오프라인에서도 보인다.** 고치는 것만 잠근다 —
+            골드와 경험은 지하에서 세 시간 하는 동안 계속 들여다보는 값이다.
+          */}
+          <Roster campaignId={current.campaign.id} me={me} readOnly={offline} />
+
+          {!offline && (
+            <Crew
+              partyId={current.party.id}
+              partyName={current.party.name}
+              me={me}
+              onLeave={() => {
+                void leave(current.party.id, me)
+                window.location.hash = '#/journal'
+              }}
+            />
+          )}
+        </>
       )}
     </div>
   )
 }
 
-/** `#/journal/abc` → `abc`. 목록이면 빈 문자열. */
-function idFromHash(hash: string): string {
-  const parts = hash.replace(/^#\//, '').split('/')
-  return parts[0] === 'journal' ? (parts[1] ?? '') : ''
+/* --------------------------------------------------------------------------
+   내 캐릭터 — 첫 화면 맨 위
+   -------------------------------------------------------------------------- */
+
+function MyCharacters({
+  characters,
+  loaded,
+  hasParty,
+}: {
+  characters: readonly MyCharacter[]
+  loaded: boolean
+  hasParty: boolean
+}) {
+  const classes = useClassStore((s) => s.list)
+  const loadClasses = useClassStore((s) => s.load)
+  useEffect(() => {
+    void loadClasses()
+  }, [loadClasses])
+
+  // 은퇴한 캐릭터는 상에 없다. 지우지 않은 것은 기록의 일부이므로 파티 기록지
+  // 안에는 남아 있고, 여기서만 접는다.
+  const active = characters.filter((c) => !c.retired)
+
+  return (
+    <>
+      <h2 className="journal__section">내 캐릭터</h2>
+
+      {loaded && active.length === 0 && (
+        <p className="journal__empty">
+          {hasParty
+            ? '아직 세운 캐릭터가 없다. 아래에서 파티를 열고 거기서 세워라.'
+            : '파티를 먼저 세워라. 캐릭터는 파티 안에서 세운다.'}
+        </p>
+      )}
+
+      {active.length > 0 && (
+        <ul className="journal__mine">
+          {active.map((c) => {
+            const info = classInfoOf(classes, c.classId, c.classIcon)
+            const iconUrl = classIconUrl(c.classIcon)
+            return (
+              <li key={c.id}>
+                <a className="journal__char" href={`#/journal/${c.partyId}/${c.id}`}>
+                  {/* 양피지 원반. 아이콘 색을 건드리지 않는다(구현 결정 41). */}
+                  <span
+                    className={`journal__char-badge${iconUrl ? '' : ' journal__char-badge--plain'}`}
+                    aria-hidden="true"
+                  >
+                    {iconUrl ? <img src={iconUrl} alt="" draggable={false} /> : '?'}
+                  </span>
+
+                  <span className="journal__char-body">
+                    <span className="journal__char-name">{c.name || '이름 없음'}</span>
+                    <span className="journal__char-sub">
+                      {/* 클래스 수치를 안 넣었으면 이름이랄 것이 없다 — 그때는
+                          파티만 적는다. 이름을 지어내지 않는다(구현 결정 40). */}
+                      {info && <span className="journal__char-class">{info.name}</span>}
+                      <span className="journal__char-party">{c.partyName}</span>
+                    </span>
+                  </span>
+
+                  <span className="journal__char-level sl-numeral" aria-label={`레벨 ${c.level}`}>
+                    {c.level}
+                  </span>
+                </a>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </>
+  )
+}
+
+/* --------------------------------------------------------------------------
+   캐릭터 한 장
+   -------------------------------------------------------------------------- */
+
+function OneCharacter({
+  campaignId,
+  characterId,
+  partyId,
+  partyTitle,
+  me,
+  readOnly,
+}: {
+  campaignId: string
+  characterId: string
+  partyId: string
+  partyTitle: string
+  me: Identity
+  readOnly: boolean
+}) {
+  const characters = useCharacterStore((s) => s.characters)
+  const loaded = useCharacterStore((s) => s.loaded)
+  const offline = useCharacterStore((s) => s.offline)
+  const load = useCharacterStore((s) => s.load)
+  const edit = useCharacterStore((s) => s.edit)
+  const remove = useCharacterStore((s) => s.remove)
+
+  useEffect(() => {
+    void load(campaignId)
+  }, [campaignId, load])
+
+  const character = characters.find((c) => c.id === characterId)
+
+  return (
+    <>
+      {/*
+        기록지로 가는 문.
+
+        **시트 위에 둔다.** 정산하다 파티 시트를 보러 가는 일이 잦은데, 시트가
+        길어서 아래에 두면 스크롤을 끝까지 내려야 한다.
+      */}
+      <a className="journal__toparty" href={`#/journal/${partyId}`}>
+        {partyTitle || '파티'} 기록지로
+      </a>
+
+      {character ? (
+        <CharacterSheet
+          key={character.id}
+          character={character}
+          mine={character.ownerId === me.userId}
+          offline={readOnly || offline}
+          onEdit={(edits) => void edit(character.id, edits)}
+          onRemove={() => {
+            void remove(character.id)
+            window.location.hash = `#/journal/${partyId}`
+          }}
+        />
+      ) : (
+        loaded && <p className="journal__empty">그런 캐릭터가 없다.</p>
+      )}
+    </>
+  )
 }
