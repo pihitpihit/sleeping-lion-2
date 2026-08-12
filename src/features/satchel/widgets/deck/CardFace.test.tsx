@@ -101,12 +101,35 @@ describe('카드 앞면', () => {
     expect(renderToStaticMarkup(<CardFace card={card('r.p0.push2')} />)).toContain('>2<')
   })
 
-  it('표식이 둘 붙으면 위아래로 쌓인다 — 같은 자리에 겹치지 않는다', () => {
+  /**
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ **쌓는 폭은 배지 제 크기로 잰다. 카드 비와 무관해야 한다.**              │
+   * └────────────────────────────────────────────────────────────────────────┘
+   *
+   * `top`으로 쌓았더니 가로 %(`width`)와 세로 %(`top`)가 섞여 겹쳤다 — 카드가
+   * 437:296이라 가로 15%짜리 배지가 세로로는 22%인데 간격을 17%로 두었다.
+   * 이제 CSS `translate`가 쌓으며 그 %는 제 크기를 기준으로 한다.
+   */
+  it('표식이 둘 붙으면 가운데를 두고 위아래로 갈린다', () => {
     const html = renderToStaticMarkup(<CardFace card={card('p1.fire.ice')} />)
     expect(html).toContain('elements/fire.svg')
     expect(html).toContain('elements/ice.svg')
+    // 자리는 같고 쌓는 값만 다르다.
     const tops = [...html.matchAll(/deck__elem"[^>]*top:([\d.]+)%/g)].map((m) => Number(m[1]))
-    expect(new Set(tops).size).toBe(2)
+    expect(new Set(tops).size).toBe(1)
+    const idx = [...html.matchAll(/--deck-badge-i:([-\d.]+)/g)].map((m) => Number(m[1]))
+    expect(idx).toEqual([-0.5, 0.5])
+  })
+
+  it('표식이 하나면 가운데 그대로다', () => {
+    const html = renderToStaticMarkup(<CardFace card={card('p2.fire')} />)
+    expect(html).toContain('--deck-badge-i:0')
+  })
+
+  it('셋이면 가운데를 두고 하나씩 위아래로 간다', () => {
+    const html = renderToStaticMarkup(<CardFace card={card('p1.fire.ice.wound')} />)
+    const idx = [...html.matchAll(/--deck-badge-i:([-\d.]+)/g)].map((m) => Number(m[1]))
+    expect(idx).toEqual([-1, 0, 1])
   })
 
   it('굴림 카드에는 오른쪽 가운데에 굴림 배지가 붙는다', () => {

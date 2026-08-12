@@ -165,10 +165,18 @@ export function CardFace({ card, owner }: { card: Card; owner?: CardOwner | null
       */}
       {spec.marks.map((mark, index) => {
         const slot = FACE_SLOTS.effect
+        /*
+          쌓는 것은 CSS `translate`가 한다 — 그 %는 **제 크기**를 기준으로 하므로
+          카드 비(437:296)와 무관하다. `top`으로 쌓았더니 가로 %와 세로 %가 섞여
+          배지가 겹쳤다.
+
+          가운데를 0으로 두고 위아래로 벌린다. 하나면 0이라 제자리다.
+        */
         const place = {
           left: `${slot.cx}%`,
-          top: `${slot.cy + (index - (spec.marks.length - 1) / 2) * FACE_SLOTS.effectStep}%`,
+          top: `${slot.cy}%`,
           width: `${slot.size}%`,
+          '--deck-badge-i': index - (spec.marks.length - 1) / 2,
         } as React.CSSProperties
 
         /*
