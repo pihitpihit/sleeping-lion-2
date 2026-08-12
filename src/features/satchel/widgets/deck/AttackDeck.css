@@ -257,67 +257,76 @@
 }
 
 /* --------------------------------------------------------------------------
-   굴림 표식
+   표식 배지 — 실물이 두는 자리에 둔다
    --------------------------------------------------------------------------
-   **직접 그린 도형이다.** 실물 카드의 문양을 베끼지 않는다(구현 결정 31).
-   메달 위쪽 여백에 앉혀 값을 가리지 않는다.
+   상태이상·원소는 **왼쪽 가운데에 마름모**로 붙고 여럿이면 아래로 쌓인다.
+   굴림은 오른쪽 가운데의 초록 마름모다. 자리는 `deck.ts`의 `FACE_SLOTS`가
+   정본이며 실물 카드를 재서 얻었다.
+
+   마름모는 사각형을 45도 돌려 만든다 — **안의 글자·그림은 되돌려 세운다.**
    -------------------------------------------------------------------------- */
 
-.deck__rolling {
+.deck__badge {
   position: absolute;
-  left: 50%;
-  top: 12%;
-  width: 24%;
-  height: auto;
-  transform: translateX(-50%);
-  color: var(--sl-gold);
-  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 70%));
-  pointer-events: none;
-}
-
-/* --------------------------------------------------------------------------
-   표식 — 메달 아래 한 줄
-   --------------------------------------------------------------------------
-   원소는 원소 트래커와 같은 아이콘을 쓰고 나머지는 글자로 적는다. 팩에서
-   상태이상 아이콘을 더 뽑아 오는 것은 ATTRIBUTION을 함께 고쳐야 하는 별개의
-   일이다(SPEC 13.1).
-
-   **카드 너비를 기준으로 잰다.** 카드가 작아지면 표식도 함께 작아져야 하고,
-   글자 크기를 px로 박으면 손톱만 한 카드에서 표식이 카드를 덮는다.
-   -------------------------------------------------------------------------- */
-
-.deck__marks {
-  position: absolute;
-  left: 50%;
-  bottom: 4%;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: calc(var(--deck-card-w, 100px) * 0.02);
-  max-width: 88%;
-  transform: translateX(-50%);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border: 1px solid rgb(0 0 0 / 55%);
+  border-radius: 12%;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 60%);
   pointer-events: none;
 }
 
-.deck__mark-icon {
-  width: calc(var(--deck-card-w, 100px) * 0.11);
-  min-width: 7px;
-  height: auto;
-  /* 파일은 원본 색을 지키고 화면에서만 밝힌다(구현 결정 15). 어둠은 거의
-     검정이라 그대로 두면 카드 홈에 묻힌다. */
-  filter: brightness(0) invert(0.92) drop-shadow(0 1px 1px rgb(0 0 0 / 80%));
+/* 실물의 굴림 배지가 초록이다. 안의 화살은 직접 그린 도형이다(구현 결정 31). */
+.deck__badge--rolling {
+  color: #fff;
+  background: #4e7d2a;
 }
 
-.deck__mark-text {
-  padding: 0 0.35em;
-  font-size: max(6px, calc(var(--deck-card-w, 100px) * 0.085));
-  line-height: 1.5;
-  color: var(--sl-text);
-  background: rgb(0 0 0 / 62%);
-  border-radius: 999px;
+/* 마름모를 되돌려 세운다. 글자가 기울어 있으면 읽히지 않는다. */
+.deck__badge-icon,
+.deck__badge-text,
+.deck__badge-arrow {
+  transform: rotate(-45deg);
+}
+
+.deck__badge-icon {
+  width: 68%;
+  height: auto;
+  /* 원소 아이콘은 제 색이 있는데 배지 바탕이 이미 그 색이다. 흰빛으로 뽑아야
+     바탕 위에서 보인다 — **파일 자체는 원본 색을 지킨다**(구현 결정 15). */
+  filter: brightness(0) invert(1) drop-shadow(0 1px 1px rgb(0 0 0 / 55%));
+}
+
+.deck__badge-arrow {
+  width: 62%;
+  height: auto;
+}
+
+/*
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ **글자는 그림을 못 구해서 쓰는 임시다.**                                │
+  └────────────────────────────────────────────────────────────────────────┘
+
+  실물은 여기에 그림을 넣는다(이동불가는 화살 맞은 장화). 그 그림은 Creator
+  Pack에 있으나 팩 원본이 없어 못 뽑았다. 한 글자인 까닭은 배지가 카드 폭의
+  15%뿐이기 때문이며, 색과 함께 보면 갈린다.
+*/
+.deck__badge-text {
+  display: flex;
+  align-items: baseline;
+  gap: 0.05em;
+  font-size: calc(var(--deck-card-w, 100px) * 0.055);
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 70%);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.deck__badge-amount {
+  font-size: 0.9em;
 }
 
 /* --------------------------------------------------------------------------

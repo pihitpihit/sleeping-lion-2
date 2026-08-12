@@ -41,9 +41,9 @@ describe('카드 늘어놓기', () => {
 
   it('표식과 굴림이 카드에 그대로 붙는다', () => {
     const html = render({ 'r.p0.fire': 1, 'p1.wound': 1 })
-    expect(html).toContain('deck__face--rolling')
+    expect(html).toContain('deck__badge--rolling')
     expect(html).toContain('elements/fire.svg')
-    expect(html).toContain('부상')
+    expect(html).toContain('deck__badge')
   })
 
   it('읽어주는 쪽에는 카드마다 우리말이 간다', () => {

@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { CardFace, CardStack } from './CardFace'
-import { makeCard, type Card } from './deck'
+import { FACE_SLOTS, makeCard, type Card } from './deck'
 
 /**
  * 카드 앞면이 실제로 그려지는지 본다.
@@ -34,39 +34,69 @@ describe('카드 앞면', () => {
     expect(html).toContain('+3')
   })
 
-  it('섞기 표식은 곱하기 카드에만 붙는다', () => {
-    expect(renderToStaticMarkup(<CardFace card={card('x2')} />)).toContain('deck__shuffle')
+  /**
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ **왼쪽 아래 홈은 덱 주인 자리다. 섞기는 오른쪽 아래다.**                 │
+   * └────────────────────────────────────────────────────────────────────────┘
+   *
+   * 실물에서 그 홈에는 1·2·3·4·M이나 클래스 표식이 들어간다 — 판이 끝나고 덱을
+   * 도로 가를 때 쓴다. 우리는 거기 섞기를 앉혀 두었다가 형님이 짚어 옮겼다.
+   */
+  it('섞기 표식은 곱하기 카드에만, 오른쪽 아래에 붙는다', () => {
+    const html = renderToStaticMarkup(<CardFace card={card('x2')} />)
+    expect(html).toContain('deck__shuffle')
+    expect(html).toContain(`left:${FACE_SLOTS.shuffle.cx}%`)
+    // 왼쪽 아래 홈(덱 주인 자리)이 아니다.
+    expect(FACE_SLOTS.shuffle.cx).toBeGreaterThan(50)
+    expect(FACE_SLOTS.owner.cx).toBeLessThan(50)
     expect(renderToStaticMarkup(<CardFace card={card('p1')} />)).not.toContain('deck__shuffle')
+  })
+
+  it('덱 주인 홈에는 아무것도 안 그린다 — 아직 누구 덱인지 모른다', () => {
+    const html = renderToStaticMarkup(<CardFace card={card('x2')} />)
+    expect(html).not.toContain(`left:${FACE_SLOTS.owner.cx}%`)
   })
 
   it('표식은 메달과 따로 붙는다 — 메달은 여전히 값에서 고른다', () => {
     const html = renderToStaticMarkup(<CardFace card={card('p1.wound')} />)
     expect(html).toContain('attack-modifiers/p1.webp')
-    expect(html).toContain('부상')
+    expect(html).toContain('deck__badge')
   })
 
-  it('원소 표식은 원소 트래커와 같은 아이콘을 쓴다', () => {
-    expect(renderToStaticMarkup(<CardFace card={card('p2.fire')} />)).toContain('elements/fire.svg')
+  /** 색이 갈리는 것이 작은 배지에서는 글자보다 먼저 읽힌다. */
+  it('상태이상 배지는 실물 표식 색을 쓴다 — 이동불가는 빨강', () => {
+    const html = renderToStaticMarkup(<CardFace card={card('p1.immobilize')} />)
+    expect(html.toLowerCase()).toContain('#a3301d')
+  })
+
+  it('원소 배지는 원소 트래커와 같은 아이콘·같은 색이다', () => {
+    const html = renderToStaticMarkup(<CardFace card={card('p2.fire')} />)
+    expect(html).toContain('elements/fire.svg')
+    expect(html.toLowerCase()).toContain('#e2421f')
   })
 
   it('수를 단 표식은 수까지 적는다', () => {
-    expect(renderToStaticMarkup(<CardFace card={card('r.p0.push2')} />)).toContain('밀기2')
+    expect(renderToStaticMarkup(<CardFace card={card('r.p0.push2')} />)).toContain('>2<')
   })
 
-  it('표식이 둘 붙은 카드도 둘 다 낸다', () => {
+  it('표식이 둘 붙으면 위아래로 쌓인다 — 같은 자리에 겹치지 않는다', () => {
     const html = renderToStaticMarkup(<CardFace card={card('p1.fire.ice')} />)
     expect(html).toContain('elements/fire.svg')
     expect(html).toContain('elements/ice.svg')
+    const tops = [...html.matchAll(/deck__badge"[^>]*top:([\d.]+)%/g)].map((m) => Number(m[1]))
+    expect(new Set(tops).size).toBe(2)
   })
 
-  it('굴림 카드에는 굴림 표식이 붙는다', () => {
+  it('굴림 카드에는 오른쪽 가운데에 굴림 배지가 붙는다', () => {
     const html = renderToStaticMarkup(<CardFace card={card('r.p1')} />)
-    expect(html).toContain('deck__face--rolling')
-    expect(html).toContain('deck__rolling')
+    expect(html).toContain('deck__badge--rolling')
+    expect(html).toContain(`left:${FACE_SLOTS.rolling.cx}%`)
   })
 
-  it('굴림이 아니면 굴림 표식이 없다', () => {
-    expect(renderToStaticMarkup(<CardFace card={card('p1')} />)).not.toContain('deck__rolling')
+  it('굴림이 아니면 굴림 배지가 없다', () => {
+    expect(renderToStaticMarkup(<CardFace card={card('p1')} />)).not.toContain(
+      'deck__badge--rolling',
+    )
   })
 })
 
