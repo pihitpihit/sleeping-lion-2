@@ -255,7 +255,7 @@ function NewCharacter({ ownerId, onMade }: { ownerId: string; onMade: () => void
   if (!open) {
     return (
       <button type="button" className="journal__newchar" onClick={() => setOpen(true)}>
-        캐릭터 세우기
+        캐릭터 생성
       </button>
     )
   }
@@ -277,7 +277,7 @@ function NewCharacter({ ownerId, onMade }: { ownerId: string; onMade: () => void
       </div>
 
       <p className="char__note">
-        클래스는 <strong>세울 때만 정한다.</strong> 그 뒤로는 못 바꾼다.
+        클래스는 <strong>생성할 때만 정한다.</strong> 그 뒤로는 못 바꾼다.
       </p>
       <ClassPicker
         classId={classId}
@@ -312,7 +312,7 @@ function NewCharacter({ ownerId, onMade }: { ownerId: string; onMade: () => void
           disabled={busy || name.trim() === ''}
           onClick={() => void make()}
         >
-          세우기
+          생성
         </button>
       </div>
     </section>
@@ -345,7 +345,7 @@ function MyCharacters({
       <h2 className="journal__section">내 캐릭터</h2>
 
       {loaded && active.length === 0 && (
-        <p className="journal__empty">아직 세운 캐릭터가 없다. 아래에서 하나 세워라.</p>
+        <p className="journal__empty">아직 만든 캐릭터가 없다. 아래에서 하나 생성하라.</p>
       )}
 
       {active.length > 0 && (

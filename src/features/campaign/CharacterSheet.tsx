@@ -94,7 +94,6 @@ export function CharacterSheet({
   onEdit,
   onRemove,
 }: Props) {
-  const nameId = useId()
   const noteId = useId()
 
   /** 고칠 수 있는 사람인가. 남의 것과 오프라인은 편집으로 들어갈 수조차 없다. */
@@ -217,17 +216,16 @@ export function CharacterSheet({
         </div>
 
         <div className="char__names">
-          <label className="sheet__label" htmlFor={nameId}>
-            이름
-          </label>
-          <input
-            id={nameId}
-            className="sheet__input"
-            value={shown.name}
-            placeholder="이름을 짓는다"
-            disabled={!editing}
-            onChange={(e) => set('name', e.target.value)}
-          />
+          {/*
+            ┌────────────────────────────────────────────────────────────────┐
+            │ **이름은 생성할 때 정한다. 여기서는 읽기만 한다.**              │
+            └────────────────────────────────────────────────────────────────┘
+
+            파티원은 이름으로 서로를 부른다 — 축 ②의 이름표도 그것이고, 전투에서
+            누구의 체력·덱인지 가리는 것도 그것이다. **판 도중에 바뀌면 옆 사람이
+            보던 것이 딴 사람이 된다.** 막는 것은 서버다(`0017`).
+          */}
+          <h2 className="char__name">{character.name || '이름 없음'}</h2>
           <p className="char__owner">
             {character.ownerName || '이름 없음'}의 캐릭터
             {info && (

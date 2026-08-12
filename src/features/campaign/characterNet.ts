@@ -158,7 +158,6 @@ export async function joinParty(id: string, campaignId: string | null): Promise<
 /** 고친 것을 얹는다. 서버가 `version`을 올리고 `updated_at`을 찍는다. */
 export async function pushCharacterEdits(id: string, edits: CharacterEdits): Promise<Character> {
   const patch: Record<string, unknown> = {}
-  if (edits.name !== undefined) patch.name = edits.name
   if (edits.level !== undefined) patch.level = clampLevel(edits.level)
   if (edits.xp !== undefined) patch.xp = clampXp(edits.xp)
   if (edits.gold !== undefined) patch.gold = clampGold(edits.gold)

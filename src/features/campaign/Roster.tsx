@@ -143,7 +143,7 @@ export function Roster({ campaignId, me, readOnly = false }: Props) {
       */}
       {!locked && (
         <p className="roster__hint">
-          캐릭터는 <a href="#/journal">일지</a>에서 세우고, 그 캐릭터 화면에서 이 파티에 넣는다.
+          캐릭터는 <a href="#/journal">일지</a>에서 생성하고, 그 캐릭터 화면에서 이 파티에 넣는다.
         </p>
       )}
     </section>

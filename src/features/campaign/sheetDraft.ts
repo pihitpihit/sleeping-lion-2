@@ -26,9 +26,11 @@ import type { Character, CharacterEdits } from './types'
  *
  * **레벨은 여기 없다** — 경험치에서 나오는 값이라 고를 것이 아니다(2026-08-12에
  * 구현 결정 43을 뒤집었다). `sheetDiff`가 경험치에서 뽑아 함께 보낸다.
+ *
+ * **이름과 클래스도 없다** — 생성할 때 정하고 그 뒤로는 못 바꾼다. 막는 것은
+ * 서버이며(`0014`·`0017`) 여기서 빼 두는 것은 **보낼 수조차 없게** 하는 것이다.
  */
 export interface SheetDraft {
-  name: string
   notes: string
   xp: number
   gold: number
@@ -40,19 +42,18 @@ export interface SheetDraft {
 
 /*
   ┌──────────────────────────────────────────────────────────────────────────┐
-  │ **클래스는 초안에 없다. 세울 때 정하고 그 뒤로는 못 바꾼다.**             │
+  │ **이름과 클래스는 초안에 없다. 생성할 때 정한다.**                        │
   └──────────────────────────────────────────────────────────────────────────┘
 
-  캐릭터가 곧 클래스다. 레벨·경험·퍽·아이템이 전부 그 클래스에 매인 값이라
-  클래스만 갈아 끼우면 남은 값들이 통째로 거짓이 된다. 막는 것은 서버이며
-  (`0014_lock_character_class.sql`) 여기서 빼 두는 것은 **보낼 수조차 없게**
-  하는 것이다 — 화면이 안 내는 것만으로는 잠긴 것이 아니다.
+  캐릭터가 곧 클래스이고, 파티원은 이름으로 서로를 부른다 — 판 도중에 이름이
+  바뀌면 옆 사람이 보던 것이 딴 사람이 된다. 막는 것은 서버이며(`0014`·`0017`)
+  여기서 빼 두는 것은 **보낼 수조차 없게** 하는 것이다 — 화면이 안 내는 것만으로는
+  잠긴 것이 아니다.
 */
 
 /** 지금 레코드를 초안으로 뜬다. 배열은 **사본으로** 뜬다 — 원본을 건드리면 안 된다. */
 export function draftOf(character: Character): SheetDraft {
   return {
-    name: character.name,
     notes: character.notes,
     xp: character.xp,
     gold: character.gold,
@@ -83,10 +84,6 @@ function sameStrings(a: readonly string[], b: readonly string[]): boolean {
  */
 export function sheetDiff(character: Character, draft: SheetDraft): CharacterEdits {
   const edits: CharacterEdits = {}
-
-  // 이름은 앞뒤 공백을 턴다. 눈에 안 보이는 차이로 저장 단추가 살아나면 안 된다.
-  const name = draft.name.trim()
-  if (name !== character.name) edits.name = name
 
   if (draft.notes !== character.notes) edits.notes = draft.notes
 

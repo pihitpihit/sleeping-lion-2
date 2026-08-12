@@ -39,7 +39,7 @@ describe('초안 뜨기', () => {
   it('그대로 뜬다', () => {
     const c = fixture()
     const d = draftOf(c)
-    expect(d.name).toBe(c.name)
+    expect(d.notes).toBe(c.notes)
     expect(d.perks).toEqual(c.perks)
     expect(d.items).toEqual(c.items)
   })
@@ -100,13 +100,6 @@ describe('바뀐 칸만 낸다', () => {
 })
 
 describe('울타리와 다듬기', () => {
-  /** 눈에 안 보이는 차이로 저장 단추가 살아나면 안 된다. */
-  it('이름의 앞뒤 공백은 턴다', () => {
-    const c = fixture({ name: '무명' })
-    expect(sheetDiff(c, { ...draftOf(c), name: '  무명  ' })).toEqual({})
-    expect(sheetDiff(c, { ...draftOf(c), name: ' 홍명보 ' })).toEqual({ name: '홍명보' })
-  })
-
   it('빈 아이템 줄은 걷는다', () => {
     const c = fixture({ items: [] })
     expect(sheetDiff(c, { ...draftOf(c), items: ['  ', ''] })).toEqual({})
@@ -164,23 +157,25 @@ describe('레벨은 경험치가 정한다', () => {
 })
 
 /**
- * **클래스는 초안에 없다.** 캐릭터가 곧 클래스이므로 세울 때 정하고 그 뒤로는 못
- * 바꾼다 — 레벨·경험·퍽·아이템이 전부 그 클래스에 매인 값이라 클래스만 갈아
- * 끼우면 남은 값들이 통째로 거짓이 된다. 막는 것은 서버이며(`0014`) 초안에서
+ * **이름과 클래스는 초안에 없다.** 생성할 때 정하고 그 뒤로는 못 바꾼다 —
+ * 캐릭터가 곧 클래스이고, 파티원은 이름으로 서로를 부른다(판 도중에 바뀌면 옆
+ * 사람이 보던 것이 딴 사람이 된다). 막는 것은 서버이며(`0014`·`0017`) 초안에서
  * 빼 둔 것은 **보낼 수조차 없게** 하는 것이다.
  */
-describe('클래스는 못 바꾼다', () => {
-  it('초안에 클래스 칸이 없다', () => {
+describe('이름과 클래스는 못 바꾼다', () => {
+  it('초안에 이름·클래스 칸이 없다', () => {
     const d = draftOf(fixture())
+    expect('name' in d).toBe(false)
     expect('classId' in d).toBe(false)
     expect('classIcon' in d).toBe(false)
   })
 
   it('무엇을 고쳐도 클래스는 안 나간다', () => {
     const c = fixture()
-    const edits = sheetDiff(c, { ...draftOf(c), gold: 999, name: '딴이름', retired: true })
+    const edits = sheetDiff(c, { ...draftOf(c), gold: 999, retired: true })
     expect('classId' in edits).toBe(false)
     expect('classIcon' in edits).toBe(false)
+    expect('name' in edits).toBe(false)
   })
 })
 

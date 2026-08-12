@@ -957,6 +957,18 @@
   gap: 0.35rem;
 }
 
+/* 이름은 생성할 때 정한다 — 여기서는 읽기만 한다(칸이 아니라 글이다). */
+.char__name {
+  margin: 0;
+  font-family: var(--sl-font-ko-display);
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--sl-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .char__owner {
   margin: 0;
   font-size: 0.78rem;
