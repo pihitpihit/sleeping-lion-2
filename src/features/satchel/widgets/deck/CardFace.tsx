@@ -2,6 +2,7 @@ import { ELEMENTS } from '../elements/elements'
 import {
   FACE_SLOTS,
   SHUFFLE_ICON_URL,
+  SOCKET_URL,
   cardLabel,
   markIconUrl,
   medallionUrl,
@@ -172,13 +173,31 @@ export function CardFace({ card }: { card: Card }) {
         </span>
       )}
 
+      {/*
+        섞기 — **홈을 먼저 깔고 그 위에 표식을 앉힌다.**
+
+        표식만 얹으면 바탕 없이 떠 보인다. 실물 카드는 여기에도 홈이 파여 있고
+        그 안에 표식이 들어간다.
+      */}
       {spec.shuffleAfter && (
-        <img
-          className="deck__shuffle"
-          src={SHUFFLE_ICON_URL}
-          alt=""
-          style={{ left: `${shuffle.cx}%`, top: `${shuffle.cy}%`, width: `${shuffle.size}%` }}
-        />
+        <>
+          <img
+            className="deck__socket"
+            src={SOCKET_URL}
+            alt=""
+            style={{ left: `${shuffle.cx}%`, top: `${shuffle.cy}%`, width: `${shuffle.size}%` }}
+          />
+          <img
+            className="deck__shuffle"
+            src={SHUFFLE_ICON_URL}
+            alt=""
+            style={{
+              left: `${FACE_SLOTS.shuffleIcon.cx}%`,
+              top: `${FACE_SLOTS.shuffleIcon.cy}%`,
+              width: `${FACE_SLOTS.shuffleIcon.size}%`,
+            }}
+          />
+        </>
       )}
     </span>
   )

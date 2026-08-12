@@ -45,6 +45,10 @@ describe('카드 앞면', () => {
   it('섞기 표식은 곱하기 카드에만, 오른쪽 아래에 붙는다', () => {
     const html = renderToStaticMarkup(<CardFace card={card('x2')} />)
     expect(html).toContain('deck__shuffle')
+    // 홈을 먼저 깔고 그 위에 표식을 앉힌다 — 표식만 얹으면 바탕 없이 떠 보인다.
+    expect(html).toContain('deck__socket')
+    expect(html.indexOf('deck__socket')).toBeLessThan(html.indexOf('deck__shuffle'))
+    expect(FACE_SLOTS.shuffleIcon.size).toBeLessThan(FACE_SLOTS.shuffle.size)
     expect(html).toContain(`left:${FACE_SLOTS.shuffle.cx}%`)
     // 왼쪽 아래 홈(덱 주인 자리)이 아니다.
     expect(FACE_SLOTS.shuffle.cx).toBeGreaterThan(50)
@@ -52,9 +56,13 @@ describe('카드 앞면', () => {
     expect(renderToStaticMarkup(<CardFace card={card('p1')} />)).not.toContain('deck__shuffle')
   })
 
-  it('덱 주인 홈에는 아무것도 안 그린다 — 아직 누구 덱인지 모른다', () => {
+  it('덱 주인 홈에는 아무것도 안 그린다 — 카드 그림에 이미 박혀 있다', () => {
     const html = renderToStaticMarkup(<CardFace card={card('x2')} />)
     expect(html).not.toContain(`left:${FACE_SLOTS.owner.cx}%`)
+  })
+
+  it('섞기가 없는 카드에는 홈도 없다', () => {
+    expect(renderToStaticMarkup(<CardFace card={card('p1')} />)).not.toContain('deck__socket')
   })
 
   it('표식은 메달과 따로 붙는다 — 메달은 여전히 값에서 고른다', () => {

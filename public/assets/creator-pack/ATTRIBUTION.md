@@ -81,6 +81,13 @@
 | `attack-modifiers/p1.webp` | `Attack Modifiers/Plus 1.png` | +1 값 메달 | 변경함 | 〃 |
 | `attack-modifiers/p2.webp` | `Attack Modifiers/Plus 2.png` | +2 값 메달 | 변경함 | 〃 |
 | `attack-modifiers/x2.webp` | `Attack Modifiers/Double Damage.png` | ×2 값 메달 | 변경함 | 〃 |
+| `attack-modifiers/socket.webp` | `Attack Modifiers/Attack Modifier - Blank.jpg` | 카드에 파인 둥근 홈 | 변경함 | **왼쪽 아래 홈만 44×44로 오려내고 원 바깥을 알파로 잘라냄.** 축소·자르기·형식 변환뿐이며 다시 그리지 않았다 |
+
+**둥근 홈에 대하여.** 실물 카드는 **양쪽 아래에 홈이 있고** 왼쪽에는 덱 주인
+(1·2·3·4·M 또는 클래스 표식)이, 오른쪽에는 섞기 표식이 앉는다. 그런데 팩의 빈
+카드 그림에는 왼쪽 홈만 박혀 있다. 오른쪽에 섞기 표식만 얹으면 바탕 없이 떠
+보이므로, **왼쪽 홈을 오려 알파로 잘라 어디에나 얹을 수 있게 했다.** 원본
+그림에서 잘라낸 것이지 새로 그린 것이 아니다.
 
 **변경 내용 상세.** 축소·자르기·형식 변환만 했다. 그림을 다시 그리거나 색을
 바꾸거나 요소를 더하고 빼지 않았다. 원본은 카드가 437×296이고 메달은 그 안에

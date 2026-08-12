@@ -211,6 +211,7 @@
   높이는 `auto`로 두어 원본 비를 지킨다.
 */
 .deck__medallion,
+.deck__socket,
 .deck__shuffle,
 .deck__numeral {
   position: absolute;
@@ -221,6 +222,17 @@
 
 .deck__medallion {
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 45%));
+}
+
+/*
+  둥근 홈. 카드에 파인 자리처럼 보이게 안쪽에 그늘을 준다.
+
+  **표식보다 먼저 그린다** — 그러지 않으면 표식이 바탕 없이 떠 보인다.
+  아주 작아지면 테가 사라지므로 최소 한 변을 둔다.
+*/
+.deck__socket {
+  min-width: 14px;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 55%));
 }
 
 /*
