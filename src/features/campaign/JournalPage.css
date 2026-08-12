@@ -1375,3 +1375,79 @@
   background: var(--sl-gold-dim);
   border-radius: 999px;
 }
+
+/* --------------------------------------------------------------------------
+   공격 보정 덱 — 켠 특혜에서 나온 구성
+   --------------------------------------------------------------------------
+   **판은 여기 없다.** 남은 장수·뽑힌 카드는 축 ②의 휘발성 런타임이라 영속
+   기록지가 비출 것이 아니다. 여기 있는 것은 특혜에서 순수하게 셈한 값뿐이다.
+
+   줄로 늘어놓지 않고 **알약으로 흘린다.** 표식이 붙으면 종류가 스물 가까이
+   되는데 줄로 세우면 시트가 그만큼 길어진다 — 시트는 이미 길다.
+   -------------------------------------------------------------------------- */
+
+.deckview {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.deckview__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: rgb(0 0 0 / 28%);
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+}
+
+/* 덱 위젯이 쓰는 것과 같은 그림이다. 시트에서 본 것과 상 위에서 뽑는 것이
+   달라 보이면 같은 덱이라는 것을 알 수 없다. */
+.deckview__medallion {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+/* 그림이 없는 값(+3·+4). 메달 자리를 대신한다. */
+.deckview__numeral {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 0.8rem;
+  color: var(--sl-text);
+  background: radial-gradient(circle at 38% 32%, #4a4034, #241d15 72%);
+  border: 1px solid var(--sl-border-strong);
+  border-radius: 50%;
+}
+
+.deckview__count {
+  font-size: 0.95rem;
+  color: var(--sl-text);
+}
+
+/* 원소 표식. 파일은 원본 색을 지키고 화면에서만 밝힌다(구현 결정 15) —
+   어둠은 거의 검정이라 그대로 두면 알약에 묻힌다. */
+.deckview__mark {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  filter: brightness(0) invert(0.9);
+}
+
+.deckview__tag {
+  font-size: 0.7rem;
+  color: var(--sl-text-faint);
+}
+
+/* 표준에서 얼마나 달라졌는가. **특혜가 실제로 먹었는지 여기서 보인다.** */
+.deckview__delta {
+  font-size: 0.75rem;
+  color: var(--sl-gold);
+}

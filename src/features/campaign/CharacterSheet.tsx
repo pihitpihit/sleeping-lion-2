@@ -14,6 +14,7 @@ import {
   xpToNextLevel,
 } from './character'
 import { ClassPicker } from './ClassPicker'
+import { DeckPreview } from './DeckPreview'
 import { classInfoOf, maxHpFor, useClassStore } from './classStore'
 import { perkRowsOf } from './perks'
 import type { Character, CharacterEdits } from './types'
@@ -358,6 +359,15 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
           </>
         )}
       </section>
+
+      {/* ------------------------------------------------------------------
+          공격 보정 덱 — 켠 특혜에서 나온 구성
+          ------------------------------------------------------------------
+          **판은 읽지 않는다.** 남은 장수·뽑힌 카드는 축 ②의 휘발성 런타임이라
+          영속 기록지가 비출 것이 아니다(SPEC 5.2). 특혜 표가 없으면 아예 안
+          나온다 — 그때는 구성의 정본이 위젯 설정이고 시트는 그것을 모른다.
+          ------------------------------------------------------------------ */}
+      <DeckPreview perks={rows.map((r) => r.perk)} checked={character.perks} />
 
       {/* ------------------------------------------------------------------
           아이템 — 사용자가 적는다(구현 결정 2)
