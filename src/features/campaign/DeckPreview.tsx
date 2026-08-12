@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   STANDARD_COMPOSITION,
   cardLabel,
@@ -10,6 +11,7 @@ import {
   specSpeech,
 } from '../satchel/widgets/deck/deck'
 import { resolveComposition } from '../satchel/widgets/deck/perks'
+import { DeckGallery } from './DeckGallery'
 import type { ClassPerk } from './perkNet'
 import { perkDeckChanges } from './perks'
 
@@ -42,11 +44,14 @@ interface Props {
 }
 
 export function DeckPreview({ perks, checked }: Props) {
-  if (perks.length === 0) return null
+  const [showing, setShowing] = useState(false)
 
   const composition = resolveComposition({}, perkDeckChanges(perks, checked))
   const kinds = compositionKinds(composition)
   const total = compositionSize(composition)
+
+  // 훅을 부른 뒤에 접는다 — 호출 차례가 렌더마다 같아야 한다.
+  if (perks.length === 0) return null
 
   return (
     <section className="sheet__block">
@@ -121,6 +126,16 @@ export function DeckPreview({ perks, checked }: Props) {
           )
         })}
       </ul>
+
+      {/*
+        알약은 **몇 장인지** 말한다. 어떤 카드인지 보려면 펼쳐야 한다 — 그것은
+        세는 일이 아니라 보는 일이라 늘어놓을 자리가 따로 필요하다.
+      */}
+      <button type="button" className="deckview__open" onClick={() => setShowing(true)}>
+        카드 펼쳐 보기
+      </button>
+
+      {showing && <DeckGallery composition={composition} onClose={() => setShowing(false)} />}
     </section>
   )
 }

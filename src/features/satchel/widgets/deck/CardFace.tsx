@@ -7,6 +7,12 @@ import {
   medallionUrl,
   type Card,
 } from './deck'
+/*
+  카드 앞면의 결은 위젯 스타일시트에 있다. **여기서 함께 들여온다** — 시트의 덱
+  펼쳐 보기(`campaign/DeckGallery`)처럼 위젯 바깥에서 쓰이는 자리가 생겼고,
+  그쪽이 스타일을 따로 챙겨야 하면 언젠가 빠뜨린다.
+*/
+import './AttackDeck.css'
 
 /**
  * 한 번의 뽑기 — **굴림이 이어졌으면 겹쳐 늘어놓는다.**

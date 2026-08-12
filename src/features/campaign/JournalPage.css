@@ -1581,3 +1581,22 @@
   outline-offset: 0.5rem;
   border-radius: 0.3rem;
 }
+
+/* 알약 아래, 카드를 펼쳐 보는 문. */
+.deckview__open {
+  align-self: flex-start;
+  margin-top: 0.2rem;
+  padding: 0.4rem 0.8rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--sl-text-muted);
+  background: var(--sl-panel);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.deckview__open:hover {
+  color: var(--sl-gold);
+  border-color: var(--sl-border-strong);
+}
