@@ -22,7 +22,7 @@ import { useAttackDeckStore } from './deckStore'
 import { resolveComposition } from './perks'
 import { sanitizeAttackDeckSettings } from './settings'
 import { slotKeyFor } from '../../roster'
-import { usePerkChanges } from '../../perkSource'
+import { useCardOwner, usePerkChanges } from '../../perkSource'
 import './AttackDeck.css'
 
 /**
@@ -78,6 +78,8 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
    * 특혜 표가 아직 안 들어왔으면 `null`이고 설정값이 쓰인다.
    */
   const perkChanges = usePerkChanges(deckSettings.characterId)
+  /** 카드 왼쪽 아래 홈에 앉을 표식. 캐릭터를 안 골랐으면 `null`이고 홈은 빈다. */
+  const owner = useCardOwner(deckSettings.characterId)
   const composition = resolveComposition(deckSettings.composition, perkChanges)
 
   /**
@@ -178,7 +180,7 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
             <img className="deck__spent-icon" src={SHUFFLE_ICON_URL} alt="" />
           </span>
         ) : !layout.showDiscard && revealed ? (
-          <CardStack chain={chain} />
+          <CardStack chain={chain} owner={owner} />
         ) : (
           <span className="deck__back" aria-hidden="true" />
         )}
@@ -196,7 +198,7 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
           aria-live="polite"
           aria-label={revealed ? `공개된 카드: ${chainSpeech(chain)}` : '아직 공개한 카드가 없다.'}
         >
-          {revealed ? <CardStack chain={chain} /> : <span className="deck__empty" />}
+          {revealed ? <CardStack chain={chain} owner={owner} /> : <span className="deck__empty" />}
           {discarded > 0 && (
             <span className="deck__count sl-numeral" aria-hidden="true">
               {discarded}
@@ -225,7 +227,7 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
           landOn={landOn}
           onDone={() => setFlash(null)}
         >
-          <CardStack chain={flash.chain} />
+          <CardStack chain={flash.chain} owner={owner} />
         </RevealFlash>
       )}
     </div>

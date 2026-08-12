@@ -17,6 +17,29 @@ import {
  * 같은 것으로 읽힌다. 나머지는 표식 자신이 들고 있는 색(`MARKS`)이며 실물
  * 상태이상 표식을 따랐다.
  */
+/**
+ * 카드가 누구 덱의 것인가 — **왼쪽 아래 홈에 앉는 것.**
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **카드는 스스로 알아내지 않고 받아서 그린다.**                            │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 실물에서는 1·2·3·4·M이나 **그 카드를 넣어 준 클래스의 표식**이 들어간다 — 판이
+ * 끝나고 덱을 도로 가를 때 쓰는 자리다. 우리는 클래스 표식을 쓴다.
+ *
+ * 그림과 글자를 여기서 찾지 않고 **부르는 쪽이 건네준다.** 카드가 캐릭터·클래스
+ * 스토어를 직접 부르면 축 ②가 축 ①에 닿는 자리가 흩어진다 — 그 자리는
+ * `perkSource.ts` 하나여야 한다(구현 결정 142).
+ */
+export interface CardOwner {
+  /** 클래스 표식 그림. 팩에 없는 클래스면 `null`. */
+  iconUrl: string | null
+  /** 그림이 없을 때 홈에 적을 한 글자. 비면 홈을 비워 둔다. */
+  letter: string
+  /** 읽어주는 쪽에 갈 이름. */
+  name: string
+}
+
 function markBadgeColor(mark: CardMark): string {
   if (mark.def.kind === 'element') {
     return ELEMENTS.find((e) => e.id === mark.def.id)?.color ?? '#5A4830'
@@ -39,10 +62,10 @@ import './AttackDeck.css'
  *
  * 한 장뿐이면 겹칠 것이 없어 그냥 그 카드다.
  */
-export function CardStack({ chain }: { chain: readonly Card[] }) {
+export function CardStack({ chain, owner }: { chain: readonly Card[]; owner?: CardOwner | null }) {
   if (chain.length <= 1) {
     const only = chain[0]
-    return only ? <CardFace card={only} /> : null
+    return only ? <CardFace card={only} owner={owner} /> : null
   }
 
   return (
@@ -63,7 +86,7 @@ export function CardStack({ chain }: { chain: readonly Card[] }) {
             } as React.CSSProperties
           }
         >
-          <CardFace card={card} />
+          <CardFace card={card} owner={owner} />
         </span>
       ))}
     </span>
@@ -92,7 +115,7 @@ export function CardStack({ chain }: { chain: readonly Card[] }) {
  * 팩에서 뽑아야 하고, 우리가 흉내 내 그리는 것은 구현 결정 31이 막는 자리와
  * 다르다 — 저쪽은 우리 도형이고 이쪽은 그들의 그림이다).
  */
-export function CardFace({ card }: { card: Card }) {
+export function CardFace({ card, owner }: { card: Card; owner?: CardOwner | null }) {
   const { spec } = card
   const medallion = medallionUrl(spec.valueId)
   const { medallion: slot, shuffle } = FACE_SLOTS
@@ -110,6 +133,30 @@ export function CardFace({ card }: { card: Card }) {
       ) : (
         <span className="deck__numeral sl-numeral" style={slotStyle}>
           {cardLabel(spec.effect)}
+        </span>
+      )}
+
+      {/*
+        덱 주인 — **왼쪽 아래 홈.**
+
+        홈은 카드 그림에 이미 박혀 있으므로 그 위에 표식만 앉힌다. 클래스 표식은
+        거의 검정이라 어두운 홈에 묻힌다 — **물들이지 않고 양피지 원반을 깐다**
+        (구현 결정 41). 시트·일지의 클래스 배지와 같은 결이다.
+      */}
+      {owner && (owner.iconUrl || owner.letter) && (
+        <span
+          className="deck__owner"
+          style={{
+            left: `${FACE_SLOTS.owner.cx}%`,
+            top: `${FACE_SLOTS.owner.cy}%`,
+            width: `${FACE_SLOTS.owner.size * 0.86}%`,
+          }}
+        >
+          {owner.iconUrl ? (
+            <img className="deck__owner-icon" src={owner.iconUrl} alt="" />
+          ) : (
+            <span className="deck__owner-letter">{owner.letter}</span>
+          )}
         </span>
       )}
 

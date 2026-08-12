@@ -11,6 +11,7 @@ import {
   specSpeech,
 } from '../satchel/widgets/deck/deck'
 import { resolveComposition } from '../satchel/widgets/deck/perks'
+import type { CardOwner } from '../satchel/widgets/deck/CardFace'
 import { DeckGallery } from './DeckGallery'
 import type { ClassPerk } from './perkNet'
 import { perkDeckChanges } from './perks'
@@ -41,9 +42,11 @@ interface Props {
   perks: readonly ClassPerk[]
   /** 켜 둔 상자 번호. */
   checked: readonly number[]
+  /** 펼쳐 본 카드의 왼쪽 아래 홈에 앉을 표식. */
+  owner?: CardOwner | null
 }
 
-export function DeckPreview({ perks, checked }: Props) {
+export function DeckPreview({ perks, checked, owner }: Props) {
   const [showing, setShowing] = useState(false)
 
   const composition = resolveComposition({}, perkDeckChanges(perks, checked))
@@ -135,7 +138,9 @@ export function DeckPreview({ perks, checked }: Props) {
         카드 펼쳐 보기
       </button>
 
-      {showing && <DeckGallery composition={composition} onClose={() => setShowing(false)} />}
+      {showing && (
+        <DeckGallery composition={composition} owner={owner} onClose={() => setShowing(false)} />
+      )}
     </section>
   )
 }

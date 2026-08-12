@@ -56,9 +56,8 @@ describe('카드 앞면', () => {
     expect(renderToStaticMarkup(<CardFace card={card('p1')} />)).not.toContain('deck__shuffle')
   })
 
-  it('덱 주인 홈에는 아무것도 안 그린다 — 카드 그림에 이미 박혀 있다', () => {
-    const html = renderToStaticMarkup(<CardFace card={card('x2')} />)
-    expect(html).not.toContain(`left:${FACE_SLOTS.owner.cx}%`)
+  it('주인을 안 건네면 홈은 빈다', () => {
+    expect(renderToStaticMarkup(<CardFace card={card('x2')} />)).not.toContain('deck__owner')
   })
 
   it('섞기가 없는 카드에는 홈도 없다', () => {
@@ -105,6 +104,48 @@ describe('카드 앞면', () => {
     expect(renderToStaticMarkup(<CardFace card={card('p1')} />)).not.toContain(
       'deck__badge--rolling',
     )
+  })
+})
+
+/**
+ * 왼쪽 아래 홈은 **덱 주인의 자리다** — 판이 끝나고 덱을 도로 가를 때 쓴다.
+ * 실물에는 1·2·3·4·M이나 그 카드를 넣어 준 클래스의 표식이 들어간다.
+ *
+ * **카드는 스스로 알아내지 않고 받아서 그린다.** 축 ②가 축 ①에 닿는 자리는
+ * `perkSource.ts` 하나여야 한다(구현 결정 142).
+ */
+describe('덱 주인 표식', () => {
+  it('그림이 있으면 홈에 그림을 앉힌다', () => {
+    const html = renderToStaticMarkup(
+      <CardFace
+        card={card('p1')}
+        owner={{ iconUrl: '/x/class-17.svg', letter: '바', name: '바위심장' }}
+      />,
+    )
+    expect(html).toContain('deck__owner')
+    expect(html).toContain('class-17.svg')
+    expect(html).toContain(`left:${FACE_SLOTS.owner.cx}%`)
+  })
+
+  /** 팩에 그림이 없는 클래스가 있다(사자의 턱 넷). 그때는 첫 글자로 대신한다. */
+  it('그림이 없으면 첫 글자를 앉힌다', () => {
+    const html = renderToStaticMarkup(
+      <CardFace card={card('p1')} owner={{ iconUrl: null, letter: '적', name: '적위병' }} />,
+    )
+    expect(html).toContain('deck__owner-letter')
+    expect(html).toContain('>적<')
+  })
+
+  it('그림도 글자도 없으면 홈을 비워 둔다', () => {
+    const html = renderToStaticMarkup(
+      <CardFace card={card('p1')} owner={{ iconUrl: null, letter: '', name: '' }} />,
+    )
+    expect(html).not.toContain('deck__owner')
+  })
+
+  it('섞기 홈과 겹치지 않는다 — 왼쪽과 오른쪽이다', () => {
+    expect(FACE_SLOTS.owner.cx).toBeLessThan(50)
+    expect(FACE_SLOTS.shuffle.cx).toBeGreaterThan(50)
   })
 })
 

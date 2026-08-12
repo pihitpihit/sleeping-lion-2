@@ -14,6 +14,7 @@ import {
 import { DeckPreview } from './DeckPreview'
 import { classInfoOf, maxHpFor, useClassStore } from './classStore'
 import { perkRowsOf } from './perks'
+import { ownerBadge } from '../satchel/perkSource'
 import { draftOf, isDirty, sheetDiff, type SheetDraft } from './sheetDraft'
 import type { Character, CharacterEdits } from './types'
 
@@ -438,7 +439,12 @@ export function CharacterSheet({
           영속 기록지가 비출 것이 아니다(SPEC 5.2). 특혜 표가 없으면 아예 안
           나온다 — 그때는 구성의 정본이 위젯 설정이고 시트는 그것을 모른다.
           ------------------------------------------------------------------ */}
-      <DeckPreview perks={rows.map((r) => r.perk)} checked={shown.perks} />
+      <DeckPreview
+        perks={rows.map((r) => r.perk)}
+        checked={shown.perks}
+        /* 카드 왼쪽 아래 홈에 앉을 표식. 실물에서 그 자리는 덱 주인의 것이다. */
+        owner={ownerBadge(info?.icon ?? character.classIcon, info?.name ?? '', character.name)}
+      />
 
       {/* ------------------------------------------------------------------
           아이템 — 사용자가 적는다(구현 결정 2)

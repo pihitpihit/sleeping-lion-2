@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
+import { classIconUrl } from '../campaign/character'
 import { classInfoOf, useClassStore } from '../campaign/classStore'
 import { perkDeckChanges } from '../campaign/perks'
+import type { CardOwner } from './widgets/deck/CardFace'
 import type { PerkDeckChange } from './widgets/deck/perks'
 import { useRosterStore } from './roster'
 
@@ -51,4 +53,40 @@ export function usePerkChanges(characterId: string | null): PerkDeckChange[] | n
   if (!perks || perks.length === 0) return null
 
   return perkDeckChanges(perks, entry.perks)
+}
+
+/**
+ * 이 덱이 누구 것인가 — 카드 왼쪽 아래 홈에 앉을 것.
+ *
+ * **여기서 낸다.** 축 ②가 축 ①에 닿는 자리를 하나로 모아 두었으므로
+ * (구현 결정 142) 클래스 표식을 찾는 일도 여기 있어야 한다.
+ *
+ * 클래스 표가 비어 있어도 **아이콘 번호만으로 그림을 찾는다** — 표를 넣기 전에
+ * 만든 캐릭터도 제 표식을 갖는다(절대 원칙 3과 같은 결).
+ */
+export function useCardOwner(characterId: string | null): CardOwner | null {
+  const entries = useRosterStore((s) => s.entries)
+  const classes = useClassStore((s) => s.list)
+
+  if (characterId === null) return null
+  const entry = entries.find((e) => e.id === characterId)
+  if (!entry) return null
+
+  const info = classInfoOf(classes, entry.classId, entry.classIcon)
+  return ownerBadge(info?.icon ?? entry.classIcon, info?.name ?? '', entry.name)
+}
+
+/**
+ * 표식 하나를 짓는다.
+ *
+ * **그림이 없으면 첫 글자로 대신한다** — 사자의 턱 넷처럼 팩에 그림이 없는
+ * 클래스가 있다(구현 결정 119). 클래스 이름도 없으면 캐릭터 이름을 쓴다.
+ */
+export function ownerBadge(icon: number, className: string, characterName: string): CardOwner {
+  const label = className || characterName
+  return {
+    iconUrl: classIconUrl(icon),
+    letter: label.slice(0, 1),
+    name: label,
+  }
 }

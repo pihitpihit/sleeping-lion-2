@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { CardFace } from '../satchel/widgets/deck/CardFace'
+import { CardFace, type CardOwner } from '../satchel/widgets/deck/CardFace'
 import {
   CARD_FACE_URL,
   buildDeck,
@@ -37,6 +37,8 @@ import './DeckGallery.css'
 
 interface Props {
   composition: DeckComposition
+  /** 카드 왼쪽 아래 홈에 앉을 표식. 모르면 홈을 비워 둔다. */
+  owner?: CardOwner | null
   onClose: () => void
 }
 
@@ -47,7 +49,7 @@ interface Props {
  * 요구해서 서버 렌더로 확인할 수가 없는데, 확인하고 싶은 것은 자리가 아니라
  * **무엇이 늘어서는가**다. 갈라 두면 그쪽만 통째로 덮인다.
  */
-export function DeckGallery({ composition, onClose }: Props) {
+export function DeckGallery({ composition, owner, onClose }: Props) {
   return createPortal(
     /*
       **바깥을 눌러 닫는 길은 두지 않는다.** 화면을 통째로 덮으면서 바깥이랄 것이
@@ -55,14 +57,14 @@ export function DeckGallery({ composition, onClose }: Props) {
       구르다 말고 팝업이 사라진다. 나가는 길은 × 단추와 Escape다.
     */
     <div className="deckgallery">
-      <DeckGalleryPanel composition={composition} onClose={onClose} />
+      <DeckGalleryPanel composition={composition} owner={owner} onClose={onClose} />
     </div>,
     document.body,
   )
 }
 
 /** 팝업의 알맹이. 배경막과 갈라 두어 서버 렌더로 확인할 수 있다. */
-export function DeckGalleryPanel({ composition, onClose }: Props) {
+export function DeckGalleryPanel({ composition, owner, onClose }: Props) {
   const closeRef = useRef<HTMLButtonElement | null>(null)
   const titleId = useId()
 
@@ -125,7 +127,7 @@ export function DeckGalleryPanel({ composition, onClose }: Props) {
       >
         {cards.map((card) => (
           <li key={card.id} className="deckgallery__cell" aria-label={cardSpeech(card)}>
-            <CardFace card={card} />
+            <CardFace card={card} owner={owner} />
           </li>
         ))}
       </ul>
