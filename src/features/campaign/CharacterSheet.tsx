@@ -11,7 +11,6 @@ import {
   togglePerk,
   xpToNextLevel,
 } from './character'
-import { ClassPicker } from './ClassPicker'
 import { DeckPreview } from './DeckPreview'
 import { classInfoOf, maxHpFor, useClassStore } from './classStore'
 import { perkRowsOf } from './perks'
@@ -55,6 +54,17 @@ interface Props {
  *
  * **퍽은 번호만 켠다.** 클래스별 퍽 표는 게임 콘텐츠라 우리가 갖고 있지 않다
  * (SPEC 3장). 사람이 제 시트를 보고 몇 번째 줄인지 짚는다.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **클래스는 여기서 못 바꾼다. 캐릭터를 세울 때 정하는 것이다.**             │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 캐릭터가 곧 클래스다 — 바위심장이 도끼투척수로 바뀌는 일은 없고, 그러고 싶으면
+ * 거두고 새로 세운다. 레벨·경험·퍽·아이템이 전부 그 클래스에 매인 값이라 클래스만
+ * 갈아 끼우면 **남은 값들이 통째로 거짓이 된다.**
+ *
+ * **막는 것은 서버다**(`0014_lock_character_class.sql`). 화면에서 칸을 안 내는
+ * 것은 헛손질을 줄이는 것일 뿐이다(구현 결정 44와 같은 결).
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
  * │ **열람이 기본이고, 고치려면 편집으로 들어간다.**                          │
@@ -142,7 +152,8 @@ export function CharacterSheet({
   const ready = levelUpReady(shown.level, shown.xp)
   const slots = perkSlotCount(shown.level, shown.checkmarks)
   const earned = perksEarned(shown.level, shown.checkmarks)
-  const iconUrl = classIconUrl(shown.classIcon)
+  // 클래스는 초안에 없다 — 바뀔 수 없으므로 레코드에서 그대로 읽는다.
+  const iconUrl = classIconUrl(character.classIcon)
 
   /**
    * 클래스 수치. 관리자가 넣어 두었으면 이름·핸드 사이즈·최대 체력이 온다.
@@ -155,7 +166,7 @@ export function CharacterSheet({
   useEffect(() => {
     void loadClasses()
   }, [loadClasses])
-  const info = classInfoOf(classes, shown.classId, shown.classIcon)
+  const info = classInfoOf(classes, character.classId, character.classIcon)
   const maxHp = maxHpFor(info, shown.level)
 
   /**
@@ -229,25 +240,6 @@ export function CharacterSheet({
           </p>
         </div>
       </div>
-
-      {/*
-        클래스는 **편집 중에만 낸다.** 스물한 개를 늘어놓는 칸이라 열람 화면에서는
-        자리만 차지한다 — 고른 클래스는 이름줄에 이미 적혀 있다.
-      */}
-      {editing && (
-        <section className="sheet__block">
-          <h3 className="sheet__label">클래스 표식</h3>
-          <ClassPicker
-            classId={shown.classId}
-            icon={shown.classIcon}
-            /* 아이콘도 함께 적어 둔다 — 축 ②의 이름표가 그 번호로 그림을 찾는다. */
-            onChange={(next) => {
-              set('classId', next.classId)
-              set('classIcon', next.icon)
-            }}
-          />
-        </section>
-      )}
 
       {/* ------------------------------------------------------------------
           레벨 — 실물 시트의 1~9 눈금

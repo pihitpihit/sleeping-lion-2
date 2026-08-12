@@ -119,10 +119,6 @@ export async function createCharacter(
 export async function pushCharacterEdits(id: string, edits: CharacterEdits): Promise<Character> {
   const patch: Record<string, unknown> = {}
   if (edits.name !== undefined) patch.name = edits.name
-  if (edits.classIcon !== undefined) {
-    patch.class_icon = hasClassIcon(edits.classIcon) ? edits.classIcon : 0
-  }
-  if (edits.classId !== undefined) patch.class_id = edits.classId
   if (edits.level !== undefined) patch.level = clampLevel(edits.level)
   if (edits.xp !== undefined) patch.xp = clampXp(edits.xp)
   if (edits.gold !== undefined) patch.gold = clampGold(edits.gold)

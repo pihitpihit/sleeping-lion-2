@@ -128,12 +128,32 @@ describe('울타리와 다듬기', () => {
   })
 })
 
+/**
+ * **클래스는 초안에 없다.** 캐릭터가 곧 클래스이므로 세울 때 정하고 그 뒤로는 못
+ * 바꾼다 — 레벨·경험·퍽·아이템이 전부 그 클래스에 매인 값이라 클래스만 갈아
+ * 끼우면 남은 값들이 통째로 거짓이 된다. 막는 것은 서버이며(`0014`) 초안에서
+ * 빼 둔 것은 **보낼 수조차 없게** 하는 것이다.
+ */
+describe('클래스는 못 바꾼다', () => {
+  it('초안에 클래스 칸이 없다', () => {
+    const d = draftOf(fixture())
+    expect('classId' in d).toBe(false)
+    expect('classIcon' in d).toBe(false)
+  })
+
+  it('무엇을 고쳐도 클래스는 안 나간다', () => {
+    const c = fixture()
+    const edits = sheetDiff(c, { ...draftOf(c), gold: 999, name: '딴이름', retired: true })
+    expect('classId' in edits).toBe(false)
+    expect('classIcon' in edits).toBe(false)
+  })
+})
+
 describe('고친 것이 있는가', () => {
   it('한 칸이라도 바뀌면 참', () => {
     const c = fixture()
     expect(isDirty(c, { ...draftOf(c), notes: '한 줄' })).toBe(true)
     expect(isDirty(c, { ...draftOf(c), retired: true })).toBe(true)
-    expect(isDirty(c, { ...draftOf(c), classId: 'x' })).toBe(true)
   })
 
   it('되돌려 놓으면 거짓 — 고쳤다 물린 것은 안 고친 것이다', () => {

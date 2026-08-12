@@ -31,10 +31,19 @@ export interface SheetDraft {
   checkmarks: number
   perks: number[]
   items: string[]
-  classId: string | null
-  classIcon: number
   retired: boolean
 }
+
+/*
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ **클래스는 초안에 없다. 세울 때 정하고 그 뒤로는 못 바꾼다.**             │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  캐릭터가 곧 클래스다. 레벨·경험·퍽·아이템이 전부 그 클래스에 매인 값이라
+  클래스만 갈아 끼우면 남은 값들이 통째로 거짓이 된다. 막는 것은 서버이며
+  (`0014_lock_character_class.sql`) 여기서 빼 두는 것은 **보낼 수조차 없게**
+  하는 것이다 — 화면이 안 내는 것만으로는 잠긴 것이 아니다.
+*/
 
 /** 지금 레코드를 초안으로 뜬다. 배열은 **사본으로** 뜬다 — 원본을 건드리면 안 된다. */
 export function draftOf(character: Character): SheetDraft {
@@ -47,8 +56,6 @@ export function draftOf(character: Character): SheetDraft {
     checkmarks: character.checkmarks,
     perks: [...character.perks],
     items: [...character.items],
-    classId: character.classId,
-    classIcon: character.classIcon,
     retired: character.retired,
   }
 }
@@ -99,8 +106,6 @@ export function sheetDiff(character: Character, draft: SheetDraft): CharacterEdi
   const items = draft.items.map((s) => s.trim()).filter((s) => s !== '')
   if (!sameStrings(items, character.items)) edits.items = items
 
-  if (draft.classId !== character.classId) edits.classId = draft.classId
-  if (draft.classIcon !== character.classIcon) edits.classIcon = draft.classIcon
   if (draft.retired !== character.retired) edits.retired = draft.retired
 
   return edits
