@@ -1,4 +1,4 @@
-import { clampCheckmarks, clampGold, clampLevel, clampXp, normalizePerks } from './character'
+import { clampCheckmarks, clampGold, clampXp, levelForXp, normalizePerks } from './character'
 import type { Character, CharacterEdits } from './types'
 
 /**
@@ -21,11 +21,15 @@ import type { Character, CharacterEdits } from './types'
  * 여기 있어야 Vitest로 못박을 수 있다.
  */
 
-/** 시트에서 사람이 고치는 칸 전부. */
+/**
+ * 시트에서 사람이 고치는 칸 전부.
+ *
+ * **레벨은 여기 없다** — 경험치에서 나오는 값이라 고를 것이 아니다(2026-08-12에
+ * 구현 결정 43을 뒤집었다). `sheetDiff`가 경험치에서 뽑아 함께 보낸다.
+ */
 export interface SheetDraft {
   name: string
   notes: string
-  level: number
   xp: number
   gold: number
   checkmarks: number
@@ -50,7 +54,6 @@ export function draftOf(character: Character): SheetDraft {
   return {
     name: character.name,
     notes: character.notes,
-    level: character.level,
     xp: character.xp,
     gold: character.gold,
     checkmarks: character.checkmarks,
@@ -87,11 +90,20 @@ export function sheetDiff(character: Character, draft: SheetDraft): CharacterEdi
 
   if (draft.notes !== character.notes) edits.notes = draft.notes
 
-  const level = clampLevel(draft.level)
-  if (level !== character.level) edits.level = level
-
   const xp = clampXp(draft.xp)
   if (xp !== character.xp) edits.xp = xp
+
+  /*
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │ **레벨은 고르는 값이 아니라 경험치에서 나오는 값이다.**                 │
+    └────────────────────────────────────────────────────────────────────────┘
+
+    그래서 초안에 없다. 그래도 **함께 보내 표에 적어 둔다** — 목록 화면이 경험치
+    없이 레벨만 읽는 자리가 있고, 표에 옛 값이 남아 있으면 시트와 목록이 다른
+    수를 말한다.
+  */
+  const level = levelForXp(xp)
+  if (level !== character.level) edits.level = level
 
   const gold = clampGold(draft.gold)
   if (gold !== character.gold) edits.gold = gold

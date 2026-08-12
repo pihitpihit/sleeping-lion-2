@@ -5,7 +5,6 @@ import {
   XP_THRESHOLDS,
   classIconUrl,
   levelForXp,
-  levelUpReady,
   perkSlotCount,
   perksEarned,
   togglePerk,
@@ -148,11 +147,15 @@ export function CharacterSheet({
     stopEditing()
   }
 
-  const reached = levelForXp(shown.xp)
+  /**
+   * **레벨은 경험치에서 나온다.** 사람이 고르는 값이 아니다 — 2026-08-12에
+   * 구현 결정 43을 뒤집었다. 표에도 이 값이 적히고(`sheetDiff`) 화면도 이것을
+   * 그리므로 시트와 목록이 다른 수를 말할 일이 없다.
+   */
+  const level = levelForXp(shown.xp)
   const toNext = xpToNextLevel(shown.xp)
-  const ready = levelUpReady(shown.level, shown.xp)
-  const slots = perkSlotCount(shown.level, shown.checkmarks)
-  const earned = perksEarned(shown.level, shown.checkmarks)
+  const slots = perkSlotCount(level, shown.checkmarks)
+  const earned = perksEarned(level, shown.checkmarks)
   // 클래스는 초안에 없다 — 바뀔 수 없으므로 레코드에서 그대로 읽는다.
   const iconUrl = classIconUrl(character.classIcon)
 
@@ -168,7 +171,7 @@ export function CharacterSheet({
     void loadClasses()
   }, [loadClasses])
   const info = classInfoOf(classes, character.classId, character.classIcon)
-  const maxHp = maxHpFor(info, shown.level)
+  const maxHp = maxHpFor(info, level)
 
   /**
    * 이 클래스의 특혜 줄과 각 줄이 시작하는 상자 번호.
@@ -244,46 +247,50 @@ export function CharacterSheet({
 
       {/* ------------------------------------------------------------------
           레벨 — 실물 시트의 1~9 눈금
+          ------------------------------------------------------------------
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **누르는 자리가 아니다. 경험치가 정한다.**                        │
+          └──────────────────────────────────────────────────────────────────┘
+
+          2026-08-12에 구현 결정 43을 뒤집었다 — 눈금은 표에 적힌 사실이지
+          사람이 정할 것이 아니다. 지나온 눈금에 표를 내어 어디까지 왔는지
+          보인다.
           ------------------------------------------------------------------ */}
       <section className="sheet__block">
-        <h3 className="sheet__label">레벨</h3>
-        <div className="char__levels" role="radiogroup" aria-label="레벨">
+        <h3 className="sheet__label">
+          레벨
+          <span className="char__hint">
+            {' '}
+            — 경험치가 정한다{toNext === null ? '' : `, 다음까지 ${toNext}`}
+          </span>
+        </h3>
+        <ol className="char__levels" aria-label={`레벨 ${level}`}>
           {XP_THRESHOLDS.map((threshold, index) => {
-            const level = index + 1
-            const on = level === shown.level
+            const n = index + 1
             return (
-              <button
-                key={level}
-                type="button"
-                role="radio"
-                aria-checked={on}
-                aria-label={`레벨 ${level} — 경험 ${threshold}`}
+              <li
+                key={n}
                 className={[
                   'char__level',
-                  on ? 'char__level--on' : '',
-                  // 경험이 닿았는데 아직 안 고른 눈금은 표를 내 둔다.
-                  !on && level <= reached ? 'char__level--reached' : '',
+                  n === level ? 'char__level--on' : '',
+                  // 지나온 눈금. 어디까지 왔는지 한눈에 보인다.
+                  n < level ? 'char__level--past' : '',
                 ]
                   .filter(Boolean)
                   .join(' ')}
-                disabled={!editing}
-                onClick={() => set('level', level)}
+                aria-current={n === level ? 'true' : undefined}
               >
                 <span className="char__level-n sl-numeral" aria-hidden="true">
-                  {level}
+                  {n}
                 </span>
                 <span className="char__level-xp sl-numeral" aria-hidden="true">
                   {threshold}
                 </span>
-              </button>
+              </li>
             )
           })}
-        </div>
+        </ol>
 
-        {/*
-          **올려주지 않고 알리기만 한다.** 레벨업은 퍽을 고르고 능력 카드를 바꾸는
-          일이라 실물에서도 사람이 멈춰서 한다.
-        */}
         {/*
           최대 체력은 **읽어주기만 한다.** 규칙을 판정하지 않는다는 선은 그대로다 —
           피해를 깎지도, 상한을 강제하지도 않는다.
@@ -294,13 +301,6 @@ export function CharacterSheet({
         {maxHp !== null && (
           <p className="char__maxhp">
             이 레벨의 최대 체력 <strong className="sl-numeral">{maxHp}</strong>
-          </p>
-        )}
-
-        {ready && mine && (
-          <p className="char__ready" role="status">
-            경험이 <strong className="sl-numeral">{reached}</strong> 레벨에 닿았다. 올릴 때가
-            되었다.
           </p>
         )}
       </section>

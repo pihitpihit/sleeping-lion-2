@@ -71,7 +71,8 @@ describe('바뀐 칸만 낸다', () => {
   it('여러 칸을 한 번에 낸다 — 정산이 그렇다', () => {
     const c = fixture()
     const d = { ...draftOf(c), gold: 200, xp: 95, checkmarks: 6 }
-    expect(sheetDiff(c, d)).toEqual({ gold: 200, xp: 95, checkmarks: 6 })
+    // 경험치가 눈금을 넘었으므로 레벨이 딸려 나간다.
+    expect(sheetDiff(c, d)).toEqual({ gold: 200, xp: 95, checkmarks: 6, level: 3 })
   })
 
   it('배열은 알맹이로 견준다 — 사본이라고 바뀐 것이 아니다', () => {
@@ -113,7 +114,6 @@ describe('울타리와 다듬기', () => {
 
   it('숫자는 울타리 안으로 들인다 — 화면이 아무거나 칠 수 있다', () => {
     const c = fixture()
-    expect(sheetDiff(c, { ...draftOf(c), level: 99 }).level).toBe(9)
     expect(sheetDiff(c, { ...draftOf(c), xp: -5 }).xp).toBe(0)
     expect(sheetDiff(c, { ...draftOf(c), checkmarks: 99 }).checkmarks).toBe(MAX_CHECKMARKS)
   })
@@ -123,8 +123,43 @@ describe('울타리와 다듬기', () => {
    * 최대인 칸을 한 번 더 눌렀을 때 저장 단추가 살아난다.
    */
   it('울타리에 걸려 원래 값이 되면 안 낸다', () => {
-    const c = fixture({ level: 9 })
-    expect(sheetDiff(c, { ...draftOf(c), level: 12 })).toEqual({})
+    const c = fixture({ checkmarks: MAX_CHECKMARKS })
+    expect(sheetDiff(c, { ...draftOf(c), checkmarks: 99 })).toEqual({})
+  })
+})
+
+/**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **레벨은 고르는 값이 아니라 경험치에서 나오는 값이다.**                    │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 2026-08-12에 구현 결정 43을 뒤집었다. 초안에는 없고, 경험치를 고치면 딸려
+ * 나간다 — **표에도 적어 두어야** 목록 화면이 시트와 다른 수를 말하지 않는다.
+ */
+describe('레벨은 경험치가 정한다', () => {
+  it('초안에 레벨 칸이 없다', () => {
+    expect('level' in draftOf(fixture())).toBe(false)
+  })
+
+  it('경험치를 올리면 레벨이 딸려 나간다', () => {
+    const c = fixture({ xp: 60, level: 2 })
+    expect(sheetDiff(c, { ...draftOf(c), xp: 100 })).toEqual({ xp: 100, level: 3 })
+  })
+
+  it('경험치를 내리면 레벨도 내려간다', () => {
+    const c = fixture({ xp: 100, level: 3 })
+    expect(sheetDiff(c, { ...draftOf(c), xp: 10 })).toEqual({ xp: 10, level: 1 })
+  })
+
+  it('눈금을 안 넘으면 레벨은 안 나간다', () => {
+    const c = fixture({ xp: 60, level: 2 })
+    expect(sheetDiff(c, { ...draftOf(c), xp: 70 })).toEqual({ xp: 70 })
+  })
+
+  /** 표에 옛 값이 남아 있으면 아무것도 안 고쳐도 바로잡아 보낸다. */
+  it('표의 레벨이 경험치와 어긋나 있으면 바로잡는다', () => {
+    const c = fixture({ xp: 500, level: 1 })
+    expect(sheetDiff(c, draftOf(c))).toEqual({ level: 9 })
   })
 })
 

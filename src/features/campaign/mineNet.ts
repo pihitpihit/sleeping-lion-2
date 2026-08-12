@@ -1,5 +1,5 @@
 import { isSupabaseConfigured, supabase } from '../auth/supabase'
-import { clampLevel, hasClassIcon } from './character'
+import { hasClassIcon, levelForXp } from './character'
 
 /**
  * 내 캐릭터 — 파티를 가로지르는 목록.
@@ -25,6 +25,7 @@ import { clampLevel, hasClassIcon } from './character'
 export interface MyCharacter {
   id: string
   name: string
+  /** 경험치에서 뽑은 레벨. 표의 `level` 칸을 믿지 않는다. */
   level: number
   classIcon: number
   classId: string | null
@@ -39,7 +40,7 @@ export interface MyCharacter {
 interface Row {
   id: string
   name: string | null
-  level: number | null
+  xp: number | null
   class_icon: number | null
   class_id: string | null
   retired: boolean | null
@@ -60,7 +61,7 @@ interface Row {
  * 가리킨다).
  */
 const COLUMNS =
-  'id, name, level, class_icon, class_id, retired, campaign_id, campaign:campaigns(id, name, party:parties(id, name))'
+  'id, name, xp, class_icon, class_id, retired, campaign_id, campaign:campaigns(id, name, party:parties(id, name))'
 
 function toMine(row: Row): MyCharacter | null {
   const party = row.campaign?.party
@@ -71,7 +72,11 @@ function toMine(row: Row): MyCharacter | null {
   return {
     id: row.id,
     name: typeof row.name === 'string' ? row.name : '',
-    level: clampLevel(typeof row.level === 'number' ? row.level : 1),
+    /*
+      **레벨은 경험치에서 뽑는다.** 표의 `level` 칸도 함께 적히지만(`sheetDiff`),
+      이 화면이 그 칸을 믿으면 옛 값이 남은 캐릭터에서 시트와 다른 수를 말한다.
+    */
+    level: levelForXp(typeof row.xp === 'number' ? row.xp : 0),
     classIcon: hasClassIcon(row.class_icon ?? 0) ? (row.class_icon as number) : 0,
     classId: typeof row.class_id === 'string' && row.class_id !== '' ? row.class_id : null,
     retired: row.retired === true,

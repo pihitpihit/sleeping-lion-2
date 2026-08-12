@@ -63,7 +63,18 @@ export function clampLevel(value: number): number {
   return Math.min(MAX_LEVEL, Math.max(MIN_LEVEL, Math.trunc(value)))
 }
 
-/** 이 경험치가 닿은 레벨. **대신 올려주지는 않는다** — 사람이 보고 누른다. */
+/**
+ * 이 경험치의 레벨 — **레벨의 정본이다.**
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **레벨은 사람이 고르는 값이 아니라 경험치에서 나오는 값이다.**            │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 2026-08-12까지는 사람이 눈금을 눌러 레벨을 정했고, 경험이 다음 눈금에 닿으면
+ * "올릴 때가 되었다"고 알리기만 했다(구현 결정 43). 형님이 뒤집었다 — **눈금은
+ * 표에 적힌 사실이지 사람이 정할 것이 아니다.** 레벨업에 딸린 일(퍽 고르기·능력
+ * 카드 바꾸기)은 여전히 사람이 하지만, 그것은 시트 밖의 일이다.
+ */
 export function levelForXp(xp: number): number {
   const value = Number.isFinite(xp) ? Math.max(0, Math.trunc(xp)) : 0
   let level = MIN_LEVEL
@@ -78,16 +89,6 @@ export function xpToNextLevel(xp: number): number | null {
   const value = Number.isFinite(xp) ? Math.max(0, Math.trunc(xp)) : 0
   const next = XP_THRESHOLDS.find((threshold) => threshold > value)
   return next === undefined ? null : next - value
-}
-
-/**
- * 적어둔 레벨이 경험치보다 뒤처졌는가 — 올릴 때가 되었음을 알린다.
- *
- * **자동으로 올리지 않는다.** 레벨업은 퍽을 고르고 능력 카드를 바꾸는 일이라
- * 실물에서도 사람이 멈춰서 한다. 우리는 "때가 되었다"까지만 말한다.
- */
-export function levelUpReady(level: number, xp: number): boolean {
-  return levelForXp(xp) > clampLevel(level)
 }
 
 /* --------------------------------------------------------------------------

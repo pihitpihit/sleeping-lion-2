@@ -790,12 +790,6 @@
   color: var(--sl-text-muted);
 }
 
-/* 올릴 때가 되었다는 표. 목록에서도 보여야 정산 자리에서 놓치지 않는다. */
-.roster__ready {
-  color: var(--sl-moss-bright);
-  font-size: 0.7rem;
-}
-
 .roster__toggle,
 .roster__add,
 .roster__cancel {
@@ -968,6 +962,9 @@
    -------------------------------------------------------------------------- */
 
 .char__levels {
+  margin: 0;
+  padding: 0;
+  list-style: none;
   display: grid;
   grid-template-columns: repeat(9, 1fr);
   gap: 0.2rem;
@@ -984,7 +981,6 @@
   background: rgb(0 0 0 / 30%);
   border: 1px solid var(--sl-border);
   border-radius: 0.2rem;
-  cursor: pointer;
 }
 
 .char__level-n {
@@ -997,36 +993,6 @@
   font-size: 0.62rem;
   line-height: 1;
   color: var(--sl-text-faint);
-}
-
-/* 경험이 닿았는데 아직 안 고른 눈금 — 올릴 수 있다는 표다. */
-.char__level--reached {
-  border-color: var(--sl-moss);
-  color: var(--sl-moss-bright);
-}
-
-.char__level--on {
-  color: var(--sl-void);
-  background: var(--sl-gold);
-  border-color: var(--sl-gold);
-}
-
-.char__level--on .char__level-xp {
-  color: rgb(0 0 0 / 60%);
-}
-
-.char__level:disabled {
-  cursor: not-allowed;
-}
-
-.char__ready {
-  margin: 0.3rem 0 0;
-  font-size: 0.82rem;
-  color: var(--sl-moss-bright);
-}
-
-.char__ready strong {
-  font-weight: 400;
 }
 
 /* --------------------------------------------------------------------------

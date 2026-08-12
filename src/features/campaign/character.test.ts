@@ -11,7 +11,6 @@ import {
   clampXp,
   hasClassIcon,
   levelForXp,
-  levelUpReady,
   normalizePerks,
   perkSlotCount,
   perksEarned,
@@ -80,12 +79,16 @@ describe('레벨과 경험', () => {
     expect(clampLevel(Number.NaN)).toBe(1)
   })
 
-  it('적어둔 레벨이 뒤처졌을 때만 올릴 때가 되었다고 한다', () => {
-    expect(levelUpReady(1, 44)).toBe(false)
-    expect(levelUpReady(1, 45)).toBe(true)
-    // 경험이 아직 안 찼는데 레벨을 손으로 올려둔 경우 — 재촉하지 않는다.
-    expect(levelUpReady(4, 45)).toBe(false)
-    expect(levelUpReady(MAX_LEVEL, 9999)).toBe(false)
+  /**
+   * **레벨은 경험치에서 나온다.** 2026-08-12에 구현 결정 43을 뒤집었다 — 그전에는
+   * 사람이 눈금을 눌러 정했고 경험이 앞서면 "올릴 때가 되었다"고 알리기만 했다.
+   */
+  it('경험치가 눈금에 닿는 순간 그 레벨이다', () => {
+    expect(levelForXp(44)).toBe(1)
+    expect(levelForXp(45)).toBe(2)
+    expect(levelForXp(499)).toBe(8)
+    expect(levelForXp(500)).toBe(MAX_LEVEL)
+    expect(levelForXp(9999)).toBe(MAX_LEVEL)
   })
 })
 

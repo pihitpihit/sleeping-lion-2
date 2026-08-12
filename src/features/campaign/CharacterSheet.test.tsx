@@ -144,16 +144,31 @@ describe('전투 목표', () => {
 })
 
 describe('그 밖', () => {
-  it('경험이 다음 눈금에 닿으면 알리기만 한다 — 레벨을 올려주지 않는다', () => {
+  /**
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ **레벨은 경험치가 정한다. 누르는 자리가 아니다.**                        │
+   * └────────────────────────────────────────────────────────────────────────┘
+   *
+   * 2026-08-12에 구현 결정 43을 뒤집었다 — 그전에는 사람이 눈금을 눌러 정했고
+   * 경험이 앞서면 "올릴 때가 되었다"고 알리기만 했다.
+   */
+  it('표에 옛 레벨이 남아 있어도 경험치대로 그린다', () => {
     const html = render(fixture({ level: 1, xp: 100 }), true)
-    expect(html).toContain('올릴 때가 되었다')
-    // 켜진 눈금은 여전히 1이다.
-    expect(html).toContain('aria-checked="true" aria-label="레벨 1')
+    expect(html).toContain('aria-label="레벨 3"')
+    expect(html).not.toContain('올릴 때가 되었다')
   })
 
-  it('경험이 모자라면 재촉하지 않는다', () => {
-    const html = render(fixture({ level: 2, xp: 60 }), true)
-    expect(html).not.toContain('올릴 때가 되었다')
+  it('눈금은 누를 수 없다', () => {
+    const html = render(fixture({ xp: 100 }), true)
+    // 단추가 아니라 목록이다.
+    expect(html).not.toMatch(/<button[^>]*class="char__level/)
+    expect(html).toContain('<ol class="char__levels"')
+  })
+
+  it('지나온 눈금에 표를 낸다 — 어디까지 왔는지 보인다', () => {
+    const html = render(fixture({ xp: 100 }), true)
+    expect((html.match(/char__level--past/g) ?? []).length).toBe(2)
+    expect((html.match(/char__level--on/g) ?? []).length).toBe(1)
   })
 
   it('클래스를 안 골랐어도 그려진다', () => {

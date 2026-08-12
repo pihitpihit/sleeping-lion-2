@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Identity } from '../net/types'
-import { classIconUrl, levelUpReady } from './character'
+import { classIconUrl, levelForXp } from './character'
 import { CharacterSheet } from './CharacterSheet'
 import { ClassPicker } from './ClassPicker'
 import { useCharacterStore } from './characterStore'
@@ -104,14 +104,10 @@ export function Roster({ campaignId, me, readOnly = false }: Props) {
                 </span>
 
                 <span className="roster__stats">
-                  {/* 올릴 때가 되었다는 것은 목록에서도 보여야 한다. */}
-                  {mine && levelUpReady(character.level, character.xp) && (
-                    <span className="roster__ready" aria-label="레벨을 올릴 때가 되었다">
-                      ▲
-                    </span>
-                  )}
-                  <span className="sl-numeral" aria-label={`레벨 ${character.level}`}>
-                    L{character.level}
+                  {/* 레벨은 경험치에서 나온다 — 표에 옛 값이 남아 있어도 여기서
+                      다시 뽑으므로 시트와 같은 수를 말한다. */}
+                  <span className="sl-numeral" aria-label={`레벨 ${levelForXp(character.xp)}`}>
+                    L{levelForXp(character.xp)}
                   </span>
                   <span className="sl-numeral" aria-label={`경험 ${character.xp}`}>
                     {character.xp}xp
