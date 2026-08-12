@@ -901,25 +901,146 @@
 }
 
 /*
-  혼자 서는 시트.
-
   ┌────────────────────────────────────────────────────────────────────────┐
-  │ **매달릴 줄이 없으면 제 테두리를 갖는다.**                              │
+  │ **한 장의 종이다. 상자를 겹치지 않는다.**                                │
   └────────────────────────────────────────────────────────────────────────┘
 
-  `.char`는 원래 로스터 줄 **밑에 매달리는** 상자다 — 위 테두리를 지우고 위쪽
-  모서리를 각지게 두어 눌린 줄과 한 덩어리로 보이게 했다. 캐릭터 한 장짜리
-  화면에는 그 줄이 없으므로, 그대로 두면 **위가 뚫린 채 화면 끝까지 펼쳐져**
-  다른 칸들과 왼쪽 끝이 어긋난다. 다이얼이 제일 넓고 각진 요소라 그 어긋남이
-  거기서 제일 크게 보인다.
+  칸마다 `.sheet__block`의 상자를 두었더니 **상자 안에 상자**가 들어 좌우로만
+  크롬이 세 겹 쌓였다 — 페이지 16px + 시트 14px + 칸 16px, 폰(390px)에서 양쪽
+  93px이라 화면 폭의 4분의 1이 내용 아닌 것으로 갔다. 칸을 가르는 데 상자는
+  필요 없다 — **선 하나면 된다.** 실물 캐릭터 시트도 한 장의 종이에 칸이
+  그어져 있을 뿐이다.
 
-  폭은 이 화면의 다른 칸(`journal__toparty`·`sheet__block`)과 같은 44rem이다.
+  로스터 줄에 매달리는 `.char`는 상자를 지킨다(구현 결정 177) — 그쪽은 눌린
+  줄과 한 덩어리로 보여야 한다. **안쪽 칸만 평평해진다.**
+*/
+.char .sheet__block {
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+
+/*
+  혼자 서는 시트 — 매달릴 줄이 없으므로 상자를 통째로 걷는다.
+
+  폭은 이 화면의 다른 칸(`journal__toparty`)과 같은 44rem이다. 두 단으로 설
+  때만 넓어진다.
 */
 .char--solo {
   max-width: 44rem;
   margin: 0 auto;
-  border-top: 1px solid var(--sl-border);
-  border-radius: 0.3rem;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+
+/*
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ **머리는 위에 붙어 따라온다.**                                          │
+  └────────────────────────────────────────────────────────────────────────┘
+
+  시트가 길어 아이템까지 내려가면 누구의 시트인지 화면에서 사라진다. 저장
+  띠를 아래에 붙여 둔 것과 짝이다(구현 결정 170) — **오래 머무는 화면에서는
+  누구의 것인지와 무엇을 누르는지가 늘 보여야 한다.**
+
+  `top`은 안전영역만큼 내린다. 페이지가 이미 그만큼 비워 두고 시작하므로
+  그 줄에 정확히 물린다.
+*/
+.char--solo > .char__head {
+  position: sticky;
+  top: var(--sl-safe-top);
+  z-index: 2;
+  padding: 0.5rem 0;
+  /* 시트가 머리 밑을 지나가므로 바탕을 깐다 — 안 그러면 글자가 겹쳐 읽힌다. */
+  background: var(--sl-bg);
+  box-shadow: 0 8px 12px -10px rgb(0 0 0 / 70%);
+}
+
+/*
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ **두 단은 감싼 것이 `display: contents`를 벗을 때 생긴다.**              │
+  └────────────────────────────────────────────────────────────────────────┘
+
+  폰에서 두 단은 없는 것이나 같다 — 감싼 상자가 사라지고 칸들이 그대로 시트의
+  자식이 된다. 넓어지면 상자가 살아나 각자 한 단이 된다. **DOM을 갈아 끼우지
+  않으므로 좁힐 때 차례가 흐트러지지 않는다.**
+*/
+.char__col {
+  display: contents;
+}
+
+@media (min-width: 62rem) {
+  .char--solo {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 0.8rem 2.2rem;
+    /* 두 단이 서면 44rem은 좁다. 한 단이 22rem 남짓으로 폰과 비슷해진다. */
+    max-width: 72rem;
+  }
+
+  /* 머리와 띠는 두 단에 걸친다. */
+  .char--solo > .char__head,
+  .char--solo > .char__actions,
+  .char--solo > .sheet__bar {
+    grid-column: 1 / -1;
+  }
+
+  .char--solo > .char__col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+}
+
+/*
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ **칸을 가르는 것은 고풍스러운 장식선이다.**                              │
+  └────────────────────────────────────────────────────────────────────────┘
+
+  그냥 일직선은 화면 부품처럼 보인다. 양끝이 스러지고 가운데로 갈수록 짙어지는
+  금빛 선에 마름모를 물리면 시트가 종이로 읽힌다.
+
+  **선은 `::before`가, 마름모는 `::after`가 그린다.** 한 겹으로는 안 된다 —
+  마름모는 사각형을 45도 돌린 것이라 `transform`이 필요하고, 돌리면 선까지
+  함께 기운다(구현 결정 206과 같은 자리).
+
+  **가운데 틈은 픽셀로 고정한다.** %로 두면 넓은 화면에서 틈이 마름모보다
+  훨씬 벌어져 선이 두 동강 난 것처럼 보인다.
+
+  거는 자리는 `.char__col`의 **모든** 자식이다 — 앞에 무엇이 오든(머리든 옆
+  칸이든) 반드시 무엇인가가 오기 때문이다. 두 단으로 서면 양쪽 첫 칸이 머리
+  밑에 나란히 서는데 그때도 맞다.
+*/
+.char__col > * {
+  position: relative;
+  padding-top: 1.3rem;
+}
+
+.char__col > *::before {
+  content: '';
+  position: absolute;
+  inset: 0.5rem 0 auto;
+  height: 1px;
+  background:
+    linear-gradient(90deg, transparent, var(--sl-gold-dim)) left center / calc(50% - 11px) 100%
+      no-repeat,
+    linear-gradient(90deg, var(--sl-gold-dim), transparent) right center / calc(50% - 11px) 100%
+      no-repeat;
+}
+
+.char__col > *::after {
+  content: '';
+  position: absolute;
+  top: 0.5rem;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: var(--sl-gold-dim);
+  border: 1px solid var(--sl-gold);
+  transform: translate(-50%, -50%) rotate(45deg);
 }
 
 .char--retired {

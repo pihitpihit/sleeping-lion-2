@@ -197,3 +197,55 @@ describe('그 밖', () => {
     expect(html).toContain('char__badge-empty')
   })
 })
+
+/**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **칸을 가르는 것이 CSS이므로 짜임이 어긋나면 화면에만 드러난다.**          │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 2026-08-12에 상자를 걷고 장식선으로 칸을 갈랐다. 그 선은 `.char__col`의 자식에
+ * 붙으므로 **감싼 것 바깥에 칸을 두면 앞 칸과 붙어 버린다** — 마크업은 멀쩡하고
+ * 시험도 통과하는데 화면에서만 어긋나는 자리다(구현 결정 252와 같은 병).
+ *
+ * 그래서 시트의 **맨 윗줄 자식이 넷뿐**이라는 것을 못박는다.
+ */
+function topLevelClasses(html: string): string[] {
+  const start = html.indexOf('<div class="char ')
+  const out: string[] = []
+  let depth = 0
+  const tag = /<(\/?)([a-z0-9]+)([^>]*?)(\/?)>/g
+  tag.lastIndex = start
+  for (let m = tag.exec(html); m !== null; m = tag.exec(html)) {
+    const [, close, , attrs, self] = m
+    if (close === '/') {
+      depth -= 1
+      if (depth === 0) break
+      continue
+    }
+    if (self === '/') {
+      // 홀로 닫는 것(img·input)은 깊이를 바꾸지 않는다.
+      if (depth === 1) out.push(/class="([^"]*)"/.exec(attrs)?.[1] ?? '')
+      continue
+    }
+    if (depth === 1) out.push(/class="([^"]*)"/.exec(attrs)?.[1] ?? '')
+    depth += 1
+  }
+  return out
+}
+
+describe('시트의 짜임 — 한 장의 종이', () => {
+  it('맨 윗줄에는 머리·두 단·띠만 선다', () => {
+    const kinds = topLevelClasses(render(fixture(), true, false, true)).map((c) =>
+      c.split(' ').find((k) => k !== 'char__col'),
+    )
+    expect(kinds).toEqual(['char__head', 'char__col--a', 'char__col--b', 'sheet__bar'])
+  })
+
+  it('모든 칸이 두 단 안에 든다 — 밖에 남으면 선을 못 받는다', () => {
+    const html = render(fixture(), true, false, true)
+    const outside = topLevelClasses(html).filter((c) => c.includes('sheet__block'))
+    expect(outside).toEqual([])
+    // 덱까지 여섯 칸이 실제로 그려졌는지 함께 본다 — 세지 않으면 빈 단도 통과한다.
+    expect((html.match(/class="sheet__block/g) ?? []).length).toBeGreaterThanOrEqual(5)
+  })
+})

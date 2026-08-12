@@ -30,8 +30,9 @@ interface Props {
    *
    * `Roster`에서는 **줄 밑에 매달린다** — 위 테두리를 지우고 위쪽 모서리를 각지게
    * 두어 눌린 줄과 한 덩어리로 보이게 한 것이다. 캐릭터 한 장짜리 화면
-   * (`#/journal/<파티>/<캐릭터>`)에서는 매달릴 줄이 없으므로 **제 테두리를 갖고
-   * 폭을 스스로 잡아야 한다.** 그러지 않으면 위가 뚫린 채 화면 끝까지 펼쳐진다.
+   * (`#/character/<id>`)에는 매달릴 줄이 없으므로 **상자를 통째로 걷고 폭을
+   * 스스로 잡는다** — 한 장의 종이처럼 선으로만 칸을 가르고, 넓은 화면에서는
+   * 두 단으로 선다. 머리도 이때만 위에 붙어 따라온다.
    */
   standalone?: boolean
 }
@@ -251,7 +252,17 @@ export function CharacterSheet({
         </div>
       </div>
 
-      {/* ------------------------------------------------------------------
+      {/*
+        ┌────────────────────────────────────────────────────────────────────┐
+        │ **두 단으로 갈 수 있게 감싼다. 폰에서는 `display: contents`로 편다.** │
+        └────────────────────────────────────────────────────────────────────┘
+
+        가르는 자리는 하나뿐이다 — 폰에서는 두 단이 이어 붙어 한 줄로 서므로
+        **DOM 차례가 곧 읽는 차례**이고, 그것을 지키려면 지금 차례를 한 번만
+        끊을 수 있다. 특혜 뒤에서 끊는 것이 두 단의 키가 가장 비슷하다.
+      */}
+      <div className="char__col char__col--a">
+        {/* ------------------------------------------------------------------
           레벨 — 실물 시트의 1~9 눈금
           ------------------------------------------------------------------
           ┌──────────────────────────────────────────────────────────────────┐
@@ -262,271 +273,274 @@ export function CharacterSheet({
           사람이 정할 것이 아니다. 지나온 눈금에 표를 내어 어디까지 왔는지
           보인다.
           ------------------------------------------------------------------ */}
-      <section className="sheet__block">
-        <h3 className="sheet__label">
-          레벨
-          <span className="char__hint">
-            {' '}
-            — 경험치가 정한다{toNext === null ? '' : `, 다음까지 ${toNext}`}
-          </span>
-        </h3>
-        <ol className="char__levels" aria-label={`레벨 ${level}`}>
-          {XP_THRESHOLDS.map((threshold, index) => {
-            const n = index + 1
-            return (
-              <li
-                key={n}
-                className={[
-                  'char__level',
-                  n === level ? 'char__level--on' : '',
-                  // 지나온 눈금. 어디까지 왔는지 한눈에 보인다.
-                  n < level ? 'char__level--past' : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                aria-current={n === level ? 'true' : undefined}
-              >
-                <span className="char__level-n sl-numeral" aria-hidden="true">
-                  {n}
-                </span>
-                {/* 경험치 눈금 — 푸른 쪽. HP/XP 트래커와 같은 결이다. */}
-                <span className="char__level-xp sl-numeral" aria-hidden="true">
-                  {threshold}
-                </span>
-                {/*
+        <section className="sheet__block">
+          <h3 className="sheet__label">
+            레벨
+            <span className="char__hint">
+              {' '}
+              — 경험치가 정한다{toNext === null ? '' : `, 다음까지 ${toNext}`}
+            </span>
+          </h3>
+          <ol className="char__levels" aria-label={`레벨 ${level}`}>
+            {XP_THRESHOLDS.map((threshold, index) => {
+              const n = index + 1
+              return (
+                <li
+                  key={n}
+                  className={[
+                    'char__level',
+                    n === level ? 'char__level--on' : '',
+                    // 지나온 눈금. 어디까지 왔는지 한눈에 보인다.
+                    n < level ? 'char__level--past' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  aria-current={n === level ? 'true' : undefined}
+                >
+                  <span className="char__level-n sl-numeral" aria-hidden="true">
+                    {n}
+                  </span>
+                  {/* 경험치 눈금 — 푸른 쪽. HP/XP 트래커와 같은 결이다. */}
+                  <span className="char__level-xp sl-numeral" aria-hidden="true">
+                    {threshold}
+                  </span>
+                  {/*
                   그 레벨의 최대 체력 — 붉은 쪽.
 
                   **클래스 수치를 안 넣었으면 아예 안 그린다.** 짐작해서 숫자를
                   내면 사람이 그것을 믿는다(구현 결정 115).
                 */}
-                {hpAt(n) !== null && (
-                  <span className="char__level-hp sl-numeral" aria-hidden="true">
-                    {hpAt(n)}
-                  </span>
-                )}
-              </li>
-            )
-          })}
-        </ol>
-      </section>
+                  {hpAt(n) !== null && (
+                    <span className="char__level-hp sl-numeral" aria-hidden="true">
+                      {hpAt(n)}
+                    </span>
+                  )}
+                </li>
+              )
+            })}
+          </ol>
+        </section>
 
-      {/* ------------------------------------------------------------------
+        {/* ------------------------------------------------------------------
           경험과 골드 — 다이얼
           ------------------------------------------------------------------ */}
-      <div className="char__dials">
-        <Dial
-          label="경험"
-          value={shown.xp}
-          disabled={!editing}
-          steps={[1, 5]}
-          onChange={(next) => set('xp', next)}
-          foot={toNext === null ? '끝' : `다음까지 ${toNext}`}
-        />
-        <Dial
-          label="골드"
-          value={shown.gold}
-          disabled={!editing}
-          steps={[1, 10]}
-          onChange={(next) => set('gold', next)}
-        />
-      </div>
+        <div className="char__dials">
+          <Dial
+            label="경험"
+            value={shown.xp}
+            disabled={!editing}
+            steps={[1, 5]}
+            onChange={(next) => set('xp', next)}
+            foot={toNext === null ? '끝' : `다음까지 ${toNext}`}
+          />
+          <Dial
+            label="골드"
+            value={shown.gold}
+            disabled={!editing}
+            steps={[1, 10]}
+            onChange={(next) => set('gold', next)}
+          />
+        </div>
 
-      {/* ------------------------------------------------------------------
+        {/* ------------------------------------------------------------------
           체크마크 — 셋마다 퍽 하나
           ------------------------------------------------------------------ */}
-      <section className="sheet__block">
-        <h3 className="sheet__label">
-          전투 목표
-          <span className="char__hint"> — 셋마다 퍽 하나</span>
-        </h3>
-        <div className="char__checks">
-          {Array.from({ length: MAX_CHECKMARKS }, (_, i) => i + 1).map((n) => (
-            <button
-              key={n}
-              type="button"
-              aria-label={`체크마크 ${n}개까지`}
-              aria-pressed={n <= shown.checkmarks}
-              /* 묶음은 격자가 낸다 — 한 줄에 셋이므로 줄 하나가 곧 한 묶음이다. */
-              className={`char__check${n <= shown.checkmarks ? ' char__check--on' : ''}`}
-              disabled={!editing}
-              /* 켜진 마지막 칸을 다시 누르면 하나 줄인다 — 잘못 짚었을 때의 길이다. */
-              onClick={() => set('checkmarks', n === shown.checkmarks ? n - 1 : n)}
-            >
-              <span aria-hidden="true">✓</span>
-            </button>
-          ))}
-        </div>
-      </section>
+        <section className="sheet__block">
+          <h3 className="sheet__label">
+            전투 목표
+            <span className="char__hint"> — 셋마다 퍽 하나</span>
+          </h3>
+          <div className="char__checks">
+            {Array.from({ length: MAX_CHECKMARKS }, (_, i) => i + 1).map((n) => (
+              <button
+                key={n}
+                type="button"
+                aria-label={`체크마크 ${n}개까지`}
+                aria-pressed={n <= shown.checkmarks}
+                /* 묶음은 격자가 낸다 — 한 줄에 셋이므로 줄 하나가 곧 한 묶음이다. */
+                className={`char__check${n <= shown.checkmarks ? ' char__check--on' : ''}`}
+                disabled={!editing}
+                /* 켜진 마지막 칸을 다시 누르면 하나 줄인다 — 잘못 짚었을 때의 길이다. */
+                onClick={() => set('checkmarks', n === shown.checkmarks ? n - 1 : n)}
+              >
+                <span aria-hidden="true">✓</span>
+              </button>
+            ))}
+          </div>
+        </section>
 
-      {/* ------------------------------------------------------------------
+        {/* ------------------------------------------------------------------
           퍽 — 표가 있으면 줄로, 없으면 번호로
           ------------------------------------------------------------------ */}
-      <section className="sheet__block">
-        <h3 className="sheet__label">
-          퍽
-          <span className="char__hint">
-            {' '}
-            — 얻은 것 <span className="sl-numeral">{earned}</span>, 켠 것{' '}
-            <span className="sl-numeral">{shown.perks.length}</span>
-          </span>
-        </h3>
+        <section className="sheet__block">
+          <h3 className="sheet__label">
+            퍽
+            <span className="char__hint">
+              {' '}
+              — 얻은 것 <span className="sl-numeral">{earned}</span>, 켠 것{' '}
+              <span className="sl-numeral">{shown.perks.length}</span>
+            </span>
+          </h3>
 
-        {/*
+          {/*
           **표가 있으면 줄을 보여주고, 없으면 번호만 늘어놓는다.**
 
           특혜 글은 게임 콘텐츠라 레포에 없고 DB에만 있다(절대 원칙 1). 아무것도
           안 넣었으면 지금까지 그랬듯 번호를 켠다 — 없어도 앱은 완전히 돈다
           (절대 원칙 3). 어느 쪽이든 켜지는 값은 **같은 상자 번호**다.
         */}
-        {rows.length > 0 ? (
-          <>
-            <p className="char__note">
-              시트의 줄 그대로다. 상자를 켜면 공격 보정 덱이 그만큼 맞춰진다.
-            </p>
-            <ul className="char__perkrows">
-              {rows.map(({ perk, first }) => (
-                <li key={perk.id} className="char__perkrow">
-                  <span className="char__perkboxes">
-                    {Array.from({ length: perk.count }, (_, i) => first + i).map((slot) => {
-                      const on = shown.perks.includes(slot)
-                      return (
-                        <button
-                          key={slot}
-                          type="button"
-                          aria-label={`${perk.text} — ${slot}번 상자`}
-                          aria-pressed={on}
-                          className={`char__perkbox${on ? ' char__perkbox--on' : ''}`}
-                          disabled={!editing}
-                          onClick={() => set('perks', togglePerk(shown.perks, slot))}
-                        />
-                      )
-                    })}
-                  </span>
-                  <span className="char__perktext">{perk.text}</span>
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : (
-          <>
-            <p className="char__note">
-              퍽 표는 클래스마다 다르고 우리가 갖고 있지 않다. 제 시트에서 몇 번째 줄인지 보고 그
-              번호를 켠다.
-            </p>
-            <div className="char__perks">
-              {Array.from({ length: slots }, (_, i) => i + 1).map((slot) => {
-                const on = shown.perks.includes(slot)
-                return (
-                  <button
-                    key={slot}
-                    type="button"
-                    aria-label={`퍽 ${slot}번`}
-                    aria-pressed={on}
-                    className={`char__perk${on ? ' char__perk--on' : ''}`}
-                    disabled={!editing}
-                    onClick={() => set('perks', togglePerk(shown.perks, slot))}
-                  >
-                    <span className="sl-numeral" aria-hidden="true">
-                      {slot}
+          {rows.length > 0 ? (
+            <>
+              <p className="char__note">
+                시트의 줄 그대로다. 상자를 켜면 공격 보정 덱이 그만큼 맞춰진다.
+              </p>
+              <ul className="char__perkrows">
+                {rows.map(({ perk, first }) => (
+                  <li key={perk.id} className="char__perkrow">
+                    <span className="char__perkboxes">
+                      {Array.from({ length: perk.count }, (_, i) => first + i).map((slot) => {
+                        const on = shown.perks.includes(slot)
+                        return (
+                          <button
+                            key={slot}
+                            type="button"
+                            aria-label={`${perk.text} — ${slot}번 상자`}
+                            aria-pressed={on}
+                            className={`char__perkbox${on ? ' char__perkbox--on' : ''}`}
+                            disabled={!editing}
+                            onClick={() => set('perks', togglePerk(shown.perks, slot))}
+                          />
+                        )
+                      })}
                     </span>
-                  </button>
-                )
-              })}
-            </div>
-          </>
-        )}
-      </section>
+                    <span className="char__perktext">{perk.text}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <>
+              <p className="char__note">
+                퍽 표는 클래스마다 다르고 우리가 갖고 있지 않다. 제 시트에서 몇 번째 줄인지 보고 그
+                번호를 켠다.
+              </p>
+              <div className="char__perks">
+                {Array.from({ length: slots }, (_, i) => i + 1).map((slot) => {
+                  const on = shown.perks.includes(slot)
+                  return (
+                    <button
+                      key={slot}
+                      type="button"
+                      aria-label={`퍽 ${slot}번`}
+                      aria-pressed={on}
+                      className={`char__perk${on ? ' char__perk--on' : ''}`}
+                      disabled={!editing}
+                      onClick={() => set('perks', togglePerk(shown.perks, slot))}
+                    >
+                      <span className="sl-numeral" aria-hidden="true">
+                        {slot}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )}
+        </section>
+      </div>
 
-      {/* ------------------------------------------------------------------
+      <div className="char__col char__col--b">
+        {/* ------------------------------------------------------------------
           공격 보정 덱 — 켠 특혜에서 나온 구성
           ------------------------------------------------------------------
           **판은 읽지 않는다.** 남은 장수·뽑힌 카드는 축 ②의 휘발성 런타임이라
           영속 기록지가 비출 것이 아니다(SPEC 5.2). 특혜 표가 없으면 아예 안
           나온다 — 그때는 구성의 정본이 위젯 설정이고 시트는 그것을 모른다.
           ------------------------------------------------------------------ */}
-      <DeckPreview
-        perks={rows.map((r) => r.perk)}
-        checked={shown.perks}
-        /* 카드 왼쪽 아래 홈에 앉을 표식. 실물에서 그 자리는 덱 주인의 것이다. */
-        owner={ownerBadge(info?.icon ?? character.classIcon, info?.name ?? '', character.name)}
-      />
+        <DeckPreview
+          perks={rows.map((r) => r.perk)}
+          checked={shown.perks}
+          /* 카드 왼쪽 아래 홈에 앉을 표식. 실물에서 그 자리는 덱 주인의 것이다. */
+          owner={ownerBadge(info?.icon ?? character.classIcon, info?.name ?? '', character.name)}
+        />
 
-      {/* ------------------------------------------------------------------
+        {/* ------------------------------------------------------------------
           아이템 — 사용자가 적는다(구현 결정 2)
           ------------------------------------------------------------------ */}
-      <section className="sheet__block">
-        <h3 className="sheet__label">아이템</h3>
+        <section className="sheet__block">
+          <h3 className="sheet__label">아이템</h3>
 
-        {shown.items.length > 0 && (
-          <ul className="sheet__achievements">
-            {shown.items.map((item, index) => (
-              <li key={`${index}-${item}`}>
-                <span>{item}</span>
-                {/* 지우는 단추는 편집 중에만 낸다. 열람 화면에 ×가 늘어서 있으면
+          {shown.items.length > 0 && (
+            <ul className="sheet__achievements">
+              {shown.items.map((item, index) => (
+                <li key={`${index}-${item}`}>
+                  <span>{item}</span>
+                  {/* 지우는 단추는 편집 중에만 낸다. 열람 화면에 ×가 늘어서 있으면
                     누를 수 있는 줄 알고 손이 간다. */}
-                {editing && (
-                  <button
-                    type="button"
-                    className="sheet__remove"
-                    aria-label={`아이템 '${item}' 지우기`}
-                    onClick={() =>
-                      set(
-                        'items',
-                        draft.items.filter((_, i) => i !== index),
-                      )
-                    }
-                  >
-                    ×
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
+                  {editing && (
+                    <button
+                      type="button"
+                      className="sheet__remove"
+                      aria-label={`아이템 '${item}' 지우기`}
+                      onClick={() =>
+                        set(
+                          'items',
+                          draft.items.filter((_, i) => i !== index),
+                        )
+                      }
+                    >
+                      ×
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
 
-        {shown.items.length === 0 && !editing && <p className="char__note">아직 없다.</p>}
+          {shown.items.length === 0 && !editing && <p className="char__note">아직 없다.</p>}
 
-        {editing && (
-          <div className="sheet__add">
-            <input
-              className="sheet__input"
-              value={newItem}
-              placeholder="아이템을 적는다"
-              aria-label="새 아이템"
-              onChange={(e) => setNewItem(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  addItem()
-                }
-              }}
-            />
-            <button
-              type="button"
-              className="sheet__add-button"
-              disabled={newItem.trim() === ''}
-              onClick={addItem}
-            >
-              더하기
-            </button>
-          </div>
-        )}
-      </section>
+          {editing && (
+            <div className="sheet__add">
+              <input
+                className="sheet__input"
+                value={newItem}
+                placeholder="아이템을 적는다"
+                aria-label="새 아이템"
+                onChange={(e) => setNewItem(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    addItem()
+                  }
+                }}
+              />
+              <button
+                type="button"
+                className="sheet__add-button"
+                disabled={newItem.trim() === ''}
+                onClick={addItem}
+              >
+                더하기
+              </button>
+            </div>
+          )}
+        </section>
 
-      <section className="sheet__block">
-        <label className="sheet__label" htmlFor={noteId}>
-          메모
-        </label>
-        <textarea
-          id={noteId}
-          className="sheet__notes"
-          rows={4}
-          value={shown.notes}
-          placeholder={editing ? '적어둘 것' : ''}
-          disabled={!editing}
-          onChange={(e) => set('notes', e.target.value)}
-        />
-      </section>
+        <section className="sheet__block">
+          <label className="sheet__label" htmlFor={noteId}>
+            메모
+          </label>
+          <textarea
+            id={noteId}
+            className="sheet__notes"
+            rows={4}
+            value={shown.notes}
+            placeholder={editing ? '적어둘 것' : ''}
+            disabled={!editing}
+            onChange={(e) => set('notes', e.target.value)}
+          />
+        </section>
+      </div>
 
       {/*
         은퇴와 거두기.
