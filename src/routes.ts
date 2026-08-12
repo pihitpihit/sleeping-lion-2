@@ -39,6 +39,15 @@ export const LAZY_ROUTES: Record<string, ComponentType> = {
   '/journal': lazy(() =>
     import('./features/campaign/JournalPage').then((m) => ({ default: m.JournalPage })),
   ),
+  /*
+    캐릭터 한 장.
+
+    **주소에 파티가 없다.** 캐릭터가 먼저 서고 파티에는 나중에 들므로
+    (2026-08-12, `0015`), 파티를 열쇠로 삼으면 아직 안 든 캐릭터를 열 수가 없다.
+  */
+  '/character': lazy(() =>
+    import('./features/campaign/CharacterPage').then((m) => ({ default: m.CharacterPage })),
+  ),
 }
 
 /**
@@ -48,7 +57,7 @@ export const LAZY_ROUTES: Record<string, ComponentType> = {
  * 때문에 react-router를 들이는 것은 아직 과하므로, **첫 마디만 보고 화면을 고르고
  * 나머지는 화면이 직접 읽는다.** 중첩이 생기면 그때 갈아탄다.
  */
-const PREFIX_ROUTES: readonly string[] = ['/join', '/journal']
+const PREFIX_ROUTES: readonly string[] = ['/join', '/journal', '/character']
 
 /** 라우트에서 화면을 찾을 열쇠. `/join/abc` → `/join` */
 export function routeKey(route: string): string {

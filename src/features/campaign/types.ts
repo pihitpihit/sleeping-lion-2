@@ -67,7 +67,12 @@ export type CampaignEdits = Partial<
 export interface Character {
   id: string
   /** 어느 기록지에 딸렸는가. **서버가 옮기지 못하게 막는다**(트리거). */
-  campaignId: string
+  /**
+   * 어느 기록지(=파티)의 것인가. **아직 안 들었으면 `null`.**
+   *
+   * 캐릭터가 먼저 서고 파티에는 나중에 든다(2026-08-12, `0015`).
+   */
+  campaignId: string | null
   /** 누구의 것인가. 이 값이 곧 편집 권한이다. */
   ownerId: string
   /** 파티원 목록에 이 이름이 뜬다. 누가 주인인지 아는 데 쓴다. */

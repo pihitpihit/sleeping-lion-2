@@ -30,11 +30,11 @@ export interface MyCharacter {
   classIcon: number
   classId: string | null
   retired: boolean
-  /** 어느 기록지의 것인가. 시트를 열 때 쓴다. */
-  campaignId: string
-  /** 어느 파티인가. 줄의 부제이자 기록지로 가는 열쇠다. */
-  partyId: string
-  partyName: string
+  /** 어느 기록지의 것인가. **아직 파티에 안 들었으면 `null`.** */
+  campaignId: string | null
+  /** 어느 파티인가. 줄의 부제이자 기록지로 가는 열쇠다. 안 들었으면 `null`. */
+  partyId: string | null
+  partyName: string | null
 }
 
 interface Row {
@@ -44,7 +44,7 @@ interface Row {
   class_icon: number | null
   class_id: string | null
   retired: boolean | null
-  campaign_id: string
+  campaign_id: string | null
   campaign: {
     id: string
     name: string | null
@@ -63,11 +63,13 @@ interface Row {
 const COLUMNS =
   'id, name, xp, class_icon, class_id, retired, campaign_id, campaign:campaigns(id, name, party:parties(id, name))'
 
-function toMine(row: Row): MyCharacter | null {
-  const party = row.campaign?.party
-  // 파티를 못 따라갔으면 줄을 그릴 수 없다 — 어디 속한 캐릭터인지 말할 수 없고
-  // 기록지로 가는 길도 없다. 있을 수 없는 일이지만 조용히 거른다.
-  if (!party?.id) return null
+function toMine(row: Row): MyCharacter {
+  /*
+    **파티가 없을 수 있다.** 캐릭터가 먼저 서고 파티에는 나중에 들기 때문이다
+    (`0015`). 그때는 줄에 "아직 파티가 없다"고 적는다 — 걸러 버리면 방금 세운
+    캐릭터가 목록에서 사라진다.
+  */
+  const party = row.campaign?.party ?? null
 
   return {
     id: row.id,
@@ -81,10 +83,10 @@ function toMine(row: Row): MyCharacter | null {
     classId: typeof row.class_id === 'string' && row.class_id !== '' ? row.class_id : null,
     retired: row.retired === true,
     campaignId: row.campaign_id,
-    partyId: party.id,
+    partyId: party?.id ?? null,
     // 기록지 이름을 먼저 쓴다 — 파티 시트에서 고치는 이름이 그쪽이고, 목록에 뜨는
-    // 것도 그것이다(`journal__entry-name`). 비면 파티 이름으로 물러난다.
-    partyName: row.campaign?.name || party.name || '이름 없는 파티',
+    // 것도 그것이다. 비면 파티 이름으로 물러난다.
+    partyName: party ? row.campaign?.name || party.name || '이름 없는 파티' : null,
   }
 }
 
@@ -102,5 +104,5 @@ export async function fetchMyCharacters(userId: string): Promise<MyCharacter[]> 
     .eq('owner_id', userId)
     .order('created_at', { ascending: true })
   if (error) throw error
-  return (data as unknown as Row[]).map(toMine).filter((c): c is MyCharacter => c !== null)
+  return (data as unknown as Row[]).map(toMine)
 }

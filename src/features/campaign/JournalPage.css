@@ -698,6 +698,17 @@
    화면을 오갈 일이 아니다.
    -------------------------------------------------------------------------- */
 
+/* 캐릭터를 세우는 자리는 일지 하나뿐이다 — 여기서는 길만 알려 준다. */
+.roster__hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--sl-text-faint);
+}
+
+.roster__hint a {
+  color: var(--sl-gold);
+}
+
 .roster__empty {
   margin: 0;
   font-size: 0.9rem;
@@ -1582,6 +1593,94 @@
 }
 
 .deckview__open:hover {
+  color: var(--sl-gold);
+  border-color: var(--sl-border-strong);
+}
+
+/* --------------------------------------------------------------------------
+   캐릭터 세우기 · 파티에 들기
+   --------------------------------------------------------------------------
+   **캐릭터가 먼저 서고 파티에는 나중에 든다**(2026-08-12). 일지에는 파티 목록을
+   내지 않는다 — 파티 기록지로는 캐릭터의 부제를 눌러 들어간다.
+   -------------------------------------------------------------------------- */
+
+.journal__newchar {
+  display: block;
+  max-width: 44rem;
+  margin: 0 auto 1.5rem;
+  padding: 0.6rem 1rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--sl-void);
+  background: var(--sl-gold);
+  border: 1px solid var(--sl-gold);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.newchar {
+  max-width: 44rem;
+  margin: 0 auto 1.5rem;
+  padding: 0.9rem 1rem;
+  background: var(--sl-raised);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.3rem;
+}
+
+/* 아직 파티에 안 든 캐릭터. 빈칸으로 두면 빠뜨린 것처럼 보인다. */
+.journal__char-party--none {
+  color: var(--sl-text-faint);
+  font-style: italic;
+}
+
+.joinparty {
+  max-width: 44rem;
+  margin: 0 auto 0.75rem;
+  padding: 0.8rem 1rem;
+  background: var(--sl-panel);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.3rem;
+}
+
+.joinparty__title {
+  margin: 0 0 0.35rem;
+  font-family: var(--sl-font-ko-display);
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--sl-gold-bright);
+}
+
+.joinparty__hint {
+  margin: 0 0 0.6rem;
+  font-size: 0.85rem;
+  color: var(--sl-text-faint);
+}
+
+.joinparty__hint a {
+  color: var(--sl-gold);
+}
+
+.joinparty__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.joinparty__pick {
+  padding: 0.45rem 0.9rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--sl-text);
+  background: rgb(0 0 0 / 28%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.joinparty__pick:hover:not(:disabled) {
   color: var(--sl-gold);
   border-color: var(--sl-border-strong);
 }

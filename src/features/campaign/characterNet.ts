@@ -94,7 +94,8 @@ export async function fetchCharacters(campaignId: string): Promise<Character[]> 
  * **넣는 값**을 보기 때문이다.
  */
 export async function createCharacter(
-  campaignId: string,
+  /** 어느 기록지에 세우는가. **파티 없이 세우면 `null`.** */
+  campaignId: string | null,
   ownerId: string,
   name: string,
   classIcon: number,
@@ -109,6 +110,45 @@ export async function createCharacter(
       class_icon: hasClassIcon(classIcon) ? classIcon : 0,
       class_id: classId,
     })
+    .select(COLUMNS)
+    .single()
+  if (error) throw error
+  return sanitizeCharacter(data as unknown as Row)
+}
+
+/**
+ * 한 장만 읽어 온다 — 캐릭터 화면이 파티를 모른 채 여는 자리다.
+ *
+ * 파티에 안 든 캐릭터는 기록지가 없어 `fetchCharacters(campaignId)`로는 닿을 수
+ * 없다. RLS가 한 번 더 거른다 — 파티에 안 든 것은 주인만 본다(`0015`).
+ */
+export async function fetchCharacter(id: string): Promise<Character | null> {
+  const { data, error } = await supabase()
+    .from('characters')
+    .select(COLUMNS)
+    .eq('id', id)
+    .maybeSingle()
+  if (error) throw error
+  return data ? sanitizeCharacter(data as unknown as Row) : null
+}
+
+/**
+ * 파티에 들거나 나온다.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **시트에서 고치는 칸이 아니라 따로 하는 일이다.**                         │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * `CharacterEdits`에 넣지 않는 까닭은 클래스와 같다 — 시트가 통째로 보내는 것에
+ * 섞이면 저장 한 번에 파티가 딸려 바뀔 수 있다. **드는 파티가 제가 든 파티인지는
+ * 서버가 본다**(`0015`의 `with check`) — 화면이 목록을 좁히는 것은 헛손질을 줄이는
+ * 것일 뿐이다.
+ */
+export async function joinParty(id: string, campaignId: string | null): Promise<Character> {
+  const { data, error } = await supabase()
+    .from('characters')
+    .update({ campaign_id: campaignId })
+    .eq('id', id)
     .select(COLUMNS)
     .single()
   if (error) throw error

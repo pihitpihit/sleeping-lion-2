@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import type { Identity } from '../net/types'
 import { classIconUrl, levelForXp } from './character'
 import { CharacterSheet } from './CharacterSheet'
-import { ClassPicker } from './ClassPicker'
 import { useCharacterStore } from './characterStore'
 
 interface Props {
@@ -33,18 +32,12 @@ export function Roster({ campaignId, me, readOnly = false }: Props) {
   const characters = useCharacterStore((s) => s.characters)
   const loaded = useCharacterStore((s) => s.loaded)
   const offline = useCharacterStore((s) => s.offline)
-  const busy = useCharacterStore((s) => s.busy)
   const error = useCharacterStore((s) => s.error)
   const load = useCharacterStore((s) => s.load)
-  const add = useCharacterStore((s) => s.add)
   const edit = useCharacterStore((s) => s.edit)
   const remove = useCharacterStore((s) => s.remove)
 
   const [openId, setOpenId] = useState<string | null>(null)
-  const [making, setMaking] = useState(false)
-  const [newName, setNewName] = useState('')
-  const [newIcon, setNewIcon] = useState(0)
-  const [newClassId, setNewClassId] = useState<string | null>(null)
   const [showRetired, setShowRetired] = useState(false)
 
   useEffect(() => {
@@ -56,14 +49,6 @@ export function Roster({ campaignId, me, readOnly = false }: Props) {
   const active = characters.filter((c) => !c.retired)
   const retired = characters.filter((c) => c.retired)
   const shown = showRetired ? [...active, ...retired] : active
-
-  async function onCreate() {
-    await add(campaignId, me.userId, newName, newIcon, newClassId)
-    setNewName('')
-    setNewIcon(0)
-    setNewClassId(null)
-    setMaking(false)
-  }
 
   return (
     <section className="sheet__block roster">
@@ -148,62 +133,19 @@ export function Roster({ campaignId, me, readOnly = false }: Props) {
       )}
 
       {/*
-        **세우는 자리에서 클래스를 먼저 고른다.** 나중에 고쳐도 되지만, 봉투를
-        막 뜯은 자리라 그림이 손에 있다.
+        ┌──────────────────────────────────────────────────────────────────┐
+        │ **여기서는 캐릭터를 세우지 않는다.**                              │
+        └──────────────────────────────────────────────────────────────────┘
+
+        캐릭터가 먼저 서고 파티에는 나중에 든다(2026-08-12) — 세우는 자리는
+        일지 하나뿐이고, 파티에 드는 것은 캐릭터 화면에서 한다. **창구를 둘로
+        두면 어긋난다.**
       */}
-      {!locked &&
-        (making ? (
-          <div className="roster__new">
-            <input
-              className="sheet__input"
-              value={newName}
-              placeholder="캐릭터 이름"
-              aria-label="새 캐릭터 이름"
-              maxLength={40}
-              onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  void onCreate()
-                }
-              }}
-            />
-            <ClassPicker
-              classId={newClassId}
-              icon={newIcon}
-              onChange={(next) => {
-                setNewClassId(next.classId)
-                setNewIcon(next.icon)
-              }}
-            />
-            <div className="roster__new-actions">
-              <button
-                type="button"
-                className="sheet__add-button"
-                disabled={busy || newName.trim() === ''}
-                onClick={() => void onCreate()}
-              >
-                세우기
-              </button>
-              <button
-                type="button"
-                className="roster__cancel"
-                onClick={() => {
-                  setMaking(false)
-                  setNewName('')
-                  setNewIcon(0)
-                  setNewClassId(null)
-                }}
-              >
-                그만
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button type="button" className="roster__add" onClick={() => setMaking(true)}>
-            캐릭터를 세운다
-          </button>
-        ))}
+      {!locked && (
+        <p className="roster__hint">
+          캐릭터는 <a href="#/journal">일지</a>에서 세우고, 그 캐릭터 화면에서 이 파티에 넣는다.
+        </p>
+      )}
     </section>
   )
 }

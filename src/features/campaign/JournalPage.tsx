@@ -2,17 +2,16 @@ import { useEffect, useState } from 'react'
 import { useAuthStore } from '../auth/authStore'
 import type { Identity } from '../net/types'
 import { useJournalStore } from './campaignStore'
-import { useCharacterStore } from './characterStore'
 import { classInfoOf, useClassStore } from './classStore'
 import { classIconUrl } from './character'
-import { CharacterSheet } from './CharacterSheet'
 import { Crew } from './Crew'
+import { ClassPicker } from './ClassPicker'
+import { createCharacter } from './characterNet'
 import type { MyCharacter } from './mineNet'
 import { useMineStore } from './mineStore'
 import { PartySheet } from './PartySheet'
 import { Roster } from './Roster'
 import { backHref, readJournalRoute } from './journalRoute'
-import { priceModifierLabel, shopPriceModifier } from './reputation'
 import './JournalPage.css'
 
 /**
@@ -43,7 +42,6 @@ import './JournalPage.css'
 export function JournalPage() {
   const session = useAuthStore((s) => s.session)
 
-  const entries = useJournalStore((s) => s.entries)
   const current = useJournalStore((s) => s.current)
   const loaded = useJournalStore((s) => s.loaded)
   const offline = useJournalStore((s) => s.offline)
@@ -71,7 +69,7 @@ export function JournalPage() {
 
   const userId = session?.userId ?? null
   const displayName = session?.displayName ?? ''
-  const { partyId, characterId } = route
+  const { partyId } = route
 
   useEffect(() => {
     if (userId === null) return
@@ -93,6 +91,10 @@ export function JournalPage() {
     if (userId === null || partyId) return
     void loadMine(userId)
   }, [userId, partyId, loadMine])
+
+  const reloadMine = () => {
+    if (userId !== null) void loadMine(userId)
+  }
 
   if (session === null) return null
   const me: Identity = { userId: session.userId, displayName: session.displayName }
@@ -135,87 +137,50 @@ export function JournalPage() {
 
       {!partyId ? (
         <>
-          <MyCharacters characters={mine} loaded={mineLoaded} hasParty={entries.length > 0} />
+          <MyCharacters characters={mine} loaded={mineLoaded} />
 
-          <h2 className="journal__section">파티</h2>
+          {!offline && <NewCharacter ownerId={me.userId} onMade={reloadMine} />}
 
-          {loaded && entries.length === 0 && (
-            <p className="journal__empty">아직 적어둔 것이 없다. 파티를 하나 세워라.</p>
-          )}
+          {/*
+            파티 세우기.
 
-          {entries.length > 0 && (
-            <ul className="journal__list">
-              {entries.map(({ party, campaign }) => {
-                const reputation = campaign?.reputation ?? 0
-                return (
-                  <li key={party.id}>
-                    <a className="journal__entry" href={`#/journal/${party.id}`}>
-                      <span className="journal__entry-name">
-                        {campaign?.name || party.name || '이름 없는 파티'}
-                      </span>
-                      <span className="journal__entry-meta">
-                        {campaign?.location && (
-                          <span className="journal__entry-place">{campaign.location}</span>
-                        )}
-                        <span className="sl-numeral" aria-label={`평판 ${reputation}`}>
-                          {reputation > 0 ? `+${reputation}` : reputation}
-                        </span>
-                        <span className="journal__entry-price sl-numeral" aria-hidden="true">
-                          {priceModifierLabel(shopPriceModifier(reputation))}
-                        </span>
-                      </span>
-                    </a>
-                  </li>
-                )
-              })}
-            </ul>
-          )}
-
+            **목록은 안 낸다**(2026-08-12) — 일지는 캐릭터를 보는 자리다. 파티
+            기록지로는 캐릭터의 부제를 눌러 들어간다. 그래도 **세우는 자리는
+            남긴다**: 첫 파티는 어디선가 세워야 하고, 캐릭터의 「파티에 들기」가
+            여기로 보낸다.
+          */}
           {!offline && (
-            <div className="journal__new">
-              <input
-                className="journal__new-input"
-                value={newName}
-                placeholder="새 파티 이름"
-                aria-label="새 파티 이름"
-                maxLength={40}
-                onChange={(e) => setNewName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    void onCreate()
-                  }
-                }}
-              />
-              <button
-                type="button"
-                className="journal__new-button"
-                disabled={busy || newName.trim() === ''}
-                onClick={() => void onCreate()}
-              >
-                세우기
-              </button>
-            </div>
+            <>
+              <h2 className="journal__section">새 파티</h2>
+              <div className="journal__new">
+                <input
+                  className="journal__new-input"
+                  value={newName}
+                  placeholder="새 파티 이름"
+                  aria-label="새 파티 이름"
+                  maxLength={40}
+                  onChange={(e) => setNewName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      void onCreate()
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="journal__new-button"
+                  disabled={busy || newName.trim() === ''}
+                  onClick={() => void onCreate()}
+                >
+                  세우기
+                </button>
+              </div>
+            </>
           )}
         </>
       ) : !current?.campaign ? (
         loaded && <p className="journal__empty">그런 기록지가 없다.</p>
-      ) : characterId ? (
-        /*
-          캐릭터 한 장.
-
-          **기록지로 가는 문을 함께 낸다.** 정산할 때는 파티 시트와 남의 캐릭터를
-          같이 봐야 하는데, 여기서 되돌아가는 길이 뒤로가기뿐이면 한 번 더 돌아야
-          한다.
-        */
-        <OneCharacter
-          campaignId={current.campaign.id}
-          characterId={characterId}
-          partyId={current.party.id}
-          partyTitle={partyTitle}
-          me={me}
-          readOnly={offline}
-        />
       ) : (
         <>
           <PartySheet
@@ -247,6 +212,113 @@ export function JournalPage() {
   )
 }
 
+/**
+ * 캐릭터 세우기 — **파티보다 먼저.**
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **캐릭터가 먼저 서고 파티에는 나중에 든다.**                              │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 2026-08-12까지는 파티를 세우고 그 안에서 캐릭터를 만들었다. 실제로 사람은 제
+ * 캐릭터를 먼저 정하고 누구와 놀지는 그다음에 정한다 — 봉투를 뜯는 것과 약속을
+ * 잡는 것은 다른 일이다. 표도 그렇게 바뀌었다(`0015`).
+ *
+ * 이름과 클래스만 받는다. **클래스는 여기서만 정할 수 있다** — 세운 뒤에는 못
+ * 바꾼다(구현 결정 181).
+ */
+function NewCharacter({ ownerId, onMade }: { ownerId: string; onMade: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState('')
+  const [icon, setIcon] = useState(0)
+  const [classId, setClassId] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function make() {
+    const trimmed = name.trim()
+    if (trimmed === '') return
+    setBusy(true)
+    setError(null)
+    try {
+      // 파티 없이 세운다. 드는 것은 캐릭터 화면에서 따로 한다.
+      const made = await createCharacter(null, ownerId, trimmed, icon, classId)
+      onMade()
+      window.location.hash = `#/character/${made.id}`
+    } catch (cause) {
+      console.error('[character]', cause)
+      setError('세우지 못했다.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (!open) {
+    return (
+      <button type="button" className="journal__newchar" onClick={() => setOpen(true)}>
+        캐릭터 세우기
+      </button>
+    )
+  }
+
+  return (
+    <section className="newchar">
+      <h2 className="journal__section">새 캐릭터</h2>
+
+      <div className="journal__new">
+        <input
+          className="journal__new-input"
+          value={name}
+          placeholder="이름을 짓는다"
+          aria-label="새 캐릭터 이름"
+          maxLength={40}
+          autoFocus
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
+
+      <p className="char__note">
+        클래스는 <strong>세울 때만 정한다.</strong> 그 뒤로는 못 바꾼다.
+      </p>
+      <ClassPicker
+        classId={classId}
+        icon={icon}
+        disabled={busy}
+        onChange={(next) => {
+          setClassId(next.classId)
+          setIcon(next.icon)
+        }}
+      />
+
+      {error !== null && (
+        <p className="journal__error" role="alert">
+          {error}
+        </p>
+      )}
+
+      <div className="sheet__bar">
+        <button
+          type="button"
+          className="sheet__cancel"
+          onClick={() => {
+            setOpen(false)
+            setName('')
+          }}
+        >
+          그만두기
+        </button>
+        <button
+          type="button"
+          className="sheet__save"
+          disabled={busy || name.trim() === ''}
+          onClick={() => void make()}
+        >
+          세우기
+        </button>
+      </div>
+    </section>
+  )
+}
+
 /* --------------------------------------------------------------------------
    내 캐릭터 — 첫 화면 맨 위
    -------------------------------------------------------------------------- */
@@ -254,11 +326,9 @@ export function JournalPage() {
 function MyCharacters({
   characters,
   loaded,
-  hasParty,
 }: {
   characters: readonly MyCharacter[]
   loaded: boolean
-  hasParty: boolean
 }) {
   const classes = useClassStore((s) => s.list)
   const loadClasses = useClassStore((s) => s.load)
@@ -275,11 +345,7 @@ function MyCharacters({
       <h2 className="journal__section">내 캐릭터</h2>
 
       {loaded && active.length === 0 && (
-        <p className="journal__empty">
-          {hasParty
-            ? '아직 세운 캐릭터가 없다. 아래에서 파티를 열고 거기서 세워라.'
-            : '파티를 먼저 세워라. 캐릭터는 파티 안에서 세운다.'}
-        </p>
+        <p className="journal__empty">아직 세운 캐릭터가 없다. 아래에서 하나 세워라.</p>
       )}
 
       {active.length > 0 && (
@@ -289,7 +355,7 @@ function MyCharacters({
             const iconUrl = classIconUrl(c.classIcon)
             return (
               <li key={c.id}>
-                <a className="journal__char" href={`#/journal/${c.partyId}/${c.id}`}>
+                <a className="journal__char" href={`#/character/${c.id}`}>
                   {/* 양피지 원반. 아이콘 색을 건드리지 않는다(구현 결정 41). */}
                   <span
                     className={`journal__char-badge${iconUrl ? '' : ' journal__char-badge--plain'}`}
@@ -304,7 +370,12 @@ function MyCharacters({
                       {/* 클래스 수치를 안 넣었으면 이름이랄 것이 없다 — 그때는
                           파티만 적는다. 이름을 지어내지 않는다(구현 결정 40). */}
                       {info && <span className="journal__char-class">{info.name}</span>}
-                      <span className="journal__char-party">{c.partyName}</span>
+                      {/* 어느 파티에 속했는지. **아직 안 들었으면 그렇게 적는다.** */}
+                      <span
+                        className={`journal__char-party${c.partyName ? '' : ' journal__char-party--none'}`}
+                      >
+                        {c.partyName ?? '파티 없음'}
+                      </span>
                     </span>
                   </span>
 
@@ -316,70 +387,6 @@ function MyCharacters({
             )
           })}
         </ul>
-      )}
-    </>
-  )
-}
-
-/* --------------------------------------------------------------------------
-   캐릭터 한 장
-   -------------------------------------------------------------------------- */
-
-function OneCharacter({
-  campaignId,
-  characterId,
-  partyId,
-  partyTitle,
-  me,
-  readOnly,
-}: {
-  campaignId: string
-  characterId: string
-  partyId: string
-  partyTitle: string
-  me: Identity
-  readOnly: boolean
-}) {
-  const characters = useCharacterStore((s) => s.characters)
-  const loaded = useCharacterStore((s) => s.loaded)
-  const offline = useCharacterStore((s) => s.offline)
-  const load = useCharacterStore((s) => s.load)
-  const edit = useCharacterStore((s) => s.edit)
-  const remove = useCharacterStore((s) => s.remove)
-
-  useEffect(() => {
-    void load(campaignId)
-  }, [campaignId, load])
-
-  const character = characters.find((c) => c.id === characterId)
-
-  return (
-    <>
-      {/*
-        기록지로 가는 문.
-
-        **시트 위에 둔다.** 정산하다 파티 시트를 보러 가는 일이 잦은데, 시트가
-        길어서 아래에 두면 스크롤을 끝까지 내려야 한다.
-      */}
-      <a className="journal__toparty" href={`#/journal/${partyId}`}>
-        {partyTitle || '파티'} 기록지로
-      </a>
-
-      {character ? (
-        <CharacterSheet
-          key={character.id}
-          character={character}
-          standalone
-          mine={character.ownerId === me.userId}
-          offline={readOnly || offline}
-          onEdit={(edits) => void edit(character.id, edits)}
-          onRemove={() => {
-            void remove(character.id)
-            window.location.hash = `#/journal/${partyId}`
-          }}
-        />
-      ) : (
-        loaded && <p className="journal__empty">그런 캐릭터가 없다.</p>
       )}
     </>
   )
