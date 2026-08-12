@@ -38,12 +38,13 @@ function fixture(over: Partial<Character> = {}): Character {
   }
 }
 
-function render(character: Character, mine: boolean, offline = false) {
+function render(character: Character, mine: boolean, offline = false, standalone = false) {
   return renderToStaticMarkup(
     <CharacterSheet
       character={character}
       mine={mine}
       offline={offline}
+      standalone={standalone}
       onEdit={() => {}}
       onRemove={() => {}}
     />,
@@ -100,6 +101,21 @@ describe('열람 모드', () => {
 
   it('아이템이 없으면 없다고 적는다 — 빈 칸만 있으면 고장으로 읽힌다', () => {
     expect(render(fixture({ items: [] }), true)).toContain('아직 없다')
+  })
+})
+
+/**
+ * `.char`는 로스터 줄 **밑에 매달리는** 상자다 — 위 테두리가 없고 위쪽 모서리가
+ * 각졌다. 캐릭터 한 장짜리 화면에는 매달릴 줄이 없으므로 제 테두리를 갖고 폭을
+ * 스스로 잡아야 한다. 그러지 않으면 **위가 뚫린 채 화면 끝까지 펼쳐진다.**
+ */
+describe('혼자 서는 시트', () => {
+  it('줄 밑에 매달릴 때는 제 테를 두르지 않는다', () => {
+    expect(render(fixture(), true)).not.toContain('char--solo')
+  })
+
+  it('혼자 설 때는 제 테를 두른다', () => {
+    expect(render(fixture(), true, false, true)).toContain('char--solo')
   })
 })
 

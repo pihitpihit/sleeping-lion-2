@@ -888,6 +888,28 @@
   border-radius: 0 0 0.25rem 0.25rem;
 }
 
+/*
+  혼자 서는 시트.
+
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ **매달릴 줄이 없으면 제 테두리를 갖는다.**                              │
+  └────────────────────────────────────────────────────────────────────────┘
+
+  `.char`는 원래 로스터 줄 **밑에 매달리는** 상자다 — 위 테두리를 지우고 위쪽
+  모서리를 각지게 두어 눌린 줄과 한 덩어리로 보이게 했다. 캐릭터 한 장짜리
+  화면에는 그 줄이 없으므로, 그대로 두면 **위가 뚫린 채 화면 끝까지 펼쳐져**
+  다른 칸들과 왼쪽 끝이 어긋난다. 다이얼이 제일 넓고 각진 요소라 그 어긋남이
+  거기서 제일 크게 보인다.
+
+  폭은 이 화면의 다른 칸(`journal__toparty`·`sheet__block`)과 같은 44rem이다.
+*/
+.char--solo {
+  max-width: 44rem;
+  margin: 0 auto;
+  border-top: 1px solid var(--sl-border);
+  border-radius: 0.3rem;
+}
+
 .char--retired {
   opacity: 0.72;
 }
@@ -1020,8 +1042,18 @@
   gap: 0.6rem;
 }
 
+/*
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ **`min-width: 0`이 없으면 줄어들지 못하고 넘친다.**                      │
+  └────────────────────────────────────────────────────────────────────────┘
+
+  플렉스 항목의 기본 `min-width`는 `auto`라 **내용의 최소 너비 밑으로는 줄지
+  않는다.** 다이얼 안에는 폭이 고정된 단추가 넷 있어 그 최소 너비가 200px을
+  넘는다 — 둘이 한 줄에 서면 좁은 화면에서 상자 밖으로 밀려 나간다.
+*/
 .dial {
   flex: 1 1 15rem;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -1034,12 +1066,20 @@
 .dial__row {
   display: flex;
   align-items: center;
+  min-width: 0;
   gap: 0.3rem;
 }
 
+/*
+  단추는 **좁아지면 함께 좁아진다.**
+
+  40px으로 못박아 두면 좁은 화면에서 넘칠 길이 그것뿐이다. 44px짜리 터치 목표를
+  지키지 못하는 것은 아쉽지만, **넘쳐서 눌리지 않는 것보다는 낫다.** 아래 한도
+  32px은 손가락이 아직 짚을 수 있는 크기다.
+*/
 .dial__step {
-  flex: none;
-  width: 40px;
+  flex: 0 1 auto;
+  width: clamp(32px, 11vw, 40px);
   height: 40px;
   font-family: inherit;
   font-size: 1.1rem;
@@ -1068,10 +1108,12 @@
 }
 
 .dial__value {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 0;
+  /* 네 자리(9999)는 들어가야 한다. 그 밑으로는 단추가 먼저 줄어든다. */
+  min-width: 4ch;
+  width: 100%;
   padding: 0.35rem;
-  font-size: 1.4rem;
+  font-size: clamp(1.05rem, 4.5vw, 1.4rem);
   text-align: center;
   color: var(--sl-text);
   background: rgb(0 0 0 / 30%);

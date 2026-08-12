@@ -26,6 +26,15 @@ interface Props {
   offline?: boolean
   onEdit: (edits: CharacterEdits) => void
   onRemove: () => void
+  /**
+   * 혼자 서는 시트인가.
+   *
+   * `Roster`에서는 **줄 밑에 매달린다** — 위 테두리를 지우고 위쪽 모서리를 각지게
+   * 두어 눌린 줄과 한 덩어리로 보이게 한 것이다. 캐릭터 한 장짜리 화면
+   * (`#/journal/<파티>/<캐릭터>`)에서는 매달릴 줄이 없으므로 **제 테두리를 갖고
+   * 폭을 스스로 잡아야 한다.** 그러지 않으면 위가 뚫린 채 화면 끝까지 펼쳐진다.
+   */
+  standalone?: boolean
 }
 
 /**
@@ -67,7 +76,14 @@ interface Props {
  * **부르는 쪽이 `key`로 다시 태운다.** 초안을 이펙트로 맞추면 남이 고친 값이
  * 치고 있는 글자를 덮어쓴다.
  */
-export function CharacterSheet({ character, mine, offline = false, onEdit, onRemove }: Props) {
+export function CharacterSheet({
+  character,
+  mine,
+  offline = false,
+  standalone = false,
+  onEdit,
+  onRemove,
+}: Props) {
   const nameId = useId()
   const noteId = useId()
 
@@ -162,6 +178,7 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
     <div
       className={[
         'char',
+        standalone ? 'char--solo' : '',
         // 은퇴는 초안이 아니라 **저장된 사실**로 흐린다 — 편집 중에 껐다 켰다 할
         // 때마다 시트 전체가 흐려졌다 밝아지면 눈이 어지럽다.
         character.retired ? 'char--retired' : '',

@@ -369,6 +369,7 @@ function OneCharacter({
         <CharacterSheet
           key={character.id}
           character={character}
+          standalone
           mine={character.ownerId === me.userId}
           offline={readOnly || offline}
           onEdit={(edits) => void edit(character.id, edits)}
