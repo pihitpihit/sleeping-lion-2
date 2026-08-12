@@ -170,7 +170,6 @@ export function CharacterSheet({
     void loadClasses()
   }, [loadClasses])
   const info = classInfoOf(classes, character.classId, character.classIcon)
-  const maxHp = maxHpFor(info, level)
 
   /**
    * 이 클래스의 특혜 줄과 각 줄이 시작하는 상자 번호.
@@ -178,6 +177,15 @@ export function CharacterSheet({
    * **번호는 줄의 차례에서 나온다**(`perkBoxes`) — 캐릭터가 켜 둔 값은 지금까지도
    * 상자 번호였으므로 표가 들어와도 그대로 맞물린다.
    */
+  /**
+   * 그 레벨의 최대 체력. 클래스 수치를 안 넣었으면 `null`.
+   *
+   * **별도 줄로 내지 않고 눈금 안에 적는다**(2026-08-12) — 아홉 줄이 이미
+   * 레벨과 경험치를 늘어놓고 있고, 체력도 레벨마다 정해진 값이라 같은 표에
+   * 들어가는 것이 맞다. 형님이 짚었다.
+   */
+  const hpAt = (n: number) => maxHpFor(info, n)
+
   const perkTable = useClassStore((s) => s.perks)
   const rows = perkRowsOf(info === null ? [] : (perkTable[info.id] ?? []))
 
@@ -281,26 +289,25 @@ export function CharacterSheet({
                 <span className="char__level-n sl-numeral" aria-hidden="true">
                   {n}
                 </span>
+                {/* 경험치 눈금 — 푸른 쪽. HP/XP 트래커와 같은 결이다. */}
                 <span className="char__level-xp sl-numeral" aria-hidden="true">
                   {threshold}
                 </span>
+                {/*
+                  그 레벨의 최대 체력 — 붉은 쪽.
+
+                  **클래스 수치를 안 넣었으면 아예 안 그린다.** 짐작해서 숫자를
+                  내면 사람이 그것을 믿는다(구현 결정 115).
+                */}
+                {hpAt(n) !== null && (
+                  <span className="char__level-hp sl-numeral" aria-hidden="true">
+                    {hpAt(n)}
+                  </span>
+                )}
               </li>
             )
           })}
         </ol>
-
-        {/*
-          최대 체력은 **읽어주기만 한다.** 규칙을 판정하지 않는다는 선은 그대로다 —
-          피해를 깎지도, 상한을 강제하지도 않는다.
-
-          클래스 수치를 안 넣었으면 아예 뜨지 않는다. **모르면 모른다고 한다** —
-          짐작해서 숫자를 내면 사람이 그것을 믿는다.
-        */}
-        {maxHp !== null && (
-          <p className="char__maxhp">
-            이 레벨의 최대 체력 <strong className="sl-numeral">{maxHp}</strong>
-          </p>
-        )}
       </section>
 
       {/* ------------------------------------------------------------------
