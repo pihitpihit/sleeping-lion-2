@@ -43,7 +43,7 @@ describe('카드 늘어놓기', () => {
     const html = render({ 'r.p0.fire': 1, 'p1.wound': 1 })
     expect(html).toContain('deck__badge--rolling')
     expect(html).toContain('elements/fire.svg')
-    expect(html).toContain('deck__badge')
+    expect(html).toContain('deck__elem')
   })
 
   it('읽어주는 쪽에는 카드마다 우리말이 간다', () => {

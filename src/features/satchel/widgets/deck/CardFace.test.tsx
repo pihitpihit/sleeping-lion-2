@@ -76,10 +76,25 @@ describe('카드 앞면', () => {
     expect(html.toLowerCase()).toContain('#a3301d')
   })
 
-  it('원소 배지는 원소 트래커와 같은 아이콘·같은 색이다', () => {
+  /**
+   * 팩의 원소 아이콘은 **색 있는 원반에 흰 문양이 얹힌 통짜 배지다.** 마름모에
+   * 넣고 흰빛으로 물들였더니 문양이 사라지고 흰 원반만 남았다 — 있는 그대로
+   * 얹는 것이 맞다.
+   */
+  it('원소는 마름모에 넣지 않고 둥근 아이콘 그대로 얹는다', () => {
     const html = renderToStaticMarkup(<CardFace card={card('p2.fire')} />)
     expect(html).toContain('elements/fire.svg')
-    expect(html.toLowerCase()).toContain('#e2421f')
+    expect(html).toContain('deck__elem')
+    // 마름모 배지가 아니다 — 바탕색을 깔지 않는다.
+    expect(html).not.toContain('deck__badge"')
+    expect(html.toLowerCase()).not.toContain('#e2421f')
+  })
+
+  it('상태이상은 색 있는 마름모에 글자로 적는다', () => {
+    const html = renderToStaticMarkup(<CardFace card={card('p1.wound')} />)
+    expect(html).toContain('deck__badge')
+    expect(html).toContain('deck__badge-text')
+    expect(html).not.toContain('deck__elem')
   })
 
   it('수를 단 표식은 수까지 적는다', () => {
@@ -90,7 +105,7 @@ describe('카드 앞면', () => {
     const html = renderToStaticMarkup(<CardFace card={card('p1.fire.ice')} />)
     expect(html).toContain('elements/fire.svg')
     expect(html).toContain('elements/ice.svg')
-    const tops = [...html.matchAll(/deck__badge"[^>]*top:([\d.]+)%/g)].map((m) => Number(m[1]))
+    const tops = [...html.matchAll(/deck__elem"[^>]*top:([\d.]+)%/g)].map((m) => Number(m[1]))
     expect(new Set(tops).size).toBe(2)
   })
 

@@ -1486,13 +1486,16 @@
   color: var(--sl-text);
 }
 
-/* 원소 표식. 파일은 원본 색을 지키고 화면에서만 밝힌다(구현 결정 15) —
-   어둠은 거의 검정이라 그대로 두면 알약에 묻힌다. */
+/*
+  원소 표식.
+
+  **물들이지 않는다.** 팩의 원소 아이콘은 색 있는 원반에 흰 문양이 얹힌 통짜
+  배지라, 흰빛으로 뽑으면 문양이 사라지고 흰 점만 남는다 — 카드에서 겪은 자리다.
+*/
 .deckview__mark {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   object-fit: contain;
-  filter: brightness(0) invert(0.9);
 }
 
 .deckview__tag {

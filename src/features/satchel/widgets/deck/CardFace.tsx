@@ -1,4 +1,3 @@
-import { ELEMENTS } from '../elements/elements'
 import {
   FACE_SLOTS,
   SHUFFLE_ICON_URL,
@@ -11,11 +10,11 @@ import {
 } from './deck'
 
 /**
- * 배지 바탕색.
+ * 마름모 배지의 바탕색.
  *
- * **원소는 `elements.ts`가 정본이다** — 원소 트래커와 같은 색이라야 상 위에서
- * 같은 것으로 읽힌다. 나머지는 표식 자신이 들고 있는 색(`MARKS`)이며 실물
- * 상태이상 표식을 따랐다.
+ * **원소는 여기 오지 않는다** — 원소 아이콘은 그 자체로 색 있는 둥근 배지라
+ * 바탕을 깔 것이 없다. 여기 오는 것은 상태이상과 수치뿐이고, 색은 표식 자신이
+ * 들고 있다(`MARKS`).
  */
 /**
  * 카드가 누구 덱의 것인가 — **왼쪽 아래 홈에 앉는 것.**
@@ -41,9 +40,6 @@ export interface CardOwner {
 }
 
 function markBadgeColor(mark: CardMark): string {
-  if (mark.def.kind === 'element') {
-    return ELEMENTS.find((e) => e.id === mark.def.id)?.color ?? '#5A4830'
-  }
   return mark.def.color ?? '#5A4830'
 }
 /*
@@ -168,27 +164,41 @@ export function CardFace({ card, owner }: { card: Card; owner?: CardOwner | null
         자리다.
       */}
       {spec.marks.map((mark, index) => {
-        const icon = markIconUrl(mark)
         const slot = FACE_SLOTS.effect
-        const style = {
+        const place = {
           left: `${slot.cx}%`,
           top: `${slot.cy + (index - (spec.marks.length - 1) / 2) * FACE_SLOTS.effectStep}%`,
           width: `${slot.size}%`,
-          // 원소는 제 색을 쓴다(`elements.ts`가 정본). 나머지는 표식 색.
-          background: markBadgeColor(mark),
         } as React.CSSProperties
+
+        /*
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **원소는 그 자체로 이미 완성된 둥근 배지다.**                     │
+          └──────────────────────────────────────────────────────────────────┘
+
+          팩의 원소 아이콘은 낱개 문양이 아니라 **색 있는 원반에 흰 문양이 얹히고
+          흰 테까지 둘린 통짜 배지**다. 그것을 마름모 안에 넣고 흰빛으로 물들였더니
+          **문양이 사라지고 흰 원반만 남았다** — 형님이 짚었다. 있는 그대로 얹는
+          것이 맞다. 색도 손대지 않는다(구현 결정 15 — 파일도 화면도 원본 색).
+        */
+        const icon = markIconUrl(mark)
+        if (icon) {
+          return <img key={mark.def.id} className="deck__elem" src={icon} alt="" style={place} />
+        }
+
+        // 상태이상·수치는 그림이 없어 색 있는 마름모에 한 글자를 적는다.
         return (
-          <span key={mark.def.id} className="deck__badge" style={style}>
-            {icon ? (
-              <img className="deck__badge-icon" src={icon} alt="" />
-            ) : (
-              <span className="deck__badge-text">
-                {mark.def.short ?? mark.def.name.slice(0, 1)}
-                {mark.amount !== null && (
-                  <span className="deck__badge-amount sl-numeral">{mark.amount}</span>
-                )}
-              </span>
-            )}
+          <span
+            key={mark.def.id}
+            className="deck__badge"
+            style={{ ...place, background: markBadgeColor(mark) }}
+          >
+            <span className="deck__badge-text">
+              {mark.def.short ?? mark.def.name.slice(0, 1)}
+              {mark.amount !== null && (
+                <span className="deck__badge-amount sl-numeral">{mark.amount}</span>
+              )}
+            </span>
           </span>
         )
       })}
