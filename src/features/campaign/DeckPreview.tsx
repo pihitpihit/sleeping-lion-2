@@ -5,7 +5,7 @@ import {
   compositionKinds,
   compositionSize,
   countOf,
-  markIconUrl,
+  markArt,
   markSpeech,
   medallionUrl,
   specSpeech,
@@ -103,18 +103,28 @@ export function DeckPreview({ perks, checked, owner }: Props) {
                 </span>
               )}
               {spec.marks.map((mark) => {
-                const icon = markIconUrl(mark)
-                return icon ? (
-                  <img
-                    key={mark.def.id}
-                    className="deckview__mark"
-                    src={icon}
-                    alt=""
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <span key={mark.def.id} className="deckview__tag" aria-hidden="true">
-                    {markSpeech(mark)}
+                /*
+                  완성된 배지(상태이상·원소)는 그대로 얹고, 검정 실루엣(치료·방어)은
+                  물들여 얹는다. 그림이 없으면 글자다 — 카드와 같은 갈래다.
+                */
+                const art = markArt(mark)
+                if (!art) {
+                  return (
+                    <span key={mark.def.id} className="deckview__tag" aria-hidden="true">
+                      {markSpeech(mark)}
+                    </span>
+                  )
+                }
+                return (
+                  <span key={mark.def.id} className="deckview__markwrap" aria-hidden="true">
+                    <img
+                      className={art.kind === 'badge' ? 'deckview__mark' : 'deckview__glyph'}
+                      src={art.url}
+                      alt=""
+                    />
+                    {mark.amount !== null && (
+                      <span className="deckview__markn sl-numeral">{mark.amount}</span>
+                    )}
                   </span>
                 )
               })}

@@ -67,13 +67,17 @@ describe('카드 앞면', () => {
   it('표식은 메달과 따로 붙는다 — 메달은 여전히 값에서 고른다', () => {
     const html = renderToStaticMarkup(<CardFace card={card('p1.wound')} />)
     expect(html).toContain('attack-modifiers/p1.webp')
-    expect(html).toContain('deck__badge')
+    expect(html).toContain('deck__mark')
   })
 
-  /** 색이 갈리는 것이 작은 배지에서는 글자보다 먼저 읽힌다. */
-  it('상태이상 배지는 실물 표식 색을 쓴다 — 이동불가는 빨강', () => {
+  /**
+   * 색은 우리가 정하지 않는다 — **팩 그림에 이미 들어 있다.** 손으로 적어 둔
+   * 색표를 쓰다가 팩에서 진짜 배지를 가져오면서 걷었다.
+   */
+  it('상태이상 배지에 우리가 색을 입히지 않는다', () => {
     const html = renderToStaticMarkup(<CardFace card={card('p1.immobilize')} />)
-    expect(html.toLowerCase()).toContain('#a3301d')
+    expect(html).toContain('status/immobilize.svg')
+    expect(html.toLowerCase()).not.toContain('background')
   })
 
   /**
@@ -81,24 +85,41 @@ describe('카드 앞면', () => {
    * 넣고 흰빛으로 물들였더니 문양이 사라지고 흰 원반만 남았다 — 있는 그대로
    * 얹는 것이 맞다.
    */
-  it('원소는 마름모에 넣지 않고 둥근 아이콘 그대로 얹는다', () => {
+  it('원소는 팩의 둥근 배지를 그대로 얹는다', () => {
     const html = renderToStaticMarkup(<CardFace card={card('p2.fire')} />)
     expect(html).toContain('elements/fire.svg')
-    expect(html).toContain('deck__elem')
-    // 마름모 배지가 아니다 — 바탕색을 깔지 않는다.
-    expect(html).not.toContain('deck__badge"')
+    expect(html).toContain('deck__mark')
+    // 바탕색을 깔지 않는다 — 그림에 이미 있다.
     expect(html.toLowerCase()).not.toContain('#e2421f')
   })
 
-  it('상태이상은 색 있는 마름모에 글자로 적는다', () => {
+  /** 팩의 상태이상 열넷은 색까지 다 그려진 마름모다. 씌우거나 물들이지 않는다. */
+  it('상태이상도 팩의 마름모 배지를 그대로 얹는다', () => {
     const html = renderToStaticMarkup(<CardFace card={card('p1.wound')} />)
-    expect(html).toContain('deck__badge')
-    expect(html).toContain('deck__badge-text')
-    expect(html).not.toContain('deck__elem')
+    expect(html).toContain('status/wound.svg')
+    expect(html).toContain('deck__mark')
+    expect(html).not.toContain('deck__badge-text')
   })
 
-  it('수를 단 표식은 수까지 적는다', () => {
-    expect(renderToStaticMarkup(<CardFace card={card('r.p0.push2')} />)).toContain('>2<')
+  /** 치료·방어는 열넷에 없다. 검정 실루엣이라 우리가 마름모를 깐다. */
+  it('팩에 배지가 없는 것은 마름모를 깔고 얹는다', () => {
+    const html = renderToStaticMarkup(<CardFace card={card('p1.heal2')} />)
+    expect(html).toContain('general/hp-drop.svg')
+    expect(html).toContain('deck__badge-glyph')
+    expect(html.toLowerCase()).toContain('#3f6b4a')
+  })
+
+  it('그림이 아예 없으면 글자로 간다', () => {
+    const html = renderToStaticMarkup(<CardFace card={card('p0.special')} />)
+    expect(html).toContain('deck__badge-text')
+  })
+
+  /** 팩 그림에는 수가 없다 — 실물 카드도 표식 옆에 따로 적는다. */
+  it('수를 단 표식은 수를 따로 얹는다', () => {
+    const html = renderToStaticMarkup(<CardFace card={card('r.p0.push2')} />)
+    expect(html).toContain('status/push.svg')
+    expect(html).toContain('deck__badge-amount')
+    expect(html).toContain('>2<')
   })
 
   /**
@@ -115,7 +136,7 @@ describe('카드 앞면', () => {
     expect(html).toContain('elements/fire.svg')
     expect(html).toContain('elements/ice.svg')
     // 자리는 같고 쌓는 값만 다르다.
-    const tops = [...html.matchAll(/deck__elem"[^>]*top:([\d.]+)%/g)].map((m) => Number(m[1]))
+    const tops = [...html.matchAll(/deck__mark"[^>]*top:([\d.]+)%/g)].map((m) => Number(m[1]))
     expect(new Set(tops).size).toBe(1)
     const idx = [...html.matchAll(/--deck-badge-i:([-\d.]+)/g)].map((m) => Number(m[1]))
     expect(idx).toEqual([-0.5, 0.5])
@@ -132,16 +153,15 @@ describe('카드 앞면', () => {
     expect(idx).toEqual([-1, 0, 1])
   })
 
+  /** 굴림도 팩의 상태이상 열넷 가운데 하나다 — 실물 카드의 초록 마름모와 같다. */
   it('굴림 카드에는 오른쪽 가운데에 굴림 배지가 붙는다', () => {
     const html = renderToStaticMarkup(<CardFace card={card('r.p1')} />)
-    expect(html).toContain('deck__badge--rolling')
+    expect(html).toContain('status/rolling.svg')
     expect(html).toContain(`left:${FACE_SLOTS.rolling.cx}%`)
   })
 
   it('굴림이 아니면 굴림 배지가 없다', () => {
-    expect(renderToStaticMarkup(<CardFace card={card('p1')} />)).not.toContain(
-      'deck__badge--rolling',
-    )
+    expect(renderToStaticMarkup(<CardFace card={card('p1')} />)).not.toContain('deck__roll')
   })
 })
 

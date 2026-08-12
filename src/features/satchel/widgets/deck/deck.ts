@@ -124,10 +124,35 @@ export function medallionUrl(valueId: string): string | null {
   return valueHasArt(valueId) ? `${ASSET_ROOT}attack-modifiers/${valueId}.webp` : null
 }
 
-/** 원소 표식의 아이콘. 원소 트래커와 같은 파일을 쓴다. */
-export function markIconUrl(mark: CardMark): string | null {
-  return mark.def.kind === 'element' ? `${ASSET_ROOT}elements/${mark.def.id}.svg` : null
+/**
+ * 표식 그림이 어디 있고 **어떤 종류인가.**
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **완성된 배지와 검정 실루엣은 다르게 다뤄야 한다.**                       │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * `badge`는 색까지 다 그려진 마름모(또는 원소의 둥근 원반)라 **자리와 크기만
+ * 주고 그대로 얹는다.** 물들이면 문양이 사라진다 — 원소에서 겪은 자리다.
+ *
+ * `glyph`는 검정 실루엣이라 **우리가 마름모를 깔고 흰빛으로 얹는다.**
+ *
+ * 둘 다 없으면 `null`이고 글자로 간다.
+ */
+export type MarkArt =
+  | { readonly kind: 'badge'; readonly url: string }
+  | { readonly kind: 'glyph'; readonly url: string }
+
+export function markArt(mark: CardMark): MarkArt | null {
+  const def = mark.def
+  // 원소는 팩에서 색 있는 둥근 배지로 온다 — 원소 트래커와 같은 파일이다.
+  if (def.kind === 'element') return { kind: 'badge', url: `${ASSET_ROOT}elements/${def.id}.svg` }
+  if (def.badge) return { kind: 'badge', url: `${ASSET_ROOT}status/${def.badge}.svg` }
+  if (def.glyph) return { kind: 'glyph', url: `${ASSET_ROOT}general/${def.glyph}.svg` }
+  return null
 }
+
+/** 굴림 표식. 팩의 상태이상 열넷 가운데 하나이며 실물 카드와 같은 초록 마름모다. */
+export const ROLLING_ICON_URL = `${ASSET_ROOT}status/rolling.svg`
 
 /**
  * 카드 앞면에서 각 표식이 앉는 자리.

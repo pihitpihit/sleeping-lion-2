@@ -3,7 +3,8 @@ import {
   SHUFFLE_ICON_URL,
   SOCKET_URL,
   cardLabel,
-  markIconUrl,
+  ROLLING_ICON_URL,
+  markArt,
   medallionUrl,
   type Card,
   type CardMark,
@@ -181,32 +182,45 @@ export function CardFace({ card, owner }: { card: Card; owner?: CardOwner | null
 
         /*
           ┌──────────────────────────────────────────────────────────────────┐
-          │ **원소는 그 자체로 이미 완성된 둥근 배지다.**                     │
+          │ **완성된 배지는 그대로 얹고, 실루엣만 마름모를 깔아 준다.**        │
           └──────────────────────────────────────────────────────────────────┘
 
-          팩의 원소 아이콘은 낱개 문양이 아니라 **색 있는 원반에 흰 문양이 얹히고
-          흰 테까지 둘린 통짜 배지**다. 그것을 마름모 안에 넣고 흰빛으로 물들였더니
-          **문양이 사라지고 흰 원반만 남았다** — 형님이 짚었다. 있는 그대로 얹는
-          것이 맞다. 색도 손대지 않는다(구현 결정 15 — 파일도 화면도 원본 색).
+          팩의 상태이상 열넷과 원소 여섯은 **색까지 다 그려진 통짜 배지**다. 그것을
+          마름모에 넣고 흰빛으로 물들였더니 문양이 사라지고 흰 원반만 남았다 —
+          형님이 짚은 자리다. 있는 그대로 얹는다(구현 결정 15).
+
+          치료·방어는 검정 실루엣이라 우리가 마름모를 깔고 흰빛으로 얹는다.
+          당기기·특수는 그림이 아예 없어 글자로 간다.
         */
-        const icon = markIconUrl(mark)
-        if (icon) {
-          return <img key={mark.def.id} className="deck__elem" src={icon} alt="" style={place} />
+        const art = markArt(mark)
+        const amount =
+          mark.amount === null ? null : (
+            <span className="deck__badge-amount sl-numeral">{mark.amount}</span>
+          )
+
+        if (art?.kind === 'badge') {
+          return (
+            <span key={mark.def.id} className="deck__mark" style={place}>
+              <img className="deck__mark-art" src={art.url} alt="" />
+              {amount}
+            </span>
+          )
         }
 
-        // 상태이상·수치는 그림이 없어 색 있는 마름모에 한 글자를 적는다.
         return (
           <span
             key={mark.def.id}
             className="deck__badge"
             style={{ ...place, background: markBadgeColor(mark) }}
           >
-            <span className="deck__badge-text">
-              {mark.def.short ?? mark.def.name.slice(0, 1)}
-              {mark.amount !== null && (
-                <span className="deck__badge-amount sl-numeral">{mark.amount}</span>
-              )}
-            </span>
+            {art ? (
+              <img className="deck__badge-glyph" src={art.url} alt="" />
+            ) : (
+              <span className="deck__badge-text">
+                {mark.def.short ?? mark.def.name.slice(0, 1)}
+              </span>
+            )}
+            {amount}
           </span>
         )
       })}
@@ -214,29 +228,20 @@ export function CardFace({ card, owner }: { card: Card; owner?: CardOwner | null
       {/*
         굴림 표식 — **오른쪽 가운데, 초록 마름모.**
 
-        실물이 그 자리에 그 색으로 둔다. 안의 화살은 **직접 그린 도형이다** —
-        실물 문양을 베끼지 않는다(구현 결정 31).
+        **팩에서 온 그림이다.** 처음에는 직접 그린 화살을 썼는데, 팩의 상태이상
+        열넷 가운데 하나가 바로 이것이었다 — 실물 카드의 초록 마름모와 같다.
       */}
       {spec.rolling && (
-        <span
-          className="deck__badge deck__badge--rolling"
+        <img
+          className="deck__roll"
+          src={ROLLING_ICON_URL}
+          alt=""
           style={{
             left: `${FACE_SLOTS.rolling.cx}%`,
             top: `${FACE_SLOTS.rolling.cy}%`,
             width: `${FACE_SLOTS.rolling.size}%`,
           }}
-        >
-          <svg className="deck__badge-arrow" viewBox="0 0 24 24" role="presentation">
-            <path
-              d="M7 18V10a5 5 0 0 1 10 0v8"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-            <path d="M17 22l-4-5h8z" fill="currentColor" />
-          </svg>
-        </span>
+        />
       )}
 
       {/*

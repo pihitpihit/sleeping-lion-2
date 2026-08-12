@@ -5,7 +5,7 @@ import {
   MAX_PER_KIND,
   STANDARD_KINDS,
   SHUFFLE_ICON_URL,
-  markIconUrl,
+  markArt,
   medallionUrl,
   STANDARD_COMPOSITION,
   buildDeck,
@@ -363,7 +363,7 @@ describe('에셋 (Creator Pack)', () => {
       ...STANDARD_KINDS.map((spec) => medallionUrl(spec.valueId)).filter(
         (u): u is string => u !== null,
       ),
-      markIconUrl(parseCardSpec('p1.fire')!.marks[0])!,
+      markArt(parseCardSpec('p1.fire')!.marks[0])!.url,
     ]
     for (const url of urls) {
       expect(url, url).toContain('assets/creator-pack/')
@@ -376,11 +376,28 @@ describe('에셋 (Creator Pack)', () => {
 
   it('원소 표식은 원소 트래커와 같은 아이콘을 쓴다', () => {
     const fire = parseCardSpec('r.p0.fire')!.marks[0]
-    expect(markIconUrl(fire)).toContain('elements/fire.svg')
+    expect(markArt(fire)).toEqual({
+      kind: 'badge',
+      url: expect.stringContaining('elements/fire.svg'),
+    })
   })
 
-  it('원소가 아닌 표식에는 아이콘이 없다 — 글자로 그린다', () => {
-    expect(markIconUrl(parseCardSpec('p1.wound')!.marks[0])).toBeNull()
+  /** 팩의 상태이상 열넷은 색까지 다 그려진 마름모라 그대로 얹는다. */
+  it('상태이상도 완성된 배지로 온다', () => {
+    const art = markArt(parseCardSpec('p1.wound')!.marks[0])
+    expect(art?.kind).toBe('badge')
+    expect(art?.url).toContain('status/wound.svg')
+  })
+
+  /** 치료·방어는 열넷에 없다. 검정 실루엣이라 우리가 마름모를 깐다. */
+  it('팩에 배지가 없는 것은 실루엣으로 온다', () => {
+    const art = markArt(parseCardSpec('p1.heal2')!.marks[0])
+    expect(art?.kind).toBe('glyph')
+    expect(art?.url).toContain('general/hp-drop.svg')
+  })
+
+  it('그림이 아예 없으면 null — 글자로 간다', () => {
+    expect(markArt(parseCardSpec('p0.special')!.marks[0])).toBeNull()
   })
 })
 

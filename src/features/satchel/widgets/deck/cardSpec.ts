@@ -130,18 +130,25 @@ export interface MarkDef {
    */
   readonly color?: string
   /**
+   * **완성된 마름모 배지** 그림(`status/<이름>.svg`).
+   *
+   * Creator Pack `Icon Pack/Status Effect Icons.pdf`에서 뽑았다. 낱개 문양이
+   * 아니라 **색 있는 마름모에 흰 문양이 얹힌 통짜 배지**이므로 자리와 크기만
+   * 주고 그대로 얹는다 — 원소 아이콘과 같은 성질이다.
+   */
+  readonly badge?: string
+  /**
+   * **검정 실루엣** 그림(`general/<이름>.svg`).
+   *
+   * 팩의 상태이상 열넷에 없는 것들이다(치료·방어). 마름모가 딸려 있지 않아
+   * 우리가 `color`로 마름모를 깔고 그 위에 흰빛으로 얹는다.
+   */
+  readonly glyph?: string
+  /**
    * 배지 안에 적을 한 글자.
    *
-   * ┌──────────────────────────────────────────────────────────────────────┐
-   * │ **아이콘을 못 구해서 글자로 대신한다 — 임시다.**                      │
-   * └──────────────────────────────────────────────────────────────────────┘
-   *
-   * 실물 카드는 여기에 그림을 넣는다(이동불가는 화살 맞은 장화). 그 그림들은
-   * Creator Pack `Icon Pack/General Icons.pdf`의 아직 안 가져온 쪽에 있는데
-   * **팩 원본이 이 기계에 없어 뽑을 수가 없다.** 구하면 글자를 그림으로 바꾼다.
-   *
-   * 한 글자인 까닭은 배지가 카드 폭의 14%뿐이기 때문이다. 색과 함께 보면
-   * 갈린다.
+   * 그림이 아예 없는 것에만 쓴다(당기기·특수). 배지가 카드 폭의 15%뿐이라
+   * 한 글자이며, 색과 함께 보면 갈린다.
    */
   readonly short?: string
 }
@@ -158,24 +165,34 @@ export interface MarkDef {
  * 제대로 셈하고 화면에는 '특수'라고만 낸다. 무엇인지는 그 카드를 가진 사람이 안다.
  */
 export const MARKS: readonly MarkDef[] = [
-  // 색은 실물 상태이상 표식을 따른다. 중독 초록·부상 주황·이동불가 빨강·
-  // 무장해제 파랑·기절 남색·혼란 갈색·투명 검정.
-  { id: 'wound', name: '부상', kind: 'condition', color: '#B85A18', short: '부' },
-  { id: 'immobilize', name: '이동불가', kind: 'condition', color: '#A3301D', short: '이' },
-  { id: 'poison', name: '중독', kind: 'condition', color: '#4C7A26', short: '중' },
-  { id: 'muddle', name: '혼란', kind: 'condition', color: '#6B4A28', short: '혼' },
-  { id: 'stun', name: '기절', kind: 'condition', color: '#28407A', short: '기' },
-  // 저주는 실물에 표식 색이 따로 없다(카드다). 어둠 쪽 보라로 둔다 — 우리 색이다.
-  { id: 'curse', name: '저주', kind: 'condition', color: '#4A2A6B', short: '저' },
-  { id: 'disarm', name: '무장해제', kind: 'condition', color: '#2A5F8A', short: '무' },
-  { id: 'invisible', name: '투명', kind: 'condition', color: '#2E2E33', short: '투' },
+  /*
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │ **열넷은 팩에서 그대로 온다. 색까지 그려져 있다.**                      │
+    └────────────────────────────────────────────────────────────────────────┘
 
-  // 수치는 상태이상이 아니다. 돌빛 하나로 묶고 배지 안에 수를 적는다.
-  { id: 'push', name: '밀기', kind: 'amount', numeric: true, color: '#5A4830', short: '밀' },
+    `Status Effect Icons.pdf` 열네 쪽이 곧 카드에 붙는 배지다. 어느 쪽이 무엇인지는
+    **형님에게 하나씩 보여 주고 확인했다**(2026-08-12) — 그림만 보고 단정하지
+    않는다(구현 결정 119).
+  */
+  { id: 'wound', name: '부상', kind: 'condition', badge: 'wound' },
+  { id: 'immobilize', name: '이동불가', kind: 'condition', badge: 'immobilize' },
+  { id: 'poison', name: '중독', kind: 'condition', badge: 'poison' },
+  { id: 'muddle', name: '혼란', kind: 'condition', badge: 'muddle' },
+  { id: 'stun', name: '기절', kind: 'condition', badge: 'stun' },
+  { id: 'curse', name: '저주', kind: 'condition', badge: 'curse' },
+  { id: 'disarm', name: '무장해제', kind: 'condition', badge: 'disarm' },
+  { id: 'invisible', name: '투명', kind: 'condition', badge: 'invisible' },
+  // 아홉 클래스의 특혜에는 안 나오지만 팩에 그림이 있어 함께 열어 둔다.
+  { id: 'bless', name: '축복', kind: 'condition', badge: 'bless' },
+  { id: 'strengthen', name: '강화', kind: 'condition', badge: 'strengthen' },
+
+  { id: 'push', name: '밀기', kind: 'amount', numeric: true, badge: 'push' },
+  { id: 'pierce', name: '관통', kind: 'amount', numeric: true, badge: 'pierce' },
+  // 치료·방어는 상태이상 열넷에 없다. 검정 실루엣이라 마름모를 우리가 깐다.
+  { id: 'heal', name: '치료', kind: 'amount', numeric: true, color: '#3F6B4A', glyph: 'hp-drop' },
+  { id: 'shield', name: '방어', kind: 'amount', numeric: true, color: '#4A5A6B', glyph: 'shield' },
+  // 당기기는 팩에 그림이 없다. 글자로 간다.
   { id: 'pull', name: '당기기', kind: 'amount', numeric: true, color: '#5A4830', short: '당' },
-  { id: 'pierce', name: '관통', kind: 'amount', numeric: true, color: '#5A4830', short: '관' },
-  { id: 'heal', name: '치료', kind: 'amount', numeric: true, color: '#3F6B4A', short: '치' },
-  { id: 'shield', name: '방어', kind: 'amount', numeric: true, color: '#4A5A6B', short: '방' },
 
   { id: 'fire', name: '불', kind: 'element' },
   { id: 'ice', name: '얼음', kind: 'element' },
@@ -184,7 +201,7 @@ export const MARKS: readonly MarkDef[] = [
   { id: 'light', name: '빛', kind: 'element' },
   { id: 'dark', name: '어둠', kind: 'element' },
 
-  { id: 'targets', name: '대상 추가', kind: 'other', color: '#5A4830', short: '대' },
+  { id: 'targets', name: '대상 추가', kind: 'other', badge: 'target' },
   { id: 'special', name: '특수', kind: 'other', color: '#5A4830', short: '특' },
 ]
 
