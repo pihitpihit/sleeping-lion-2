@@ -50,34 +50,60 @@ function render(character: Character, mine: boolean, offline = false) {
   )
 }
 
-describe('캐릭터 시트', () => {
-  it('내 것이면 칸이 열려 있다', () => {
+/**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **여기서 볼 수 있는 것은 열람 모드까지다.**                               │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 편집 모드는 컴포넌트 안의 상태이고 서버 렌더는 단추를 누를 수 없다. 그 안에서
+ * 벌어지는 일(무엇이 바뀌었나 · 저장 단추가 사는가 · 무엇을 보내는가)의 알맹이는
+ * **순수 함수로 떼어 `sheetDraft.test.ts`가 통째로 덮는다** — 화면에 매달린
+ * 것만 남기지 않으려고 뗀 것이다.
+ */
+describe('열람 모드', () => {
+  it('값은 다 보이되 고치는 칸은 없다', () => {
     const html = render(fixture(), true)
+    // 값은 보인다.
     expect(html).toContain('가죽 장화')
-    expect(html).toContain('아이템을 적는다')
-    expect(html).toContain('은퇴시킨다')
-    // 클래스 표식은 스물하나가 다 나온다.
-    expect(html.match(/aria-label="클래스 표식 \d+번"/g) ?? []).toHaveLength(21)
-    // 고른 것 하나만 켜져 있다.
-    expect(html.match(/classpick__cell--on/g) ?? []).toHaveLength(1)
-  })
-
-  it('남의 것이면 어느 칸도 열려 있지 않다', () => {
-    const html = render(fixture({ ownerId: 'u2' }), false)
-    // 글자 칸·단추가 전부 잠긴다.
+    expect(html).toContain('value="120"')
+    // 고치는 자리는 없다.
     expect(html).not.toContain('아이템을 적는다')
     expect(html).not.toContain('은퇴시킨다')
     expect(html).not.toContain('classpick__cell')
+    expect(html).not.toContain('char__save')
+  })
+
+  it('내 것이면 고치기 문이 있다', () => {
+    expect(render(fixture(), true)).toContain('고치기')
+  })
+
+  /** 칸이 다 잠겨 있다 — 스치기만 해도 값이 바뀌던 것이 이 모드의 요점이다. */
+  it('모든 손잡이가 잠겨 있다', () => {
+    const html = render(fixture(), true)
+    expect(html).not.toMatch(/<button[^>]*class="char__level[^"]*"(?![^>]*disabled)/)
+    expect(html).not.toMatch(/<button[^>]*class="char__check[^"]*"(?![^>]*disabled)/)
+  })
+
+  it('남의 것이면 고칠 길이 없고 왜인지 적는다', () => {
+    const html = render(fixture({ ownerId: 'u2' }), false)
+    expect(html).not.toContain('고치기')
+    expect(html).toContain('남의 시트라 보기만 한다')
     // 그래도 값은 보인다 — 누가 몇 레벨인지 안 보이면 같이 놀 수 없다.
     expect(html).toContain('가죽 장화')
   })
 
-  it('서버에 못 닿으면 내 것이어도 잠긴다', () => {
+  it('서버에 못 닿으면 내 것이어도 고칠 길이 없다', () => {
     const html = render(fixture(), true, true)
-    expect(html).not.toContain('아이템을 적는다')
-    expect(html).not.toContain('은퇴시킨다')
+    expect(html).not.toContain('고치기')
+    expect(html).toContain('서버에 닿지 못해')
   })
 
+  it('아이템이 없으면 없다고 적는다 — 빈 칸만 있으면 고장으로 읽힌다', () => {
+    expect(render(fixture({ items: [] }), true)).toContain('아직 없다')
+  })
+})
+
+describe('그 밖', () => {
   it('경험이 다음 눈금에 닿으면 알리기만 한다 — 레벨을 올려주지 않는다', () => {
     const html = render(fixture({ level: 1, xp: 100 }), true)
     expect(html).toContain('올릴 때가 되었다')

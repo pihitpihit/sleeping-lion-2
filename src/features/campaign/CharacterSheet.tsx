@@ -1,10 +1,8 @@
 import { useEffect, useId, useState } from 'react'
+import { ConfirmDialog } from '../satchel/board/ConfirmDialog'
 import {
   MAX_CHECKMARKS,
   XP_THRESHOLDS,
-  clampGold,
-  clampLevel,
-  clampXp,
   classIconUrl,
   levelForXp,
   levelUpReady,
@@ -17,6 +15,7 @@ import { ClassPicker } from './ClassPicker'
 import { DeckPreview } from './DeckPreview'
 import { classInfoOf, maxHpFor, useClassStore } from './classStore'
 import { perkRowsOf } from './perks'
+import { draftOf, isDirty, sheetDiff, type SheetDraft } from './sheetDraft'
 import type { Character, CharacterEdits } from './types'
 
 interface Props {
@@ -48,8 +47,22 @@ interface Props {
  * **퍽은 번호만 켠다.** 클래스별 퍽 표는 게임 콘텐츠라 우리가 갖고 있지 않다
  * (SPEC 3장). 사람이 제 시트를 보고 몇 번째 줄인지 짚는다.
  *
- * 글자 칸은 **손을 뗄 때 저장한다**(`onBlur`). 한 자 칠 때마다 보내면 `version`이
- * 타이핑 수만큼 오르고 낙관적 잠금이 그 순간 무의미해진다.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **열람이 기본이고, 고치려면 편집으로 들어간다.**                          │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 2026-08-12까지는 칸을 건드리는 즉시 서버로 갔다. 다이얼로 골드를 120에서
+ * 340으로 옮기면 그 사이 스물두 번이 나가고 `version`이 스물두 번 오른다 —
+ * **낙관적 잠금이 손가락 수만큼 무의미해진다.** 게다가 시트를 그냥 들여다보는
+ * 동안에도 모든 칸이 눌려 있어 **스치기만 해도 값이 바뀌었다.**
+ *
+ * 이제 편집 모드에서 초안(`sheetDraft.ts`)을 고치고 **저장을 누를 때 한 번**
+ * 보낸다. 저장 단추는 실제로 바뀐 것이 있을 때만 살아난다. 정산은 여러 칸을
+ * 함께 고치는 일이라(골드·경험·체크마크·아이템이 한꺼번에 움직인다) 실물에서도
+ * 지우개로 다 고친 다음 덮는다.
+ *
+ * **바뀐 칸만 보낸다.** 통째로 보내면 안 건드린 칸까지 덮어 그 사이 남이 고친
+ * 것을 되돌린다.
  *
  * **부르는 쪽이 `key`로 다시 태운다.** 초안을 이펙트로 맞추면 남이 고친 값이
  * 치고 있는 글자를 덮어쓴다.
@@ -58,17 +71,62 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
   const nameId = useId()
   const noteId = useId()
 
-  const locked = !mine || offline
+  /** 고칠 수 있는 사람인가. 남의 것과 오프라인은 편집으로 들어갈 수조차 없다. */
+  const canEdit = mine && !offline
 
-  const [draft, setDraft] = useState({ name: character.name, notes: character.notes })
+  const [wantsEdit, setWantsEdit] = useState(false)
+  const [draft, setDraft] = useState<SheetDraft>(() => draftOf(character))
   const [newItem, setNewItem] = useState('')
+  /** 무엇을 물으려고 팝업을 띄웠는가. */
+  const [asking, setAsking] = useState<'discard' | 'remove' | null>(null)
 
-  const reached = levelForXp(character.xp)
-  const toNext = xpToNextLevel(character.xp)
-  const ready = levelUpReady(character.level, character.xp)
-  const slots = perkSlotCount(character.level, character.checkmarks)
-  const earned = perksEarned(character.level, character.checkmarks)
-  const iconUrl = classIconUrl(character.classIcon)
+  /**
+   * 화면에 그리는 값.
+   *
+   * **편집 중이면 초안, 아니면 레코드다.** 열람 중에 초안을 그리면 남이 고친 값이
+   * 들어와도 화면이 옛것을 붙들고 있다 — 초안은 편집으로 들어갈 때 새로 뜬다.
+   */
+  /**
+   * 지금 편집 중인가.
+   *
+   * **고칠 수 없게 되면 그 자리에서 내려온다.** 편집 중에 서버가 끊기면 칸이
+   * 열린 채로 남는데, 저장은 어차피 안 나간다 — 열려 있는 것처럼 보이는 화면이
+   * 잠긴 화면보다 나쁘다.
+   */
+  const editing = wantsEdit && canEdit
+
+  const shown: SheetDraft = editing ? draft : draftOf(character)
+  const dirty = editing && isDirty(character, draft)
+
+  function set<K extends keyof SheetDraft>(key: K, value: SheetDraft[K]) {
+    setDraft((d) => ({ ...d, [key]: value }))
+  }
+
+  function startEditing() {
+    setDraft(draftOf(character))
+    setNewItem('')
+    setWantsEdit(true)
+  }
+
+  function stopEditing() {
+    setWantsEdit(false)
+    setNewItem('')
+    setAsking(null)
+  }
+
+  function save() {
+    const edits = sheetDiff(character, draft)
+    // 바뀐 것이 없으면 보내지 않는다. 빈 갱신도 `version`을 올린다.
+    if (Object.keys(edits).length > 0) onEdit(edits)
+    stopEditing()
+  }
+
+  const reached = levelForXp(shown.xp)
+  const toNext = xpToNextLevel(shown.xp)
+  const ready = levelUpReady(shown.level, shown.xp)
+  const slots = perkSlotCount(shown.level, shown.checkmarks)
+  const earned = perksEarned(shown.level, shown.checkmarks)
+  const iconUrl = classIconUrl(shown.classIcon)
 
   /**
    * 클래스 수치. 관리자가 넣어 두었으면 이름·핸드 사이즈·최대 체력이 온다.
@@ -81,8 +139,8 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
   useEffect(() => {
     void loadClasses()
   }, [loadClasses])
-  const info = classInfoOf(classes, character.classId, character.classIcon)
-  const maxHp = maxHpFor(info, character.level)
+  const info = classInfoOf(classes, shown.classId, shown.classIcon)
+  const maxHp = maxHpFor(info, shown.level)
 
   /**
    * 이 클래스의 특혜 줄과 각 줄이 시작하는 상자 번호.
@@ -93,20 +151,25 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
   const perkTable = useClassStore((s) => s.perks)
   const rows = perkRowsOf(info === null ? [] : (perkTable[info.id] ?? []))
 
-  function commit(field: 'name' | 'notes') {
-    if (draft[field] === character[field]) return
-    onEdit({ [field]: draft[field] })
-  }
-
   function addItem() {
     const value = newItem.trim()
     if (value === '') return
-    onEdit({ items: [...character.items, value] })
+    set('items', [...draft.items, value])
     setNewItem('')
   }
 
   return (
-    <div className={`char${character.retired ? ' char--retired' : ''}`}>
+    <div
+      className={[
+        'char',
+        // 은퇴는 초안이 아니라 **저장된 사실**로 흐린다 — 편집 중에 껐다 켰다 할
+        // 때마다 시트 전체가 흐려졌다 밝아지면 눈이 어지럽다.
+        character.retired ? 'char--retired' : '',
+        editing ? 'char--editing' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       {/* ------------------------------------------------------------------
           이름과 클래스 표식
           ------------------------------------------------------------------ */}
@@ -128,11 +191,10 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
           <input
             id={nameId}
             className="sheet__input"
-            value={draft.name}
+            value={shown.name}
             placeholder="이름을 짓는다"
-            disabled={locked}
-            onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
-            onBlur={() => commit('name')}
+            disabled={!editing}
+            onChange={(e) => set('name', e.target.value)}
           />
           <p className="char__owner">
             {character.ownerName || '이름 없음'}의 캐릭터
@@ -151,15 +213,21 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
         </div>
       </div>
 
-      {mine && (
+      {/*
+        클래스는 **편집 중에만 낸다.** 스물한 개를 늘어놓는 칸이라 열람 화면에서는
+        자리만 차지한다 — 고른 클래스는 이름줄에 이미 적혀 있다.
+      */}
+      {editing && (
         <section className="sheet__block">
           <h3 className="sheet__label">클래스 표식</h3>
           <ClassPicker
-            classId={character.classId}
-            icon={character.classIcon}
-            disabled={locked}
+            classId={shown.classId}
+            icon={shown.classIcon}
             /* 아이콘도 함께 적어 둔다 — 축 ②의 이름표가 그 번호로 그림을 찾는다. */
-            onChange={(next) => onEdit({ classId: next.classId, classIcon: next.icon })}
+            onChange={(next) => {
+              set('classId', next.classId)
+              set('classIcon', next.icon)
+            }}
           />
         </section>
       )}
@@ -172,7 +240,7 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
         <div className="char__levels" role="radiogroup" aria-label="레벨">
           {XP_THRESHOLDS.map((threshold, index) => {
             const level = index + 1
-            const on = level === character.level
+            const on = level === shown.level
             return (
               <button
                 key={level}
@@ -188,8 +256,8 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
                 ]
                   .filter(Boolean)
                   .join(' ')}
-                disabled={locked}
-                onClick={() => onEdit({ level: clampLevel(level) })}
+                disabled={!editing}
+                onClick={() => set('level', level)}
               >
                 <span className="char__level-n sl-numeral" aria-hidden="true">
                   {level}
@@ -233,18 +301,18 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
       <div className="char__dials">
         <Dial
           label="경험"
-          value={character.xp}
-          disabled={locked}
+          value={shown.xp}
+          disabled={!editing}
           steps={[1, 5]}
-          onChange={(next) => onEdit({ xp: clampXp(next) })}
+          onChange={(next) => set('xp', next)}
           foot={toNext === null ? '끝' : `다음까지 ${toNext}`}
         />
         <Dial
           label="골드"
-          value={character.gold}
-          disabled={locked}
+          value={shown.gold}
+          disabled={!editing}
           steps={[1, 10]}
-          onChange={(next) => onEdit({ gold: clampGold(next) })}
+          onChange={(next) => set('gold', next)}
         />
       </div>
 
@@ -262,18 +330,18 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
               key={n}
               type="button"
               aria-label={`체크마크 ${n}개까지`}
-              aria-pressed={n <= character.checkmarks}
+              aria-pressed={n <= shown.checkmarks}
               className={[
                 'char__check',
-                n <= character.checkmarks ? 'char__check--on' : '',
+                n <= shown.checkmarks ? 'char__check--on' : '',
                 // 세 칸마다 사이를 벌려 실물의 묶음이 그대로 보이게 한다.
                 n % 3 === 0 ? 'char__check--last' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
-              disabled={locked}
+              disabled={!editing}
               /* 켜진 마지막 칸을 다시 누르면 하나 줄인다 — 잘못 짚었을 때의 길이다. */
-              onClick={() => onEdit({ checkmarks: n === character.checkmarks ? n - 1 : n })}
+              onClick={() => set('checkmarks', n === shown.checkmarks ? n - 1 : n)}
             >
               <span aria-hidden="true">✓</span>
             </button>
@@ -290,7 +358,7 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
           <span className="char__hint">
             {' '}
             — 얻은 것 <span className="sl-numeral">{earned}</span>, 켠 것{' '}
-            <span className="sl-numeral">{character.perks.length}</span>
+            <span className="sl-numeral">{shown.perks.length}</span>
           </span>
         </h3>
 
@@ -311,7 +379,7 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
                 <li key={perk.id} className="char__perkrow">
                   <span className="char__perkboxes">
                     {Array.from({ length: perk.count }, (_, i) => first + i).map((slot) => {
-                      const on = character.perks.includes(slot)
+                      const on = shown.perks.includes(slot)
                       return (
                         <button
                           key={slot}
@@ -319,8 +387,8 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
                           aria-label={`${perk.text} — ${slot}번 상자`}
                           aria-pressed={on}
                           className={`char__perkbox${on ? ' char__perkbox--on' : ''}`}
-                          disabled={locked}
-                          onClick={() => onEdit({ perks: togglePerk(character.perks, slot) })}
+                          disabled={!editing}
+                          onClick={() => set('perks', togglePerk(shown.perks, slot))}
                         />
                       )
                     })}
@@ -338,7 +406,7 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
             </p>
             <div className="char__perks">
               {Array.from({ length: slots }, (_, i) => i + 1).map((slot) => {
-                const on = character.perks.includes(slot)
+                const on = shown.perks.includes(slot)
                 return (
                   <button
                     key={slot}
@@ -346,8 +414,8 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
                     aria-label={`퍽 ${slot}번`}
                     aria-pressed={on}
                     className={`char__perk${on ? ' char__perk--on' : ''}`}
-                    disabled={locked}
-                    onClick={() => onEdit({ perks: togglePerk(character.perks, slot) })}
+                    disabled={!editing}
+                    onClick={() => set('perks', togglePerk(shown.perks, slot))}
                   >
                     <span className="sl-numeral" aria-hidden="true">
                       {slot}
@@ -367,7 +435,7 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
           영속 기록지가 비출 것이 아니다(SPEC 5.2). 특혜 표가 없으면 아예 안
           나온다 — 그때는 구성의 정본이 위젯 설정이고 시트는 그것을 모른다.
           ------------------------------------------------------------------ */}
-      <DeckPreview perks={rows.map((r) => r.perk)} checked={character.perks} />
+      <DeckPreview perks={rows.map((r) => r.perk)} checked={shown.perks} />
 
       {/* ------------------------------------------------------------------
           아이템 — 사용자가 적는다(구현 결정 2)
@@ -375,26 +443,36 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
       <section className="sheet__block">
         <h3 className="sheet__label">아이템</h3>
 
-        {character.items.length > 0 && (
+        {shown.items.length > 0 && (
           <ul className="sheet__achievements">
-            {character.items.map((item, index) => (
+            {shown.items.map((item, index) => (
               <li key={`${index}-${item}`}>
                 <span>{item}</span>
-                <button
-                  type="button"
-                  className="sheet__remove"
-                  aria-label={`아이템 '${item}' 지우기`}
-                  disabled={locked}
-                  onClick={() => onEdit({ items: character.items.filter((_, i) => i !== index) })}
-                >
-                  ×
-                </button>
+                {/* 지우는 단추는 편집 중에만 낸다. 열람 화면에 ×가 늘어서 있으면
+                    누를 수 있는 줄 알고 손이 간다. */}
+                {editing && (
+                  <button
+                    type="button"
+                    className="sheet__remove"
+                    aria-label={`아이템 '${item}' 지우기`}
+                    onClick={() =>
+                      set(
+                        'items',
+                        draft.items.filter((_, i) => i !== index),
+                      )
+                    }
+                  >
+                    ×
+                  </button>
+                )}
               </li>
             ))}
           </ul>
         )}
 
-        {!locked && (
+        {shown.items.length === 0 && !editing && <p className="char__note">아직 없다.</p>}
+
+        {editing && (
           <div className="sheet__add">
             <input
               className="sheet__input"
@@ -429,38 +507,101 @@ export function CharacterSheet({ character, mine, offline = false, onEdit, onRem
           id={noteId}
           className="sheet__notes"
           rows={4}
-          value={draft.notes}
-          placeholder="적어둘 것"
-          disabled={locked}
-          onChange={(e) => setDraft((d) => ({ ...d, notes: e.target.value }))}
-          onBlur={() => commit('notes')}
+          value={shown.notes}
+          placeholder={editing ? '적어둘 것' : ''}
+          disabled={!editing}
+          onChange={(e) => set('notes', e.target.value)}
         />
       </section>
 
       {/*
-        은퇴와 거두기를 나란히 둔다. **은퇴는 접어두는 것이고 거두기는 없애는
-        것이다** — 은퇴한 캐릭터도 파티 기록의 일부라 기본은 접어두는 쪽이다.
+        은퇴와 거두기.
+
+        **은퇴는 접어두는 것이고 거두기는 없애는 것이다** — 은퇴한 캐릭터도 파티
+        기록의 일부라 기본은 접어두는 쪽이다. 은퇴는 칸 하나이므로 초안에 담겨
+        저장을 눌러야 남고, **거두기는 되돌릴 수 없어 그 자리에서 나간다.**
       */}
-      {mine && !offline && (
+      {editing && (
         <div className="char__actions">
           <button
             type="button"
             className="char__retire"
-            onClick={() => onEdit({ retired: !character.retired })}
+            aria-pressed={shown.retired}
+            onClick={() => set('retired', !shown.retired)}
           >
-            {character.retired ? '다시 나선다' : '은퇴시킨다'}
+            {shown.retired ? '다시 나선다' : '은퇴시킨다'}
           </button>
-          <button
-            type="button"
-            className="char__remove"
-            onClick={() => {
-              if (!window.confirm(`'${character.name || '이름 없음'}'을 거두시겠습니까?`)) return
-              onRemove()
-            }}
-          >
+          <button type="button" className="char__remove" onClick={() => setAsking('remove')}>
             거둔다
           </button>
         </div>
+      )}
+
+      {/*
+        ┌────────────────────────────────────────────────────────────────────┐
+        │ **띠는 아래에 붙어 따라온다.** 시트가 길어 끝까지 내려야 하면        │
+        │ 저장을 잊는다.                                                      │
+        └────────────────────────────────────────────────────────────────────┘
+
+        열람 중에는 편집으로 들어가는 문 하나뿐이다. 남의 시트이거나 서버에
+        못 닿는 중이면 그 문도 없다 — **왜 없는지 대신 적는다.**
+      */}
+      <div className="char__bar">
+        {!editing ? (
+          canEdit ? (
+            <button type="button" className="char__edit" onClick={startEditing}>
+              고치기
+            </button>
+          ) : (
+            <p className="char__locked">
+              {!mine ? '남의 시트라 보기만 한다.' : '서버에 닿지 못해 지금은 고칠 수 없다.'}
+            </p>
+          )
+        ) : (
+          <>
+            <button
+              type="button"
+              className="char__cancel"
+              /* 고친 것이 있으면 한 번 묻는다. 없으면 버릴 것도 없다. */
+              onClick={() => (dirty ? setAsking('discard') : stopEditing())}
+            >
+              그만두기
+            </button>
+            <button type="button" className="char__save" disabled={!dirty} onClick={save}>
+              {dirty ? '저장' : '고친 것 없음'}
+            </button>
+          </>
+        )}
+      </div>
+
+      {asking === 'discard' && (
+        <ConfirmDialog
+          title="고치던 것을 버립니까?"
+          description="저장하지 않은 것은 되돌아오지 않는다."
+          confirmLabel="버린다"
+          /*
+            **뜸을 짧게 잡는다.** 기본 5초는 몇 시간짜리 판이 날아가는 자리에
+            맞춘 값이다(구현 결정 36). 여기서 잃는 것은 방금 고친 몇 칸이므로
+            손이 멎을 만큼만 두면 된다 — 5초를 그대로 쓰면 그만두는 일이 벌처럼
+            느껴진다.
+          */
+          delayMs={1500}
+          onConfirm={stopEditing}
+          onCancel={() => setAsking(null)}
+        />
+      )}
+
+      {asking === 'remove' && (
+        <ConfirmDialog
+          title={`'${character.name || '이름 없음'}'을 거둡니까?`}
+          description="레벨·경험·골드·아이템·특혜가 모두 사라진다. 되돌릴 수 없다."
+          confirmLabel="거둔다"
+          onConfirm={() => {
+            setAsking(null)
+            onRemove()
+          }}
+          onCancel={() => setAsking(null)}
+        />
       )}
     </div>
   )
