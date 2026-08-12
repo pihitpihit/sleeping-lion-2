@@ -118,7 +118,12 @@ export function DeckPreview({ perks, checked, owner }: Props) {
                 return (
                   <span key={mark.def.id} className="deckview__markwrap" aria-hidden="true">
                     <img
-                      className={art.kind === 'badge' ? 'deckview__mark' : 'deckview__glyph'}
+                      className={[
+                        art.kind === 'badge' ? 'deckview__mark' : 'deckview__glyph',
+                        art.turned ? 'deckview__mark--turned' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
                       src={art.url}
                       alt=""
                     />

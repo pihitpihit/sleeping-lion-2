@@ -138,16 +138,28 @@ export function medallionUrl(valueId: string): string | null {
  *
  * 둘 다 없으면 `null`이고 글자로 간다.
  */
-export type MarkArt =
-  | { readonly kind: 'badge'; readonly url: string }
-  | { readonly kind: 'glyph'; readonly url: string }
+export interface MarkArt {
+  readonly kind: 'badge' | 'glyph'
+  readonly url: string
+  /** 반 바퀴 돌려 그린다. 당기기가 밀기를 돌려 쓴다. */
+  readonly turned: boolean
+}
 
 export function markArt(mark: CardMark): MarkArt | null {
   const def = mark.def
   // 원소는 팩에서 색 있는 둥근 배지로 온다 — 원소 트래커와 같은 파일이다.
-  if (def.kind === 'element') return { kind: 'badge', url: `${ASSET_ROOT}elements/${def.id}.svg` }
-  if (def.badge) return { kind: 'badge', url: `${ASSET_ROOT}status/${def.badge}.svg` }
-  if (def.glyph) return { kind: 'glyph', url: `${ASSET_ROOT}general/${def.glyph}.svg` }
+  if (def.kind === 'element') {
+    return { kind: 'badge', url: `${ASSET_ROOT}elements/${def.id}.svg`, turned: false }
+  }
+  if (def.badge) {
+    return {
+      kind: 'badge',
+      url: `${ASSET_ROOT}status/${def.badge}.svg`,
+      turned: def.badgeTurned === true,
+    }
+  }
+  if (def.glyph)
+    return { kind: 'glyph', url: `${ASSET_ROOT}general/${def.glyph}.svg`, turned: false }
   return null
 }
 

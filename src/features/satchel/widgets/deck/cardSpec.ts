@@ -138,6 +138,15 @@ export interface MarkDef {
    */
   readonly badge?: string
   /**
+   * 그 배지를 **반 바퀴 돌려 쓴다.**
+   *
+   * 당기기는 팩에 그림이 없는데 밀기를 180도 돌리면 그대로 당기기가 된다 —
+   * 마름모가 대칭이라 틀은 그대로고 화살만 뒤집힌다. **파일을 새로 만들지 않고
+   * 화면에서만 돌린다**(구현 결정 15 — 그리는 순간에만 거는 것이라 에셋을
+   * 개변하는 것과 다르다).
+   */
+  readonly badgeTurned?: true
+  /**
    * **검정 실루엣** 그림(`general/<이름>.svg`).
    *
    * 팩의 상태이상 열넷에 없는 것들이다(치료·방어). 마름모가 딸려 있지 않아
@@ -191,8 +200,8 @@ export const MARKS: readonly MarkDef[] = [
   // 치료·방어는 상태이상 열넷에 없다. 검정 실루엣이라 마름모를 우리가 깐다.
   { id: 'heal', name: '치료', kind: 'amount', numeric: true, color: '#3F6B4A', glyph: 'hp-drop' },
   { id: 'shield', name: '방어', kind: 'amount', numeric: true, color: '#4A5A6B', glyph: 'shield' },
-  // 당기기는 팩에 그림이 없다. 글자로 간다.
-  { id: 'pull', name: '당기기', kind: 'amount', numeric: true, color: '#5A4830', short: '당' },
+  // 당기기는 팩에 그림이 없다 — **밀기를 반 바퀴 돌려 쓴다.**
+  { id: 'pull', name: '당기기', kind: 'amount', numeric: true, badge: 'push', badgeTurned: true },
 
   { id: 'fire', name: '불', kind: 'element' },
   { id: 'ice', name: '얼음', kind: 'element' },

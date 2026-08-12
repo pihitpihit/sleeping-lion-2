@@ -201,7 +201,11 @@ export function CardFace({ card, owner }: { card: Card; owner?: CardOwner | null
         if (art?.kind === 'badge') {
           return (
             <span key={mark.def.id} className="deck__mark" style={place}>
-              <img className="deck__mark-art" src={art.url} alt="" />
+              <img
+                className={`deck__mark-art${art.turned ? ' deck__mark-art--turned' : ''}`}
+                src={art.url}
+                alt=""
+              />
               {amount}
             </span>
           )

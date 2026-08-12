@@ -384,6 +384,14 @@
   height: auto;
 }
 
+/*
+  반 바퀴 돌려 쓰는 배지. 당기기가 밀기를 돌려 쓴다 — 마름모가 대칭이라 틀은
+  그대로고 화살만 뒤집힌다. **파일은 그대로 두고 그릴 때만 돌린다**(구현 결정 15).
+*/
+.deck__mark-art--turned {
+  transform: rotate(180deg);
+}
+
 .deck__badge-arrow {
   width: 62%;
   height: auto;

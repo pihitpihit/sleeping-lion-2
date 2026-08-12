@@ -107,6 +107,18 @@ describe('카드 앞면', () => {
     expect(html.toLowerCase()).toContain('#3f6b4a')
   })
 
+  it('당기기는 밀기 그림을 반 바퀴 돌려 그린다', () => {
+    const html = renderToStaticMarkup(<CardFace card={card('p1.pull1')} />)
+    expect(html).toContain('status/push.svg')
+    expect(html).toContain('deck__mark-art--turned')
+  })
+
+  it('밀기는 안 돌린다', () => {
+    expect(renderToStaticMarkup(<CardFace card={card('p1.push1')} />)).not.toContain(
+      'deck__mark-art--turned',
+    )
+  })
+
   it('그림이 아예 없으면 글자로 간다', () => {
     const html = renderToStaticMarkup(<CardFace card={card('p0.special')} />)
     expect(html).toContain('deck__badge-text')

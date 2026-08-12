@@ -48,7 +48,9 @@ describe('카드 늘어놓기', () => {
 
   it('읽어주는 쪽에는 카드마다 우리말이 간다', () => {
     // 퍽으로 더한 것이면 그 말이 뒤에 붙는다.
-    expect(render({ 'r.p0.fire': 1 })).toContain('aria-label="굴림, 보정 없음, 불 (특혜로 더한 것)"')
+    expect(render({ 'r.p0.fire': 1 })).toContain(
+      'aria-label="굴림, 보정 없음, 불 (특혜로 더한 것)"',
+    )
     expect(render({ ...STANDARD_COMPOSITION })).toContain('aria-label="보정 없음"')
   })
 

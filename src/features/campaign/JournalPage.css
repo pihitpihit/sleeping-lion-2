@@ -1464,6 +1464,11 @@
   object-fit: contain;
 }
 
+/* 당기기는 밀기를 반 바퀴 돌려 쓴다 — 파일은 그대로 두고 그릴 때만 돌린다. */
+.deckview__mark--turned {
+  transform: rotate(180deg);
+}
+
 .deckview__tag {
   font-size: 0.7rem;
   color: var(--sl-text-faint);

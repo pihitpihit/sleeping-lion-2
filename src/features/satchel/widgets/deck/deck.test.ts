@@ -375,6 +375,7 @@ describe('에셋 (Creator Pack)', () => {
     expect(markArt(fire)).toEqual({
       kind: 'badge',
       url: expect.stringContaining('elements/fire.svg'),
+      turned: false,
     })
   })
 
@@ -394,6 +395,22 @@ describe('에셋 (Creator Pack)', () => {
 
   it('그림이 아예 없으면 null — 글자로 간다', () => {
     expect(markArt(parseCardSpec('p0.special')!.marks[0])).toBeNull()
+  })
+
+  /**
+   * 당기기는 팩에 그림이 없다. **밀기를 반 바퀴 돌리면 그대로 당기기다** —
+   * 마름모가 대칭이라 틀은 그대로고 화살만 뒤집힌다. 파일을 새로 만들지 않고
+   * 그릴 때만 돌린다(구현 결정 15).
+   */
+  it('당기기는 밀기를 돌려 쓴다', () => {
+    const art = markArt(parseCardSpec('p1.pull1')!.marks[0])
+    expect(art?.url).toContain('status/push.svg')
+    expect(art?.turned).toBe(true)
+  })
+
+  it('나머지는 돌리지 않는다', () => {
+    expect(markArt(parseCardSpec('p1.push1')!.marks[0])?.turned).toBe(false)
+    expect(markArt(parseCardSpec('p1.fire')!.marks[0])?.turned).toBe(false)
   })
 })
 
