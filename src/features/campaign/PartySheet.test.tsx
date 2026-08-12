@@ -83,3 +83,27 @@ describe('물건값', () => {
     expect(render(fixture({ reputation: 0 }))).toContain('sheet__hidden')
   })
 })
+
+/**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **캐릭터 시트와 같은 짜임이다 — 한 장의 종이.**                           │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 장식선은 `.paper__col`의 자식마다 붙으므로 **칸이 그 밖에 남으면 앞 칸과 붙어
+ * 버리고**, 저장 띠가 그 안에 들면 띠 위에 선이 그어져 칸으로 읽힌다. 둘 다
+ * 마크업은 멀쩡하고 화면에서만 어긋난다(구현 결정 252와 같은 병).
+ */
+describe('기록지의 짜임 — 한 장의 종이', () => {
+  it('칸은 단 안에 들고 저장 띠는 그 밖에 선다', () => {
+    const html = render(fixture())
+    const col = html.indexOf('class="paper__col"')
+    const bar = html.indexOf('class="sheet__bar"')
+    expect(col).toBeGreaterThan(-1)
+    // 단이 먼저 열리고 띠는 그 뒤에 온다.
+    expect(bar).toBeGreaterThan(col)
+    // 칸은 다섯 — 이름·머무는 곳·평판·업적·메모.
+    expect((html.match(/class="sheet__block/g) ?? []).length).toBe(5)
+    // 단이 닫힌 뒤에 띠가 서는지: 띠 앞쪽에 칸이 다 들어 있다.
+    expect((html.slice(col, bar).match(/class="sheet__block/g) ?? []).length).toBe(5)
+  })
+})

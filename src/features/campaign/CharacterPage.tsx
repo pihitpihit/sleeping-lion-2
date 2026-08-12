@@ -92,15 +92,15 @@ export function CharacterPage() {
 
         파티로 가는 문도 여기 넣는다. 글자 단추로 한 줄을 쓰기에는 아까운 자리다.
       */}
-      <header className="charbar">
-        <div className="charbar__inner">
+      <header className="topbar">
+        <div className="topbar__inner">
           <a className="journal__back" href="#/journal" aria-label="일지로">
             ←
           </a>
 
           {character && (
             <>
-              <span className="charbar__badge" aria-hidden={iconUrl === null}>
+              <span className="topbar__badge" aria-hidden={iconUrl === null}>
                 {iconUrl ? (
                   <img
                     src={iconUrl}
@@ -112,14 +112,14 @@ export function CharacterPage() {
                 )}
               </span>
 
-              <span className="charbar__names">
-                <h1 className="charbar__name">{character.name || '이름 없음'}</h1>
-                <span className="charbar__sub">
+              <span className="topbar__names">
+                <h1 className="topbar__name">{character.name || '이름 없음'}</h1>
+                <span className="topbar__sub">
                   {character.ownerName || '이름 없음'}의 캐릭터
                   {info && (
                     <>
                       {' · '}
-                      <span className="charbar__class">{info.name}</span>
+                      <span className="topbar__class">{info.name}</span>
                       {info.handSize > 0 && (
                         <>
                           {' · '}손 <span className="sl-numeral">{info.handSize}</span>장
@@ -139,7 +139,7 @@ export function CharacterPage() {
           */}
           {character?.campaignId && (
             <a
-              className="charbar__party"
+              className="topbar__party"
               href={`#/journal/${party?.party.id ?? ''}`}
               aria-label={`${partyName || '파티'} 기록지로`}
               title={`${partyName || '파티'} 기록지로`}

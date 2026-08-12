@@ -108,18 +108,31 @@ export function JournalPage() {
 
   const partyTitle = current ? current.campaign?.name || current.party.name : ''
   const title = partyId ? partyTitle : '일지'
+  const place = partyId ? (current?.campaign?.location ?? '') : ''
 
   return (
     <div className="journal">
-      <header className="journal__bar">
-        <a
-          className="journal__back"
-          href={backHref(route)}
-          aria-label={partyId ? '일지 목록으로' : '처음으로'}
-        >
-          ←
-        </a>
-        <h1 className="journal__title">{title}</h1>
+      {/*
+        캐릭터 한 장짜리 화면과 같은 붙박이 띠다(`topbar`). 여백 안에 두면 스크롤
+        내내 좌우로 다른 것들이 지나가는 것이 보인다 — 화면 끝까지 덮는다.
+
+        파티 기록지에서는 **장소를 부제로 단다.** 상 위에서 "우리 지금 어디였지"를
+        가장 자주 묻는다.
+      */}
+      <header className="topbar">
+        <div className="topbar__inner">
+          <a
+            className="journal__back"
+            href={backHref(route)}
+            aria-label={partyId ? '일지 목록으로' : '처음으로'}
+          >
+            ←
+          </a>
+          <span className="topbar__names">
+            <h1 className="topbar__name">{title}</h1>
+            {place !== '' && <span className="topbar__sub">{place}</span>}
+          </span>
+        </div>
       </header>
 
       {/* 거울을 보여주는 중이라는 것을 걷을 수 없게 알린다. 고칠 수 없기 때문이다. */}
@@ -182,31 +195,44 @@ export function JournalPage() {
       ) : !current?.campaign ? (
         loaded && <p className="journal__empty">그런 기록지가 없다.</p>
       ) : (
-        <>
+        /*
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **기록지·무리·파티원이 한 장의 종이에 든다.**                     │
+          └──────────────────────────────────────────────────────────────────┘
+
+          셋이 저마다 상자를 두르고 있었다. 캐릭터 시트와 같은 결로 — 상자를
+          걷고 장식선으로만 가른다. 감싸는 것이 `.paper`이고 선은 `.paper__col`의
+          자식마다 붙으므로, **기록지는 제 칸들이 그대로 자식이 되도록**
+          `paper__col`을 쓰고 무리·파티원은 함께 한 단에 담는다.
+        */
+        <div className="paper">
           <PartySheet
             key={current.campaign.id}
             campaign={current.campaign}
             readOnly={offline}
             onEdit={(edits) => void edit(edits)}
           />
-          {/*
-            캐릭터는 **거울이 있어 오프라인에서도 보인다.** 고치는 것만 잠근다 —
-            골드와 경험은 지하에서 세 시간 하는 동안 계속 들여다보는 값이다.
-          */}
-          <Roster campaignId={current.campaign.id} me={me} readOnly={offline} />
 
-          {!offline && (
-            <Crew
-              partyId={current.party.id}
-              partyName={current.party.name}
-              me={me}
-              onLeave={() => {
-                void leave(current.party.id, me)
-                window.location.hash = '#/journal'
-              }}
-            />
-          )}
-        </>
+          <div className="paper__col">
+            {/*
+              캐릭터는 **거울이 있어 오프라인에서도 보인다.** 고치는 것만 잠근다 —
+              골드와 경험은 지하에서 세 시간 하는 동안 계속 들여다보는 값이다.
+            */}
+            <Roster campaignId={current.campaign.id} me={me} readOnly={offline} />
+
+            {!offline && (
+              <Crew
+                partyId={current.party.id}
+                partyName={current.party.name}
+                me={me}
+                onLeave={() => {
+                  void leave(current.party.id, me)
+                  window.location.hash = '#/journal'
+                }}
+              />
+            )}
+          </div>
+        </div>
       )}
     </div>
   )

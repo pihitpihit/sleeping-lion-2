@@ -201,7 +201,9 @@ export function CharacterSheet({
     <div
       className={[
         'char',
-        standalone ? 'char--solo' : '',
+        // 두 시트가 함께 쓰는 짜임 — 안쪽 칸이 평평해지고 장식선으로 갈린다.
+        'paper',
+        standalone ? 'char--solo paper--wide' : '',
         // 은퇴는 초안이 아니라 **저장된 사실**로 흐린다 — 편집 중에 껐다 켰다 할
         // 때마다 시트 전체가 흐려졌다 밝아지면 눈이 어지럽다.
         character.retired ? 'char--retired' : '',
@@ -273,7 +275,7 @@ export function CharacterSheet({
         **DOM 차례가 곧 읽는 차례**이고, 그것을 지키려면 지금 차례를 한 번만
         끊을 수 있다. 특혜 뒤에서 끊는 것이 두 단의 키가 가장 비슷하다.
       */}
-      <div className="char__col char__col--a">
+      <div className="paper__col paper__col--a">
         {/* ------------------------------------------------------------------
           레벨 — 실물 시트의 1~9 눈금
           ------------------------------------------------------------------
@@ -461,7 +463,7 @@ export function CharacterSheet({
         </section>
       </div>
 
-      <div className="char__col char__col--b">
+      <div className="paper__col paper__col--b">
         {/* ------------------------------------------------------------------
           공격 보정 덱 — 켠 특혜에서 나온 구성
           ------------------------------------------------------------------

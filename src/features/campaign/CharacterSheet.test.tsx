@@ -105,17 +105,26 @@ describe('열람 모드', () => {
 })
 
 /**
- * `.char`는 로스터 줄 **밑에 매달리는** 상자다 — 위 테두리가 없고 위쪽 모서리가
- * 각졌다. 캐릭터 한 장짜리 화면에는 매달릴 줄이 없으므로 제 테두리를 갖고 폭을
- * 스스로 잡아야 한다. 그러지 않으면 **위가 뚫린 채 화면 끝까지 펼쳐진다.**
+ * `.char`는 로스터 줄 **밑에 매달리는** 상자다. 캐릭터 한 장짜리 화면에는 매달릴
+ * 줄이 없으므로 **상자를 통째로 걷고**(`char--solo`) 넓은 화면에서 두 단으로
+ * 선다(`paper--wide`). 어느 쪽이든 안쪽 칸은 평평하다(`paper`).
  */
 describe('혼자 서는 시트', () => {
-  it('줄 밑에 매달릴 때는 제 테를 두르지 않는다', () => {
-    expect(render(fixture(), true)).not.toContain('char--solo')
+  it('줄 밑에 매달릴 때는 상자를 지킨다', () => {
+    const html = render(fixture(), true)
+    expect(html).not.toContain('char--solo')
+    expect(html).not.toContain('paper--wide')
   })
 
-  it('혼자 설 때는 제 테를 두른다', () => {
-    expect(render(fixture(), true, false, true)).toContain('char--solo')
+  it('혼자 설 때는 상자를 걷고 두 단으로 설 수 있다', () => {
+    const html = render(fixture(), true, false, true)
+    expect(html).toContain('char--solo')
+    expect(html).toContain('paper--wide')
+  })
+
+  it('어느 쪽이든 안쪽 칸은 평평하다', () => {
+    expect(render(fixture(), true)).toContain('char paper')
+    expect(render(fixture(), true, false, true)).toContain('char paper')
   })
 })
 
@@ -203,7 +212,7 @@ describe('그 밖', () => {
  * │ **칸을 가르는 것이 CSS이므로 짜임이 어긋나면 화면에만 드러난다.**          │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
- * 2026-08-12에 상자를 걷고 장식선으로 칸을 갈랐다. 그 선은 `.char__col`의 자식에
+ * 2026-08-12에 상자를 걷고 장식선으로 칸을 갈랐다. 그 선은 `.paper__col`의 자식에
  * 붙으므로 **감싼 것 바깥에 칸을 두면 앞 칸과 붙어 버린다** — 마크업은 멀쩡하고
  * 시험도 통과하는데 화면에서만 어긋나는 자리다(구현 결정 252와 같은 병).
  *
@@ -236,9 +245,9 @@ function topLevelClasses(html: string): string[] {
 describe('시트의 짜임 — 한 장의 종이', () => {
   it('맨 윗줄에는 두 단과 띠만 선다', () => {
     const kinds = topLevelClasses(render(fixture(), true, false, true)).map((c) =>
-      c.split(' ').find((k) => k !== 'char__col'),
+      c.split(' ').find((k) => k !== 'paper__col'),
     )
-    expect(kinds).toEqual(['char__col--a', 'char__col--b', 'sheet__bar'])
+    expect(kinds).toEqual(['paper__col--a', 'paper__col--b', 'sheet__bar'])
   })
 
   /**

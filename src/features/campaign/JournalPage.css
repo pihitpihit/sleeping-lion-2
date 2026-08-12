@@ -13,15 +13,6 @@
   background: linear-gradient(180deg, var(--sl-bg) 0%, var(--sl-void) 100%);
 }
 
-.journal__bar {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  max-width: 44rem;
-  margin: 0 auto 1.25rem;
-  padding: 0.5rem 0;
-}
-
 .journal__back {
   flex: none;
   display: inline-flex;
@@ -41,18 +32,6 @@
 .journal__back:hover {
   color: var(--sl-gold);
   border-color: var(--sl-border-strong);
-}
-
-.journal__title {
-  margin: 0;
-  font-family: var(--sl-font-ko-display);
-  font-size: 1.35rem;
-  font-weight: 400;
-  color: var(--sl-text);
-  /* 이름이 길어도 줄을 넘기지 않는다 — 띠가 두꺼워지면 아래가 밀린다. */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .journal__error {
@@ -304,12 +283,15 @@
    기록지 한 장
    -------------------------------------------------------------------------- */
 
+/*
+  파티 기록지의 칸 묶음. **폭과 자리잡기는 `.paper`가 한다** — 여기서는 칸을
+  세로로 세우기만 한다. 편집 중임을 알리는 금빛 테를 두르려면 상자가 있어야
+  하므로 `display: contents`로 지우지 않는다.
+*/
 .sheet {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-  max-width: 44rem;
-  margin: 0 auto;
+  gap: 0.8rem;
 }
 
 .sheet__block {
@@ -655,12 +637,6 @@
    화면에서 시트만 가운데 44rem이고 아래 칸은 끝까지 늘어난다.
    -------------------------------------------------------------------------- */
 
-.sheet__block.crew,
-.sheet__block.roster {
-  max-width: 44rem;
-  margin: 1.25rem auto 0;
-}
-
 /* --------------------------------------------------------------------------
    무리 — 이 기록지의 캐릭터들
    --------------------------------------------------------------------------
@@ -873,7 +849,7 @@
    나오고 띠가 두 겹이었다.
    -------------------------------------------------------------------------- */
 
-.charbar {
+.topbar {
   position: sticky;
   top: 0;
   z-index: 5;
@@ -882,12 +858,16 @@
   padding: calc(var(--sl-safe-top) + 0.4rem) calc(var(--sl-safe-right) + 1rem) 0.5rem
     calc(var(--sl-safe-left) + 1rem);
   background: var(--sl-bg);
-  border-bottom: 1px solid var(--sl-border);
-  box-shadow: 0 10px 14px -12px rgb(0 0 0 / 80%);
+  /*
+    **테를 긋지 않는다.** 띠 바로 밑에 종이의 첫 장식선이 오므로 가로줄이 둘
+    겹친다. 안 굴렸을 때는 그 장식선이 가르고, 굴리면 그림자와 밝은 바탕이
+    가른다.
+  */
+  box-shadow: 0 10px 16px -10px rgb(0 0 0 / 85%);
 }
 
 /* 알맹이는 시트와 같은 폭에 맞춘다 — 넓은 화면에서 띠만 혼자 펼쳐지면 어긋난다. */
-.charbar__inner {
+.topbar__inner {
   display: flex;
   align-items: center;
   gap: 0.6rem;
@@ -896,13 +876,13 @@
 }
 
 @media (min-width: 62rem) {
-  .charbar__inner {
+  .topbar__inner {
     max-width: 72rem;
   }
 }
 
 /* 양피지 원반 — 표식은 거의 검정이라 물들이지 않고 바탕을 깐다(구현 결정 41). */
-.charbar__badge {
+.topbar__badge {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -916,13 +896,13 @@
   font-family: var(--sl-font-ko-display);
 }
 
-.charbar__badge img {
+.topbar__badge img {
   width: 76%;
   height: 76%;
   object-fit: contain;
 }
 
-.charbar__names {
+.topbar__names {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -930,7 +910,7 @@
   gap: 0.1rem;
 }
 
-.charbar__name {
+.topbar__name {
   margin: 0;
   font-family: var(--sl-font-ko-display);
   font-size: 1.15rem;
@@ -942,7 +922,7 @@
   white-space: nowrap;
 }
 
-.charbar__sub {
+.topbar__sub {
   font-size: 0.78rem;
   color: var(--sl-text-faint);
   overflow: hidden;
@@ -950,12 +930,12 @@
   white-space: nowrap;
 }
 
-.charbar__class {
+.topbar__class {
   color: var(--sl-text-muted);
 }
 
 /* 파티 기록지로 — 펼친 기록지 그림. 급하게 누르는 자리라 44px를 지킨다. */
-.charbar__party {
+.topbar__party {
   flex: none;
   display: inline-flex;
   align-items: center;
@@ -968,12 +948,12 @@
   background: rgb(0 0 0 / 30%);
 }
 
-.charbar__party svg {
+.topbar__party svg {
   width: 22px;
   height: 22px;
 }
 
-.charbar__party:hover {
+.topbar__party:hover {
   color: var(--sl-gold);
   border-color: var(--sl-border-strong);
 }
@@ -993,6 +973,22 @@
   border-radius: 0 0 0.25rem 0.25rem;
 }
 
+/* --------------------------------------------------------------------------
+   한 장의 종이 — 두 시트가 함께 쓰는 짜임
+   --------------------------------------------------------------------------
+   캐릭터 시트와 파티 기록지가 **같은 결로 읽혀야 한다.** 같은 일을 하는 것을
+   두 벌 그리면 반드시 어긋난다(구현 결정 238과 같은 손질) — 그래서 `.char__`
+   밑에 있던 것을 `.paper`로 뽑아 둘이 나눠 쓴다.
+   -------------------------------------------------------------------------- */
+
+.paper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
 /*
   ┌────────────────────────────────────────────────────────────────────────┐
   │ **한 장의 종이다. 상자를 겹치지 않는다.**                                │
@@ -1007,7 +1003,7 @@
   로스터 줄에 매달리는 `.char`는 상자를 지킨다(구현 결정 177) — 그쪽은 눌린
   줄과 한 덩어리로 보여야 한다. **안쪽 칸만 평평해진다.**
 */
-.char .sheet__block {
+.paper .sheet__block {
   padding: 0;
   background: none;
   border: 0;
@@ -1017,12 +1013,9 @@
 /*
   혼자 서는 시트 — 매달릴 줄이 없으므로 상자를 통째로 걷는다.
 
-  폭은 이 화면의 다른 칸(`journal__toparty`)과 같은 44rem이다. 두 단으로 설
-  때만 넓어진다.
+  폭과 자리잡기는 `.paper`가 이미 한다 — 여기서는 상자만 지운다.
 */
 .char--solo {
-  max-width: 44rem;
-  margin: 0 auto;
   padding: 0;
   background: none;
   border: 0;
@@ -1038,12 +1031,12 @@
   자식이 된다. 넓어지면 상자가 살아나 각자 한 단이 된다. **DOM을 갈아 끼우지
   않으므로 좁힐 때 차례가 흐트러지지 않는다.**
 */
-.char__col {
+.paper__col {
   display: contents;
 }
 
 @media (min-width: 62rem) {
-  .char--solo {
+  .paper--wide {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
@@ -1053,12 +1046,12 @@
   }
 
   /* 띠는 두 단에 걸친다. */
-  .char--solo > .char__actions,
-  .char--solo > .sheet__bar {
+  .paper--wide > .char__actions,
+  .paper--wide > .sheet__bar {
     grid-column: 1 / -1;
   }
 
-  .char--solo > .char__col {
+  .paper--wide > .paper__col {
     display: flex;
     flex-direction: column;
     gap: 0.8rem;
@@ -1080,28 +1073,28 @@
   **가운데 틈은 픽셀로 고정한다.** %로 두면 넓은 화면에서 틈이 마름모보다
   훨씬 벌어져 선이 두 동강 난 것처럼 보인다.
 
-  거는 자리는 `.char__col`의 **모든** 자식이다 — 앞에 무엇이 오든(머리든 옆
+  거는 자리는 `.paper__col`의 **모든** 자식이다 — 앞에 무엇이 오든(머리든 옆
   칸이든) 반드시 무엇인가가 오기 때문이다. 두 단으로 서면 양쪽 첫 칸이 머리
   밑에 나란히 서는데 그때도 맞다.
 */
 /*
   ┌────────────────────────────────────────────────────────────────────────┐
-  │ **`.char .sheet__block`이 이 규칙을 이겨 선이 글자를 덮었다.**            │
+  │ **`.paper .sheet__block`이 이 규칙을 이겨 선이 글자를 덮었다.**            │
   └────────────────────────────────────────────────────────────────────────┘
 
-  상자를 걷으면서 `.char .sheet__block { padding: 0 }`을 적었는데 그것이
-  (0,2,0)이고 `.char__col > *`은 (0,1,0)이라 **여백이 안 잡혔다.** 선은 절대
+  상자를 걷으면서 `.paper .sheet__block { padding: 0 }`을 적었는데 그것이
+  (0,2,0)이고 `.paper__col > *`은 (0,1,0)이라 **여백이 안 잡혔다.** 선은 절대
   위치라 제자리에 그려지는데 밑에 비워 둔 자리가 없으니 그대로 제목 위에
   얹혔다 — 형님이 "구분선이 컨텐츠를 가린다"고 짚은 자리다.
 
   **여백은 선을 긋는 규칙이 함께 잡는다.** 두 곳에서 정하면 또 어긋난다.
 */
-.char .char__col > * {
+.paper .paper__col > * {
   position: relative;
   padding-top: 1.3rem;
 }
 
-.char__col > *::before {
+.paper__col > *::before {
   content: '';
   position: absolute;
   inset: 0.5rem 0 auto;
@@ -1113,7 +1106,7 @@
       no-repeat;
 }
 
-.char__col > *::after {
+.paper__col > *::after {
   content: '';
   position: absolute;
   top: 0.5rem;
