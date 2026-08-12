@@ -124,7 +124,9 @@ describe('덱 주인 표식', () => {
     )
     expect(html).toContain('deck__owner')
     expect(html).toContain('class-17.svg')
-    expect(html).toContain(`left:${FACE_SLOTS.owner.cx}%`)
+    expect(html).toContain(`left:${FACE_SLOTS.ownerInner.cx}%`)
+    // 홈 테 안쪽에 앉는다 — 바깥 지름을 쓰면 테를 덮어 홈이 사라진다.
+    expect(FACE_SLOTS.ownerInner.size).toBeLessThan(FACE_SLOTS.owner.size)
   })
 
   /** 팩에 그림이 없는 클래스가 있다(사자의 턱 넷). 그때는 첫 글자로 대신한다. */

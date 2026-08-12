@@ -291,9 +291,10 @@
   pointer-events: none;
 }
 
+/* 원반이 이제 홈 테 안쪽에 꼭 맞으므로 표식도 그만큼 키운다. */
 .deck__owner-icon {
-  width: 76%;
-  height: 76%;
+  width: 82%;
+  height: 82%;
   object-fit: contain;
 }
 

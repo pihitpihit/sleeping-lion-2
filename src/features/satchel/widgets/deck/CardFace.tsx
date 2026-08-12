@@ -146,10 +146,11 @@ export function CardFace({ card, owner }: { card: Card; owner?: CardOwner | null
       {owner && (owner.iconUrl || owner.letter) && (
         <span
           className="deck__owner"
+          /* 홈 **테 안쪽**에 딱 맞춘다. 바깥 지름을 쓰면 테를 덮어 홈이 사라진다. */
           style={{
-            left: `${FACE_SLOTS.owner.cx}%`,
-            top: `${FACE_SLOTS.owner.cy}%`,
-            width: `${FACE_SLOTS.owner.size * 0.86}%`,
+            left: `${FACE_SLOTS.ownerInner.cx}%`,
+            top: `${FACE_SLOTS.ownerInner.cy}%`,
+            width: `${FACE_SLOTS.ownerInner.size}%`,
           }}
         >
           {owner.iconUrl ? (
