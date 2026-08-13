@@ -15,7 +15,7 @@ import {
 import { DeckPreview } from './DeckPreview'
 import { classInfoOf, maxHpFor, useClassStore } from './classStore'
 import { HandCards } from './HandCards'
-import { LOG_REASONS, REASON_TEXT, changesOf, type LogReason } from './characterLog'
+import { changesOf } from './characterLog'
 import { writeLog } from './characterNet'
 import { LogView } from './LogView'
 import { PerkText } from './PerkText'
@@ -123,13 +123,6 @@ export function CharacterSheet({
   const [asking, setAsking] = useState<'discard' | 'remove' | null>(null)
   /** 기록 팝업이 열려 있는가. 읽기·편집 어느 쪽에서나 열 수 있다. */
   const [logOpen, setLogOpen] = useState(false)
-  /**
-   * 이번에 고치는 까닭. 기록에 함께 담긴다.
-   *
-   * **기본은 「직접 수정」이다.** 시나리오 정산은 판이 끝난 뒤 한 번뿐이고
-   * 나머지는 손으로 맞추는 것이므로, 잘못 남을 확률이 낮은 쪽을 기본으로 둔다.
-   */
-  const [reason, setReason] = useState<LogReason>('manual')
 
   /**
    * 화면에 그리는 값.
@@ -156,8 +149,6 @@ export function CharacterSheet({
   function startEditing() {
     setDraft(draftOf(character))
     setNewItem('')
-    // 매번 새로 고른다 — 지난번 것이 남아 있으면 딸려 들어간다.
-    setReason('manual')
     setWantsEdit(true)
   }
 
@@ -176,7 +167,12 @@ export function CharacterSheet({
         **기록은 값이 들어간 다음에 남긴다.** 실패해도 삼키므로(`writeLog`)
         저장이 되돌아가지 않는다 — 기록은 읽어 보는 것이지 정본이 아니다.
       */
-      void writeLog(character.id, character.ownerId, reason, changesOf(character, edits))
+      /*
+        **시트에서 고친 것은 언제나 「직접 수정」이다.** 사람이 고를 것이 아니라
+        경로가 정하는 것이다 — 시나리오 정산으로 들어오는 길은 따로 난다(형님이
+        짚었다). 그래서 고르는 자리를 두지 않는다.
+      */
+      void writeLog(character.id, character.ownerId, 'manual', changesOf(character, edits))
     }
     stopEditing()
   }
@@ -440,14 +436,12 @@ export function CharacterSheet({
             delta={editing ? xpDelta : 0}
             /*
               **고치는 동안에도 몇 %인지 남긴다.** 「60+35/95」만 적었더니 목표까지
-              얼마나 왔는지가 사라졌다 — 형님이 짚었다. 비율은 고친 뒤의 값으로
-              센다: 지금 이 손질이 어디까지 데려다 놓았는지가 궁금한 것이다.
+              얼마나 왔는지가 사라졌다. 비율은 고친 뒤의 값으로 센다 — 지금 이
+              손질이 어디까지 데려다 놓았는지가 궁금한 것이다.
             */
-            tail={
-              nextMark === null
-                ? undefined
-                : `/${nextMark} (${Math.round((shown.xp / nextMark) * 100)}%)`
-            }
+            tail={nextMark === null ? undefined : `/${nextMark}`}
+            /* 비율도 증감과 같은 색을 입는다. 얼마나 움직였는지를 함께 말한다. */
+            pct={nextMark === null ? undefined : Math.round((shown.xp / nextMark) * 100)}
             move={editing ? moveOf(character.xp, shown.xp) : null}
             steps={editing ? [1, 5] : undefined}
             onChange={(next) => set('xp', next)}
@@ -773,28 +767,6 @@ export function CharacterSheet({
             >
               취소
             </button>
-            {/*
-              ┌──────────────────────────────────────────────────────────────┐
-              │ **고치는 까닭을 저장 곁에서 고른다.**                          │
-              └──────────────────────────────────────────────────────────────┘
-
-              저장할 때마다 따로 묻는 팝업을 띄우면 매번 한 걸음이 는다. 저장
-              단추 바로 옆에 두면 누르기 직전에 눈에 들어온다.
-            */}
-            <span className="sheet__why" role="radiogroup" aria-label="고치는 까닭">
-              {LOG_REASONS.map((r) => (
-                <button
-                  key={r}
-                  type="button"
-                  role="radio"
-                  aria-checked={reason === r}
-                  className={`sheet__why-pick${reason === r ? ' sheet__why-pick--on' : ''}`}
-                  onClick={() => setReason(r)}
-                >
-                  {REASON_TEXT[r]}
-                </button>
-              ))}
-            </span>
             <button type="button" className="sheet__save" disabled={!dirty} onClick={save}>
               {dirty ? '저장' : '고친 것 없음'}
             </button>
@@ -859,6 +831,7 @@ function Tally({
   base,
   delta,
   tail,
+  pct,
   move,
   steps,
   onChange,
@@ -875,6 +848,8 @@ function Tally({
   delta?: number
   /** 증감 뒤에 붙일 글 — 경험의 `/95`. */
   tail?: string
+  /** 목표까지의 비율. 증감과 같은 색을 입는다. */
+  pct?: number
   /** 저장된 값에서 어느 쪽으로 움직였는가. 편집 중에만 온다. */
   move?: Move
   /** [한 칸, 여러 칸]. 오면 캐럿이 돋고 안 오면 읽기 전용이다. */
@@ -930,6 +905,9 @@ function Tally({
             {Math.abs(delta)}
           </span>
           {tail}
+          {pct !== undefined && (
+            <span className={`tally__delta${markClass(moveOf(0, delta))}`}> ({pct}%)</span>
+          )}
         </span>
       ) : (
         caption !== undefined && <span className="tally__label sl-numeral">{caption}</span>
