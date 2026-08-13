@@ -1,3 +1,5 @@
+import { useId } from 'react'
+
 import './HandCards.css'
 
 /**
@@ -17,6 +19,10 @@ import './HandCards.css'
  * **뒷장은 1시, 앞장은 11시로 기운다.** 도형 둘이라 베낄 것이 없다(금화와 같은
  * 선, 구현 결정 106).
  *
+ * **앞장에만 그림자를 드리운다.** 그림 전체에 걸면 두 장을 한 덩어리로 보고
+ * 바깥 윤곽에만 드리워 사이가 안 갈린다 — 두 장이 거의 붙어 보였다(형님이
+ * 짚었다). 앞장에만 걸어야 **뒷장 위로** 그늘이 진다.
+ *
  * **테를 두르지 않고 속을 채운다.** 실물이 그렇다 — 선으로 그린 표식이 아니라
  * 밝은 카드 두 장이다. 앞장은 양피지색이고 뒷장은 한 톤 어둡다: 색이 갈리면
  * 어느 것이 앞인지 선 없이도 읽힌다.
@@ -25,10 +31,24 @@ import './HandCards.css'
  * 그대로 먹고 색도 CSS가 정한다.
  */
 export function HandCards({ count }: { count: number }) {
+  // 한 화면에 여럿 설 수 있다(생성 화면의 캐러셀) — 열쇠를 가른다. 콜론은 뺀다.
+  const lift = `hand-lift-${useId().replace(/:/g, '')}`
+
   return (
     <span className="hand" role="img" aria-label={`손에 드는 카드 ${count}장`}>
       {/* 그림에 딱 맞게 자른 viewBox다 — 남는 여백이 있으면 상자만 커진다. */}
       <svg className="hand__art" viewBox="8 8 25 30" aria-hidden="true" focusable="false">
+        <defs>
+          <filter id={lift} x="-40%" y="-40%" width="180%" height="180%">
+            <feDropShadow
+              dx="1.1"
+              dy="1.6"
+              stdDeviation="1.3"
+              floodColor="#000"
+              floodOpacity="0.65"
+            />
+          </filter>
+        </defs>
         {/* 뒷장 — 오른쪽 아래로 비켜 서고 1시로 기운다. 한 톤 어둡다. */}
         <rect
           x="13"
@@ -40,15 +60,17 @@ export function HandCards({ count }: { count: number }) {
           transform="rotate(3 22 23.6)"
         />
         {/* 앞장 — 11시로 기운다. 양피지색이라 수가 어두운 잉크로 앉는다. */}
-        <rect
-          x="10"
-          y="9"
-          width="18"
-          height="25"
-          rx="2.2"
-          fill="#d8cbaa"
-          transform="rotate(-3 19 21.5)"
-        />
+        <g filter={`url(#${lift})`}>
+          <rect
+            x="10"
+            y="9"
+            width="18"
+            height="25"
+            rx="2.2"
+            fill="#d8cbaa"
+            transform="rotate(-3 19 21.5)"
+          />
+        </g>
       </svg>
       <span className="hand__n sl-numeral" aria-hidden="true">
         {count}
