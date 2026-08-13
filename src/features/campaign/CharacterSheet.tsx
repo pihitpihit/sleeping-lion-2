@@ -15,7 +15,7 @@ import {
 import { DeckPreview } from './DeckPreview'
 import { classInfoOf, maxHpFor, useClassStore } from './classStore'
 import { HandCards } from './HandCards'
-import { changesOf } from './characterLog'
+import { LOG_REASONS, REASON_TEXT, changesOf, type LogReason } from './characterLog'
 import { writeLog } from './characterNet'
 import { LogView } from './LogView'
 import { PerkText } from './PerkText'
@@ -123,6 +123,13 @@ export function CharacterSheet({
   const [asking, setAsking] = useState<'discard' | 'remove' | null>(null)
   /** 기록 팝업이 열려 있는가. 읽기·편집 어느 쪽에서나 열 수 있다. */
   const [logOpen, setLogOpen] = useState(false)
+  /**
+   * 이번에 고치는 까닭. 기록에 함께 담긴다.
+   *
+   * **기본은 「직접 수정」이다.** 시나리오 정산은 판이 끝난 뒤 한 번뿐이고
+   * 나머지는 손으로 맞추는 것이므로, 잘못 남을 확률이 낮은 쪽을 기본으로 둔다.
+   */
+  const [reason, setReason] = useState<LogReason>('manual')
 
   /**
    * 화면에 그리는 값.
@@ -149,6 +156,8 @@ export function CharacterSheet({
   function startEditing() {
     setDraft(draftOf(character))
     setNewItem('')
+    // 매번 새로 고른다 — 지난번 것이 남아 있으면 딸려 들어간다.
+    setReason('manual')
     setWantsEdit(true)
   }
 
@@ -167,7 +176,7 @@ export function CharacterSheet({
         **기록은 값이 들어간 다음에 남긴다.** 실패해도 삼키므로(`writeLog`)
         저장이 되돌아가지 않는다 — 기록은 읽어 보는 것이지 정본이 아니다.
       */
-      void writeLog(character.id, character.ownerId, changesOf(character, edits))
+      void writeLog(character.id, character.ownerId, reason, changesOf(character, edits))
     }
     stopEditing()
   }
@@ -429,7 +438,16 @@ export function CharacterSheet({
             caption={xpProgress}
             base={editing ? character.xp : undefined}
             delta={editing ? xpDelta : 0}
-            tail={nextMark === null ? undefined : `/${nextMark}`}
+            /*
+              **고치는 동안에도 몇 %인지 남긴다.** 「60+35/95」만 적었더니 목표까지
+              얼마나 왔는지가 사라졌다 — 형님이 짚었다. 비율은 고친 뒤의 값으로
+              센다: 지금 이 손질이 어디까지 데려다 놓았는지가 궁금한 것이다.
+            */
+            tail={
+              nextMark === null
+                ? undefined
+                : `/${nextMark} (${Math.round((shown.xp / nextMark) * 100)}%)`
+            }
             move={editing ? moveOf(character.xp, shown.xp) : null}
             steps={editing ? [1, 5] : undefined}
             onChange={(next) => set('xp', next)}
@@ -704,11 +722,18 @@ export function CharacterSheet({
         자주 여는 자리가 아니라 정산이 맞았는지 되짚을 때만 연다. 저장 띠보다
         위에 두어 **띠가 늘 마지막**이게 한다.
       */}
-      <div className="char__logrow">
-        <button type="button" className="char__logopen" onClick={() => setLogOpen(true)}>
-          고친 기록 보기
-        </button>
-      </div>
+      {/*
+        **제 캐릭터의 기록만 본다.** 시트의 현재값은 파티원이 다 보지만(SPEC 6장)
+        이력은 갈린다 — 형님이 좁혔다. 막는 것은 서버다(`0019`); 여기서 문을 안
+        내는 것은 헛손질을 줄이는 것뿐이다.
+      */}
+      {mine && (
+        <div className="char__logrow">
+          <button type="button" className="char__logopen" onClick={() => setLogOpen(true)}>
+            고친 기록 보기
+          </button>
+        </div>
+      )}
 
       {logOpen && <LogView characterId={character.id} onClose={() => setLogOpen(false)} />}
 
@@ -748,6 +773,28 @@ export function CharacterSheet({
             >
               취소
             </button>
+            {/*
+              ┌──────────────────────────────────────────────────────────────┐
+              │ **고치는 까닭을 저장 곁에서 고른다.**                          │
+              └──────────────────────────────────────────────────────────────┘
+
+              저장할 때마다 따로 묻는 팝업을 띄우면 매번 한 걸음이 는다. 저장
+              단추 바로 옆에 두면 누르기 직전에 눈에 들어온다.
+            */}
+            <span className="sheet__why" role="radiogroup" aria-label="고치는 까닭">
+              {LOG_REASONS.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  role="radio"
+                  aria-checked={reason === r}
+                  className={`sheet__why-pick${reason === r ? ' sheet__why-pick--on' : ''}`}
+                  onClick={() => setReason(r)}
+                >
+                  {REASON_TEXT[r]}
+                </button>
+              ))}
+            </span>
             <button type="button" className="sheet__save" disabled={!dirty} onClick={save}>
               {dirty ? '저장' : '고친 것 없음'}
             </button>

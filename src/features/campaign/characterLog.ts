@@ -14,6 +14,34 @@ import type { Character, CharacterEdits } from './types'
  * 시험할 수 있다(구현 결정 158과 같은 손질).
  */
 
+/**
+ * 어떤 경로로 고쳤는가.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **무엇이 바뀌었는가만으로는 부족하다 — 왜 바뀌었는지가 갈린다.**          │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 「골드 120 → 160」이 전투에서 노획한 것인지 손으로 맞춘 것인지 나중에 알 수
+ * 없다. 정산이 맞았는지 되짚는 것이 기록을 두는 까닭이므로 그 둘이 갈려야 한다.
+ *
+ * **세 갈래뿐이다.** 더 잘게 쪼개면 고를 때마다 생각해야 하고, 생각하기 싫으면
+ * 아무거나 고르게 된다.
+ */
+export type LogReason = 'scenario' | 'manual' | 'other'
+
+export const LOG_REASONS: readonly LogReason[] = ['scenario', 'manual', 'other']
+
+/** 화면에 적는 말. **흔히 쓰는 낱말로 둔다** — 우리끼리만 아는 말은 안 쓴다. */
+export const REASON_TEXT: Readonly<Record<LogReason, string>> = {
+  scenario: '시나리오 정산',
+  manual: '직접 수정',
+  other: '기타',
+}
+
+export function reasonText(reason: string): string {
+  return REASON_TEXT[reason as LogReason] ?? REASON_TEXT.other
+}
+
 /** 기록 한 줄에 담기는 변화 하나. */
 export interface LogChange {
   readonly field: string
@@ -25,6 +53,7 @@ export interface LogEntry {
   readonly id: string
   readonly at: number
   readonly actorName: string
+  readonly reason: string
   readonly changes: readonly LogChange[]
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { changesOf, describeChange, whenText } from './characterLog'
+import { LOG_REASONS, changesOf, describeChange, reasonText, whenText } from './characterLog'
 import type { Character } from './types'
 
 function fixture(over: Partial<Character> = {}): Character {
@@ -109,5 +109,26 @@ describe('언제 고쳤는가', () => {
   it('자정은 열두 시로 적는다 — 0시라고 하지 않는다', () => {
     const mid = new Date(2026, 7, 11, 0, 10).getTime()
     expect(whenText(mid, now)).toContain('오전 12시 10분')
+  })
+})
+
+/**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **왜 바뀌었는지가 갈려야 한다.**                                          │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 「골드 120 → 160」이 전투에서 노획한 것인지 손으로 맞춘 것인지 나중에 알 수
+ * 없다 — 정산이 맞았는지 되짚는 것이 기록을 두는 까닭이다.
+ */
+describe('고친 까닭', () => {
+  it('세 갈래가 저마다 다른 말을 한다', () => {
+    const said = LOG_REASONS.map(reasonText)
+    expect(new Set(said).size).toBe(3)
+    expect(said.every((s) => s.trim() !== '')).toBe(true)
+  })
+
+  /** 서버 값을 믿지 않는다 — 모르는 것이 와도 화면이 서야 한다. */
+  it('모르는 까닭은 기타로 읽는다', () => {
+    expect(reasonText('무엇인가')).toBe(reasonText('other'))
   })
 })

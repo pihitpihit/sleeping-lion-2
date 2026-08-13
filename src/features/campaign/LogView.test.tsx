@@ -33,6 +33,7 @@ describe('고친 기록', () => {
             id: 'e1',
             at: NOW - 5 * 60_000,
             actorName: '형님',
+            reason: 'scenario',
             changes: [
               { field: 'gold', from: 120, to: 160 },
               { field: 'xp', from: 60, to: 95 },
@@ -53,7 +54,7 @@ describe('고친 기록', () => {
   it('변화가 없는 덩어리도 그려진다', () => {
     const html = renderToStaticMarkup(
       <LogPanel
-        entries={[{ id: 'e2', at: NOW - 20_000, actorName: '', changes: [] }]}
+        entries={[{ id: 'e2', at: NOW - 20_000, actorName: '', reason: 'manual', changes: [] }]}
         failed={false}
         now={NOW}
         onClose={() => {}}

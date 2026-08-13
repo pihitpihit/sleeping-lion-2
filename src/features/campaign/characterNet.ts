@@ -7,7 +7,7 @@ import {
   hasClassIcon,
   normalizePerks,
 } from './character'
-import type { LogChange, LogEntry } from './characterLog'
+import type { LogChange, LogEntry, LogReason } from './characterLog'
 import type { Character, CharacterEdits } from './types'
 
 /**
@@ -197,13 +197,14 @@ export async function deleteCharacter(id: string): Promise<void> {
 export async function writeLog(
   characterId: string,
   actorId: string,
+  reason: LogReason,
   changes: readonly LogChange[],
 ): Promise<void> {
   if (changes.length === 0) return
   try {
     const { error } = await supabase()
       .from('character_log')
-      .insert({ character_id: characterId, actor_id: actorId, changes })
+      .insert({ character_id: characterId, actor_id: actorId, reason, changes })
     if (error) throw error
   } catch (cause) {
     console.error('[log]', cause)
@@ -214,7 +215,7 @@ export async function writeLog(
 export async function fetchLog(characterId: string, limit = 200): Promise<LogEntry[]> {
   const { data, error } = await supabase()
     .from('character_log')
-    .select('id, at, changes, actor:actor_id (display_name)')
+    .select('id, at, reason, changes, actor:actor_id (display_name)')
     .eq('character_id', characterId)
     .order('at', { ascending: false })
     .limit(limit)
@@ -224,6 +225,7 @@ export async function fetchLog(characterId: string, limit = 200): Promise<LogEnt
     const r = row as unknown as {
       id: string
       at: string
+      reason: string
       changes: unknown
       actor: { display_name?: string } | null
     }
@@ -231,6 +233,7 @@ export async function fetchLog(characterId: string, limit = 200): Promise<LogEnt
       id: r.id,
       at: Date.parse(r.at),
       actorName: r.actor?.display_name ?? '',
+      reason: typeof r.reason === 'string' ? r.reason : 'other',
       // 서버 값을 믿지 않는다 — 모양이 어긋난 것은 버린다.
       changes: Array.isArray(r.changes)
         ? (r.changes as LogChange[]).filter(

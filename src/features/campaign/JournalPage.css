@@ -2173,6 +2173,57 @@
   color: var(--sl-text);
 }
 
+/*
+  고치는 까닭 — 저장 곁에서 고른다.
+
+  **셋뿐이라 늘어놓는다.** 접어 두면 한 번 더 눌러야 하고, 접힌 것은 기본값
+  그대로 지나가기 쉽다. 좁은 화면에서는 줄을 넘긴다.
+*/
+.sheet__why {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-right: auto;
+}
+
+.sheet__why-pick {
+  padding: 0.3rem 0.55rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  color: var(--sl-text-faint);
+  background: rgb(0 0 0 / 25%);
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.sheet__why-pick--on {
+  color: var(--sl-void);
+  background: var(--sl-gold-dim);
+  border-color: var(--sl-gold-dim);
+}
+
+/* 기록 한 덩어리의 머리 — 언제와 왜가 나란히 선다. */
+.logview__meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.logview__why {
+  padding: 0.05rem 0.4rem;
+  font-size: 0.7rem;
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  color: var(--sl-text-faint);
+}
+
+/* 전투에서 받은 것은 눈에 띄어야 한다 — 되짚을 때 찾는 것이 대개 이것이다. */
+.logview__why--scenario {
+  color: var(--sl-gold);
+  border-color: var(--sl-gold-dim);
+}
+
 /* 고치는 동안의 증감. 수는 `sl-numeral`이 이미 맡고 여기서는 색만 정한다. */
 .tally__delta {
   margin: 0 0.05em;

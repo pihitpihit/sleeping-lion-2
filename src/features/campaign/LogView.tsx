@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { describeChange, whenText, type LogEntry } from './characterLog'
+import { describeChange, reasonText, whenText, type LogEntry } from './characterLog'
 import { fetchLog } from './characterNet'
 
 /**
@@ -102,7 +102,13 @@ export function LogPanel({
         <ol className="logview__list">
           {entries.map((entry) => (
             <li key={entry.id} className="logview__entry">
-              <span className="logview__when">{whenText(entry.at, now)}</span>
+              <span className="logview__meta">
+                <span className="logview__when">{whenText(entry.at, now)}</span>
+                {/* 어떤 경로로 고쳤는가 — 전투 정산인지 손으로 맞춘 것인지. */}
+                <span className={`logview__why logview__why--${entry.reason}`}>
+                  {reasonText(entry.reason)}
+                </span>
+              </span>
               <ul className="logview__changes">
                 {entry.changes.map((change, i) => (
                   <li key={i}>{describeChange(change)}</li>
