@@ -222,6 +222,59 @@ export function NewCharacterPage() {
 }
 
 /**
+ * 손에 드는 카드 장수 — **그림 안에 수를 적는다.**
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **이 그림은 우리가 그린 것이다. 팩 것이 아니다.**                         │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 실물 시트에도 핸드 사이즈는 그림과 수로 적혀 있는데, 팩 원본이 작업 기계에
+ * 없어 뽑아 올 수가 없다(구현 결정 205와 같은 자리). 형님이 실물 시트를 찍어
+ * 보내 주어 **얼개만 맞췄다** — 두 장이 어긋나게 겹치고 **뒷장은 1시, 앞장은
+ * 11시로 기운다.** 도형 둘이라 베낄 것이 없다(금화와 같은 선, 구현 결정 106).
+ * 팩이 손에 들어오면 그때 갈아 끼운다.
+ *
+ * **테를 두르지 않고 속을 채운다.** 실물이 그렇다 — 선으로 그린 표식이 아니라
+ * 밝은 카드 두 장이다. 앞장은 양피지색이고 뒷장은 한 톤 어둡다: 색이 갈리면
+ * 어느 것이 앞인지 선 없이도 읽힌다.
+ *
+ * 수는 SVG 안에 넣지 않고 **위에 얹는다** — 그래야 `sl-numeral`(Pirata One)이
+ * 그대로 먹고 색도 CSS가 정한다.
+ */
+function HandSize({ count }: { count: number }) {
+  return (
+    <span className="hand" role="img" aria-label={`손에 드는 카드 ${count}장`}>
+      {/* 그림에 딱 맞게 자른 viewBox다 — 남는 여백이 있으면 상자만 커진다. */}
+      <svg className="hand__art" viewBox="8 8 25 30" aria-hidden="true" focusable="false">
+        {/* 뒷장 — 오른쪽 아래로 비켜 서고 1시로 기운다. 한 톤 어둡다. */}
+        <rect
+          x="13"
+          y="11.1"
+          width="18"
+          height="25"
+          rx="2.2"
+          fill="#a8987a"
+          transform="rotate(3 22 23.6)"
+        />
+        {/* 앞장 — 11시로 기운다. 양피지색이라 수가 어두운 잉크로 앉는다. */}
+        <rect
+          x="10"
+          y="9"
+          width="18"
+          height="25"
+          rx="2.2"
+          fill="#d8cbaa"
+          transform="rotate(-3 19 21.5)"
+        />
+      </svg>
+      <span className="hand__n sl-numeral" aria-hidden="true">
+        {count}
+      </span>
+    </span>
+  )
+}
+
+/**
  * 클래스 한 장.
  *
  * 표식·이름·핸드 사이즈·레벨별 체력을 적는다. **모르는 것은 안 적는다** — 클래스
@@ -246,11 +299,7 @@ function ClassCard({ choice }: { choice: Choice }) {
 
       <h2 className="classcard__name">{choice.title}</h2>
 
-      {choice.handSize > 0 && (
-        <p className="classcard__hand">
-          손에 드는 카드 <span className="sl-numeral">{choice.handSize}</span>장
-        </p>
-      )}
+      {choice.handSize > 0 && <HandSize count={choice.handSize} />}
 
       {choice.hp.length === 9 && (
         <ol className="classcard__levels" aria-label="레벨별 최대 체력">

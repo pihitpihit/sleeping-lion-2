@@ -192,10 +192,48 @@
   color: var(--sl-gold-bright);
 }
 
-.classcard__hand {
-  margin: 0;
-  font-size: 0.88rem;
-  color: var(--sl-text-muted);
+/*
+  손에 드는 카드 장수.
+
+  **그림 안에 수를 적는다** — 실물 시트가 그렇고, 「손에 드는 카드 12장」이라고
+  풀어 쓰면 한 줄을 통째로 쓴다. 수는 SVG 밖에 얹어 `sl-numeral`이 그대로
+  먹게 한다.
+*/
+.hand {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 50px;
+}
+
+/* 어두운 바탕에서 카드가 떠 보이게. 테 대신 그림자가 가장자리를 짓는다. */
+.hand__art {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 70%));
+}
+
+/*
+  수는 앞장 한가운데에 앉되 **기울지 않는다.**
+
+  카드가 기울었다고 수까지 눕히면 읽기가 나빠진다 — 마름모 안의 표식을 되세우는
+  것과 같은 자리다(구현 결정 206). 형님이 짚었다.
+
+  자리는 그림 좌표에서 재서 적었다: 앞장이 x 10~28 · y 9~34이므로 가운데가
+  (19, 21.5)이고, 잘라 쓰는 viewBox(8 8 25 30) 안에서 가로 44% · 세로 45%다.
+  **어림수로 두면 카드 안에서 논다**(구현 결정 213-1과 같은 손질).
+*/
+.hand__n {
+  position: absolute;
+  top: 45%;
+  left: 44%;
+  transform: translate(-50%, -50%);
+  font-size: 1.1rem;
+  line-height: 1;
+  /* 양피지 위에 앉으므로 어두운 잉크다. */
+  color: var(--sl-void);
 }
 
 /*
