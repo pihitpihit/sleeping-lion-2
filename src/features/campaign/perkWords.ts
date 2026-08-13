@@ -1,4 +1,4 @@
-import { MARKS, valueHasArt, type MarkDef } from '../satchel/widgets/deck/cardSpec'
+import { MARKS, VALUE_IDS, type MarkDef } from '../satchel/widgets/deck/cardSpec'
 
 /**
  * 특혜 글에서 그림으로 바꿀 수 있는 낱말을 갈라낸다.
@@ -26,9 +26,11 @@ import { MARKS, valueHasArt, type MarkDef } from '../satchel/widgets/deck/cardSp
  * │ **값도 그림이다: `+1`·`−2`·`×0`은 팩의 값 메달로 바꾼다.**                 │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
- * 카드에 찍힌 것과 같은 그림이라 글자로 두면 또 따로 논다. **그림이 있는 일곱만
- * 바꾼다** — `+3`·`+4`는 특혜로만 나오는 값이라 팩에 메달이 없고, 그때는 글자
- * 그대로 두는 것이 맞다(구현 결정 115와 같은 결).
+ * 카드에 찍힌 것과 같은 그림이라 글자로 두면 또 따로 논다.
+ *
+ * **팩에 메달이 없는 값(`+3`·`+4`)도 값으로 갈라낸다** — 덱 알약이 그러듯 숫자를
+ * 직접 그려 메달 자리를 대신하기 때문이다. 여기서 글자로 흘려 두면 특혜 목록에서
+ * 그 줄만 그림이 빠져 어긋나 보인다. **카드 값이 아닌 것(`+5`)은 글자로 남는다.**
  */
 
 /** 그림으로 바꿀 낱말과 그것이 가리키는 표식. */
@@ -84,8 +86,13 @@ export type PerkPiece =
   | { readonly kind: 'text'; readonly text: string }
   | { readonly kind: 'rolling' }
   | { readonly kind: 'mark'; readonly def: MarkDef; readonly amount: number | null }
-  /** 값 메달. 그림이 있는 일곱(`x0`·`m2`·`m1`·`p0`·`p1`·`p2`·`x2`)만 온다. */
-  | { readonly kind: 'value'; readonly valueId: string }
+  /**
+   * 카드 값. 메달 그림이 있으면 그림으로, 없으면 숫자를 그려 대신한다.
+   *
+   * `text`는 **적힌 그대로**다 — 그림 없는 값을 그릴 때 이것을 쓴다. 되만들면
+   * 빼기표가 적은 것과 달라질 수 있다.
+   */
+  | { readonly kind: 'value'; readonly valueId: string; readonly text: string }
 
 /**
  * 값을 적는 꼴.
@@ -97,10 +104,10 @@ export type PerkPiece =
  */
 const VALUE_RE = /^([+\-\u2212\u2013\u00d7xX])(\d)(?!\d)/
 
-/** 적힌 꼴을 값 낱말로. 그림이 없는 값이면 `null`이라 글자로 남는다. */
+/** 적힌 꼴을 값 낱말로. 카드 값이 아니면 `null`이라 글자로 남는다. */
 function valueIdOf(sign: string, digit: string): string | null {
   const id = sign === '+' ? `p${digit}` : /[\u00d7xX]/.test(sign) ? `x${digit}` : `m${digit}`
-  return valueHasArt(id) ? id : null
+  return VALUE_IDS.includes(id) ? id : null
 }
 
 /** 특혜 글 한 줄을 글자와 표식으로 가른다. */
@@ -123,7 +130,7 @@ export function splitPerkText(text: string): PerkPiece[] {
       const id = valueIdOf(value[1] as string, value[2] as string)
       if (id !== null) {
         flush()
-        out.push({ kind: 'value', valueId: id })
+        out.push({ kind: 'value', valueId: id, text: value[0] })
         i += value[0].length
         continue
       }

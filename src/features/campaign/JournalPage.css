@@ -1901,10 +1901,32 @@
   vertical-align: -0.4em;
 }
 
+/*
+  그림이 없는 값(`+3`·`+4`)이 메달 자리를 대신한다.
+
+  덱 알약의 `.deckview__numeral`과 같은 그림이지만 **크기 단위가 다르다** —
+  알약에서는 픽셀로 못박고 글줄에서는 글자 크기를 따라야 한다.
+*/
+.imark__numeral {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.45em;
+  height: 1.45em;
+  font-size: 0.86em;
+  line-height: 1;
+  color: var(--sl-text);
+  background: radial-gradient(circle at 38% 32%, #4a4034, #241d15 72%);
+  border: 1px solid var(--sl-border-strong);
+  border-radius: 50%;
+  vertical-align: -0.34em;
+}
+
 /* 표식 앞뒤로 머리카락만큼 띄운다 — 글자에 붙으면 낱말의 일부로 읽힌다. */
 .perktext .imark,
 .perktext > .imark__badge,
 .perktext > .imark__medal,
+.perktext > .imark__numeral,
 .perktext .imark__tag {
   margin: 0 0.08em;
 }

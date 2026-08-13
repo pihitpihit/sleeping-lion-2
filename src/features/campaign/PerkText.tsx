@@ -35,16 +35,21 @@ export function PerkText({ text }: { text: string }) {
               aria-hidden="true"
             />
           )
-        if (piece.kind === 'value')
-          return (
-            <img
-              key={i}
-              className="imark__medal"
-              src={medallionUrl(piece.valueId) ?? ''}
-              alt=""
-              aria-hidden="true"
-            />
+        if (piece.kind === 'value') {
+          const medal = medallionUrl(piece.valueId)
+          /*
+            **그림이 없는 값(`+3`·`+4`)은 숫자를 직접 그린다.** 팩이 실물 표준
+            덱에 있는 일곱만 담고 있어서인데, 글자로 흘려 두면 그 줄만 그림이
+            빠져 어긋나 보인다 — 덱 알약이 이미 쓰는 손질이다.
+          */
+          return medal === null ? (
+            <span key={i} className="imark__numeral sl-numeral" aria-hidden="true">
+              {piece.text}
+            </span>
+          ) : (
+            <img key={i} className="imark__medal" src={medal} alt="" aria-hidden="true" />
           )
+        }
         return <InlineMark key={i} mark={{ def: piece.def, amount: piece.amount }} />
       })}
     </span>
