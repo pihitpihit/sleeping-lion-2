@@ -45,6 +45,7 @@
 | `general/shuffle.svg` | 같은 파일 **21쪽** | 공격 보정 덱의 섞기 표식 | 변경함 | 〃 |
 | `general/check.svg` | 같은 파일 **23쪽** | 캐릭터 시트의 전투 목표 체크표 | 변경함 | 〃 |
 | `general/xp-star-lit.webp` | `general/xp-star.svg`(같은 파일 17쪽)에서 파생 | 캐릭터 시트·HP/XP 트래커의 경험 표식 | **크게 변경함** | 검정 실루엣에 **두께감을 입혀 구웠다** — 가장자리를 비스듬히 깎고 위에서 빛을 주었으며 색은 HP/XP 트래커가 쓰던 푸른 그라디언트를 따랐다. 굽는 스크립트는 `tools/bake_marks.py` |
+| `general/level-crown.webp` | `Character Ability Cards/Ability Cards - Front.jpg`의 위쪽 한가운데 | 캐릭터 레벨 표식 | 변경함 | **아이콘 묶음에는 없어 카드 앞면에서 그 자리만 오려냈다**(x 187~223, y 65~87). 밝기를 알파로 옮겨 가장자리의 반투명을 살리고 네 배로 늘렸다. 오려내기·크기 변환뿐이며 다시 그리지 않았다. 뽑는 스크립트는 `tools/extract_crown.py` |
 | `general/hp-drop-lit.webp` | `general/hp-drop.svg`(같은 파일 8쪽)에서 파생 | HP/XP 트래커의 체력 표식 | **크게 변경함** | 〃 (붉은 쪽) |
 | `classes/class-01.svg` ~ `class-21.svg` | `Icon Pack/Class Icons and Augments.pdf` 1~21쪽 (쪽 번호 = 파일 번호) | 캐릭터 시트의 클래스 표식 | 변경함 | PDF 쪽 → SVG 추출 |
 

@@ -19,7 +19,15 @@ import { PerkText } from './PerkText'
 import { perkRowsOf } from './perks'
 import { ownerBadge } from '../satchel/perkSource'
 import { Coin } from '../satchel/widgets/gold/Coin'
-import { draftOf, isDirty, sheetDiff, type SheetDraft } from './sheetDraft'
+import {
+  draftOf,
+  isDirty,
+  moveOf,
+  sheetDiff,
+  toggleOf,
+  type Move,
+  type SheetDraft,
+} from './sheetDraft'
 import type { Character, CharacterEdits } from './types'
 
 interface Props {
@@ -386,35 +394,30 @@ export function CharacterSheet({
           **경험은 별, 골드는 금화** 위에 수를 얹으면 한눈에 든다. 표식은 둘 다
           이미 앱에서 쓰는 것이라(HP/XP 트래커·골드 카운터) 같은 것으로 읽힌다.
 
-          **편집으로 들어가면 다이얼로 돌아간다.** 수를 옮기는 데는 손잡이가
-          있어야 한다.
+          **편집으로 들어가도 모양이 그대로다.** 표식 양옆에 캐럿이 돋을 뿐이다 —
+          다이얼로 갈아 끼우면 눈이 자리를 다시 찾아야 한다(형님이 짚었다).
+          캐럿은 안쪽이 한 칸, 바깥쪽이 여러 칸이다: 골드를 8에서 340으로 옮기는
+          일이 있으므로 한 칸짜리만으로는 손이 남아나지 않는다.
           ------------------------------------------------------------------ */}
-        {!editing && (
-          <div className="tally">
-            <Tally kind="xp" label="경험" value={shown.xp} caption={xpProgress} />
-            <Tally kind="gold" label="골드" value={shown.gold} />
-          </div>
-        )}
-
-        {editing && (
-          <div className="char__dials">
-            <Dial
-              label="경험"
-              value={shown.xp}
-              disabled={!editing}
-              steps={[1, 5]}
-              onChange={(next) => set('xp', next)}
-              foot={xpProgress ?? '끝'}
-            />
-            <Dial
-              label="골드"
-              value={shown.gold}
-              disabled={!editing}
-              steps={[1, 10]}
-              onChange={(next) => set('gold', next)}
-            />
-          </div>
-        )}
+        <div className="tally">
+          <Tally
+            kind="xp"
+            label="경험"
+            value={shown.xp}
+            caption={xpProgress}
+            move={editing ? moveOf(character.xp, shown.xp) : null}
+            steps={editing ? [1, 5] : undefined}
+            onChange={(next) => set('xp', next)}
+          />
+          <Tally
+            kind="gold"
+            label="골드"
+            value={shown.gold}
+            move={editing ? moveOf(character.gold, shown.gold) : null}
+            steps={editing ? [1, 10] : undefined}
+            onChange={(next) => set('gold', next)}
+          />
+        </div>
 
         {/* ------------------------------------------------------------------
           체크마크 — 셋마다 퍽 하나
@@ -432,7 +435,16 @@ export function CharacterSheet({
                 aria-label={`체크마크 ${n}개까지`}
                 aria-pressed={n <= shown.checkmarks}
                 /* 묶음은 격자가 낸다 — 한 줄에 셋이므로 줄 하나가 곧 한 묶음이다. */
-                className={`char__check${n <= shown.checkmarks ? ' char__check--on' : ''}`}
+                className={[
+                  'char__check',
+                  n <= shown.checkmarks ? 'char__check--on' : '',
+                  // 편집 중에만 짚어 준다. 저장하면 견줄 것이 없어져 저절로 물러난다.
+                  editing
+                    ? markClass(toggleOf(n <= character.checkmarks, n <= shown.checkmarks))
+                    : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
                 disabled={!editing}
                 /* 켜진 마지막 칸을 다시 누르면 하나 줄인다 — 잘못 짚었을 때의 길이다. */
                 onClick={() => set('checkmarks', n === shown.checkmarks ? n - 1 : n)}
@@ -484,7 +496,15 @@ export function CharacterSheet({
                             type="button"
                             aria-label={`${perk.text} — ${slot}번 상자`}
                             aria-pressed={on}
-                            className={`char__perkbox${on ? ' char__perkbox--on' : ''}`}
+                            className={[
+                              'char__perkbox',
+                              on ? 'char__perkbox--on' : '',
+                              editing
+                                ? markClass(toggleOf(character.perks.includes(slot), on))
+                                : '',
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
                             disabled={!editing}
                             onClick={() => set('perks', togglePerk(shown.perks, slot))}
                           />
@@ -513,7 +533,13 @@ export function CharacterSheet({
                       type="button"
                       aria-label={`퍽 ${slot}번`}
                       aria-pressed={on}
-                      className={`char__perk${on ? ' char__perk--on' : ''}`}
+                      className={[
+                        'char__perk',
+                        on ? 'char__perk--on' : '',
+                        editing ? markClass(toggleOf(character.perks.includes(slot), on)) : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
                       disabled={!editing}
                       onClick={() => set('perks', togglePerk(shown.perks, slot))}
                     >
@@ -657,8 +683,14 @@ export function CharacterSheet({
       <div className="sheet__bar">
         {!editing ? (
           canEdit ? (
-            <button type="button" className="sheet__edit" onClick={startEditing}>
-              고치기
+            <button
+              type="button"
+              className="sheet__edit"
+              aria-label="고치기"
+              title="고치기"
+              onClick={startEditing}
+            >
+              <PencilIcon />
             </button>
           ) : (
             <p className="sheet__locked">
@@ -673,7 +705,7 @@ export function CharacterSheet({
               /* 고친 것이 있으면 한 번 묻는다. 없으면 버릴 것도 없다. */
               onClick={() => (dirty ? setAsking('discard') : stopEditing())}
             >
-              그만두기
+              취소
             </button>
             <button type="button" className="sheet__save" disabled={!dirty} onClick={save}>
               {dirty ? '저장' : '고친 것 없음'}
@@ -715,38 +747,30 @@ export function CharacterSheet({
   )
 }
 
-/* --------------------------------------------------------------------------
-   다이얼 — 경험과 골드
-   --------------------------------------------------------------------------
-   실물에서 지우개로 고치던 자리다. 정산 뒤에 큰 폭으로 움직이므로 **단위를 둘
-   두었다** — 골드는 열씩, 경험은 다섯씩. 하나씩만 있으면 백 단위를 옮기는 데
-   손가락이 스무 번 간다.
-   -------------------------------------------------------------------------- */
-
-interface DialProps {
-  label: string
-  value: number
-  steps: [number, number]
-  disabled: boolean
-  onChange: (next: number) => void
-  foot?: string
-}
-
 /**
- * 표식 위에 얹힌 수 — 읽을 때의 경험·골드.
+ * 표식 위에 얹힌 수 — 경험과 골드.
  *
- * 경험의 별은 팩 것이고(HP/XP 트래커와 같은 파일) 금화는 우리가 그린 것이다
- * (골드 카운터와 같은 조각). **둘 다 이미 앱에서 쓰는 그림이라** 여기서 처음
- * 보는 표식이 아니다.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **읽을 때와 고칠 때가 같은 모양이다.**                                    │
+ * └──────────────────────────────────────────────────────────────────────────┘
  *
- * 수는 그림 밖에 얹는다 — `sl-numeral`(Pirata One)이 그대로 먹고 색은 CSS가
- * 정한다(구현 결정 296과 같은 손질).
+ * 편집으로 들어가면 표식 양옆에 캐럿이 돋을 뿐이다 — 다이얼로 갈아 끼우면 눈이
+ * 자리를 다시 찾아야 한다(형님이 짚었다). 캐럿은 **안쪽이 한 칸, 바깥쪽이 여러
+ * 칸**이다: 골드를 8에서 340으로 옮기는 일이 있으므로 한 칸짜리만으로는 손이
+ * 남아나지 않는다.
+ *
+ * 경험의 별은 팩 것이고 금화는 우리가 그린 것이다 — **둘 다 이미 앱에서 쓰는
+ * 그림이라** 여기서 처음 보는 표식이 아니다. 수는 그림 밖에 얹어 `sl-numeral`이
+ * 그대로 먹게 한다(구현 결정 296과 같은 손질).
  */
 function Tally({
   kind,
   label,
   value,
   caption,
+  move,
+  steps,
+  onChange,
 }: {
   kind: 'xp' | 'gold'
   /** 읽어주는 쪽에만 간다 — 그림이 무엇인지는 눈에 이미 보인다. */
@@ -754,89 +778,94 @@ function Tally({
   value: number
   /** 밑에 적을 글. 없으면 안 적는다 — 골드는 적을 것이 없다. */
   caption?: string
+  /** 저장된 값에서 어느 쪽으로 움직였는가. 편집 중에만 온다. */
+  move?: Move
+  /** [한 칸, 여러 칸]. 오면 캐럿이 돋고 안 오면 읽기 전용이다. */
+  steps?: readonly [number, number]
+  onChange?: (next: number) => void
 }) {
+  const carets = steps !== undefined && onChange !== undefined
+
   return (
     <div className={`tally__item tally__item--${kind}`}>
+      {carets && (
+        <span className="tally__carets tally__carets--left">
+          <Caret label={`${label} ${steps[1]} 내리기`} onPress={() => onChange(value - steps[1])}>
+            «
+          </Caret>
+          <Caret label={`${label} ${steps[0]} 내리기`} onPress={() => onChange(value - steps[0])}>
+            ‹
+          </Caret>
+        </span>
+      )}
+
       <span className="tally__art" role="img" aria-label={`${label} ${value}`}>
         {kind === 'gold' ? (
           <Coin />
         ) : (
           <img src={XP_STAR_URL} alt="" draggable={false} aria-hidden="true" />
         )}
-        <span className="tally__n sl-numeral" aria-hidden="true">
+        <span className={`tally__n sl-numeral${markClass(move ?? null)}`} aria-hidden="true">
           {value}
         </span>
       </span>
+
+      {carets && (
+        <span className="tally__carets tally__carets--right">
+          <Caret label={`${label} ${steps[0]} 올리기`} onPress={() => onChange(value + steps[0])}>
+            ›
+          </Caret>
+          <Caret label={`${label} ${steps[1]} 올리기`} onPress={() => onChange(value + steps[1])}>
+            »
+          </Caret>
+        </span>
+      )}
+
       {caption !== undefined && <span className="tally__label sl-numeral">{caption}</span>}
     </div>
   )
 }
 
-function Dial({ label, value, steps, disabled, onChange, foot }: DialProps) {
-  const id = useId()
-  const [big, small] = [steps[1], steps[0]]
-
+function Caret({
+  label,
+  onPress,
+  children,
+}: {
+  label: string
+  onPress: () => void
+  children: string
+}) {
   return (
-    <section className="dial">
-      <label className="sheet__label" htmlFor={id}>
-        {label}
-      </label>
+    <button type="button" className="tally__caret" aria-label={label} onClick={onPress}>
+      <span aria-hidden="true">{children}</span>
+    </button>
+  )
+}
 
-      <div className="dial__row">
-        <button
-          type="button"
-          className="dial__step dial__step--big"
-          aria-label={`${label} ${big} 내리기`}
-          disabled={disabled}
-          onClick={() => onChange(value - big)}
-        >
-          <span className="sl-numeral" aria-hidden="true">
-            −{big}
-          </span>
-        </button>
-        <button
-          type="button"
-          className="dial__step"
-          aria-label={`${label} ${small} 내리기`}
-          disabled={disabled}
-          onClick={() => onChange(value - small)}
-        >
-          <span aria-hidden="true">−</span>
-        </button>
+/**
+ * 바뀐 자리에 붙일 클래스.
+ *
+ * **오른 것은 녹색, 내린 것은 붉은색.** 되돌려 놓으면 색도 함께 사라지고,
+ * 저장하면 견줄 것이 없어져 저절로 물러난다(`sheetDraft.ts`).
+ */
+function markClass(move: Move): string {
+  if (move === 'up') return ' is-up'
+  if (move === 'down') return ' is-down'
+  return ''
+}
 
-        <input
-          id={id}
-          className="dial__value sl-numeral"
-          type="number"
-          inputMode="numeric"
-          value={value}
-          disabled={disabled}
-          onChange={(e) => onChange(Number(e.target.value))}
-        />
-
-        <button
-          type="button"
-          className="dial__step"
-          aria-label={`${label} ${small} 올리기`}
-          disabled={disabled}
-          onClick={() => onChange(value + small)}
-        >
-          <span aria-hidden="true">+</span>
-        </button>
-        <button
-          type="button"
-          className="dial__step dial__step--big"
-          aria-label={`${label} ${big} 올리기`}
-          disabled={disabled}
-          onClick={() => onChange(value + big)}
-        >
-          <span className="sl-numeral" aria-hidden="true">
-            +{big}
-          </span>
-        </button>
-      </div>
-
-      {foot && <p className="dial__foot sl-numeral">{foot}</p>}
-    </section>
+/** 고치기 단추의 연필. 직접 그린 도형이다(Creator Pack 격리 규칙 밖). */
+function PencilIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M4 20h4L19.2 8.8a2.1 2.1 0 0 0 0-3L18.2 4.8a2.1 2.1 0 0 0-3 0L4 16v4Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.9"
+        strokeLinejoin="round"
+      />
+      <path d="M14.4 5.6 18.4 9.6" fill="none" stroke="currentColor" strokeWidth="1.9" />
+    </svg>
   )
 }

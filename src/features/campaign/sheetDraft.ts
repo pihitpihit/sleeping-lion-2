@@ -129,3 +129,34 @@ export function sheetDiff(character: Character, draft: SheetDraft): CharacterEdi
 export function isDirty(character: Character, draft: SheetDraft): boolean {
   return Object.keys(sheetDiff(character, draft)).length > 0
 }
+
+/* --------------------------------------------------------------------------
+   무엇이 어떻게 바뀌었는가 — 편집 중에 색으로 알린다
+   --------------------------------------------------------------------------
+   ┌────────────────────────────────────────────────────────────────────────┐
+   │ **고친 자리를 눈으로 짚어 준다.**                                       │
+   └────────────────────────────────────────────────────────────────────────┘
+
+   여러 칸을 함께 고치는 자리라(정산은 골드·경험·체크마크가 한꺼번에 움직인다)
+   저장을 누르기 전에 **무엇을 건드렸는지** 한눈에 보여야 한다. 오른 것은 녹색,
+   내린 것은 붉은색 — 되돌려 놓으면 색도 함께 사라진다.
+
+   저장하면 초안이 곧 레코드가 되므로 **비교할 것이 없어져 저절로 물러난다.**
+   따로 지우는 코드가 없다.
+   -------------------------------------------------------------------------- */
+
+/** 수가 어느 쪽으로 움직였는가. 그대로면 `null`. */
+export type Move = 'up' | 'down' | null
+
+export function moveOf(before: number, after: number): Move {
+  if (after > before) return 'up'
+  if (after < before) return 'down'
+  return null
+}
+
+/** 켬/끔이 어느 쪽으로 움직였는가. 그대로면 `null`. */
+export function toggleOf(before: boolean, after: boolean): Move {
+  if (after && !before) return 'up'
+  if (!after && before) return 'down'
+  return null
+}
