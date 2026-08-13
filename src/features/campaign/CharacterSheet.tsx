@@ -1,6 +1,7 @@
 import { useEffect, useId, useState } from 'react'
 import { ConfirmDialog } from '../satchel/board/ConfirmDialog'
 import {
+  CHECK_MARK_URL,
   MAX_CHECKMARKS,
   XP_THRESHOLDS,
   classIconUrl,
@@ -377,7 +378,11 @@ export function CharacterSheet({
                 /* 켜진 마지막 칸을 다시 누르면 하나 줄인다 — 잘못 짚었을 때의 길이다. */
                 onClick={() => set('checkmarks', n === shown.checkmarks ? n - 1 : n)}
               >
-                <span aria-hidden="true">✓</span>
+                {/*
+                  켜지든 말든 늘 그린다 — 켤 때만 그리면 그 칸만 다시 자리를
+                  잡느라 눌린 자리가 흔들린다. 꺼진 것은 보이지 않을 뿐이다.
+                */}
+                <img className="char__check-mark" src={CHECK_MARK_URL} alt="" draggable={false} />
               </button>
             ))}
           </div>

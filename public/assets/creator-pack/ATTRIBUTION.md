@@ -43,6 +43,7 @@
 | `general/hp-drop.svg` | `Icon Pack/General Icons.pdf` 8쪽 | HP/XP 트래커의 체력 표식 | 변경함 | PDF 쪽 → SVG 추출 |
 | `general/xp-star.svg` | 같은 파일 17쪽 | HP/XP 트래커의 경험 표식 | 변경함 | 〃 |
 | `general/shuffle.svg` | 같은 파일 **21쪽** | 공격 보정 덱의 섞기 표식 | 변경함 | 〃 |
+| `general/check.svg` | 같은 파일 **23쪽** | 캐릭터 시트의 전투 목표 체크표 | 변경함 | 〃 |
 | `classes/class-01.svg` ~ `class-21.svg` | `Icon Pack/Class Icons and Augments.pdf` 1~21쪽 (쪽 번호 = 파일 번호) | 캐릭터 시트의 클래스 표식 | 변경함 | PDF 쪽 → SVG 추출 |
 
 **클래스 아이콘에 대하여.** 21쪽 전부를 가져왔다. 1~17쪽이 글룸헤이븐 클래스이고,

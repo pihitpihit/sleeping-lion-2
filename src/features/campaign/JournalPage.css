@@ -1393,22 +1393,41 @@
   셋만 서므로 자리가 남고, **급하게 누르는 화면이라 클수록 낫다.**
 */
 .char__check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   aspect-ratio: 1;
   padding: 0;
-  font-size: 0.9rem;
-  line-height: 1;
-  color: transparent;
   background: rgb(0 0 0 / 30%);
   border: 1px solid var(--sl-border);
   border-radius: 0.2rem;
   cursor: pointer;
 }
 
+/*
+  체크표는 Creator Pack 것이다(`General Icons.pdf` 23쪽).
+
+  **꺼진 칸에서도 자리를 지키고 보이지만 않는다** — 켤 때만 그리면 그 칸만
+  다시 자리를 잡느라 눌린 자리가 흔들린다.
+
+  원본이 거의 검정이라 **물들이지 않는다**(구현 결정 15) — 켜진 칸이 금빛이라
+  그대로 읽힌다.
+*/
+.char__check-mark {
+  width: 74%;
+  height: 74%;
+  object-fit: contain;
+  opacity: 0;
+}
+
 .char__check--on {
-  color: var(--sl-void);
   background: var(--sl-gold);
   border-color: var(--sl-gold);
+}
+
+.char__check--on .char__check-mark {
+  opacity: 1;
 }
 
 .char__check:disabled {

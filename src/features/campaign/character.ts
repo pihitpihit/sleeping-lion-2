@@ -39,6 +39,15 @@ export function classIconUrl(index: number): string | null {
   return `${ASSET_ROOT}classes/class-${String(index).padStart(2, '0')}.svg`
 }
 
+/**
+ * 전투 목표 칸에 찍는 체크표 — Creator Pack `General Icons.pdf` 23쪽.
+ *
+ * **팩 것을 쓴다.** 그전에는 글꼴의 `✓`를 찍었는데 기기마다 획이 다르고 실물
+ * 시트의 것과 닮지도 않았다. **물들이지 않고 그대로 얹는다**(구현 결정 15) —
+ * 원본이 거의 검정이고 켜진 칸이 금빛이라 그대로 읽힌다.
+ */
+export const CHECK_MARK_URL = `${ASSET_ROOT}general/check.svg`
+
 /* --------------------------------------------------------------------------
    레벨과 경험
    -------------------------------------------------------------------------- */
