@@ -66,7 +66,10 @@ describe('열람 모드', () => {
     const html = render(fixture(), true)
     // 값은 보인다.
     expect(html).toContain('가죽 장화')
-    expect(html).toContain('value="120"')
+    // 경험·골드는 표식 위의 수로 — 다이얼은 편집 중에만 선다.
+    expect(html).toContain('aria-label="골드 120"')
+    expect(html).toContain('aria-label="경험 60"')
+    expect(html).not.toContain('class="dial"')
     // 고치는 자리는 없다.
     expect(html).not.toContain('아이템을 적는다')
     expect(html).not.toContain('은퇴시킨다')
@@ -170,6 +173,34 @@ describe('이름은 못 고친다', () => {
 
   it('이름이 비어 있어도 자리는 지킨다', () => {
     expect(render(fixture({ name: '' }), true)).toContain('이름 없음')
+  })
+})
+
+/**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **읽을 때는 표식 위의 수, 고칠 때는 다이얼.**                             │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 들여다보는 동안에는 손잡이가 자리만 차지한다. 편집 모드는 서버 렌더로 볼 수
+ * 없으므로(구현 결정 150) 여기서 못박는 것은 **읽기 쪽뿐**이다.
+ */
+describe('경험과 골드', () => {
+  it('한 줄에 표식 위의 수로 선다', () => {
+    const html = render(fixture(), true)
+    expect(html).toContain('class="tally"')
+    expect((html.match(/class="tally__item/g) ?? []).length).toBe(2)
+  })
+
+  /** 표식은 둘 다 이미 앱에서 쓰는 것이다 — 여기서 처음 보는 그림이 아니다. */
+  it('경험은 팩의 별, 골드는 우리 금화다', () => {
+    const html = render(fixture(), true)
+    expect(html).toContain('general/xp-star.svg')
+    expect(html).toContain('class="gold__coin"')
+  })
+
+  /** 읽어주는 쪽에는 무엇의 수인지 함께 간다 — 그림과 숫자만으로는 알 수 없다. */
+  it('읽어주는 쪽에 이름과 수가 함께 간다', () => {
+    expect(render(fixture({ gold: 340 }), true)).toContain('aria-label="골드 340"')
   })
 })
 

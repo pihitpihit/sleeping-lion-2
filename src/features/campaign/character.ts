@@ -48,6 +48,14 @@ export function classIconUrl(index: number): string | null {
  */
 export const CHECK_MARK_URL = `${ASSET_ROOT}general/check.svg`
 
+/**
+ * 경험 표식 — Creator Pack `General Icons.pdf` 17쪽.
+ *
+ * **HP/XP 트래커와 같은 파일이다.** 같은 값이 화면 두 곳에서 다른 그림이면 같은
+ * 것으로 안 읽힌다.
+ */
+export const XP_STAR_URL = `${ASSET_ROOT}general/xp-star.svg`
+
 /* --------------------------------------------------------------------------
    레벨과 경험
    -------------------------------------------------------------------------- */

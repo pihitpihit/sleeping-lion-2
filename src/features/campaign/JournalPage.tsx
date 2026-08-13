@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { useAuthStore } from '../auth/authStore'
 import type { Identity } from '../net/types'
 import { useJournalStore } from './campaignStore'
@@ -10,7 +10,7 @@ import { useMineStore } from './mineStore'
 import { PartySheet } from './PartySheet'
 import { Roster } from './Roster'
 import { backHref, readJournalRoute } from './journalRoute'
-import { useAtTop } from './useAtTop'
+import { useScrolled } from './useScrolled'
 import './JournalPage.css'
 
 /**
@@ -56,7 +56,7 @@ export function JournalPage() {
   const loadMine = useMineStore((s) => s.load)
 
   const [route, setRoute] = useState(() => readJournalRoute(window.location.hash))
-  const atTop = useAtTop()
+  const scrolled = useScrolled()
 
   useEffect(() => {
     const onHash = () => setRoute(readJournalRoute(window.location.hash))
@@ -105,7 +105,7 @@ export function JournalPage() {
         파티 기록지에서는 **장소를 부제로 단다.** 상 위에서 "우리 지금 어디였지"를
         가장 자주 묻는다.
       */}
-      <header className={`topbar${atTop ? ' topbar--tall' : ''}`}>
+      <header className="topbar" style={{ '--tb': scrolled } as CSSProperties}>
         <div className="topbar__inner">
           <a
             className="journal__back"

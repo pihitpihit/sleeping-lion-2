@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { useAuthStore } from '../auth/authStore'
 import { useJournalStore } from './campaignStore'
 import { classIconUrl } from './character'
 import { CharacterSheet } from './CharacterSheet'
 import { classInfoOf, useClassStore } from './classStore'
+import { HandCards } from './HandCards'
 import { characterIdFromHash } from './journalRoute'
 import { useOneCharacterStore } from './oneCharacter'
-import { useAtTop } from './useAtTop'
+import { useScrolled } from './useScrolled'
 import './JournalPage.css'
 
 /**
@@ -25,7 +26,7 @@ import './JournalPage.css'
 export function CharacterPage() {
   const session = useAuthStore((s) => s.session)
   const [id, setId] = useState(() => characterIdFromHash(window.location.hash))
-  const atTop = useAtTop()
+  const scrolled = useScrolled()
 
   useEffect(() => {
     const onHash = () => setId(characterIdFromHash(window.location.hash))
@@ -94,7 +95,7 @@ export function CharacterPage() {
 
         파티로 가는 문도 여기 넣는다. 글자 단추로 한 줄을 쓰기에는 아까운 자리다.
       */}
-      <header className={`topbar${atTop ? ' topbar--tall' : ''}`}>
+      <header className="topbar" style={{ '--tb': scrolled } as CSSProperties}>
         <div className="topbar__inner">
           <a className="journal__back" href="#/journal" aria-label="일지로">
             ←
@@ -124,7 +125,8 @@ export function CharacterPage() {
                       <span className="topbar__class">{info.name}</span>
                       {info.handSize > 0 && (
                         <>
-                          {' · '}손 <span className="sl-numeral">{info.handSize}</span>장
+                          {' '}
+                          <HandCards count={info.handSize} />
                         </>
                       )}
                     </>

@@ -3,6 +3,7 @@ import { ConfirmDialog } from '../satchel/board/ConfirmDialog'
 import {
   CHECK_MARK_URL,
   MAX_CHECKMARKS,
+  XP_STAR_URL,
   XP_THRESHOLDS,
   classIconUrl,
   levelForXp,
@@ -13,9 +14,11 @@ import {
 } from './character'
 import { DeckPreview } from './DeckPreview'
 import { classInfoOf, maxHpFor, useClassStore } from './classStore'
+import { HandCards } from './HandCards'
 import { PerkText } from './PerkText'
 import { perkRowsOf } from './perks'
 import { ownerBadge } from '../satchel/perkSource'
+import { Coin } from '../satchel/widgets/gold/Coin'
 import { draftOf, isDirty, sheetDiff, type SheetDraft } from './sheetDraft'
 import type { Character, CharacterEdits } from './types'
 
@@ -258,7 +261,8 @@ export function CharacterSheet({
                   <span className="char__class">{info.name}</span>
                   {info.handSize > 0 && (
                     <>
-                      {' · '}손 <span className="sl-numeral">{info.handSize}</span>장
+                      {' '}
+                      <HandCards count={info.handSize} />
                     </>
                   )}
                 </>
@@ -338,25 +342,50 @@ export function CharacterSheet({
         </section>
 
         {/* ------------------------------------------------------------------
-          경험과 골드 — 다이얼
+          경험과 골드
+          ------------------------------------------------------------------
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **읽을 때는 표식 위의 수, 고칠 때는 다이얼.**                     │
+          └──────────────────────────────────────────────────────────────────┘
+
+          들여다보는 동안에는 손잡이가 자리만 차지한다 — 값 둘을 한 줄에 놓고
+          **경험은 별, 골드는 금화** 위에 수를 얹으면 한눈에 든다. 표식은 둘 다
+          이미 앱에서 쓰는 것이라(HP/XP 트래커·골드 카운터) 같은 것으로 읽힌다.
+
+          **편집으로 들어가면 다이얼로 돌아간다.** 수를 옮기는 데는 손잡이가
+          있어야 한다.
           ------------------------------------------------------------------ */}
-        <div className="char__dials">
-          <Dial
-            label="경험"
-            value={shown.xp}
-            disabled={!editing}
-            steps={[1, 5]}
-            onChange={(next) => set('xp', next)}
-            foot={toNext === null ? '끝' : `다음까지 ${toNext}`}
-          />
-          <Dial
-            label="골드"
-            value={shown.gold}
-            disabled={!editing}
-            steps={[1, 10]}
-            onChange={(next) => set('gold', next)}
-          />
-        </div>
+        {!editing && (
+          <div className="tally">
+            <Tally
+              kind="xp"
+              label="경험"
+              value={shown.xp}
+              foot={toNext === null ? '끝' : `다음까지 ${toNext}`}
+            />
+            <Tally kind="gold" label="골드" value={shown.gold} />
+          </div>
+        )}
+
+        {editing && (
+          <div className="char__dials">
+            <Dial
+              label="경험"
+              value={shown.xp}
+              disabled={!editing}
+              steps={[1, 5]}
+              onChange={(next) => set('xp', next)}
+              foot={toNext === null ? '끝' : `다음까지 ${toNext}`}
+            />
+            <Dial
+              label="골드"
+              value={shown.gold}
+              disabled={!editing}
+              steps={[1, 10]}
+              onChange={(next) => set('gold', next)}
+            />
+          </div>
+        )}
 
         {/* ------------------------------------------------------------------
           체크마크 — 셋마다 퍽 하나
@@ -672,6 +701,47 @@ interface DialProps {
   disabled: boolean
   onChange: (next: number) => void
   foot?: string
+}
+
+/**
+ * 표식 위에 얹힌 수 — 읽을 때의 경험·골드.
+ *
+ * 경험의 별은 팩 것이고(HP/XP 트래커와 같은 파일) 금화는 우리가 그린 것이다
+ * (골드 카운터와 같은 조각). **둘 다 이미 앱에서 쓰는 그림이라** 여기서 처음
+ * 보는 표식이 아니다.
+ *
+ * 수는 그림 밖에 얹는다 — `sl-numeral`(Pirata One)이 그대로 먹고 색은 CSS가
+ * 정한다(구현 결정 296과 같은 손질).
+ */
+function Tally({
+  kind,
+  label,
+  value,
+  foot,
+}: {
+  kind: 'xp' | 'gold'
+  label: string
+  value: number
+  foot?: string
+}) {
+  return (
+    <div className={`tally__item tally__item--${kind}`}>
+      <span className="tally__art" role="img" aria-label={`${label} ${value}`}>
+        {kind === 'gold' ? (
+          <Coin />
+        ) : (
+          <img src={XP_STAR_URL} alt="" draggable={false} aria-hidden="true" />
+        )}
+        <span className="tally__n sl-numeral" aria-hidden="true">
+          {value}
+        </span>
+      </span>
+      <span className="tally__label">
+        {label}
+        {foot !== undefined && <span className="tally__foot"> · {foot}</span>}
+      </span>
+    </div>
+  )
 }
 
 function Dial({ label, value, steps, disabled, onChange, foot }: DialProps) {

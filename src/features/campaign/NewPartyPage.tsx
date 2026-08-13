@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { useAuthStore } from '../auth/authStore'
 import type { Identity } from '../net/types'
 import { useJournalStore } from './campaignStore'
 import { NAME_MAX, checkName, nameProblemText, tidyName } from './nameRules'
-import { useAtTop } from './useAtTop'
+import { useScrolled } from './useScrolled'
 import './JournalPage.css'
 import './NewCharacterPage.css'
 
@@ -25,7 +25,7 @@ import './NewCharacterPage.css'
  */
 export function NewPartyPage() {
   const session = useAuthStore((s) => s.session)
-  const atTop = useAtTop()
+  const scrolled = useScrolled()
 
   const entries = useJournalStore((s) => s.entries)
   const refresh = useJournalStore((s) => s.refresh)
@@ -61,7 +61,7 @@ export function NewPartyPage() {
 
   return (
     <div className="journal">
-      <header className={`topbar${atTop ? ' topbar--tall' : ''}`}>
+      <header className="topbar" style={{ '--tb': scrolled } as CSSProperties}>
         <div className="topbar__inner">
           <a className="journal__back" href="#/journal" aria-label="일지로">
             ←
