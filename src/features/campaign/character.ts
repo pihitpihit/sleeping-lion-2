@@ -49,12 +49,16 @@ export function classIconUrl(index: number): string | null {
 export const CHECK_MARK_URL = `${ASSET_ROOT}general/check.svg`
 
 /**
- * 경험 표식 — Creator Pack `General Icons.pdf` 17쪽.
+ * 경험 표식 — Creator Pack `General Icons.pdf` 17쪽에 **두께감을 입혀 구운 것.**
  *
- * **HP/XP 트래커와 같은 파일이다.** 같은 값이 화면 두 곳에서 다른 그림이면 같은
- * 것으로 안 읽힌다.
+ * 팩의 별은 검정 실루엣이라 물들이기만 하면 납작하다. HP/XP 트래커에서는 CSS
+ * 그라디언트를 표식 모양으로 오려 입체를 냈지만 시트에서는 그림 하나로 끝나야
+ * 하므로, 값 메달과 같은 끌 베벨을 씌워 구워 뒀다(`tools/bake_xp_star.py`).
+ *
+ * **색은 HP/XP 트래커의 푸른 쪽과 같은 결이다** — 같은 값이 화면 두 곳에서 다른
+ * 색이면 같은 것으로 안 읽힌다.
  */
-export const XP_STAR_URL = `${ASSET_ROOT}general/xp-star.svg`
+export const XP_STAR_URL = `${ASSET_ROOT}general/xp-star-lit.webp`
 
 /* --------------------------------------------------------------------------
    레벨과 경험

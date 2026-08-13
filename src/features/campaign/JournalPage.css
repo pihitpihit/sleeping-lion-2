@@ -1926,18 +1926,30 @@
    편집으로 들어가면 다이얼로 돌아간다.
    -------------------------------------------------------------------------- */
 
+/*
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ **둘을 반씩 나눠 갖는다.**                                              │
+  └────────────────────────────────────────────────────────────────────────┘
+
+  흘려 놓으면 값의 자릿수에 따라 자리가 밀려 화면이 흔들린다 — 반씩 못박으면
+  340이든 8이든 늘 같은 자리에 선다. 테를 둘러 "여기까지가 한 값"이라고 말한다.
+*/
 .tally {
-  display: flex;
-  gap: 1.6rem;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
 }
 
 .tally__item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.2rem;
+  gap: 0.25rem;
   min-width: 0;
+  padding: 0.7rem 0.5rem;
+  background: rgb(0 0 0 / 22%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.5rem;
 }
 
 .tally__art {
@@ -1957,14 +1969,18 @@
 }
 
 /*
-  경험의 별은 팩 것이라 거의 검정이다 — 어두운 바탕에서 묻히므로 물들인다.
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ **뾰족한 것은 둥근 것보다 작아 보인다.**                                │
+  └────────────────────────────────────────────────────────────────────────┘
 
-  **그림이 상자를 채우는 정도가 달라 크기를 맞춰 준다.** 재 보니 별은 상자의
-  80%, 금화는 90%였다 — 그대로 두면 별이 작아 보인다. 90/80 = 1.12배.
+  상자를 같게 두어도 별이 작아 보인다 — 재 보니 잉크가 상자의 34%뿐이고 금화는
+  64%였다(별은 폭이 80%라도 뿔 사이가 비어 있다). **넓이를 맞추려면 1.37배**인데
+  그러면 뿔이 튀어 커 보인다. 그 사이인 1.28배가 눈에 안정적이다.
+
+  물들이지 않는다 — 두께감까지 구워 담은 그림이다(`tools/bake_xp_star.py`).
 */
 .tally__item--xp .tally__art img {
-  transform: scale(1.12);
-  filter: brightness(0) invert(0.62) sepia(1) saturate(3) hue-rotate(175deg);
+  transform: scale(1.28);
 }
 
 /*
@@ -1986,6 +2002,33 @@
   font-size: 0.82rem;
   color: var(--sl-text-muted);
   white-space: nowrap;
+}
+
+/* 손패 — 그림과 이름표를 한 테 안에 담는다. 경험·골드 칸과 같은 결이다. */
+.handchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.55rem 0.3rem 0.4rem;
+  background: rgb(0 0 0 / 22%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.5rem;
+}
+
+.handchip .hand {
+  flex: none;
+  width: 34px;
+  height: 40px;
+}
+
+.handchip .hand__n {
+  font-size: 0.92rem;
+}
+
+.handchip__label {
+  font-size: 0.68rem;
+  line-height: 1.15;
+  color: var(--sl-text-muted);
 }
 
 /*

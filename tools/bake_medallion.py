@@ -28,8 +28,11 @@
 
     필요한 것: rsvg-convert, ImageMagick, fontTools, numpy
 """
-import os, subprocess
+import os, subprocess, sys
 import numpy as np
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from bakelib import TMP, dilate, edt, gauss, rgba_of
 from fontTools.ttLib import TTFont
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.boundsPen import BoundsPen
@@ -57,9 +60,7 @@ TILT  = 0.28
 INK_LO, INK_HI = 140, 252
 SPEC, SPEC_EXP = 0.7, 90   # 능선에 얹히는 밝은 선. 좁을수록 날이 선다
 
-_tmp = '/tmp/_bake'
-os.makedirs(_tmp, exist_ok=True)
-_ttf = f'{_tmp}/pirata.ttf'
+_ttf = f'{TMP}/pirata.ttf'
 if not os.path.exists(_ttf):
     f = TTFont(FONT); f.flavor = None; f.save(_ttf)
 _f = TTFont(_ttf); _gs = _f.getGlyphSet(); _cm = _f.getBestCmap()
@@ -90,57 +91,12 @@ def paths(label, d):
     return ''.join(out)
 
 
-def rgba_of(path, n=N):
-    subprocess.run(['magick', path, '-depth', '8', f'RGBA:{_tmp}/x.rgba'], check=True)
-    return np.frombuffer(open(f'{_tmp}/x.rgba', 'rb').read(), dtype=np.uint8).reshape(n, n, 4).astype(np.float32)
-
-
 def mask_of(label, n):
     svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="{n}" height="{n}" viewBox="0 0 {n} {n}">'
            f'<rect width="{n}" height="{n}" fill="#000"/><g fill="#fff">{paths(label, n)}</g></svg>')
-    open(f'{_tmp}/m.svg', 'w').write(svg)
-    subprocess.run(['rsvg-convert', '-o', f'{_tmp}/m.png', f'{_tmp}/m.svg'], check=True)
-    return rgba_of(f'{_tmp}/m.png', n)[..., 0]/255.0
-
-
-def boxblur(a, k):
-    """한 겹이든 세 겹(RGB)이든 같은 함수로 눅인다."""
-    if a.ndim == 3:
-        return np.dstack([boxblur(a[..., i], k) for i in range(a.shape[2])])
-    p = np.pad(a, k, mode='edge')
-    c = np.pad(np.cumsum(np.cumsum(p, 0), 1), ((1, 0), (1, 0)))
-    n = a.shape[0]; s = 2*k+1
-    return (c[s:s+n, s:s+n]-c[0:n, s:s+n]-c[s:s+n, 0:n]+c[0:n, 0:n])/(s*s)
-
-
-def gauss(a, sigma):
-    k = max(1, int(round(sigma*0.9)))
-    for _ in range(3):
-        a = boxblur(a, k)
-    return a
-
-
-def edt(mask, iters=64):
-    """덮개 안쪽에서 가장자리까지의 거리. 이웃의 최솟값 + 한 걸음을 되풀이한다."""
-    d = np.where(mask > 0.5, 1e6, 0.0)
-    a, b = 1.0, 1.41421356
-    for _ in range(iters):
-        n = d
-        nd = np.minimum(d, np.stack([
-            np.roll(n, 1, 0)+a, np.roll(n, -1, 0)+a, np.roll(n, 1, 1)+a, np.roll(n, -1, 1)+a,
-            np.roll(np.roll(n, 1, 0), 1, 1)+b, np.roll(np.roll(n, 1, 0), -1, 1)+b,
-            np.roll(np.roll(n, -1, 0), 1, 1)+b, np.roll(np.roll(n, -1, 0), -1, 1)+b,
-        ]).min(0))
-        if np.array_equal(nd, d):
-            break
-        d = nd
-    return np.where(mask > 0.5, d, 0.0)
-
-
-def dilate(a, k):
-    for _ in range(int(k)):
-        a = np.maximum.reduce([a, np.roll(a, 1, 0), np.roll(a, -1, 0), np.roll(a, 1, 1), np.roll(a, -1, 1)])
-    return a
+    open(f'{TMP}/m.svg', 'w').write(svg)
+    subprocess.run(['rsvg-convert', '-o', f'{TMP}/m.png', f'{TMP}/m.svg'], check=True)
+    return rgba_of(f'{TMP}/m.png', n)[..., 0]/255.0
 
 
 def blank_disc():
@@ -149,7 +105,7 @@ def blank_disc():
     R = np.hypot(xx-c, yy-c)
 
     def load(v):
-        a = rgba_of(f'{OUT}/{v}.webp')
+        a = rgba_of(f'{OUT}/{v}.webp', N)
         return a[..., :3].copy(), a[..., 3]
 
     def hidden(rgb):
@@ -216,9 +172,9 @@ def main():
     blank = blank_disc()
     for label, name in (('+3', 'p3'), ('+4', 'p4')):
         img = bake(label, blank)
-        open(f'{_tmp}/{name}.rgba', 'wb').write(img.tobytes())
+        open(f'{TMP}/{name}.rgba', 'wb').write(img.tobytes())
         subprocess.run(['magick', '-depth', '8', '-size', f'{N}x{N}',
-                        f'RGBA:{_tmp}/{name}.rgba', '-quality', '92', f'{OUT}/{name}.webp'], check=True)
+                        f'RGBA:{TMP}/{name}.rgba', '-quality', '92', f'{OUT}/{name}.webp'], check=True)
         print('구웠다:', f'{OUT}/{name}.webp')
 
 

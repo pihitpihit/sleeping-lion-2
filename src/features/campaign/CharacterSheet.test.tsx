@@ -194,7 +194,8 @@ describe('경험과 골드', () => {
   /** 표식은 둘 다 이미 앱에서 쓰는 것이다 — 여기서 처음 보는 그림이 아니다. */
   it('경험은 팩의 별, 골드는 우리 금화다', () => {
     const html = render(fixture(), true)
-    expect(html).toContain('general/xp-star.svg')
+    // 두께감까지 구워 담은 그림이다 — 물들이는 실루엣이 아니다.
+    expect(html).toContain('general/xp-star-lit.webp')
     expect(html).toContain('class="gold__coin"')
   })
 
