@@ -1,13 +1,14 @@
 /**
- * 캐릭터 이름 검사.
+ * 이름 검사 — **캐릭터와 파티가 함께 쓴다.**
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ **이름은 한 번 정하면 못 바꾼다. 그래서 세울 때 걸러야 한다.**             │
+ * │ **캐릭터 이름은 한 번 정하면 못 바꾼다. 그래서 만들 때 걸러야 한다.**      │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
  * 파티원은 이름으로 서로를 부른다 — 축 ②의 이름표도 그것이고 전투에서 누구의
- * 체력·덱인지 가리는 것도 그것이다(구현 결정 249). 세운 뒤에는 서버가 거절하므로
- * (`0017`) **고칠 기회는 이 화면 한 번뿐이다.**
+ * 체력·덱인지 가리는 것도 그것이다(구현 결정 249). 만든 뒤에는 서버가 거절하므로
+ * (`0017`) **고칠 기회는 그 화면 한 번뿐이다.** 파티 이름은 나중에 고칠 수 있지만
+ * **거르는 규칙까지 둘로 둘 까닭이 없다** — 같은 자리에서 같은 글자를 막는다.
  *
  * 화면에서 거르는 것은 헛손질을 줄이는 것이고 강제는 아니다 — 레포와 번들이
  * 공개라 REST로 직접 찌르면 무엇이든 넣을 수 있다(구현 결정 44와 같은 결).
@@ -46,7 +47,7 @@ export function tidyName(raw: string): string {
  * @param taken 이미 가진 캐릭터들의 이름. **대소문자를 가리지 않고** 견준다 —
  *   `Bob`과 `bob`이 한 상에 앉으면 누구의 체력인지 알 수 없다.
  */
-export function checkCharacterName(raw: string, taken: readonly string[]): NameProblem | null {
+export function checkName(raw: string, taken: readonly string[]): NameProblem | null {
   const name = tidyName(raw)
   if (name === '') return 'empty'
   // 다듬은 뒤에 센다. 앞뒤 공백으로 자릿수를 채우는 것을 막는다.
@@ -64,8 +65,10 @@ export function checkCharacterName(raw: string, taken: readonly string[]): NameP
  *
  * **무엇이 틀렸는지 짚어 준다** — "쓸 수 없는 이름"이라고만 하면 어디를 고쳐야
  * 하는지 알 수 없다(구현 결정 117·139와 같은 결).
+ *
+ * @param what 무엇의 이름인가. 겹쳤을 때 무엇과 겹쳤는지 말해 주려면 알아야 한다.
  */
-export function nameProblemText(problem: NameProblem): string {
+export function nameProblemText(problem: NameProblem, what = '캐릭터'): string {
   switch (problem) {
     case 'empty':
       return '이름을 적어야 한다.'
@@ -74,6 +77,6 @@ export function nameProblemText(problem: NameProblem): string {
     case 'charset':
       return "한글·영문·숫자·공백과 . , ! ? ( ) - _ · ' 만 쓸 수 있다."
     case 'duplicate':
-      return '같은 이름의 캐릭터가 이미 있다.'
+      return `같은 이름의 ${what}가 이미 있다.`
   }
 }

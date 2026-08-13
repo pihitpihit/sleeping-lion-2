@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuthStore } from '../auth/authStore'
 import { XP_THRESHOLDS, classIconUrl } from './character'
 import { createCharacter } from './characterNet'
-import { NAME_MAX, checkCharacterName, nameProblemText, tidyName } from './characterName'
+import { NAME_MAX, checkName, nameProblemText, tidyName } from './nameRules'
 import { choicesOf, type Choice } from './classChoices'
 import { useClassStore } from './classStore'
 import { useMineStore } from './mineStore'
@@ -53,7 +53,7 @@ export function NewCharacterPage() {
   const choices = choicesOf(list)
   const picked = choices[Math.min(index, choices.length - 1)] ?? null
 
-  const problem = checkCharacterName(
+  const problem = checkName(
     name,
     mine.map((c) => c.name),
   )

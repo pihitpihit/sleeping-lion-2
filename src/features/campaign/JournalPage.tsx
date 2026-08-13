@@ -44,12 +44,10 @@ export function JournalPage() {
   const current = useJournalStore((s) => s.current)
   const loaded = useJournalStore((s) => s.loaded)
   const offline = useJournalStore((s) => s.offline)
-  const busy = useJournalStore((s) => s.busy)
   const error = useJournalStore((s) => s.error)
   const refresh = useJournalStore((s) => s.refresh)
   const open = useJournalStore((s) => s.open)
   const close = useJournalStore((s) => s.close)
-  const addParty = useJournalStore((s) => s.addParty)
   const edit = useJournalStore((s) => s.edit)
   const leave = useJournalStore((s) => s.leave)
 
@@ -57,7 +55,6 @@ export function JournalPage() {
   const mineLoaded = useMineStore((s) => s.loaded)
   const loadMine = useMineStore((s) => s.load)
 
-  const [newName, setNewName] = useState('')
   const [route, setRoute] = useState(() => readJournalRoute(window.location.hash))
   const atTop = useAtTop()
 
@@ -94,13 +91,6 @@ export function JournalPage() {
 
   if (session === null) return null
   const me: Identity = { userId: session.userId, displayName: session.displayName }
-
-  async function onCreate() {
-    const id = await addParty(newName, me)
-    if (!id) return
-    setNewName('')
-    window.location.hash = `#/journal/${id}`
-  }
 
   const partyTitle = current ? current.campaign?.name || current.party.name : ''
   const title = partyId ? partyTitle : '일지'
@@ -159,41 +149,20 @@ export function JournalPage() {
           )}
 
           {/*
-            파티 생성.
+            파티 생성 — **캐릭터와 같은 모양의 문이다.**
 
-            **목록은 안 낸다**(2026-08-12) — 일지는 캐릭터를 보는 자리다. 파티
-            기록지로는 캐릭터의 부제를 눌러 들어간다. 그래도 **세우는 자리는
-            남긴다**: 첫 파티는 어디선가 세워야 하고, 캐릭터의 「파티에 들기」가
+            여기 입력란을 두었더니 캐릭터는 단추이고 파티는 칸이라 **같은 일인데
+            생김새가 달랐다**(형님이 짚었다). 만드는 것은 들어가서 하는 일이다.
+
+            **목록은 안 낸다**(2026-08-12) — 일지는 캐릭터를 보는 자리이고 파티
+            기록지로는 캐릭터의 부제를 눌러 들어간다. 그래도 **만드는 자리는
+            남긴다**: 첫 파티는 어디선가 만들어야 하고, 캐릭터의 「파티에 들기」가
             여기로 보낸다.
           */}
           {!offline && (
-            <>
-              <h2 className="journal__section">새 파티</h2>
-              <div className="journal__new">
-                <input
-                  className="journal__new-input"
-                  value={newName}
-                  placeholder="새 파티 이름"
-                  aria-label="새 파티 이름"
-                  maxLength={40}
-                  onChange={(e) => setNewName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault()
-                      void onCreate()
-                    }
-                  }}
-                />
-                <button
-                  type="button"
-                  className="journal__new-button"
-                  disabled={busy || newName.trim() === ''}
-                  onClick={() => void onCreate()}
-                >
-                  생성
-                </button>
-              </div>
-            </>
+            <a className="journal__newchar journal__newparty" href="#/journal/new">
+              파티 생성
+            </a>
           )}
         </>
       ) : !current?.campaign ? (

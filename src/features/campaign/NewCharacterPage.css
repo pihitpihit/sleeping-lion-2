@@ -325,3 +325,14 @@ a.sheet__cancel {
   align-items: center;
   text-decoration: none;
 }
+
+/* --------------------------------------------------------------------------
+   파티 생성 — 캐릭터와 같은 틀을 쓰고 안내 한 줄만 더 있다
+   -------------------------------------------------------------------------- */
+
+.newparty__hint {
+  margin: 0 0 0.2rem;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--sl-text-muted);
+}

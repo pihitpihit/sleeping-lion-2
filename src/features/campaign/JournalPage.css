@@ -1799,6 +1799,22 @@
   cursor: pointer;
 }
 
+/*
+  파티 생성 — 캐릭터 생성 바로 밑에 선다.
+
+  **한 톤 낮춘다.** 일지는 캐릭터를 보는 자리이고 파티는 그 캐릭터가 속한 곳이다
+  (2026-08-12 전환) — 둘 다 금빛이면 무엇이 먼저인지 화면이 말하지 않는다.
+*/
+.journal__newparty {
+  color: var(--sl-gold);
+  background: none;
+  border-color: var(--sl-border);
+}
+
+.journal__newparty:hover {
+  border-color: var(--sl-gold-dim);
+}
+
 /* 아직 파티에 안 든 캐릭터. 빈칸으로 두면 빠뜨린 것처럼 보인다. */
 .journal__char-party--none {
   color: var(--sl-text-faint);

@@ -40,6 +40,13 @@ export const LAZY_ROUTES: Record<string, ComponentType> = {
     import('./features/campaign/JournalPage').then((m) => ({ default: m.JournalPage })),
   ),
   /*
+    파티 생성. `/character/new`와 같은 짜임이다 — 파티 id는 uuid라 `new`와
+    부딪히지 않고, `routeKey`가 정확히 맞는 것을 앞머리보다 먼저 본다.
+  */
+  '/journal/new': lazy(() =>
+    import('./features/campaign/NewPartyPage').then((m) => ({ default: m.NewPartyPage })),
+  ),
+  /*
     캐릭터 한 장.
 
     **주소에 파티가 없다.** 캐릭터가 먼저 서고 파티에는 나중에 들므로
