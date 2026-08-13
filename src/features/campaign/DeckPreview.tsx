@@ -5,14 +5,14 @@ import {
   compositionKinds,
   compositionSize,
   countOf,
-  markArt,
-  markSpeech,
+  ROLLING_ICON_URL,
   medallionUrl,
   specSpeech,
 } from '../satchel/widgets/deck/deck'
 import { resolveComposition } from '../satchel/widgets/deck/perks'
 import type { CardOwner } from '../satchel/widgets/deck/CardFace'
 import { DeckGallery } from './DeckGallery'
+import { InlineMark } from './InlineMark'
 import type { ClassPerk } from './perkNet'
 import { perkDeckChanges } from './perks'
 
@@ -96,42 +96,19 @@ export function DeckPreview({ perks, checked, owner }: Props) {
                 ×{count}
               </span>
 
-              {/* 굴림과 표식. 표준 아홉과 갈리는 것이 이것뿐이라 반드시 보여야 한다. */}
+              {/*
+                굴림과 표식. 표준 아홉과 갈리는 것이 이것뿐이라 반드시 보여야 한다.
+
+                **굴림도 그림이다.** 글자로 두었더니 카드·특혜 글에서는 초록
+                마름모인 것이 여기서만 낱말이었다 — 같은 것으로 안 읽힌다.
+                읽어주는 쪽에는 알약 전체의 `aria-label`이 우리말로 간다.
+              */}
               {spec.rolling && (
-                <span className="deckview__tag" aria-hidden="true">
-                  굴림
-                </span>
+                <img className="imark__badge" src={ROLLING_ICON_URL} alt="" aria-hidden="true" />
               )}
               {spec.marks.map((mark) => {
-                /*
-                  완성된 배지(상태이상·원소)는 그대로 얹고, 검정 실루엣(치료·방어)은
-                  물들여 얹는다. 그림이 없으면 글자다 — 카드와 같은 갈래다.
-                */
-                const art = markArt(mark)
-                if (!art) {
-                  return (
-                    <span key={mark.def.id} className="deckview__tag" aria-hidden="true">
-                      {markSpeech(mark)}
-                    </span>
-                  )
-                }
-                return (
-                  <span key={mark.def.id} className="deckview__markwrap" aria-hidden="true">
-                    <img
-                      className={[
-                        art.kind === 'badge' ? 'deckview__mark' : 'deckview__glyph',
-                        art.turned ? 'deckview__mark--turned' : '',
-                      ]
-                        .filter(Boolean)
-                        .join(' ')}
-                      src={art.url}
-                      alt=""
-                    />
-                    {mark.amount !== null && (
-                      <span className="deckview__markn sl-numeral">{mark.amount}</span>
-                    )}
-                  </span>
-                )
+                /* 그리는 일은 `InlineMark` 한 곳이 한다 — 특혜 글도 같은 것을 쓴다. */
+                return <InlineMark key={mark.def.id} mark={mark} />
               })}
 
               {/* 표준에서 얼마나 달라졌는가. 특혜가 실제로 먹었는지 여기서 보인다. */}

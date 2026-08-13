@@ -13,6 +13,7 @@ import {
 } from './character'
 import { DeckPreview } from './DeckPreview'
 import { classInfoOf, maxHpFor, useClassStore } from './classStore'
+import { PerkText } from './PerkText'
 import { perkRowsOf } from './perks'
 import { ownerBadge } from '../satchel/perkSource'
 import { draftOf, isDirty, sheetDiff, type SheetDraft } from './sheetDraft'
@@ -432,7 +433,9 @@ export function CharacterSheet({
                         )
                       })}
                     </span>
-                    <span className="char__perktext">{perk.text}</span>
+                    <span className="char__perktext">
+                      <PerkText text={perk.text} />
+                    </span>
                   </li>
                 ))}
               </ul>

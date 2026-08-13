@@ -1623,14 +1623,14 @@
   **물들이지 않는다.** 팩의 원소 아이콘은 색 있는 원반에 흰 문양이 얹힌 통짜
   배지라, 흰빛으로 뽑으면 문양이 사라지고 흰 점만 남는다 — 카드에서 겪은 자리다.
 */
-.deckview__mark {
+.imark__badge {
   width: 16px;
   height: 16px;
   object-fit: contain;
 }
 
 /* 당기기는 밀기를 반 바퀴 돌려 쓴다 — 파일은 그대로 두고 그릴 때만 돌린다. */
-.deckview__mark--turned {
+.imark__badge--turned {
   transform: rotate(180deg);
 }
 
@@ -1641,13 +1641,13 @@
 
   팩 그림에는 수가 없다(밀기2·치료1) — 카드에서와 같이 옆에 따로 적는다.
 */
-.deckview__markwrap {
+.imark {
   display: inline-flex;
   align-items: center;
   gap: 0.1rem;
 }
 
-.deckview__markn {
+.imark__n {
   font-size: 0.72rem;
   color: var(--sl-text-muted);
 }
@@ -1658,14 +1658,14 @@
 
   크기 규칙이 없으면 SVG가 제 크기대로 펴져 알약을 뚫고 나온다.
 */
-.deckview__glyph {
+.imark__glyph {
   width: 14px;
   height: 14px;
   object-fit: contain;
   filter: brightness(0) invert(0.92);
 }
 
-.deckview__tag {
+.imark__tag {
   font-size: 0.7rem;
   color: var(--sl-text-faint);
 }
@@ -1871,4 +1871,28 @@
 .joinparty__pick:hover:not(:disabled) {
   color: var(--sl-gold);
   border-color: var(--sl-border-strong);
+}
+
+/* --------------------------------------------------------------------------
+   특혜 글에 얹히는 표식
+   --------------------------------------------------------------------------
+   ┌────────────────────────────────────────────────────────────────────────┐
+   │ **글줄 사이에 서므로 밑선에 맞춘다.**                                   │
+   └────────────────────────────────────────────────────────────────────────┘
+
+   덱 알약에서는 조각들이 홀로 늘어서지만 여기서는 **글자 사이에 낀다** —
+   `vertical-align`을 안 주면 그림만 밑으로 처져 줄이 들쭉날쭉해진다.
+   -------------------------------------------------------------------------- */
+
+.perktext .imark,
+.perktext .imark__badge,
+.perktext .imark__glyph {
+  vertical-align: -0.18em;
+}
+
+/* 표식 앞뒤로 머리카락만큼 띄운다 — 글자에 붙으면 낱말의 일부로 읽힌다. */
+.perktext .imark,
+.perktext > .imark__badge,
+.perktext .imark__tag {
+  margin: 0 0.08em;
 }
