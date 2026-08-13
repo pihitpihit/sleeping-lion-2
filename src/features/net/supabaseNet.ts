@@ -101,7 +101,7 @@ export const supabasePartyAdapter: PartyAdapter = {
         createdAt: toMillis(data.created_at),
       }
     } catch (cause) {
-      return fail(cause, '파티를 세우지 못했다.')
+      return fail(cause, '파티를 생성하지 못했다.')
     }
   },
 

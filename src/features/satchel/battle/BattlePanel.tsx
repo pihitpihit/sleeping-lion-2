@@ -152,7 +152,7 @@ export function BattlePanel({ onClose }: Props) {
 
             {!loading && parties.length === 0 && (
               <p className="battle__alone">
-                아직 파티가 없다. <a href="#/journal">일지</a>에서 하나 세워라.
+                아직 파티가 없다. <a href="#/journal">일지</a>에서 하나 생성한다.
               </p>
             )}
 

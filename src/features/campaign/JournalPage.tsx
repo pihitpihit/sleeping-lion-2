@@ -157,7 +157,7 @@ export function JournalPage() {
           )}
 
           {/*
-            파티 세우기.
+            파티 생성.
 
             **목록은 안 낸다**(2026-08-12) — 일지는 캐릭터를 보는 자리다. 파티
             기록지로는 캐릭터의 부제를 눌러 들어간다. 그래도 **세우는 자리는
@@ -188,7 +188,7 @@ export function JournalPage() {
                   disabled={busy || newName.trim() === ''}
                   onClick={() => void onCreate()}
                 >
-                  세우기
+                  생성
                 </button>
               </div>
             </>

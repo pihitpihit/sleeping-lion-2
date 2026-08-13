@@ -223,7 +223,7 @@ function JoinParty({
       <h2 className="joinparty__title">아직 파티에 들지 않았다</h2>
       {usable.length === 0 ? (
         <p className="joinparty__hint">
-          들 파티가 없다. <a href="#/journal">일지에서 파티를 세워라.</a>
+          들 파티가 없다. <a href="#/journal">일지에서 파티를 생성한다.</a>
         </p>
       ) : (
         <>

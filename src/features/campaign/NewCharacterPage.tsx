@@ -80,7 +80,7 @@ export function NewCharacterPage() {
       window.location.hash = `#/character/${made.id}`
     } catch (cause) {
       console.error('[character]', cause)
-      setError('세우지 못했다.')
+      setError('생성하지 못했다.')
     } finally {
       setBusy(false)
     }
