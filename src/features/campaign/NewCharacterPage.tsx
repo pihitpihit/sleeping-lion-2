@@ -6,6 +6,7 @@ import { NAME_MAX, checkCharacterName, nameProblemText, tidyName } from './chara
 import { choicesOf, type Choice } from './classChoices'
 import { useClassStore } from './classStore'
 import { useMineStore } from './mineStore'
+import { useAtTop } from './useAtTop'
 import './JournalPage.css'
 import './NewCharacterPage.css'
 
@@ -47,6 +48,7 @@ export function NewCharacterPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const trackRef = useRef<HTMLDivElement>(null)
+  const atTop = useAtTop()
 
   const choices = choicesOf(list)
   const picked = choices[Math.min(index, choices.length - 1)] ?? null
@@ -90,7 +92,7 @@ export function NewCharacterPage() {
 
   return (
     <div className="journal">
-      <header className="topbar">
+      <header className={`topbar${atTop ? ' topbar--tall' : ''}`}>
         <div className="topbar__inner">
           <a className="journal__back" href="#/journal" aria-label="일지로">
             ←

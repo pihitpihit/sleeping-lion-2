@@ -6,6 +6,7 @@ import { CharacterSheet } from './CharacterSheet'
 import { classInfoOf, useClassStore } from './classStore'
 import { characterIdFromHash } from './journalRoute'
 import { useOneCharacterStore } from './oneCharacter'
+import { useAtTop } from './useAtTop'
 import './JournalPage.css'
 
 /**
@@ -24,6 +25,7 @@ import './JournalPage.css'
 export function CharacterPage() {
   const session = useAuthStore((s) => s.session)
   const [id, setId] = useState(() => characterIdFromHash(window.location.hash))
+  const atTop = useAtTop()
 
   useEffect(() => {
     const onHash = () => setId(characterIdFromHash(window.location.hash))
@@ -92,7 +94,7 @@ export function CharacterPage() {
 
         파티로 가는 문도 여기 넣는다. 글자 단추로 한 줄을 쓰기에는 아까운 자리다.
       */}
-      <header className="topbar">
+      <header className={`topbar${atTop ? ' topbar--tall' : ''}`}>
         <div className="topbar__inner">
           <a className="journal__back" href="#/journal" aria-label="일지로">
             ←
