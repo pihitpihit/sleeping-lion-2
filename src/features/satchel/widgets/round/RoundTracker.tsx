@@ -50,7 +50,21 @@ export function RoundTracker({ mode }: WidgetProps) {
         disabled={mode !== 'play'}
         onClick={advance}
       >
-        <NumberReel value={round} max={MAX_ROUND} />
+        {/*
+          좁으면 `R3`, 넓으면 숫자 밑에 `ROUND`.
+
+          **한 칸짜리로 두면 숫자만 덩그러니 남는다** — 상 위에 체력·골드 트래커가
+          함께 놓이므로 그것이 라운드인 줄 알 길이 없다. 이름표를 넣을 자리가
+          없을 때만 앞에 한 글자를 붙인다.
+        */}
+        <span className="round__value">
+          {!layout.showLabel && (
+            <span className="round__prefix" aria-hidden="true">
+              R
+            </span>
+          )}
+          <NumberReel value={round} max={MAX_ROUND} />
+        </span>
         {layout.showLabel && (
           <span className="round__label" aria-hidden="true">
             ROUND

@@ -212,7 +212,13 @@
 */
 .deck__medallion,
 .deck__socket,
-.deck__shuffle,
+.deck__shuffle {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  height: auto;
+  pointer-events: none;
+}
+
 .deck__medallion {
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 45%));
 }

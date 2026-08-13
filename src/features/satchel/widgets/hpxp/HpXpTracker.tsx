@@ -81,8 +81,12 @@ export function HpXpTracker({ instanceId, mode, rotation, settings }: WidgetProp
 /**
  * 표식 그림. **Creator Pack 에셋이므로 `.tsx`에 인라인 SVG로 박지 않는다**
  * (SPEC 13.1) — 배경 이미지로 붙이고 파일은 `public/assets/creator-pack/`에 둔다.
+ *
+ * **두께감까지 구워 담은 그림을 쓴다**(`tools/bake_marks.py`, 2026-08-13). 전에는
+ * 검정 실루엣을 오려 CSS 그라디언트로 도톰하게 만들었는데, 그것은 둥근 돔이라
+ * 캐릭터 시트의 별(끌 베벨)과 나란히 놓으면 다른 물건으로 보였다.
  */
-const MARK_FILE: Record<HpXpTrack, string> = { hp: 'hp-drop', xp: 'xp-star' }
+const MARK_FILE: Record<HpXpTrack, string> = { hp: 'hp-drop-lit', xp: 'xp-star-lit' }
 
 interface DialProps {
   track: HpXpTrack
@@ -208,7 +212,7 @@ function Dial({ track, value, rotation, disabled, onAdjust }: DialProps) {
           aria-hidden="true"
           style={
             {
-              '--hpxp-mark-src': `url(${import.meta.env.BASE_URL}assets/creator-pack/general/${MARK_FILE[track]}.svg)`,
+              '--hpxp-mark-src': `url(${import.meta.env.BASE_URL}assets/creator-pack/general/${MARK_FILE[track]}.webp)`,
             } as React.CSSProperties
           }
         >

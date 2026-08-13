@@ -10,7 +10,12 @@ export interface RoundLayout {
   numberSize: number
   /** 'ROUND' 글자 크기(px). */
   labelSize: number
-  /** 이름표를 낼 자리가 있는가. 좁으면 숫자가 먼저다. */
+  /**
+   * 이름표를 낼 자리가 있는가. 좁으면 숫자가 먼저다.
+   *
+   * **이름표가 빠지면 숫자 앞에 `R`을 붙인다.** 한 칸짜리로 두면 숫자만 덩그러니
+   * 남아 그것이 라운드인지 체력인지 골드인지 알 수 없다 — 형님이 짚었다.
+   */
   showLabel: boolean
   /** 왼쪽 위를 사선으로 자른 길이(px). 그 삼각형이 곧 '처음으로' 단추다. */
   cutSize: number
@@ -34,7 +39,12 @@ export function computeRoundLayout(box: { width: number; height: number }): Roun
 
   // 이름표가 있으면 그만큼 세로를 내준다. 띠 창은 글자 크기와 같다.
   const forNumber = showLabel ? height * 0.62 : height * 0.82
-  const numberSize = Math.max(MIN_NUMBER, Math.min(MAX_NUMBER, forNumber, width * 0.52))
+  /*
+    이름표가 빠진 자리에는 `R`이 숫자 앞에 붙으므로 **가로를 그만큼 더 나눠 준다.**
+    `R`은 숫자의 0.62배이고 사이가 조금 뜨므로 셋으로 나눈 둘쯤이 숫자 몫이다.
+  */
+  const widthShare = showLabel ? 0.52 : 0.34
+  const numberSize = Math.max(MIN_NUMBER, Math.min(MAX_NUMBER, forNumber, width * widthShare))
 
   /*
     잘린 귀퉁이의 크기.

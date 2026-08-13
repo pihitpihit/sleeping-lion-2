@@ -27,7 +27,16 @@
   justify-content: center;
   gap: 0.15em;
   padding: 4%;
-  border: 1px solid var(--sl-border-strong);
+  /*
+    ┌──────────────────────────────────────────────────────────────────────┐
+    │ **제 테를 두르지 않는다 — 위젯 틀의 테가 이미 거기 있다.**            │
+    └──────────────────────────────────────────────────────────────────────┘
+
+    판이 칸을 가득 채우는데 제 테까지 두르면 위젯 틀의 테와 겹친다. 게다가
+    `clip-path`를 쓰고 있어 **모서리가 각져서**, 틀이 둥글어진 뒤로는(2026-08-13)
+    둥근 모서리에서 이 테가 잘려 검은 이가 빠진 것처럼 보였다 — 형님이 짚었다.
+    안쪽 그늘만으로도 판은 충분히 파여 보인다.
+  */
   /*
     왼쪽 위를 사선으로 자른다. 그 자리에 '처음으로'가 앉는다.
 
@@ -54,8 +63,11 @@
     box-shadow 0.15s ease;
 }
 
+/* 테가 없으므로 안쪽 금빛 선으로 손이 닿았음을 알린다. */
 .round__plate:hover:not(:disabled) {
-  border-color: var(--sl-gold);
+  box-shadow:
+    inset 0 0 0 1px var(--sl-gold),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.6);
 }
 
 .round__plate:active:not(:disabled) {
@@ -81,6 +93,19 @@
   읽어 주는 쪽에는 이 글자가 가지 않는다 — 판 전체의 `aria-label`이 한국어로
   "N라운드"라고 이미 말한다.
 */
+/* 숫자와 그 앞의 `R`. 밑선이 아니라 가운데를 맞춘다 — 띠 창이 한 칸이라 그렇다. */
+.round__value {
+  display: flex;
+  align-items: center;
+  gap: 0.06em;
+}
+
+.round__prefix {
+  font-size: 0.62em;
+  line-height: 1;
+  color: var(--sl-gold-dim);
+}
+
 .round__label {
   font-size: var(--round-label);
   letter-spacing: 0.3em;

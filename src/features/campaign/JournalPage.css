@@ -870,9 +870,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* 맨 위에서 크고 굴리면 줄어든다. 이름과 함께 움직여야 한 덩어리로 읽힌다. */
-  width: calc(56px - 22px * var(--tb));
-  height: calc(56px - 22px * var(--tb));
+  /*
+    맨 위에서 크고 굴리면 줄어든다. 이름과 함께 움직여야 한 덩어리로 읽힌다.
+
+    **다 줄었을 때는 뒤로가기 단추와 같은 40px이다** — 나란히 선 둘의 키가
+    어긋나면 줄이 삐뚤어 보인다(형님이 짚었다).
+  */
+  width: calc(56px - 16px * var(--tb));
+  height: calc(56px - 16px * var(--tb));
   color: var(--sl-void);
   background: #d8cbaa;
   border-radius: 999px;

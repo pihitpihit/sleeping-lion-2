@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-"""경험 표식에 두께감을 입힌다.
+"""HP·경험 표식에 두께감을 입힌다.
 
 ┌────────────────────────────────────────────────────────────────────────────┐
 │ **팩의 별은 검정 실루엣이다. 물들이기만 하면 납작하다.**                     │
 └────────────────────────────────────────────────────────────────────────────┘
 
-HP/XP 트래커에서는 CSS 그라디언트를 표식 모양으로 오려 입체를 냈지만, 캐릭터
-시트에서는 그림 하나로 끝나야 한다 — 그래서 **값 메달과 같은 끌 베벨**을 씌워
-구워 둔다(`bakelib.edt`).
+HP/XP 트래커는 CSS 그라디언트를 표식 모양으로 오려 도톰하게 만들었지만, 그것은
+**둥근 돔**이라 시트의 별(끌 베벨)과 나란히 놓으면 다른 물건으로 보였다. 값 메달과
+같은 끌 베벨을 씌워 구워 두면 **한 벌로 읽힌다** — 트래커와 시트가 같은 그림을
+쓴다.
 
-색은 HP/XP 트래커의 푸른 쪽과 같은 결이다(`#d3e9ff` ~ `#35659e`) — **같은 값이
-화면 두 곳에서 다른 색이면 같은 것으로 안 읽힌다.**
+색은 트래커가 쓰던 두 그라디언트에서 그대로 가져왔다 — 붉은 쪽과 푸른 쪽.
 
-바탕은 비운다. 메달과 달리 원반이 없으므로 **알파가 곧 별 모양**이다.
+바탕은 비운다. 메달과 달리 원반이 없으므로 **알파가 곧 표식 모양**이다.
 
-    쓰는 법:  python3 tools/bake_xp_star.py
+    쓰는 법:  python3 tools/bake_marks.py
 """
 import os
 import subprocess
@@ -34,27 +34,43 @@ N, SS = 256, 3
 # **값 메달과 달리 가장자리만 깎는다.** 별은 덩어리가 넓어 자르지 않으면 한가운데가
 # 통째로 능선이 되어 하얗게 뜬다 — 테두리에서 `BEVEL`만큼만 비스듬히 내려오고
 # 안쪽은 평평한 판이다. 실물 표식이 그렇게 생겼다.
-BEVEL = 20        # 깎이는 띠의 너비(N=256 기준 px)
+BEVEL = 20        # 깎이는 띠의 너비(N=256 기준 px). 표식마다 다시 정할 수 있다.
 AZIM, TILT = 135, 0.75
 SPEC, SPEC_EXP = 0.35, 40
-# HP/XP 트래커의 푸른 쪽에서 가져온 세 자리. 평평한 판이 `MID`다.
-DARK = np.array([0x2b, 0x4f, 0x7a], dtype=np.float32)
-MID = np.array([0x8d, 0xbc, 0xe8], dtype=np.float32)
-LIGHT = np.array([0xe4, 0xf3, 0xff], dtype=np.float32)
 # 어두운 바탕에서 뜨게 하는 얇은 테.
 EDGE_W = 1.2
-EDGE = np.array([0x0d, 0x1c, 0x2e], dtype=np.float32)
+
+# ── 표식마다 색 세 자리. 평평한 판이 `MID`다. 트래커의 두 그라디언트에서 왔다.
+MARKS = {
+    'xp-star': dict(
+        dark=(0x2b, 0x4f, 0x7a), mid=(0x8d, 0xbc, 0xe8), light=(0xe4, 0xf3, 0xff),
+        edge=(0x0d, 0x1c, 0x2e),
+    ),
+    'hp-drop': dict(
+        dark=(0x8a, 0x2b, 0x22), mid=(0xe0, 0x8a, 0x7a), light=(0xff, 0xe2, 0xda),
+        edge=(0x2a, 0x0a, 0x07),
+        # 물방울은 꼬리가 가늘어 별과 같은 띠로 깎으면 **평평한 판이 남지 않는다** —
+        # 꼬리 전체가 비탈이 되어 접힌 종이처럼 보인다. 좁게 깎는다.
+        bevel=13,
+    ),
+}
 
 
-def main():
+def bake(name, color):
+    DARK = np.array(color['dark'], dtype=np.float32)
+    MID = np.array(color['mid'], dtype=np.float32)
+    LIGHT = np.array(color['light'], dtype=np.float32)
+    EDGE = np.array(color['edge'], dtype=np.float32)
+
+    bevel = color.get('bevel', BEVEL)
     n = N*SS
     subprocess.run(['rsvg-convert', '-w', str(n), '-h', str(n),
-                    '-o', f'{TMP}/star.png', f'{GEN}/xp-star.svg'], check=True)
-    m = (rgba_of(f'{TMP}/star.png', n)[..., 3]/255.0)
+                    '-o', f'{TMP}/m.png', f'{GEN}/{name}.svg'], check=True)
+    m = (rgba_of(f'{TMP}/m.png', n)[..., 3]/255.0)
     solid = (m > 0.5).astype(np.float32)
 
     import math
-    cap = BEVEL*SS
+    cap = bevel*SS
     # 가장자리에서 `cap`까지만 오르고 그 뒤는 평평하다.
     h = np.minimum(edt(solid), cap)
     h = gauss(h, SS*0.8)          # 이가 빠진 자리를 눅여 면이 고르게 선다
@@ -87,8 +103,13 @@ def main():
     out = np.dstack([np.clip(rgb, 0, 255), np.clip(alpha*255, 0, 255)]).astype(np.uint8)
     open(f'{TMP}/lit.rgba', 'wb').write(out.tobytes())
     subprocess.run(['magick', '-depth', '8', '-size', f'{N}x{N}', f'RGBA:{TMP}/lit.rgba',
-                    '-quality', '94', f'{GEN}/xp-star-lit.webp'], check=True)
-    print('구웠다:', f'{GEN}/xp-star-lit.webp')
+                    '-quality', '94', f'{GEN}/{name}-lit.webp'], check=True)
+    print('구웠다:', f'{GEN}/{name}-lit.webp')
+
+
+def main():
+    for name, color in MARKS.items():
+        bake(name, color)
 
 
 if __name__ == '__main__':
