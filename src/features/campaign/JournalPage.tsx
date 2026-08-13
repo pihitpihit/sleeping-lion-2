@@ -5,8 +5,6 @@ import { useJournalStore } from './campaignStore'
 import { classInfoOf, useClassStore } from './classStore'
 import { classIconUrl } from './character'
 import { Crew } from './Crew'
-import { ClassPicker } from './ClassPicker'
-import { createCharacter } from './characterNet'
 import type { MyCharacter } from './mineNet'
 import { useMineStore } from './mineStore'
 import { PartySheet } from './PartySheet'
@@ -92,10 +90,6 @@ export function JournalPage() {
     void loadMine(userId)
   }, [userId, partyId, loadMine])
 
-  const reloadMine = () => {
-    if (userId !== null) void loadMine(userId)
-  }
-
   if (session === null) return null
   const me: Identity = { userId: session.userId, displayName: session.displayName }
 
@@ -152,7 +146,15 @@ export function JournalPage() {
         <>
           <MyCharacters characters={mine} loaded={mineLoaded} />
 
-          {!offline && <NewCharacter ownerId={me.userId} onMade={reloadMine} />}
+          {/*
+            캐릭터 생성은 **별도 화면**이다(`#/character/new`). 클래스는 세울 때만
+            정할 수 있으므로 한 장씩 넘겨 보고 고르는 자리가 따로 있어야 한다.
+          */}
+          {!offline && (
+            <a className="journal__newchar" href="#/character/new">
+              캐릭터 생성
+            </a>
+          )}
 
           {/*
             파티 세우기.
@@ -235,113 +237,6 @@ export function JournalPage() {
         </div>
       )}
     </div>
-  )
-}
-
-/**
- * 캐릭터 세우기 — **파티보다 먼저.**
- *
- * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ **캐릭터가 먼저 서고 파티에는 나중에 든다.**                              │
- * └──────────────────────────────────────────────────────────────────────────┘
- *
- * 2026-08-12까지는 파티를 세우고 그 안에서 캐릭터를 만들었다. 실제로 사람은 제
- * 캐릭터를 먼저 정하고 누구와 놀지는 그다음에 정한다 — 봉투를 뜯는 것과 약속을
- * 잡는 것은 다른 일이다. 표도 그렇게 바뀌었다(`0015`).
- *
- * 이름과 클래스만 받는다. **클래스는 여기서만 정할 수 있다** — 세운 뒤에는 못
- * 바꾼다(구현 결정 181).
- */
-function NewCharacter({ ownerId, onMade }: { ownerId: string; onMade: () => void }) {
-  const [open, setOpen] = useState(false)
-  const [name, setName] = useState('')
-  const [icon, setIcon] = useState(0)
-  const [classId, setClassId] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  async function make() {
-    const trimmed = name.trim()
-    if (trimmed === '') return
-    setBusy(true)
-    setError(null)
-    try {
-      // 파티 없이 세운다. 드는 것은 캐릭터 화면에서 따로 한다.
-      const made = await createCharacter(null, ownerId, trimmed, icon, classId)
-      onMade()
-      window.location.hash = `#/character/${made.id}`
-    } catch (cause) {
-      console.error('[character]', cause)
-      setError('세우지 못했다.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  if (!open) {
-    return (
-      <button type="button" className="journal__newchar" onClick={() => setOpen(true)}>
-        캐릭터 생성
-      </button>
-    )
-  }
-
-  return (
-    <section className="newchar">
-      <h2 className="journal__section">새 캐릭터</h2>
-
-      <div className="journal__new">
-        <input
-          className="journal__new-input"
-          value={name}
-          placeholder="이름을 짓는다"
-          aria-label="새 캐릭터 이름"
-          maxLength={40}
-          autoFocus
-          onChange={(e) => setName(e.target.value)}
-        />
-      </div>
-
-      <p className="char__note">
-        클래스는 <strong>생성할 때만 정한다.</strong> 그 뒤로는 못 바꾼다.
-      </p>
-      <ClassPicker
-        classId={classId}
-        icon={icon}
-        disabled={busy}
-        onChange={(next) => {
-          setClassId(next.classId)
-          setIcon(next.icon)
-        }}
-      />
-
-      {error !== null && (
-        <p className="journal__error" role="alert">
-          {error}
-        </p>
-      )}
-
-      <div className="sheet__bar">
-        <button
-          type="button"
-          className="sheet__cancel"
-          onClick={() => {
-            setOpen(false)
-            setName('')
-          }}
-        >
-          그만두기
-        </button>
-        <button
-          type="button"
-          className="sheet__save"
-          disabled={busy || name.trim() === ''}
-          onClick={() => void make()}
-        >
-          생성
-        </button>
-      </div>
-    </section>
   )
 }
 

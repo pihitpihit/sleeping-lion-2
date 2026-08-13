@@ -48,6 +48,17 @@ export const LAZY_ROUTES: Record<string, ComponentType> = {
   '/character': lazy(() =>
     import('./features/campaign/CharacterPage').then((m) => ({ default: m.CharacterPage })),
   ),
+  /*
+    캐릭터 생성.
+
+    **`/character` 밑에 있지만 그 화면이 아니다.** 클래스와 이름은 세울 때만
+    정할 수 있으므로(`0014`·`0017`) 고르는 자리가 따로 있어야 한다. id 자리에
+    `new`가 오는 셈인데 id는 uuid라 부딪히지 않는다 — `routeKey`가 **정확히
+    맞는 것을 앞머리보다 먼저** 보므로 이쪽으로 온다.
+  */
+  '/character/new': lazy(() =>
+    import('./features/campaign/NewCharacterPage').then((m) => ({ default: m.NewCharacterPage })),
+  ),
 }
 
 /**
@@ -59,8 +70,15 @@ export const LAZY_ROUTES: Record<string, ComponentType> = {
  */
 const PREFIX_ROUTES: readonly string[] = ['/join', '/journal', '/character']
 
-/** 라우트에서 화면을 찾을 열쇠. `/join/abc` → `/join` */
+/**
+ * 라우트에서 화면을 찾을 열쇠. `/join/abc` → `/join`
+ *
+ * **정확히 맞는 것이 앞머리보다 먼저다.** `/character/new`는 `/character`의
+ * 뒷자리에 값이 붙은 꼴이지만 다른 화면이다 — 앞머리만 보면 캐릭터 한 장짜리
+ * 화면이 `new`를 id로 알아듣고 빈 화면을 낸다.
+ */
 export function routeKey(route: string): string {
+  if (route in LAZY_ROUTES) return route
   const head = '/' + (route.split('/')[1] ?? '')
   return PREFIX_ROUTES.includes(head) ? head : route
 }

@@ -1,0 +1,242 @@
+/* ==========================================================================
+   캐릭터 생성 — `#/character/new`
+   --------------------------------------------------------------------------
+   클래스를 한 장씩 넘겨 보고 고른 뒤 아래에서 이름을 짓는다. 봉투를 고르는
+   일이라 이름만 훑는 것으로는 부족하다 — 표식·핸드 사이즈·레벨별 체력을 나란히
+   놓고 견주게 된다.
+   ========================================================================== */
+
+.newchar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+/* --------------------------------------------------------------------------
+   캐러셀
+   --------------------------------------------------------------------------
+   ┌────────────────────────────────────────────────────────────────────────┐
+   │ **굴리는 것은 브라우저가 한다.**                                        │
+   └────────────────────────────────────────────────────────────────────────┘
+
+   `scroll-snap-type: x mandatory` 하나로 손가락 넘기기가 붙고 관성·되튐까지
+   기기 것이 그대로 쓰인다. 직접 만들면 그 결을 흉내 내야 하고, 흉내는 늘
+   어딘가 어긋난다.
+   -------------------------------------------------------------------------- */
+
+.carousel {
+  position: relative;
+}
+
+.carousel__track {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  /* 한 장씩 정확히 선다. 스크롤 위치를 칸 폭으로 나눠 몇 번째인지 읽는다. */
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.carousel__track::-webkit-scrollbar {
+  display: none;
+}
+
+.carousel__track > * {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  /* 플렉스 항목의 기본 `min-width: auto`를 풀어야 100%가 지켜진다(구현 결정 179). */
+  min-width: 0;
+}
+
+/*
+  넘기는 단추.
+
+  손가락이 있는 기기에서는 굴리면 되지만 **마우스에는 굴릴 것이 없다.** 화살은
+  카드 위에 얹되 반투명한 바탕을 깔아 카드 그림에 묻히지 않게 한다.
+*/
+.carousel__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 급하게 누르는 화면은 아니지만 44px 터치 목표는 지킨다. */
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--sl-gold-dim);
+  background: rgb(14 12 9 / 72%);
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.carousel__arrow--prev {
+  left: 0.35rem;
+}
+
+.carousel__arrow--next {
+  right: 0.35rem;
+}
+
+.carousel__arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.carousel__arrow:not(:disabled):hover {
+  color: var(--sl-gold);
+  border-color: var(--sl-border-strong);
+}
+
+/* 어디쯤인지. 스물둘까지 가므로 점을 다 찍지 않고 수로 적는다. */
+.carousel__where {
+  margin: 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--sl-text-faint);
+}
+
+/* --------------------------------------------------------------------------
+   클래스 한 장
+   -------------------------------------------------------------------------- */
+
+.classcard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  /* 넘기는 단추가 얹히므로 좌우를 그만큼 비운다. */
+  padding: 1.2rem 3.2rem;
+  text-align: center;
+}
+
+/*
+  양피지 원반. 글룸헤이븐 표식은 거의 검정이라 어두운 바탕에서 묻힌다 —
+  물들이지 않고 바탕을 깐다(구현 결정 41).
+*/
+.classcard__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  color: var(--sl-void);
+  background: #d8cbaa;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.classcard__badge img {
+  width: 76%;
+  height: 76%;
+  object-fit: contain;
+}
+
+.classcard__badge--plain {
+  font-family: var(--sl-font-ko-display);
+  font-size: 2.6rem;
+  background: var(--sl-raised);
+  color: var(--sl-text-faint);
+  border: 1px solid var(--sl-border);
+}
+
+.classcard__name {
+  margin: 0;
+  font-family: var(--sl-font-ko-display);
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: var(--sl-gold-bright);
+}
+
+.classcard__hand {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--sl-text-muted);
+}
+
+/*
+  레벨별 최대 체력.
+
+  캐릭터 시트의 눈금표와 **같은 색을 쓴다** — 체력은 붉은빛, 경험은 푸른빛
+  (구현 결정 255). 같은 값이 화면 두 곳에서 다른 색이면 그것부터 헷갈린다.
+*/
+.classcard__levels {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 0.2rem;
+  width: 100%;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.classcard__level {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.05rem;
+  padding: 0.25rem 0;
+  background: rgb(0 0 0 / 24%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.2rem;
+}
+
+.classcard__level-n {
+  font-size: 0.8rem;
+  color: var(--sl-gold-dim);
+}
+
+.classcard__level-hp {
+  font-size: 0.86rem;
+  color: #e08a7a;
+}
+
+.classcard__level-xp {
+  font-size: 0.58rem;
+  line-height: 1;
+  color: #7fb0e0;
+}
+
+/* --------------------------------------------------------------------------
+   이름
+   -------------------------------------------------------------------------- */
+
+.newchar__name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/*
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ **자리를 늘 잡아 둔다.**                                                │
+  └────────────────────────────────────────────────────────────────────────┘
+
+  경고가 떴다 사라질 때마다 아래 띠가 오르내리면 **누르려던 단추가 손가락 밑에서
+  움직인다.** 할 말이 없을 때는 빈 줄로 서 있는다.
+*/
+.newchar__warn {
+  min-height: 1.2rem;
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  color: var(--sl-ember);
+}
+
+.newchar__warn--ok {
+  color: transparent;
+}
+
+/* 그만두기는 링크지만 단추처럼 선다 — 옆의 생성과 나란히 놓이기 때문이다. */
+a.sheet__cancel {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
