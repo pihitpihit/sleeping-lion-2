@@ -41,9 +41,9 @@ export function computeRoundLayout(box: { width: number; height: number }): Roun
   const forNumber = showLabel ? height * 0.62 : height * 0.82
   /*
     이름표가 빠진 자리에는 `R`이 숫자 앞에 붙으므로 **가로를 그만큼 더 나눠 준다.**
-    `R`은 숫자의 0.62배이고 사이가 조금 뜨므로 셋으로 나눈 둘쯤이 숫자 몫이다.
+    `R`은 숫자의 0.78배이고 사이가 조금 뜨므로 숫자 몫은 절반이 조금 넘는다.
   */
-  const widthShare = showLabel ? 0.52 : 0.34
+  const widthShare = showLabel ? 0.52 : 0.3
   const numberSize = Math.max(MIN_NUMBER, Math.min(MAX_NUMBER, forNumber, width * widthShare))
 
   /*

@@ -325,18 +325,13 @@ export function CharacterSheet({
               <span className="char__hint"> — 경험치가 정한다</span>
             </h3>
             {/*
-              **이름표를 함께 단다.** 그림만 구석에 놓으면 무엇인지도 모르고
-              곁다리로 읽힌다 — 형님이 짚었다. 경험·골드 칸과 같은 테를 둘러
-              "이것도 값이다"라고 말한다.
+              **그림 하나로 말한다.** 「손에 드는 카드」라고 적어 두었는데 카드
+              두 장에 수가 얹힌 그림이면 그것으로 족하다 — 읽어주는 쪽에는
+              `HandCards`가 이미 우리말로 전한다.
             */}
             {info !== null && info.handSize > 0 && (
               <span className="handchip">
                 <HandCards count={info.handSize} />
-                <span className="handchip__label">
-                  손에 드는
-                  <br />
-                  카드
-                </span>
               </span>
             )}
           </div>

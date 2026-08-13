@@ -40,6 +40,14 @@ interface Gesture {
 }
 
 /**
+ * 위젯 틀의 테 두께(px).
+ *
+ * `SatchelPage.css`의 `.widget-frame { border: 1px … }`와 **같은 값이어야 한다.**
+ * 속(회전자)의 크기를 여기서 셈하기 때문이다.
+ */
+const FRAME_BORDER = 1
+
+/**
  * 위젯 하나의 껍데기. 편집 모드에서 제스처를 받는다.
  *
  * 드래그 중에는 스토어를 갱신하지 않는다. 매 프레임 갱신하면 렌더가 폭주하고
@@ -171,9 +179,23 @@ export function WidgetFrame({
     definition.maxSize.w !== definition.minSize.w ||
     definition.maxSize.h !== definition.minSize.h
 
+  /*
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │ **속은 테 안쪽 크기다. 칸 크기를 그대로 주면 테 밑으로 넘친다.**        │
+    └────────────────────────────────────────────────────────────────────────┘
+
+    틀은 `box-sizing: border-box`라 `rect`가 **테를 포함한 바깥 크기**다. 그것을
+    그대로 속에 주면 속이 사방 1px씩 테 밑으로 삐져나가고, 속의 둥근 모서리가
+    틀의 것과 어긋나 **모서리에서 속이 각진 채로 비친다** — 라운드 트래커처럼
+    칸을 가득 채우는 위젯에서 검은 이가 빠진 것처럼 보였다(형님이 짚었다).
+
+    테 두께는 CSS와 여기 두 곳에 있다. 한 곳이 바뀌면 다른 곳도 바뀌어야 하므로
+    이름을 붙여 둔다.
+  */
+  const inner = { w: rect.width - 2 * FRAME_BORDER, h: rect.height - 2 * FRAME_BORDER }
   const rotorStyle = {
-    width: `${swapsAxes(rotation) ? rect.height : rect.width}px`,
-    height: `${swapsAxes(rotation) ? rect.width : rect.height}px`,
+    width: `${swapsAxes(rotation) ? inner.h : inner.w}px`,
+    height: `${swapsAxes(rotation) ? inner.w : inner.h}px`,
     transform: `translate(-50%, -50%) rotate(${rotation}deg)`,
   }
 
