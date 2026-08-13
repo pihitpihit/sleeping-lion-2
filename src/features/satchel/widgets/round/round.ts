@@ -38,12 +38,13 @@ export function computeRoundLayout(box: { width: number; height: number }): Roun
   const showLabel = Math.min(width, height) >= LABEL_THRESHOLD
 
   // 이름표가 있으면 그만큼 세로를 내준다. 띠 창은 글자 크기와 같다.
-  const forNumber = showLabel ? height * 0.62 : height * 0.82
+  const forNumber = showLabel ? height * 0.62 : height * 0.9
   /*
     이름표가 빠진 자리에는 `R`이 숫자 앞에 붙으므로 **가로를 그만큼 더 나눠 준다.**
-    `R`은 숫자의 0.78배이고 사이가 조금 뜨므로 숫자 몫은 절반이 조금 넘는다.
+    `R`은 숫자의 0.85배이고 사이가 조금 뜨므로 숫자 몫은 절반이 조금 넘는다.
+    **인색하게 잡으면 한 칸짜리에서 글자가 점처럼 남는다** — 형님이 두 번 짚었다.
   */
-  const widthShare = showLabel ? 0.52 : 0.3
+  const widthShare = showLabel ? 0.52 : 0.42
   const numberSize = Math.max(MIN_NUMBER, Math.min(MAX_NUMBER, forNumber, width * widthShare))
 
   /*

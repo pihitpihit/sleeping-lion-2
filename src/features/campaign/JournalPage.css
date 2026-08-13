@@ -2038,3 +2038,150 @@
 .char__blockhead .hand {
   flex: none;
 }
+
+/* --------------------------------------------------------------------------
+   고친 기록
+   --------------------------------------------------------------------------
+   ┌────────────────────────────────────────────────────────────────────────┐
+   │ **자주 여는 자리가 아니다 — 문은 작게, 판은 통째로.**                   │
+   └────────────────────────────────────────────────────────────────────────┘
+
+   정산이 맞았는지 되짚을 때만 연다. 문은 시트 맨 아래 조용히 서고, 열면 덱
+   펼쳐 보기처럼 화면을 통째로 덮는다(구현 결정 198).
+   -------------------------------------------------------------------------- */
+
+.char__logrow {
+  display: flex;
+  justify-content: center;
+}
+
+.char__logopen {
+  padding: 0.45rem 1rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--sl-text-muted);
+  background: none;
+  border: 1px solid var(--sl-border);
+  border-radius: 0.3rem;
+  cursor: pointer;
+}
+
+.char__logopen:hover {
+  color: var(--sl-gold);
+  border-color: var(--sl-border-strong);
+}
+
+/* 뒤쪽 화면이 살짝 비친다 — 덮은 것이지 딴 화면으로 넘어온 것이 아니다. */
+.logview {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgb(14 12 9 / 92%);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.logview__panel {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 0 calc(var(--sl-safe-right) + 1rem) calc(var(--sl-safe-bottom) + 2rem)
+    calc(var(--sl-safe-left) + 1rem);
+}
+
+/*
+  머리는 안 구르고 목록만 구른다 — 한참 내린 뒤 닫으려고 도로 올라오게 하지
+  않는다(구현 결정 192). 제 바탕을 깔아야 글이 밑을 지나가도 겹쳐 읽히지 않는다.
+*/
+.logview__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: calc(var(--sl-safe-top) + 0.8rem) 0 0.6rem;
+  background: rgb(14 12 9 / 96%);
+}
+
+.logview__title {
+  margin: 0;
+  font-family: var(--sl-font-ko-display);
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--sl-gold-bright);
+}
+
+.logview__close {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--sl-text-muted);
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.logview__close:hover {
+  color: var(--sl-gold);
+  border-color: var(--sl-border-strong);
+}
+
+.logview__empty {
+  margin: 2rem 0;
+  text-align: center;
+  color: var(--sl-text-faint);
+}
+
+.logview__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 한 번의 저장이 한 덩어리다 — 여러 칸을 함께 고치므로 줄이 여럿일 수 있다. */
+.logview__entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid rgb(69 55 38 / 55%);
+}
+
+.logview__when {
+  font-size: 0.78rem;
+  color: var(--sl-text-faint);
+}
+
+.logview__changes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.92rem;
+  color: var(--sl-text);
+}
+
+/* 고치는 동안의 증감. 수는 `sl-numeral`이 이미 맡고 여기서는 색만 정한다. */
+.tally__delta {
+  margin: 0 0.05em;
+}
+
+.tally__delta.is-up {
+  color: #9ae6a0;
+}
+
+.tally__delta.is-down {
+  color: #f0a08e;
+}

@@ -299,11 +299,11 @@ function topLevelClasses(html: string): string[] {
 }
 
 describe('시트의 짜임 — 한 장의 종이', () => {
-  it('맨 윗줄에는 두 단과 띠만 선다', () => {
+  it('맨 윗줄에는 두 단과 기록 문, 띠만 선다', () => {
     const kinds = topLevelClasses(render(fixture(), true, false, true)).map((c) =>
       c.split(' ').find((k) => k !== 'paper__col'),
     )
-    expect(kinds).toEqual(['paper__col--a', 'paper__col--b', 'sheet__bar'])
+    expect(kinds).toEqual(['paper__col--a', 'paper__col--b', 'char__logrow', 'sheet__bar'])
   })
 
   /**

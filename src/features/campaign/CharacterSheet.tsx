@@ -15,6 +15,9 @@ import {
 import { DeckPreview } from './DeckPreview'
 import { classInfoOf, maxHpFor, useClassStore } from './classStore'
 import { HandCards } from './HandCards'
+import { changesOf } from './characterLog'
+import { writeLog } from './characterNet'
+import { LogView } from './LogView'
 import { PerkText } from './PerkText'
 import { perkRowsOf } from './perks'
 import { ownerBadge } from '../satchel/perkSource'
@@ -118,6 +121,8 @@ export function CharacterSheet({
   const [newItem, setNewItem] = useState('')
   /** 무엇을 물으려고 팝업을 띄웠는가. */
   const [asking, setAsking] = useState<'discard' | 'remove' | null>(null)
+  /** 기록 팝업이 열려 있는가. 읽기·편집 어느 쪽에서나 열 수 있다. */
+  const [logOpen, setLogOpen] = useState(false)
 
   /**
    * 화면에 그리는 값.
@@ -156,7 +161,14 @@ export function CharacterSheet({
   function save() {
     const edits = sheetDiff(character, draft)
     // 바뀐 것이 없으면 보내지 않는다. 빈 갱신도 `version`을 올린다.
-    if (Object.keys(edits).length > 0) onEdit(edits)
+    if (Object.keys(edits).length > 0) {
+      onEdit(edits)
+      /*
+        **기록은 값이 들어간 다음에 남긴다.** 실패해도 삼키므로(`writeLog`)
+        저장이 되돌아가지 않는다 — 기록은 읽어 보는 것이지 정본이 아니다.
+      */
+      void writeLog(character.id, character.ownerId, changesOf(character, edits))
+    }
     stopEditing()
   }
 
@@ -178,6 +190,16 @@ export function CharacterSheet({
    * 이미 있다.
    */
   const nextMark = toNext === null ? null : shown.xp + toNext
+
+  /*
+    **고치는 동안에는 「얼마에서 얼마를 움직였나」를 적는다.**
+
+    `60+35/95` — 저장된 값에 증감을 달고 목표를 뒤에 붙인다. 고치다 보면 몇을
+    올렸는지 잊는데(정산은 여러 칸을 함께 만진다) 현재값만으로는 알 수 없다.
+    형님이 짚었다. 증감 부분만 색이 붙는다(`tally__delta`).
+  */
+  const xpDelta = shown.xp - character.xp
+  const goldDelta = shown.gold - character.gold
   const xpProgress =
     nextMark === null
       ? undefined
@@ -405,6 +427,9 @@ export function CharacterSheet({
             label="경험"
             value={shown.xp}
             caption={xpProgress}
+            base={editing ? character.xp : undefined}
+            delta={editing ? xpDelta : 0}
+            tail={nextMark === null ? undefined : `/${nextMark}`}
             move={editing ? moveOf(character.xp, shown.xp) : null}
             steps={editing ? [1, 5] : undefined}
             onChange={(next) => set('xp', next)}
@@ -413,6 +438,8 @@ export function CharacterSheet({
             kind="gold"
             label="골드"
             value={shown.gold}
+            base={editing ? character.gold : undefined}
+            delta={editing ? goldDelta : 0}
             move={editing ? moveOf(character.gold, shown.gold) : null}
             steps={editing ? [1, 10] : undefined}
             onChange={(next) => set('gold', next)}
@@ -672,6 +699,20 @@ export function CharacterSheet({
       )}
 
       {/*
+        기록 보기 — **시트 맨 아래.**
+
+        자주 여는 자리가 아니라 정산이 맞았는지 되짚을 때만 연다. 저장 띠보다
+        위에 두어 **띠가 늘 마지막**이게 한다.
+      */}
+      <div className="char__logrow">
+        <button type="button" className="char__logopen" onClick={() => setLogOpen(true)}>
+          고친 기록 보기
+        </button>
+      </div>
+
+      {logOpen && <LogView characterId={character.id} onClose={() => setLogOpen(false)} />}
+
+      {/*
         ┌────────────────────────────────────────────────────────────────────┐
         │ **띠는 아래에 붙어 따라온다.** 시트가 길어 끝까지 내려야 하면        │
         │ 저장을 잊는다.                                                      │
@@ -768,6 +809,9 @@ function Tally({
   label,
   value,
   caption,
+  base,
+  delta,
+  tail,
   move,
   steps,
   onChange,
@@ -778,6 +822,12 @@ function Tally({
   value: number
   /** 밑에 적을 글. 없으면 안 적는다 — 골드는 적을 것이 없다. */
   caption?: string
+  /** 저장된 값. 고치는 동안 「기존값+증감」으로 적는다. */
+  base?: number
+  /** 저장된 값에서 얼마나 움직였는가. 0이면 증감을 안 적는다. */
+  delta?: number
+  /** 증감 뒤에 붙일 글 — 경험의 `/95`. */
+  tail?: string
   /** 저장된 값에서 어느 쪽으로 움직였는가. 편집 중에만 온다. */
   move?: Move
   /** [한 칸, 여러 칸]. 오면 캐럿이 돋고 안 오면 읽기 전용이다. */
@@ -821,7 +871,22 @@ function Tally({
         </span>
       )}
 
-      {caption !== undefined && <span className="tally__label sl-numeral">{caption}</span>}
+      {/*
+        고치는 동안에는 「기존값+증감」이 앞선다 — 무엇에서 얼마를 움직였는지
+        알아야 하기 때문이다. 손대지 않았으면 읽을 때와 같은 글을 그대로 낸다.
+      */}
+      {base !== undefined && delta !== undefined && delta !== 0 ? (
+        <span className="tally__label sl-numeral">
+          {base}
+          <span className={`tally__delta${markClass(moveOf(0, delta))}`}>
+            {delta > 0 ? '+' : '−'}
+            {Math.abs(delta)}
+          </span>
+          {tail}
+        </span>
+      ) : (
+        caption !== undefined && <span className="tally__label sl-numeral">{caption}</span>
+      )}
     </div>
   )
 }

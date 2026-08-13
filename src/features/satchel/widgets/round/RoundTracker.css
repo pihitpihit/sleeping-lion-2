@@ -26,7 +26,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.15em;
-  padding: 4%;
+  padding: 2%;
   /*
     ┌──────────────────────────────────────────────────────────────────────┐
     │ **제 테를 두르지 않는다 — 위젯 틀의 테가 이미 거기 있다.**            │
@@ -101,7 +101,7 @@
 }
 
 .round__prefix {
-  font-size: 0.78em;
+  font-size: 0.85em;
   line-height: 1;
   color: var(--sl-gold-dim);
 }

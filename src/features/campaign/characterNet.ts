@@ -7,6 +7,7 @@ import {
   hasClassIcon,
   normalizePerks,
 } from './character'
+import type { LogChange, LogEntry } from './characterLog'
 import type { Character, CharacterEdits } from './types'
 
 /**
@@ -181,4 +182,61 @@ export async function pushCharacterEdits(id: string, edits: CharacterEdits): Pro
 export async function deleteCharacter(id: string): Promise<void> {
   const { error } = await supabase().from('characters').delete().eq('id', id)
   if (error) throw error
+}
+
+/* --------------------------------------------------------------------------
+   기록 — 무엇을 언제 고쳤는가(`0018`)
+   -------------------------------------------------------------------------- */
+
+/**
+ * 고친 것을 기록에 남긴다.
+ *
+ * **실패해도 삼킨다.** 기록은 읽어 보는 것이지 정본이 아니므로(구현 결정 1),
+ * 이것 때문에 저장이 되돌아가면 안 된다 — 값은 이미 `characters`에 들어갔다.
+ */
+export async function writeLog(
+  characterId: string,
+  actorId: string,
+  changes: readonly LogChange[],
+): Promise<void> {
+  if (changes.length === 0) return
+  try {
+    const { error } = await supabase()
+      .from('character_log')
+      .insert({ character_id: characterId, actor_id: actorId, changes })
+    if (error) throw error
+  } catch (cause) {
+    console.error('[log]', cause)
+  }
+}
+
+/** 이 캐릭터의 기록. 새것이 먼저다. */
+export async function fetchLog(characterId: string, limit = 200): Promise<LogEntry[]> {
+  const { data, error } = await supabase()
+    .from('character_log')
+    .select('id, at, changes, actor:actor_id (display_name)')
+    .eq('character_id', characterId)
+    .order('at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+
+  return (data ?? []).map((row) => {
+    const r = row as unknown as {
+      id: string
+      at: string
+      changes: unknown
+      actor: { display_name?: string } | null
+    }
+    return {
+      id: r.id,
+      at: Date.parse(r.at),
+      actorName: r.actor?.display_name ?? '',
+      // 서버 값을 믿지 않는다 — 모양이 어긋난 것은 버린다.
+      changes: Array.isArray(r.changes)
+        ? (r.changes as LogChange[]).filter(
+            (c) => c !== null && typeof c === 'object' && typeof c.field === 'string',
+          )
+        : [],
+    }
+  })
 }
