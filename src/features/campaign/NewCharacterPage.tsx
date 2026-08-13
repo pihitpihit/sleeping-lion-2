@@ -3,7 +3,7 @@ import { useAuthStore } from '../auth/authStore'
 import { XP_THRESHOLDS, classIconUrl } from './character'
 import { createCharacter } from './characterNet'
 import { NAME_MAX, checkCharacterName, nameProblemText, tidyName } from './characterName'
-import { UNDECIDED, choicesOf, type Choice } from './classChoices'
+import { choicesOf, type Choice } from './classChoices'
 import { useClassStore } from './classStore'
 import { useMineStore } from './mineStore'
 import './JournalPage.css'
@@ -49,7 +49,7 @@ export function NewCharacterPage() {
   const trackRef = useRef<HTMLDivElement>(null)
 
   const choices = choicesOf(list)
-  const picked = choices[Math.min(index, choices.length - 1)] ?? UNDECIDED
+  const picked = choices[Math.min(index, choices.length - 1)] ?? null
 
   const problem = checkCharacterName(
     name,
@@ -70,7 +70,7 @@ export function NewCharacterPage() {
   }
 
   async function make() {
-    if (userId === null || problem !== null) return
+    if (userId === null || problem !== null || picked === null) return
     setBusy(true)
     setError(null)
     try {
@@ -150,10 +150,23 @@ export function NewCharacterPage() {
           </button>
         </div>
 
-        {/* 어디쯤인지 — 스물둘까지 가므로 점을 다 찍지 않고 수로 적는다. */}
-        <p className="carousel__where sl-numeral" aria-hidden="true">
-          {index + 1} / {choices.length}
-        </p>
+        {/*
+          어디쯤인지.
+
+          **지금 보는 것만 다이아다.** 점이 스물 넘게 늘어서므로 크기만으로는
+          어느 것이 켜졌는지 잘 안 보인다 — 모양이 갈리면 훑는 눈에 바로 걸린다.
+
+          누르는 자리가 아니다. 스물이 넘는 점을 손가락으로 짚게 하면 옆의 것이
+          눌린다 — 넘기는 것은 손가락으로 굴리거나 화살로 한다.
+        */}
+        <ul className="carousel__dots" aria-hidden="true">
+          {choices.map((choice, i) => (
+            <li
+              key={choice.key}
+              className={`carousel__dot${i === index ? ' carousel__dot--on' : ''}`}
+            />
+          ))}
+        </ul>
 
         {/* ----------------------------------------------------------------
             이름 — 아래에 둔다
@@ -163,14 +176,17 @@ export function NewCharacterPage() {
             (`0017`) 여기서 놓치면 거두고 새로 세우는 수밖에 없다.
             ---------------------------------------------------------------- */}
         <div className="newchar__name">
-          <label className="sheet__label" htmlFor="newchar-name">
-            이름
-          </label>
+          {/*
+            **제목을 걷었다.** 빈 칸에 「캐릭터 이름 입력」이라 적혀 있으므로 위에
+            「이름」을 한 번 더 적으면 같은 말을 두 번 한다. 읽어주는 쪽에는
+            `aria-label`이 그대로 간다 — 눈에 보이는 글자만 걷은 것이다.
+          */}
           <input
             id="newchar-name"
-            className="sheet__input"
+            className="sheet__input newchar__input"
+            aria-label="캐릭터 이름"
             value={name}
-            placeholder="이름을 짓는다"
+            placeholder="캐릭터 이름 입력"
             /* 다듬으면 줄어들 수 있으므로 칸 자체는 조금 넉넉하게 받는다. */
             maxLength={NAME_MAX * 2}
             disabled={busy}
@@ -194,7 +210,7 @@ export function NewCharacterPage() {
           <button
             type="button"
             className="sheet__save"
-            disabled={busy || problem !== null}
+            disabled={busy || problem !== null || picked === null}
             onClick={() => void make()}
           >
             생성
