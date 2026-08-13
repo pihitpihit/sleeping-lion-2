@@ -5,7 +5,10 @@ import { createCharacter } from './characterNet'
 import { NAME_MAX, checkName, nameProblemText, tidyName } from './nameRules'
 import { choicesOf, type Choice } from './classChoices'
 import { useClassStore } from './classStore'
+import { PerkText } from './PerkText'
+import { perkRowsOf } from './perks'
 import { useMineStore } from './mineStore'
+import type { ClassPerk } from './perkNet'
 import { useAtTop } from './useAtTop'
 import './JournalPage.css'
 import './NewCharacterPage.css'
@@ -29,6 +32,8 @@ export function NewCharacterPage() {
   const session = useAuthStore((s) => s.session)
 
   const list = useClassStore((s) => s.list)
+  /* 특혜 표도 같은 스토어에서 온다 — 한 번 읽으면 이름·수치와 함께 온다(구현 결정 144). */
+  const perkTable = useClassStore((s) => s.perks)
   const loadClasses = useClassStore((s) => s.load)
   useEffect(() => {
     void loadClasses()
@@ -137,7 +142,11 @@ export function NewCharacterPage() {
             }}
           >
             {choices.map((choice) => (
-              <ClassCard key={choice.key} choice={choice} />
+              <ClassCard
+                key={choice.key}
+                choice={choice}
+                perks={choice.classId === null ? [] : (perkTable[choice.classId] ?? [])}
+              />
             ))}
           </div>
 
@@ -283,12 +292,18 @@ function HandSize({ count }: { count: number }) {
  * 표식·이름·핸드 사이즈·레벨별 체력을 적는다. **모르는 것은 안 적는다** — 클래스
  * 수치를 안 넣었으면 체력 표가 통째로 빠지고 그림과 번호만 남는다(구현 결정 115).
  *
+ * **특혜 목록도 함께 낸다.** 어느 클래스를 고를지는 그 클래스가 판을 어떻게
+ * 바꾸는지에 달렸고, 그것을 가장 또렷하게 말하는 것이 특혜다 — 봉투를 고르며
+ * 뒷면을 읽는 것과 같다. **여기서는 켤 수 없다**: 켜는 것은 시나리오를 치른
+ * 뒤의 일이고 이 화면은 아직 캐릭터가 없다.
+ *
  * 그림과 플레이버 텍스트는 아직 없다. 팩에서 더 가져오는 것은 ATTRIBUTION을 함께
  * 고쳐야 하는 별개의 일이고(SPEC 13.1), 플레이버는 카드에 인쇄된 글이라 담지
  * 않는다(절대 원칙 1).
  */
-function ClassCard({ choice }: { choice: Choice }) {
+function ClassCard({ choice, perks }: { choice: Choice; perks: readonly ClassPerk[] }) {
   const url = choice.icon === 0 ? null : classIconUrl(choice.icon)
+  const rows = perkRowsOf(perks)
 
   return (
     <article className="classcard" aria-label={choice.title}>
@@ -303,6 +318,30 @@ function ClassCard({ choice }: { choice: Choice }) {
       <h2 className="classcard__name">{choice.title}</h2>
 
       {choice.handSize > 0 && <HandSize count={choice.handSize} />}
+
+      {rows.length > 0 && (
+        <div className="classcard__perks">
+          <h3 className="classcard__perks-title">특혜</h3>
+          <ul className="classcard__perkrows">
+            {rows.map(({ perk }) => (
+              <li key={perk.id} className="classcard__perkrow">
+                {/*
+                  상자는 **켤 수 없는 자리 표시**다. 단추로 두면 눌러 보게 되는데
+                  아직 캐릭터가 없다 — 켜는 것은 시나리오를 치른 뒤의 일이다.
+                */}
+                <span className="classcard__perkboxes" aria-hidden="true">
+                  {Array.from({ length: perk.count }, (_, i) => (
+                    <span key={i} className="classcard__perkbox" />
+                  ))}
+                </span>
+                <span className="classcard__perktext">
+                  <PerkText text={perk.text} />
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {choice.hp.length === 9 && (
         <ol className="classcard__levels" aria-label="레벨별 최대 체력">

@@ -1,4 +1,4 @@
-import { ROLLING_ICON_URL } from '../satchel/widgets/deck/deck'
+import { ROLLING_ICON_URL, medallionUrl } from '../satchel/widgets/deck/deck'
 import { InlineMark } from './InlineMark'
 import { splitPerkText } from './perkWords'
 
@@ -31,6 +31,16 @@ export function PerkText({ text }: { text: string }) {
               key={i}
               className="imark__badge"
               src={ROLLING_ICON_URL}
+              alt=""
+              aria-hidden="true"
+            />
+          )
+        if (piece.kind === 'value')
+          return (
+            <img
+              key={i}
+              className="imark__medal"
+              src={medallionUrl(piece.valueId) ?? ''}
               alt=""
               aria-hidden="true"
             />

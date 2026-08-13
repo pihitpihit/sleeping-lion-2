@@ -280,6 +280,70 @@
 }
 
 /* --------------------------------------------------------------------------
+   특혜 목록 — 고르기 전에 읽어 보는 자리
+   --------------------------------------------------------------------------
+   ┌────────────────────────────────────────────────────────────────────────┐
+   │ **켤 수 없는 자리 표시다.**                                             │
+   └────────────────────────────────────────────────────────────────────────┘
+
+   상자를 단추로 두면 눌러 보게 되는데 아직 캐릭터가 없다 — 켜는 것은 시나리오를
+   치른 뒤 캐릭터 시트에서 하는 일이다.
+   -------------------------------------------------------------------------- */
+
+.classcard__perks {
+  width: 100%;
+  /* 카드는 가운데 정렬이지만 읽는 글은 왼쪽에서 시작해야 훑어진다. */
+  text-align: left;
+}
+
+.classcard__perks-title {
+  margin: 0 0 0.3rem;
+  font-family: var(--sl-font-ko-display);
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--sl-text-muted);
+}
+
+.classcard__perkrows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.classcard__perkrow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--sl-text);
+}
+
+/* 상자 묶음은 줄어들지 않는다 — 글이 길어도 상자 수가 곧 얻는 횟수다. */
+.classcard__perkboxes {
+  flex: none;
+  display: flex;
+  gap: 0.12rem;
+  /* 글의 첫 줄과 밑선을 맞춘다. */
+  padding-top: 0.22em;
+}
+
+.classcard__perkbox {
+  width: 11px;
+  height: 11px;
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.15rem;
+}
+
+.classcard__perktext {
+  min-width: 0;
+}
+
+/* --------------------------------------------------------------------------
    이름
    -------------------------------------------------------------------------- */
 

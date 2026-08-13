@@ -1890,9 +1890,21 @@
   vertical-align: -0.18em;
 }
 
+/*
+  값 메달. 표식보다 조금 크게 둔다 — 원본에 여백이 둘려 있어 같은 크기로 두면
+  알맹이가 작아 보인다(덱 알약도 24 대 16으로 두었다).
+*/
+.imark__medal {
+  width: 1.45em;
+  height: 1.45em;
+  object-fit: contain;
+  vertical-align: -0.4em;
+}
+
 /* 표식 앞뒤로 머리카락만큼 띄운다 — 글자에 붙으면 낱말의 일부로 읽힌다. */
 .perktext .imark,
 .perktext > .imark__badge,
+.perktext > .imark__medal,
 .perktext .imark__tag {
   margin: 0 0.08em;
 }

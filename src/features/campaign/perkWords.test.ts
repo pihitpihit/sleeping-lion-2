@@ -11,6 +11,7 @@ function shape(text: string): string[] {
   return splitPerkText(text).map((p) => {
     if (p.kind === 'text') return `"${p.text}"`
     if (p.kind === 'rolling') return '[굴림]'
+    if (p.kind === 'value') return `[값:${p.valueId}]`
     return p.amount === null ? `[${p.def.id}]` : `[${p.def.id}:${p.amount}]`
   })
 }
@@ -75,5 +76,53 @@ describe('그 밖', () => {
 
   it('빈 글은 아무것도 내지 않는다', () => {
     expect(splitPerkText('')).toEqual([])
+  })
+})
+
+/**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **값도 카드에 찍힌 그림이다 — 그림이 있는 일곱만 바꾼다.**                 │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * `+3`·`+4`는 특혜로만 나오는 값이라 팩에 메달이 없다. 그때는 글자 그대로 두는
+ * 것이 맞다(구현 결정 115와 같은 결).
+ */
+describe('값 메달', () => {
+  it('그림이 있는 일곱을 바꾼다', () => {
+    expect(shape('+1 카드')).toEqual(['[값:p1]', '" 카드"'])
+    expect(shape('+0')).toEqual(['[값:p0]'])
+    expect(shape('+2')).toEqual(['[값:p2]'])
+  })
+
+  /** 빼기는 적는 사람 손에 따라 셋으로 갈린다 — 다른 값이 아니다. */
+  it('빼기표 세 가지를 모두 받는다', () => {
+    for (const sign of ['-', '\u2212', '\u2013']) {
+      expect(shape(`${sign}1`)).toEqual(['[값:m1]'])
+      expect(shape(`${sign}2`)).toEqual(['[값:m2]'])
+    }
+  })
+
+  it('곱하기는 × 와 x 를 모두 받는다', () => {
+    expect(shape('×0')).toEqual(['[값:x0]'])
+    expect(shape('x2')).toEqual(['[값:x2]'])
+  })
+
+  it('그림이 없는 값은 글자로 남는다', () => {
+    expect(shape('+3 카드')).toEqual(['"+3 카드"'])
+    expect(shape('+4')).toEqual(['"+4"'])
+  })
+
+  /** 자릿수가 둘이면 값이 아니다 — `+10`을 `+1`로 읽으면 안 된다. */
+  it('뒤에 수가 더 붙으면 값이 아니다', () => {
+    expect(shape('+10')).toEqual(['"+10"'])
+  })
+
+  it('한 줄에 값과 표식이 함께 있어도 갈린다', () => {
+    expect(shape('+1 부상 카드 1장 추가')).toEqual([
+      '[값:p1]',
+      '" "',
+      '[wound]',
+      '" 카드 1장 추가"',
+    ])
   })
 })
