@@ -829,13 +829,33 @@
   box-shadow: 0 10px 16px -10px rgb(0 0 0 / 85%);
 }
 
-/* 알맹이는 시트와 같은 폭에 맞춘다 — 넓은 화면에서 띠만 혼자 펼쳐지면 어긋난다. */
+/*
+  알맹이는 시트와 같은 폭에 맞춘다 — 넓은 화면에서 띠만 혼자 펼쳐지면 어긋난다.
+
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ **띠 높이를 정하는 것은 가장 큰 아이가 아니라 이 줄 높이여야 한다.**    │
+  └────────────────────────────────────────────────────────────────────────┘
+
+  뒤로가기 단추가 44px, 표식이 최대 56px이라 그대로 두면 **띠가 그 키에 붙들려**
+  굴려도 안 줄어든다. 표식만 `--tb`를 따라 줄어도 옆에 선 44px짜리가 바닥을
+  받치고 있으면 아무 일도 안 일어난다 — 실제로 그래서 안 줄었다.
+
+  그래서 줄 자체에 높이를 주고 그것이 `--tb`를 따르게 한다. 안쪽 것들은 넘치지
+  않게 제 크기를 그 안에서 잡는다.
+*/
 .topbar__inner {
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  min-height: calc(56px - 20px * var(--tb));
   max-width: 44rem;
   margin: 0 auto;
+}
+
+/* 뒤로가기도 함께 줄어든다 — 혼자 44px로 남으면 그것이 띠 높이를 붙든다. */
+.topbar .journal__back {
+  width: calc(46px - 6px * var(--tb));
+  height: calc(46px - 6px * var(--tb));
 }
 
 @media (min-width: 62rem) {
@@ -1936,8 +1956,14 @@
   object-fit: contain;
 }
 
-/* 경험의 별은 팩 것이라 거의 검정이다 — 어두운 바탕에서 묻히므로 물들인다. */
+/*
+  경험의 별은 팩 것이라 거의 검정이다 — 어두운 바탕에서 묻히므로 물들인다.
+
+  **그림이 상자를 채우는 정도가 달라 크기를 맞춰 준다.** 재 보니 별은 상자의
+  80%, 금화는 90%였다 — 그대로 두면 별이 작아 보인다. 90/80 = 1.12배.
+*/
 .tally__item--xp .tally__art img {
+  transform: scale(1.12);
   filter: brightness(0) invert(0.62) sepia(1) saturate(3) hue-rotate(175deg);
 }
 
@@ -1955,25 +1981,26 @@
     0 1px 2px rgb(0 0 0 / 80%);
 }
 
+/* 표식 밑의 글. **경험만 적는다** — 골드는 표식 위의 수가 전부다. */
 .tally__label {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   color: var(--sl-text-muted);
   white-space: nowrap;
 }
 
-.tally__foot {
-  color: var(--sl-text-faint);
+/*
+  칸 머리 — 이름 왼쪽, 클래스 수치 오른쪽.
+
+  레벨표 위에 손패가 선다. **클래스 수치라 레벨별 최대 체력과 한 자리다** —
+  띠의 부제 줄에 넣었더니 그림 높이가 줄을 밀어 올려 띠가 통째로 두꺼워졌다.
+*/
+.char__blockhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
 }
 
-/* 클래스 이름 옆의 손패. 부제 줄에 서므로 밑선을 맞춘다. */
-.topbar__sub .hand,
-.char__owner .hand {
-  width: 26px;
-  height: 31px;
-  vertical-align: -0.75em;
-}
-
-.topbar__sub .hand__n,
-.char__owner .hand__n {
-  font-size: 0.7rem;
+.char__blockhead .hand {
+  flex: none;
 }

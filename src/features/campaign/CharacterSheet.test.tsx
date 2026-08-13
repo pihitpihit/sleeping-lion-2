@@ -202,6 +202,30 @@ describe('경험과 골드', () => {
   it('읽어주는 쪽에 이름과 수가 함께 간다', () => {
     expect(render(fixture({ gold: 340 }), true)).toContain('aria-label="골드 340"')
   })
+
+  /**
+   * **남은 수가 아니라 온 만큼을 적는다.** 「다음까지 35」는 목표를 모르면 뜻이
+   * 없다 — 얼마나 왔는지 보려면 지금 값과 눈금이 함께 있어야 한다.
+   */
+  it('경험은 지금 값과 다음 눈금을 함께 적는다', () => {
+    // 60이면 2레벨(45~95). 다음 눈금은 95다.
+    const html = render(fixture({ xp: 60 }), true)
+    expect(html).toContain('60/95')
+    expect(html).toContain('63%')
+    expect(html).not.toContain('다음까지')
+  })
+
+  /** 아홉 레벨이면 다음 눈금이 없다 — 표식 위의 수가 전부다. */
+  it('끝까지 올랐으면 아무것도 안 적는다', () => {
+    const html = render(fixture({ xp: 600 }), true)
+    expect(html).not.toContain('tally__label')
+  })
+
+  /** 골드는 적을 것이 없다 — 표식 밑에 「골드」라고 또 적지 않는다. */
+  it('골드 밑에는 글자가 없다', () => {
+    const html = render(fixture(), true)
+    expect(html).not.toContain('>골드<')
+  })
 })
 
 describe('그 밖', () => {

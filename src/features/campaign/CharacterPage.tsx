@@ -4,7 +4,6 @@ import { useJournalStore } from './campaignStore'
 import { classIconUrl } from './character'
 import { CharacterSheet } from './CharacterSheet'
 import { classInfoOf, useClassStore } from './classStore'
-import { HandCards } from './HandCards'
 import { characterIdFromHash } from './journalRoute'
 import { useOneCharacterStore } from './oneCharacter'
 import { useScrolled } from './useScrolled'
@@ -123,12 +122,6 @@ export function CharacterPage() {
                     <>
                       {' · '}
                       <span className="topbar__class">{info.name}</span>
-                      {info.handSize > 0 && (
-                        <>
-                          {' '}
-                          <HandCards count={info.handSize} />
-                        </>
-                      )}
                     </>
                   )}
                 </span>

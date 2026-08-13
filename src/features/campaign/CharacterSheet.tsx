@@ -159,6 +159,21 @@ export function CharacterSheet({
    */
   const level = levelForXp(shown.xp)
   const toNext = xpToNextLevel(shown.xp)
+
+  /**
+   * 경험이 다음 눈금까지 얼마나 왔는가 — `60/95 (63%)`.
+   *
+   * **남은 수가 아니라 온 만큼을 적는다.** 「다음까지 35」는 목표를 모르면 뜻이
+   * 없다 — 얼마나 왔는지 보려면 지금 값과 눈금이 함께 있어야 한다. 형님이 짚었다.
+   *
+   * 아홉 레벨이면 다음 눈금이 없다. 그때는 아무것도 안 적는다 — 표식 위에 수가
+   * 이미 있다.
+   */
+  const nextMark = toNext === null ? null : shown.xp + toNext
+  const xpProgress =
+    nextMark === null
+      ? undefined
+      : `${shown.xp}/${nextMark} (${Math.round((shown.xp / nextMark) * 100)}%)`
   const slots = perkSlotCount(level, shown.checkmarks)
   const earned = perksEarned(level, shown.checkmarks)
   // 클래스는 초안에 없다 — 바뀔 수 없으므로 레코드에서 그대로 읽는다.
@@ -294,13 +309,23 @@ export function CharacterSheet({
           보인다.
           ------------------------------------------------------------------ */}
         <section className="sheet__block">
-          <h3 className="sheet__label">
-            레벨
-            <span className="char__hint">
-              {' '}
-              — 경험치가 정한다{toNext === null ? '' : `, 다음까지 ${toNext}`}
-            </span>
-          </h3>
+          {/*
+            ┌──────────────────────────────────────────────────────────────┐
+            │ **손패는 여기 선다 — 클래스 수치라 레벨표와 한 자리다.**       │
+            └──────────────────────────────────────────────────────────────┘
+
+            띠의 부제 줄에 넣었더니 **그림 높이가 줄을 밀어 올려 띠가 통째로
+            두꺼워졌고**, 그림은 px로 고정이라 굴려도 안 줄었다. 여기 오면
+            레벨별 최대 체력과 나란히 서서 "이 클래스는 이렇다"가 한 자리에
+            모인다.
+          */}
+          <div className="char__blockhead">
+            <h3 className="sheet__label">
+              레벨
+              <span className="char__hint"> — 경험치가 정한다</span>
+            </h3>
+            {info !== null && info.handSize > 0 && <HandCards count={info.handSize} />}
+          </div>
           <ol className="char__levels" aria-label={`레벨 ${level}`}>
             {XP_THRESHOLDS.map((threshold, index) => {
               const n = index + 1
@@ -357,12 +382,7 @@ export function CharacterSheet({
           ------------------------------------------------------------------ */}
         {!editing && (
           <div className="tally">
-            <Tally
-              kind="xp"
-              label="경험"
-              value={shown.xp}
-              foot={toNext === null ? '끝' : `다음까지 ${toNext}`}
-            />
+            <Tally kind="xp" label="경험" value={shown.xp} caption={xpProgress} />
             <Tally kind="gold" label="골드" value={shown.gold} />
           </div>
         )}
@@ -375,7 +395,7 @@ export function CharacterSheet({
               disabled={!editing}
               steps={[1, 5]}
               onChange={(next) => set('xp', next)}
-              foot={toNext === null ? '끝' : `다음까지 ${toNext}`}
+              foot={xpProgress ?? '끝'}
             />
             <Dial
               label="골드"
@@ -717,12 +737,14 @@ function Tally({
   kind,
   label,
   value,
-  foot,
+  caption,
 }: {
   kind: 'xp' | 'gold'
+  /** 읽어주는 쪽에만 간다 — 그림이 무엇인지는 눈에 이미 보인다. */
   label: string
   value: number
-  foot?: string
+  /** 밑에 적을 글. 없으면 안 적는다 — 골드는 적을 것이 없다. */
+  caption?: string
 }) {
   return (
     <div className={`tally__item tally__item--${kind}`}>
@@ -736,10 +758,7 @@ function Tally({
           {value}
         </span>
       </span>
-      <span className="tally__label">
-        {label}
-        {foot !== undefined && <span className="tally__foot"> · {foot}</span>}
-      </span>
+      {caption !== undefined && <span className="tally__label sl-numeral">{caption}</span>}
     </div>
   )
 }
