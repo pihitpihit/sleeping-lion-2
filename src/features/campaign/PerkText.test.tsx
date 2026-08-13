@@ -35,14 +35,13 @@ describe('특혜 글을 그림으로', () => {
   })
 
   /**
-   * 팩에는 실물 표준 덱의 일곱만 있다. **그래도 메달 자리는 지킨다** — 덱 알약이
-   * 그러듯 숫자를 직접 그린다. 글자로 흘리면 그 줄만 그림이 빠져 어긋나 보인다.
+   * 팩에는 실물 표준 덱의 일곱만 있다. `+3`·`+4`는 팩 `+1`의 원반을 빌려 구웠다
+   * (`tools/bake_medallion.py`) — **아홉 값이 모두 그림을 갖는다.**
    */
-  it('그림이 없는 값은 숫자를 직접 그린다', () => {
+  it('구운 값도 메달 그림으로 나온다', () => {
     const html = renderToStaticMarkup(<PerkText text="+3 카드" />)
-    expect(html).not.toContain('attack-modifiers/p3')
-    expect(html).toContain('imark__numeral')
-    expect(html).toContain('+3')
+    expect(html).toContain('attack-modifiers/p3.webp')
+    expect(html).not.toContain('>+3<')
   })
 
   /** DB에서 「불」 열 번 중 다섯이 「이동불가」 속이었다. */

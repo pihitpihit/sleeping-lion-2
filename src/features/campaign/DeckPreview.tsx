@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
   STANDARD_COMPOSITION,
-  cardLabel,
   compositionKinds,
   compositionSize,
   countOf,
@@ -82,15 +81,13 @@ export function DeckPreview({ perks, checked, owner }: Props) {
                  무엇인지 알 수 없다. */
               aria-label={`${specSpeech(spec)} ${count}장`}
             >
-              {medallion ? (
-                <img className="deckview__medallion" src={medallion} alt="" aria-hidden="true" />
-              ) : (
-                /* 그림이 없는 값(+3·+4)은 숫자를 직접 그린다 — 팩이 실물 표준 덱에
-                   있는 일곱만 담고 있다. */
-                <span className="deckview__numeral sl-numeral" aria-hidden="true">
-                  {cardLabel(spec.effect)}
-                </span>
-              )}
+              {/* 아홉 값이 모두 그림을 가지므로 갈래가 없다(2026-08-13). */}
+              <img
+                className="deckview__medallion"
+                src={medallion ?? ''}
+                alt=""
+                aria-hidden="true"
+              />
 
               <span className="deckview__count sl-numeral" aria-hidden="true">
                 ×{count}

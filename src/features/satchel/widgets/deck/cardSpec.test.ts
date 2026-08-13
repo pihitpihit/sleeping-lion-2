@@ -116,9 +116,10 @@ describe('명세 낱말', () => {
     expect(new Set(MARKS.map((m) => m.id)).size).toBe(MARKS.length)
   })
 
-  it('그림이 있는 값은 실물 표준 덱의 일곱뿐이다', () => {
-    const withArt = VALUE_IDS.filter(valueHasArt)
-    expect(withArt).toEqual(['x0', 'm2', 'm1', 'p0', 'p1', 'p2', 'x2'])
+  /** 일곱은 팩에서 왔고 `p3`·`p4`는 그 원반을 빌려 구웠다(2026-08-13). */
+  it('아홉 값이 모두 그림을 갖는다', () => {
+    expect(VALUE_IDS.filter(valueHasArt)).toEqual(VALUE_IDS)
+    expect(valueHasArt('p9')).toBe(false)
   })
 })
 

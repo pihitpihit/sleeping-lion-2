@@ -2,7 +2,6 @@ import {
   FACE_SLOTS,
   SHUFFLE_ICON_URL,
   SOCKET_URL,
-  cardLabel,
   ROLLING_ICON_URL,
   markArt,
   medallionUrl,
@@ -125,13 +124,8 @@ export function CardFace({ card, owner }: { card: Card; owner?: CardOwner | null
 
   return (
     <span className="deck__face" aria-hidden="true">
-      {medallion ? (
-        <img className="deck__medallion" src={medallion} alt="" style={slotStyle} />
-      ) : (
-        <span className="deck__numeral sl-numeral" style={slotStyle}>
-          {cardLabel(spec.effect)}
-        </span>
-      )}
+      {/* 값 메달. 아홉 값이 모두 그림을 가지므로 갈래가 없다(2026-08-13). */}
+      <img className="deck__medallion" src={medallion ?? ''} alt="" style={slotStyle} />
 
       {/*
         덱 주인 — **왼쪽 아래 홈.**

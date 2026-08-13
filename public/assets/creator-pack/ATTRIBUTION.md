@@ -82,6 +82,8 @@
 | `attack-modifiers/p1.webp` | `Attack Modifiers/Plus 1.png` | +1 값 메달 | 변경함 | 〃 |
 | `attack-modifiers/p2.webp` | `Attack Modifiers/Plus 2.png` | +2 값 메달 | 변경함 | 〃 |
 | `attack-modifiers/x2.webp` | `Attack Modifiers/Double Damage.png` | ×2 값 메달 | 변경함 | 〃 |
+| `attack-modifiers/p3.webp` | `Attack Modifiers/Plus 1.png` + `Plus 2.png` + `Minus 1.png` + `Minus 2.png` | 특혜로만 나오는 `+3` 값 메달 | **크게 변경함** | **팩에 `+3` 메달이 없다.** `Plus 1`의 원반에서 숫자와 그 그림자를 지우고(가려진 자리는 나머지 셋에서 색 변환해 채움) 그 위에 Pirata One으로 `+3`을 얹었다. 자리·크기·테·그림자·잉크 밝기는 팩 메달 넷을 화소 단위로 재서 맞췄다. 굽는 스크립트는 `tools/bake_medallion.py` |
+| `attack-modifiers/p4.webp` | 같은 넷 | 같은 까닭의 `+4` 값 메달 | **크게 변경함** | 〃 |
 | `attack-modifiers/socket.webp` | `Attack Modifiers/Attack Modifier - Blank.jpg` | 카드에 파인 둥근 홈 | 변경함 | **왼쪽 아래 홈만 44×44로 오려내고 원 바깥을 알파로 잘라냄.** 축소·자르기·형식 변환뿐이며 다시 그리지 않았다 |
 
 **둥근 홈에 대하여.** 실물 카드는 **양쪽 아래에 홈이 있고** 왼쪽에는 덱 주인

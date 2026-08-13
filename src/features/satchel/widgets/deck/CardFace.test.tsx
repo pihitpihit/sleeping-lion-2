@@ -28,10 +28,11 @@ describe('카드 앞면', () => {
     )
   })
 
-  it('그림이 없는 값(+3)은 숫자를 직접 그린다', () => {
-    const html = renderToStaticMarkup(<CardFace card={card('p3')} />)
-    expect(html).toContain('deck__numeral')
-    expect(html).toContain('+3')
+  /** `+3`·`+4`는 팩에 없어 원반을 빌려 구웠다 — 아홉 값이 모두 그림을 갖는다. */
+  it('구운 값도 메달을 얹는다', () => {
+    expect(renderToStaticMarkup(<CardFace card={card('p3')} />)).toContain(
+      'attack-modifiers/p3.webp',
+    )
   })
 
   /**

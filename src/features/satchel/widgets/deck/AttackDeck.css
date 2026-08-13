@@ -213,13 +213,6 @@
 .deck__medallion,
 .deck__socket,
 .deck__shuffle,
-.deck__numeral {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  height: auto;
-  pointer-events: none;
-}
-
 .deck__medallion {
   filter: drop-shadow(0 1px 2px rgb(0 0 0 / 45%));
 }
@@ -247,25 +240,6 @@
 .deck__shuffle {
   min-width: 9px;
   filter: brightness(0) invert(0.92) sepia(0.35) saturate(0.6);
-}
-
-/*
-  그림이 없는 종류(+3·+4)의 숫자.
-
-  메달 홈 자리를 그대로 쓰되 동그란 바탕을 깔아 다른 카드와 결을 맞춘다.
-*/
-.deck__numeral {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  aspect-ratio: 1;
-  font-size: var(--deck-face);
-  line-height: 1;
-  color: var(--sl-text);
-  background: radial-gradient(circle at 38% 32%, #4a4034, #241d15 72%);
-  border: 1px solid var(--sl-border-strong);
-  border-radius: 50%;
-  box-shadow: inset 0 1px 3px rgb(0 0 0 / 55%);
 }
 
 /* --------------------------------------------------------------------------

@@ -340,10 +340,19 @@ describe('에셋 (Creator Pack)', () => {
     }
   })
 
-  it('퍽으로 넣는 +3·+4는 그림이 없다 — 팩이 실물 카드만 담고 있다', () => {
+  /**
+   * `+3`·`+4`는 팩에 없다 — 실물 표준 덱에 없는 값이라 그렇다. 팩 `+1`의 원반에서
+   * 숫자를 지우고 그 위에 값을 얹어 구웠다(`tools/bake_medallion.py`).
+   */
+  it('퍽으로 넣는 +3·+4도 메달이 있다 — 구워서 담았다', () => {
     for (const id of ['p3', 'p4']) {
-      expect(medallionUrl(id), id).toBeNull()
+      expect(medallionUrl(id), id).toContain(`attack-modifiers/${id}.webp`)
     }
+  })
+
+  /** 값 낱말은 아홉으로 닫혀 있으므로 그림 없는 값이 들어올 길이 없다. */
+  it('모르는 값에는 메달이 없다', () => {
+    expect(medallionUrl('p9')).toBeNull()
   })
 
   it('표식이 붙어도 메달은 값에서 고른다', () => {
