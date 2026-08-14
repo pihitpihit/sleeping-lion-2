@@ -12,7 +12,7 @@ import { LogPanel } from './LogView'
  */
 const NOW = new Date(2026, 7, 13, 22, 32).getTime()
 
-describe('고친 기록', () => {
+describe('로그', () => {
   it('읽는 중과 빈 것과 실패를 저마다 다르게 말한다', () => {
     const said = [
       renderToStaticMarkup(<LogPanel entries={null} failed={false} now={NOW} onClose={() => {}} />),

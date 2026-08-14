@@ -818,12 +818,12 @@ export function CharacterSheet({
       {mine && (
         <div className="char__logrow">
           <button type="button" className="char__logopen" onClick={() => setLogOpen(true)}>
-            고친 기록 보기
+            로그 보기
           </button>
         </div>
       )}
 
-      {logOpen && <LogView characterId={character.id} onClose={() => setLogOpen(false)} />}
+      {logOpen && <LogView source="character" id={character.id} onClose={() => setLogOpen(false)} />}
 
       {/*
         ┌────────────────────────────────────────────────────────────────────┐

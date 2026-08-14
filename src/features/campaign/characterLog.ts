@@ -90,8 +90,15 @@ export function changesOf(before: Character, edits: CharacterEdits): LogChange[]
   return out
 }
 
+/**
+ * 칸 이름.
+ *
+ * **캐릭터와 파티가 한 표를 나눠 쓴다** — 옮기는 규칙(수는 차이까지, 목록은 들고
+ * 난 것만)이 같으므로 두 벌로 두면 언젠가 어긋난다. 이름이 겹치는 칸은 없다.
+ */
 const FIELD_NAME: Readonly<Record<string, string>> = {
   created: '생성',
+  // 캐릭터
   xp: '경험',
   gold: '골드',
   checkmarks: '전투 목표',
@@ -99,7 +106,15 @@ const FIELD_NAME: Readonly<Record<string, string>> = {
   items: '아이템',
   notes: '메모',
   retired: '은퇴',
+  // 파티
+  name: '이름',
+  location: '머무는 곳',
+  reputation: '평판',
+  achievements: '업적',
 }
+
+/** 글자를 담는 칸. 값이 짧아 무엇으로 바뀌었는지 그대로 보여 준다. */
+const TEXT_FIELDS: readonly string[] = ['name', 'location']
 
 function asNumbers(v: unknown): number[] {
   return Array.isArray(v) ? v.filter((n): n is number => typeof n === 'number') : []
@@ -131,6 +146,13 @@ export function describeChange(change: LogChange): string {
     return change.to === true ? '은퇴시켰다' : '다시 나섰다'
   }
 
+  if (TEXT_FIELDS.includes(change.field)) {
+    const from = typeof change.from === 'string' ? change.from.trim() : ''
+    const to = typeof change.to === 'string' ? change.to.trim() : ''
+    if (to === '') return `${name}을 비웠다`
+    return from === '' ? `${name} → ${to}` : `${name} ${from} → ${to}`
+  }
+
   if (change.field === 'notes') {
     const to = typeof change.to === 'string' ? change.to.trim() : ''
     return to === '' ? '메모를 비웠다' : '메모를 고쳤다'
@@ -145,6 +167,17 @@ export function describeChange(change: LogChange): string {
     if (added.length > 0) parts.push(`${added.join('·')}번 켬`)
     if (removed.length > 0) parts.push(`${removed.join('·')}번 끔`)
     return `${name} ${parts.join(', ')}`
+  }
+
+  if (change.field === 'achievements') {
+    const from = asStrings(change.from)
+    const to = asStrings(change.to)
+    const added = to.filter((s) => !from.includes(s))
+    const removed = from.filter((s) => !to.includes(s))
+    const parts: string[] = []
+    if (added.length > 0) parts.push(`${added.join(', ')} 더함`)
+    if (removed.length > 0) parts.push(`${removed.join(', ')} 뺌`)
+    return `${name} ${parts.join(' / ')}`
   }
 
   if (change.field === 'items') {
@@ -222,4 +255,27 @@ function timeOfDay(at: number): string {
   const half = h < 12 ? '오전' : '오후'
   const h12 = h % 12 === 0 ? 12 : h % 12
   return `${half} ${h12}시 ${String(d.getMinutes()).padStart(2, '0')}분`
+}
+
+/* --------------------------------------------------------------------------
+   파티
+   -------------------------------------------------------------------------- */
+
+/**
+ * 파티 기록지에서 바뀐 칸을 기록에 담을 꼴로.
+ *
+ * 캐릭터와 나누지 않는 것은 **칸 목록이 다르기 때문**이다 — 옮기는 규칙
+ * (`describeChange`)만 함께 쓴다.
+ */
+export function campaignChangesOf(
+  before: Record<string, unknown>,
+  edits: Record<string, unknown>,
+): LogChange[] {
+  const out: LogChange[] = []
+  for (const field of ['name', 'location', 'reputation', 'achievements', 'notes']) {
+    const to = edits[field]
+    if (to === undefined) continue
+    out.push({ field, from: before[field], to })
+  }
+  return out
 }

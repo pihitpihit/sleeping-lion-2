@@ -1,5 +1,6 @@
 import { supabase } from '../auth/supabase'
 import { sanitizeCampaign } from './db'
+import type { LogChange, LogEntry, LogReason } from './characterLog'
 import type { Campaign, CampaignEdits } from './types'
 
 /**
@@ -101,4 +102,72 @@ export async function pushEdits(id: string, edits: CampaignEdits): Promise<Campa
     .single()
   if (error) throw error
   return toCampaign(data as Row)
+}
+
+/* --------------------------------------------------------------------------
+   로그 — 누가 언제 무엇을 고쳤나
+   --------------------------------------------------------------------------
+   ┌────────────────────────────────────────────────────────────────────────┐
+   │ **파티는 여럿이 고치므로 캐릭터보다 되짚을 일이 잦다.**                  │
+   └────────────────────────────────────────────────────────────────────────┘
+
+   캐릭터 것과 같은 짜임이다(`characterNet`) — 값만 담고 우리말로 옮기는 것은
+   화면이 한다. **캐릭터와 갈리는 것은 보는 사람이다**: 파티 기록은 파티원이
+   다 본다(`0021`). 공용 장부라 서로의 손질이 보여야 뜻이 있다.
+   -------------------------------------------------------------------------- */
+
+/**
+ * 한 줄 남긴다.
+ *
+ * **값이 들어간 다음에 부르고 실패해도 삼킨다** — 이것 때문에 저장이 되돌아가면
+ * 안 된다(구현 결정 372).
+ */
+export async function writeCampaignLog(
+  campaignId: string,
+  actorId: string,
+  reason: LogReason,
+  changes: readonly LogChange[],
+): Promise<void> {
+  if (changes.length === 0) return
+  try {
+    const { error } = await supabase()
+      .from('campaign_log')
+      .insert({ campaign_id: campaignId, actor_id: actorId, reason, changes })
+    if (error) throw error
+  } catch (cause) {
+    console.error('[log]', cause)
+  }
+}
+
+/** 이 기록지의 로그. 새것이 먼저다. */
+export async function fetchCampaignLog(campaignId: string, limit = 200): Promise<LogEntry[]> {
+  const { data, error } = await supabase()
+    .from('campaign_log')
+    .select('id, at, reason, changes, actor:actor_id (display_name)')
+    .eq('campaign_id', campaignId)
+    .order('at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+
+  return (data ?? []).map((row) => {
+    const r = row as unknown as {
+      id: string
+      at: string
+      reason: string
+      changes: unknown
+      actor: { display_name?: string } | null
+    }
+    return {
+      id: r.id,
+      at: Date.parse(r.at),
+      actorName: r.actor?.display_name ?? '',
+      reason: typeof r.reason === 'string' ? r.reason : 'other',
+      // 서버 값을 믿지 않는다 — 모양이 어긋난 것은 버린다.
+      changes: Array.isArray(r.changes)
+        ? (r.changes as LogChange[]).filter(
+            (c) => c !== null && typeof c === 'object' && typeof c.field === 'string',
+          )
+        : [],
+    }
+  })
 }

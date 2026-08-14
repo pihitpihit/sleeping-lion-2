@@ -10,6 +10,10 @@ import {
   shopPriceModifier,
 } from './reputation'
 import type { Campaign, CampaignEdits } from './types'
+import { useAuthStore } from '../auth/authStore'
+import { campaignChangesOf } from './characterLog'
+import { writeCampaignLog } from './campaignNet'
+import { LogView } from './LogView'
 
 interface Props {
   campaign: Campaign
@@ -52,6 +56,10 @@ interface Props {
  * 덮어쓴다.**
  */
 export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
+  /** 로그 팝업이 열려 있는가. 읽기·편집 어느 쪽에서나 연다. */
+  const [logOpen, setLogOpen] = useState(false)
+  /** 누가 고쳤는지 남기려면 내가 누구인지 알아야 한다. */
+  const userId = useAuthStore((s) => s.session?.userId ?? null)
   const nameId = useId()
   const placeId = useId()
   const noteId = useId()
@@ -100,7 +108,24 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   function save() {
     const edits = partyDiff(campaign, draft)
     // 바뀐 것이 없으면 보내지 않는다. 빈 갱신도 `version`을 올린다.
-    if (Object.keys(edits).length > 0) onEdit(edits)
+    if (Object.keys(edits).length > 0) {
+      onEdit(edits)
+      /*
+        **값이 들어간 다음에 남기고 실패해도 삼킨다**(구현 결정 372). 파티는
+        여럿이 고치므로 「평판이 언제 −3이 됐지」를 물을 데가 있어야 한다.
+      */
+      if (userId !== null) {
+        void writeCampaignLog(
+          campaign.id,
+          userId,
+          'manual',
+          campaignChangesOf(
+            campaign as unknown as Record<string, unknown>,
+            edits as unknown as Record<string, unknown>,
+          ),
+        )
+      }
+    }
     stopEditing()
   }
 
@@ -321,6 +346,18 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
           </>
         )}
       </div>
+
+      {/*
+        **파티 로그는 파티원이 다 본다**(`0021`) — 캐릭터 이력이 주인만 보이는
+        것과 갈린다. 공용 장부라 서로의 손질이 보여야 뜻이 있다.
+      */}
+      <div className="char__logrow">
+        <button type="button" className="char__logopen" onClick={() => setLogOpen(true)}>
+          로그 보기
+        </button>
+      </div>
+
+      {logOpen && <LogView source="campaign" id={campaign.id} onClose={() => setLogOpen(false)} />}
 
       {asking && (
         <ConfirmDialog

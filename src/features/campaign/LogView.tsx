@@ -3,9 +3,10 @@ import { createPortal } from 'react-dom'
 import { useScrollLock } from './useScrollLock'
 import { describeChange, reasonText, whenText, type LogEntry } from './characterLog'
 import { fetchLog } from './characterNet'
+import { fetchCampaignLog } from './campaignNet'
 
 /**
- * 캐릭터 기록 보기 — **화면을 통째로 덮는 팝업.**
+ * 로그 보기 — **화면을 통째로 덮는 팝업.**
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
  * │ **정산이 맞았는지는 나중에야 묻는다.**                                    │
@@ -20,7 +21,16 @@ import { fetchLog } from './characterNet'
  * **바깥 누르기는 두지 않는다**: 화면을 통째로 덮으면서 바깥이랄 것이 없어졌고
  * 남은 빈 자리는 손을 얹어 구르는 자리다(구현 결정 195).
  */
-export function LogView({ characterId, onClose }: { characterId: string; onClose: () => void }) {
+export function LogView({
+  source,
+  id,
+  onClose,
+}: {
+  /** 누구의 로그인가. 캐릭터는 주인만 보고, 파티는 파티원이 다 본다(`0021`). */
+  source: 'character' | 'campaign'
+  id: string
+  onClose: () => void
+}) {
   const [entries, setEntries] = useState<LogEntry[] | null>(null)
   const [failed, setFailed] = useState(false)
   /*
@@ -36,7 +46,8 @@ export function LogView({ characterId, onClose }: { characterId: string; onClose
 
   useEffect(() => {
     let alive = true
-    fetchLog(characterId)
+    const load = source === 'campaign' ? fetchCampaignLog : fetchLog
+    load(id)
       .then((rows) => {
         if (alive) setEntries(rows)
       })
@@ -47,7 +58,7 @@ export function LogView({ characterId, onClose }: { characterId: string; onClose
     return () => {
       alive = false
     }
-  }, [characterId])
+  }, [source, id])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -88,9 +99,9 @@ export function LogPanel({
   onClose: () => void
 }) {
   return (
-    <section className="logview__panel" role="dialog" aria-modal="true" aria-label="고친 기록">
+    <section className="logview__panel" role="dialog" aria-modal="true" aria-label="로그">
       <header className="logview__head">
-        <h2 className="logview__title">고친 기록</h2>
+        <h2 className="logview__title">로그</h2>
         <button type="button" className="logview__close" aria-label="닫기" onClick={onClose}>
           ×
         </button>
