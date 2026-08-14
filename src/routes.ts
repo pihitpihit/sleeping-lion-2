@@ -1,4 +1,5 @@
-import { lazy, type ComponentType } from 'react'
+import { type ComponentType } from 'react'
+import { lazyPage } from './lazyPage'
 
 /**
  * 라우트 표.
@@ -16,15 +17,17 @@ export const HOME_ROUTE = '/'
  * 고지는 marked를, 행낭은 격자·제스처 코드를 끌고 온다.
  */
 export const LAZY_ROUTES: Record<string, ComponentType> = {
-  '/notice': lazy(() =>
+  '/notice': lazyPage(() =>
     import('./features/notice/NoticePage').then((m) => ({ default: m.NoticePage })),
   ),
-  '/satchel': lazy(() =>
+  '/satchel': lazyPage(() =>
     import('./features/satchel/SatchelPage').then((m) => ({ default: m.SatchelPage })),
   ),
   // 로그인은 따로 떨어져 있어야 한다. `demo` 빌드는 이 청크를 아예 받지 않는다.
-  '/login': lazy(() => import('./features/auth/LoginPage').then((m) => ({ default: m.LoginPage }))),
-  '/join': lazy(() => import('./features/net/JoinPage').then((m) => ({ default: m.JoinPage }))),
+  '/login': lazyPage(() =>
+    import('./features/auth/LoginPage').then((m) => ({ default: m.LoginPage })),
+  ),
+  '/join': lazyPage(() => import('./features/net/JoinPage').then((m) => ({ default: m.JoinPage }))),
   // 일지 — 축 ①. 목록과 기록지 한 장을 한 화면이 함께 다룬다.
   /*
     주인장 — 대기자 승인·클래스 수치·특혜 표. 관리자만 볼 수 있고, 서버가 다시
@@ -34,22 +37,26 @@ export const LAZY_ROUTES: Record<string, ComponentType> = {
     `/gate`는 「문지기」이던 시절의 주소이며 남겨 둔다 — 즐겨찾기나 손버릇으로
     치는 사람이 빈 화면을 보지 않게 하는 한 줄이다.
   */
-  '/gate': lazy(() => import('./features/auth/AdminPage').then((m) => ({ default: m.AdminPage }))),
-  '/admin': lazy(() => import('./features/auth/AdminPage').then((m) => ({ default: m.AdminPage }))),
+  '/gate': lazyPage(() =>
+    import('./features/auth/AdminPage').then((m) => ({ default: m.AdminPage })),
+  ),
+  '/admin': lazyPage(() =>
+    import('./features/auth/AdminPage').then((m) => ({ default: m.AdminPage })),
+  ),
   /*
     참조 — 찾아보는 자리. 일지·행낭과 나란한 셋째 문이며 **무엇도 고치지 않는다.**
   */
-  '/reference': lazy(() =>
+  '/reference': lazyPage(() =>
     import('./features/reference/ReferencePage').then((m) => ({ default: m.ReferencePage })),
   ),
-  '/journal': lazy(() =>
+  '/journal': lazyPage(() =>
     import('./features/campaign/JournalPage').then((m) => ({ default: m.JournalPage })),
   ),
   /*
     파티 생성. `/character/new`와 같은 짜임이다 — 파티 id는 uuid라 `new`와
     부딪히지 않고, `routeKey`가 정확히 맞는 것을 앞머리보다 먼저 본다.
   */
-  '/journal/new': lazy(() =>
+  '/journal/new': lazyPage(() =>
     import('./features/campaign/NewPartyPage').then((m) => ({ default: m.NewPartyPage })),
   ),
   /*
@@ -58,7 +65,7 @@ export const LAZY_ROUTES: Record<string, ComponentType> = {
     **주소에 파티가 없다.** 캐릭터가 먼저 서고 파티에는 나중에 들므로
     (2026-08-12, `0015`), 파티를 열쇠로 삼으면 아직 안 든 캐릭터를 열 수가 없다.
   */
-  '/character': lazy(() =>
+  '/character': lazyPage(() =>
     import('./features/campaign/CharacterPage').then((m) => ({ default: m.CharacterPage })),
   ),
   /*
@@ -69,7 +76,7 @@ export const LAZY_ROUTES: Record<string, ComponentType> = {
     `new`가 오는 셈인데 id는 uuid라 부딪히지 않는다 — `routeKey`가 **정확히
     맞는 것을 앞머리보다 먼저** 보므로 이쪽으로 온다.
   */
-  '/character/new': lazy(() =>
+  '/character/new': lazyPage(() =>
     import('./features/campaign/NewCharacterPage').then((m) => ({ default: m.NewCharacterPage })),
   ),
 }

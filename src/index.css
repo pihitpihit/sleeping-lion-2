@@ -224,14 +224,15 @@ body {
   자리에서만 서서히 떠올라, 빈 화면을 고장으로 읽지 않게 한다.
 */
 .pageload {
-  position: fixed;
-  inset: auto 0 calc(var(--sl-safe-bottom) + 1.2rem);
-  display: block;
-  height: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60dvh;
+  margin: 0;
+  color: var(--sl-text-faint);
+  font-size: 0.9rem;
   opacity: 0;
   animation: pageload-in 0.4s ease 0.5s forwards;
-  background: radial-gradient(circle 4px at 50% 50%, var(--sl-gold-dim) 98%, transparent 100%)
-    no-repeat;
 }
 
 @keyframes pageload-in {

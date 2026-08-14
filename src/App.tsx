@@ -112,7 +112,16 @@ export default function App() {
         놓아주기 위해서다(`RouteBoundary`).
       */
       <RouteBoundary route={route}>
-        <Suspense fallback={<span className="pageload" aria-hidden="true" />}>
+        <Suspense
+          fallback={
+            /*
+              **빈 화면은 고장으로 읽힌다.** 조각을 받아 오는 사이가 길어지면
+              어두운 화면만 남는데, 형님은 그것을 「어두운 화면이 뜬다」고 볼
+              수밖에 없다. 0.5초 뒤에 떠올라 느린 자리에서만 보인다.
+            */
+            <p className="pageload">불러오는 중…</p>
+          }
+        >
           <LazyPage key={route} />
         </Suspense>
       </RouteBoundary>
