@@ -257,6 +257,13 @@ describe('그 밖', () => {
     expect((html.match(/char__level--on/g) ?? []).length).toBe(1)
   })
 
+  /** 눈금표 바로 위에 서므로 지금 몇 레벨인지가 표 옆에 늘 있다. */
+  it('레벨 왕관이 눈금표 머리에 선다', () => {
+    const html = render(fixture({ xp: 100 }), true)
+    expect(html).toContain('class="levelchip"')
+    expect(html).toContain('aria-label="레벨 3"')
+  })
+
   it('클래스를 안 골랐어도 그려진다', () => {
     const html = render(fixture({ classIcon: 0 }), true)
     expect(html).toContain('char__badge-empty')

@@ -15,6 +15,7 @@ import {
 import { DeckPreview } from './DeckPreview'
 import { classInfoOf, maxHpFor, useClassStore } from './classStore'
 import { HandCards } from './HandCards'
+import { LevelBadge } from './LevelBadge'
 import { changesOf } from './characterLog'
 import { writeLog } from './characterNet'
 import { LogView } from './LogView'
@@ -363,12 +364,20 @@ export function CharacterSheet({
               **그림 하나로 말한다.** 「손에 드는 카드」라고 적어 두었는데 카드
               두 장에 수가 얹힌 그림이면 그것으로 족하다 — 읽어주는 쪽에는
               `HandCards`가 이미 우리말로 전한다.
+
+              레벨 왕관을 그 왼쪽에 둔다. 눈금표 바로 위이므로 **지금 몇 레벨인지가
+              표 옆에 늘 서 있게** 된다 — 고치는 동안에도 경험치를 따라 바뀐다.
             */}
-            {info !== null && info.handSize > 0 && (
-              <span className="handchip">
-                <HandCards count={info.handSize} />
+            <span className="char__facts">
+              <span className="levelchip">
+                <LevelBadge level={level} />
               </span>
-            )}
+              {info !== null && info.handSize > 0 && (
+                <span className="handchip">
+                  <HandCards count={info.handSize} />
+                </span>
+              )}
+            </span>
           </div>
           <ol className="char__levels" aria-label={`레벨 ${level}`}>
             {XP_THRESHOLDS.map((threshold, index) => {

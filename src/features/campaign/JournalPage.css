@@ -2002,6 +2002,24 @@
   white-space: nowrap;
 }
 
+/* 레벨과 손패가 나란히 선다. 둘 다 「이 캐릭터는 이렇다」를 말하는 값이다. */
+.char__facts {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* 레벨 왕관 — 손패와 같은 테 안에 담아 한 벌로 읽히게 한다. */
+.levelchip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.5rem;
+  font-size: 1.45rem;
+  background: rgb(0 0 0 / 22%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.5rem;
+}
+
 /* 손패 — 그림 하나를 테 안에 담는다. 경험·골드 칸과 같은 결이다. */
 .handchip {
   display: inline-flex;
