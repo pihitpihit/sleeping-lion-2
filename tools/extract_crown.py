@@ -12,6 +12,9 @@
 원본이 37x23px밖에 안 되므로 **밝기를 알파로 옮겨** 가장자리의 반투명을 살린
 뒤 네 배로 늘려 담는다. 이진으로 자르면 계단이 진다.
 
+**이것만으로는 끝이 아니다.** 37x23px이라 조금만 키워도 흐려지므로 여기서 나온
+그림을 `trace_crown.py`가 다시 벡터로 뜬다 — 레포에 담기는 것은 그 SVG다.
+
     쓰는 법:  python3 tools/extract_crown.py "<팩의 Character Ability Cards 폴더>"
 """
 import os
@@ -24,7 +27,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from bakelib import TMP, rgba_of
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = f'{ROOT}/public/assets/creator-pack/general/level-crown.webp'
+# 벡터를 뜨는 밑감이다 — 레포에 담기는 것은 `trace_crown.py`가 만드는 SVG다.
+OUT = '/tmp/_bake/level-crown-raw.webp'
 
 # ── 카드 앞면(413x563)에서 잰 자리. 왕관은 x 187~223, y 65~87이다.
 CROP = (45, 30, 184, 62)   # 폭, 높이, 왼쪽, 위 — 둘레를 조금 넉넉히 잡는다
