@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { MARKS } from '../satchel/widgets/deck/cardSpec'
 import { InlineMark } from '../campaign/InlineMark'
 import { useScrolled } from '../campaign/useScrolled'
+import { DifficultyTable, ScenarioLevelTable } from './ScenarioLevelTable'
 /*
   띠(`topbar`)와 바깥 틀(`journal`)은 이제 일지만의 것이 아니라 **앱의 공통
   껍데기**다 — 생성 화면 둘이 이미 같은 것을 쓰고 있다. 옮겨 담는 것은 쓰는
@@ -33,17 +34,10 @@ interface Section {
   readonly kind: 'condition' | 'amount' | 'element' | 'other'
   readonly title: string
   readonly hint: string
-  /** 처음 펼쳐 두는가. 맨 위 하나만 편다 — 무엇이 든 자리인지 보여 주는 몫이다. */
-  readonly open?: true
 }
 
 const SECTIONS: readonly Section[] = [
-  {
-    kind: 'condition',
-    title: '상태이상',
-    hint: '보정 카드와 특혜 글에 붙는 표식이다.',
-    open: true,
-  },
+  { kind: 'condition', title: '상태이상', hint: '보정 카드와 특혜 글에 붙는 표식이다.' },
   { kind: 'amount', title: '수를 다는 표식', hint: '표식 옆에 몇인지 함께 적힌다.' },
   { kind: 'element', title: '원소', hint: '원소 트래커와 같은 그림·같은 색이다.' },
   { kind: 'other', title: '그 밖', hint: '낱말로 못 적는 것은 「특」 한 글자로 둔다.' },
@@ -72,11 +66,47 @@ export function ReferencePage() {
           있는 것은 표식과 수치, 우리가 적은 말까지다.
         </p>
 
+        {/*
+          시나리오 레벨.
+
+          **표는 화면에만 있는 것이 아니다** — 값은 `rules/scenarioLevel.ts`에서
+          오고, 나중에 전투를 펴거나 시나리오를 정산할 때도 같은 데서 꺼낸다.
+          여기 있는 것은 그 표를 사람이 읽는 모양으로 늘어놓은 것뿐이다.
+        */}
+        <details className="ref__block" open>
+          <summary className="ref__summary">
+            <span className="ref__title">시나리오 레벨</span>
+            <span className="ref__count sl-numeral" aria-hidden="true">
+              0–7
+            </span>
+          </summary>
+
+          <p className="ref__hint">
+            권장 레벨은 <strong>파티 평균 레벨 ÷ 2, 올림</strong>이다. 넷이 다 2레벨이면 1이고,
+            누군가 3레벨이 되어야 2로 오른다. 여기에 난이도만큼 얹는다.
+          </p>
+
+          <div className="ref__papers">
+            <ScenarioLevelTable />
+            <DifficultyTable />
+          </div>
+
+          <ul className="ref__notes">
+            <li>몬스터 스탯 묶음은 언제나 시나리오 레벨과 같다.</li>
+            <li>위험 지형 피해는 함정 피해의 절반이고 내린다(1·1·2·2·3·3·4·4).</li>
+            <li>
+              혼자서 여럿을 굴리면 <strong>몬스터 레벨과 함정 피해만 1씩</strong> 올리고 금화와
+              경험은 그대로 둔다.
+            </li>
+            <li className="ref__src">글룸헤이븐 규칙서 15쪽 · 사자의 턱 규칙서 29쪽 (같은 표)</li>
+          </ul>
+        </details>
+
         {SECTIONS.map((section) => {
           const marks = MARKS.filter((mark) => mark.kind === section.kind)
           if (marks.length === 0) return null
           return (
-            <details key={section.kind} className="ref__block" open={section.open === true}>
+            <details key={section.kind} className="ref__block">
               <summary className="ref__summary">
                 <span className="ref__title">{section.title}</span>
                 <span className="ref__count sl-numeral" aria-hidden="true">

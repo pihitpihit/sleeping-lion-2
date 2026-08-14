@@ -116,3 +116,42 @@
   font-size: 0.88rem;
   color: var(--sl-text);
 }
+
+/* 규칙서 표 둘. 넓으면 나란히 서고 좁으면 위아래로 선다 — 규칙서도 나란히 둔다. */
+.ref__papers {
+  display: flex;
+  /* 짧은 표가 긴 표를 따라 늘어나면 밑이 텅 빈다 — 각자 제 키로 선다. */
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0 0.9rem 0.7rem;
+}
+
+.ref__papers > .gtable {
+  flex: 1 1 17rem;
+  min-width: 0;
+}
+
+/* 표에 안 들어가는 것들. 규칙서도 표 밑에 글로 적는다. */
+.ref__notes {
+  margin: 0 0.9rem 0.9rem;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--sl-text-muted);
+}
+
+.ref__notes > li + li {
+  margin-top: 0.2rem;
+}
+
+/* 어디서 왔는지. 값이 맞는지 되짚을 자리를 남긴다. */
+.ref__src {
+  list-style: none;
+  margin-left: -1.1rem;
+  margin-top: 0.5rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--sl-border);
+  color: var(--sl-text-faint);
+  font-size: 0.76rem;
+}

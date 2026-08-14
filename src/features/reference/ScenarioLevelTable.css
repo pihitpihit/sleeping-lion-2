@@ -1,0 +1,142 @@
+/* ==========================================================================
+   규칙서 흉내 표
+   --------------------------------------------------------------------------
+   ┌────────────────────────────────────────────────────────────────────────┐
+   │ **규칙서를 펴는 대신 여는 화면이므로 같아 보여야 한다.**                 │
+   └────────────────────────────────────────────────────────────────────────┘
+
+   양피지 바탕에 갈색 잉크, 머리글을 위아래로 두른 줄, 칸 경계마다 얹힌 ✕ 매듭.
+   문양은 우리가 그린 도형이라 팩 격리 규칙(1-1) 밖이다.
+   ========================================================================== */
+
+.gtable {
+  /* 잉크와 종이. 앱은 어두운데 이 표만 종이이므로 색이 여기 모여 있어야 한다. */
+  --ink: #4b3620;
+  --rule: #7a5a33;
+  --paper: #e6dabc;
+  --paper-alt: #dccdaa;
+
+  overflow-x: auto;
+  padding: 0.7rem 0.7rem 0.8rem;
+  background: var(--paper);
+  /* 종이의 결. 아주 옅게 깔아야 글자를 안 방해한다. */
+  background-image: radial-gradient(circle at 30% 15%, rgb(255 255 255 / 32%), transparent 62%);
+  border: 1px solid #8a6f45;
+  border-radius: 4px;
+  color: var(--ink);
+}
+
+.gtable + .gtable {
+  margin-top: 0.6rem;
+}
+
+.gtable__t {
+  width: 100%;
+  border-collapse: collapse;
+  /* 칸을 고르게 나눠야 매듭이 경계에 정확히 앉는다. */
+  table-layout: fixed;
+}
+
+.gtable--narrow .gtable__t {
+  max-width: 20rem;
+  margin: 0 auto;
+}
+
+.gtable__cap {
+  padding-bottom: 0.5rem;
+  font-family: var(--sl-font-ko-display);
+  font-size: 1rem;
+  color: var(--ink);
+  caption-side: top;
+}
+
+/* --------------------------------------------------------------------------
+   머리글 — 위아래로 줄을 두르고 경계마다 매듭을 문다
+   -------------------------------------------------------------------------- */
+
+.gtable__t thead th {
+  position: relative;
+  padding: 0.35rem 0.3rem 0.4rem;
+  font-family: var(--sl-font-ko-display);
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--ink);
+  vertical-align: bottom;
+  /* 한글은 낱말 안에서 끊지 않는다 — 「시나리 / 오 / 레벨」이 되면 못 읽는다. */
+  word-break: keep-all;
+  border-top: 1px solid var(--rule);
+  /* 두 겹 줄. `double`이면 브라우저가 알아서 굵기를 나눈다. */
+  border-bottom: 3px double var(--rule);
+}
+
+/*
+  ✕ 매듭.
+
+  **줄과 줄이 만나는 자리를 묶어 둔 표식이다.** 있고 없고가 「규칙서의 표」와
+  「웹 표」를 가른다. 칸 경계에 얹되 밑의 줄을 종이색으로 한 번 지우고 그 위에
+  그린다 — 그러지 않으면 매듭 가운데로 줄이 그대로 지나간다.
+*/
+.gtable__t thead th:not(:last-child)::before,
+.gtable__t thead th:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  width: 16px;
+  height: 11px;
+  background-color: var(--paper);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='11' viewBox='0 0 16 11'%3E%3Cg fill='none' stroke='%237a5a33' stroke-width='1.2' stroke-linecap='round'%3E%3Cpath d='M3.5 2.2 L12.5 8.8'/%3E%3Cpath d='M3.5 8.8 L12.5 2.2'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.gtable__t thead th:not(:last-child)::before {
+  top: -6px;
+}
+
+.gtable__t thead th:not(:last-child)::after {
+  bottom: -7px;
+}
+
+/* --------------------------------------------------------------------------
+   본문
+   -------------------------------------------------------------------------- */
+
+.gtable__t tbody th,
+.gtable__t tbody td {
+  padding: 0.3rem 0.3rem;
+  font-size: 1rem;
+  font-weight: 400;
+  text-align: center;
+  border-top: 1px solid rgb(122 90 51 / 45%);
+}
+
+/* 이름이 든 칸은 글자라 조금 작게 — 수보다 길다. */
+.gtable--narrow .gtable__t tbody th {
+  font-family: var(--sl-font-ko-display);
+  font-size: 0.9rem;
+}
+
+/* 한 줄 걸러 옅게 — 눈이 가로줄을 놓치지 않는다. */
+.gtable__t tbody tr:nth-child(even) {
+  background: var(--paper-alt);
+}
+
+/* 칸을 가르는 세로 실선. 첫 칸 앞에는 긋지 않는다. */
+.gtable__t tbody td {
+  border-left: 1px solid rgb(122 90 51 / 22%);
+}
+
+/*
+  첫 칸은 이름이 길다(「시나리오 레벨」·「매우 어려움」). 고르게 나누면 그 칸만
+  두세 줄이 되므로 조금 더 준다 — 나머지는 알아서 고르게 선다.
+
+  두 칸짜리 표는 사정이 다르다. 이름이 통째로 첫 칸에 들어가므로 절반을 넘게 준다.
+*/
+.gtable:not(.gtable--narrow) .gtable__t thead th:first-child {
+  width: 25%;
+}
+
+.gtable--narrow .gtable__t thead th:first-child {
+  width: 55%;
+}
