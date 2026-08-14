@@ -40,8 +40,7 @@ export function NewCharacterPage() {
     void loadClasses()
   }, [loadClasses])
 
-  /** 겹치는 이름을 막으려면 내가 가진 것을 알아야 한다. */
-  const mine = useMineStore((s) => s.characters)
+  /* 세운 뒤에 목록이 새것이 되도록 미리 읽어 둔다(구현 결정 157). */
   const loadMine = useMineStore((s) => s.load)
   const userId = session?.userId ?? null
   useEffect(() => {
@@ -59,10 +58,8 @@ export function NewCharacterPage() {
   const choices = choicesOf(list)
   const picked = choices[Math.min(index, choices.length - 1)] ?? null
 
-  const problem = checkName(
-    name,
-    mine.map((c) => c.name),
-  )
+  /* **이름이 겹쳐도 된다**(형님이 정했다) — 견줄 목록을 안 넘긴다. */
+  const problem = checkName(name)
   /*
     **아직 아무것도 안 친 것은 잘못이 아니다.** 화면을 열자마자 빨간 글씨가 떠
     있으면 무엇을 잘못한 줄 안다 — 단추는 그대로 잠긴다.

@@ -44,10 +44,13 @@ export function tidyName(raw: string): string {
 /**
  * 세울 수 있는 이름인가. 괜찮으면 `null`.
  *
- * @param taken 이미 가진 캐릭터들의 이름. **대소문자를 가리지 않고** 견준다 —
- *   `Bob`과 `bob`이 한 상에 앉으면 누구의 체력인지 알 수 없다.
+ * @param taken 겹치면 안 되는 이름들. **대소문자를 가리지 않고** 견준다.
+ *   **캐릭터는 안 넘긴다** — 이름이 겹쳐도 된다(형님이 정했다). 값이 담기는 열쇠는
+ *   캐릭터 id이므로(구현 결정 75) 같은 이름이 둘 있어도 체력·덱이 섞이지 않는다;
+ *   상에서 헷갈리는 것은 사람이 알아서 할 몫이다. 파티는 그대로 막는다 — 기록지를
+ *   고를 때 어느 쪽인지 가릴 길이 이름뿐이다.
  */
-export function checkName(raw: string, taken: readonly string[]): NameProblem | null {
+export function checkName(raw: string, taken: readonly string[] = []): NameProblem | null {
   const name = tidyName(raw)
   if (name === '') return 'empty'
   // 다듬은 뒤에 센다. 앞뒤 공백으로 자릿수를 채우는 것을 막는다.

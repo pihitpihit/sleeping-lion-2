@@ -21,6 +21,8 @@ import { changesOf } from './characterLog'
 import { writeLog } from './characterNet'
 import { LogView } from './LogView'
 import { PencilIcon } from './PencilIcon'
+import { Shop } from './Shop'
+import type { ShopItem } from './shopNet'
 import { useHiddenAbove } from './useHiddenAbove'
 import { graceText } from './grace'
 import { PerkText } from './PerkText'
@@ -175,6 +177,8 @@ export function CharacterSheet({
   const [asking, setAsking] = useState<'discard' | 'remove' | null>(null)
   /** 기록 팝업이 열려 있는가. 읽기·편집 어느 쪽에서나 열 수 있다. */
   const [logOpen, setLogOpen] = useState(false)
+  /** 상점이 열려 있는가. **편집 중에만 연다** — 사는 것은 값을 고치는 일이다. */
+  const [shopOpen, setShopOpen] = useState(false)
 
   /**
    * 화면에 그리는 값.
@@ -783,6 +787,34 @@ export function CharacterSheet({
 
           {shown.items.length === 0 && !editing && <p className="char__note">아직 없다.</p>}
 
+          {/*
+            상점 — **사는 일은 고르는 일이라 늘어놓을 자리가 필요하다.**
+
+            여기 칸은 「무엇을 들었나」를 적는 자리다. 무엇을 살 수 있나는 그보다
+            넓게 펴 놓고 값을 견주는 일이므로 팝업으로 낸다(형님이 정했다).
+          */}
+          {editing && (
+            <div className="char__shoprow">
+              <button type="button" className="char__shopopen" onClick={() => setShopOpen(true)}>
+                상점
+              </button>
+            </div>
+          )}
+
+          {/*
+            상점 — **사는 일은 고르는 일이라 늘어놓을 자리가 필요하다.**
+
+            이 칸은 「무엇을 들었나」를 적는 자리다. 무엇을 살 수 있나는 그보다
+            넓게 펴 놓고 값을 견주는 일이므로 팝업으로 낸다(형님이 정했다).
+          */}
+          {editing && (
+            <div className="char__shoprow">
+              <button type="button" className="char__shopopen" onClick={() => setShopOpen(true)}>
+                상점
+              </button>
+            </div>
+          )}
+
           {editing && (
             <div className="sheet__add">
               <input
@@ -870,6 +902,25 @@ export function CharacterSheet({
 
       {logOpen && (
         <LogView source="character" id={character.id} onClose={() => setLogOpen(false)} />
+      )}
+
+      {/*
+        산 것은 **초안에 담긴다** — 저장을 눌러야 남는 것은 시트의 다른 칸과 같다
+        (구현 결정 165). 잘못 눌러도 취소하면 없던 일이 된다.
+
+        골드는 **초안의 값**을 넘긴다: 방금 산 것이 그 자리에서 빠져야 다음 것을
+        살 수 있는지 알 수 있다.
+      */}
+      {shopOpen && (
+        <Shop
+          gold={shown.gold}
+          userId={character.ownerId}
+          onBuy={(item: ShopItem) => {
+            set('items', [...draft.items, item.name])
+            set('gold', Math.max(0, draft.gold - item.cost))
+          }}
+          onClose={() => setShopOpen(false)}
+        />
       )}
 
       {/*
