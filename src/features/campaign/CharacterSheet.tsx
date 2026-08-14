@@ -172,7 +172,6 @@ export function CharacterSheet({
 
   const [wantsEdit, setWantsEdit] = useState(false)
   const [draft, setDraft] = useState<SheetDraft>(() => draftOf(character))
-  const [newItem, setNewItem] = useState('')
   /** 무엇을 물으려고 팝업을 띄웠는가. */
   const [asking, setAsking] = useState<'discard' | 'remove' | null>(null)
   /** 기록 팝업이 열려 있는가. 읽기·편집 어느 쪽에서나 열 수 있다. */
@@ -204,13 +203,11 @@ export function CharacterSheet({
 
   function startEditing() {
     setDraft(draftOf(character))
-    setNewItem('')
     setWantsEdit(true)
   }
 
   function stopEditing() {
     setWantsEdit(false)
-    setNewItem('')
     setAsking(null)
   }
 
@@ -300,13 +297,6 @@ export function CharacterSheet({
 
   const perkTable = useClassStore((s) => s.perks)
   const rows = perkRowsOf(info === null ? [] : (perkTable[info.id] ?? []))
-
-  function addItem() {
-    const value = newItem.trim()
-    if (value === '') return
-    set('items', [...draft.items, value])
-    setNewItem('')
-  }
 
   return (
     <div
@@ -788,41 +778,19 @@ export function CharacterSheet({
           {shown.items.length === 0 && !editing && <p className="char__note">아직 없다.</p>}
 
           {/*
-            상점 — **사는 일은 고르는 일이라 늘어놓을 자리가 필요하다.**
+            상점 — **아이템이 들어오는 길은 여기 하나뿐이다.**
 
-            이 칸은 「무엇을 들었나」를 적는 자리다. 무엇을 살 수 있나는 그보다
-            넓게 펴 놓고 값을 견주는 일이므로 팝업으로 낸다(형님이 정했다).
+            손으로 적는 칸이 따로 있었는데 걷었다(형님이 정했다). 창구를 둘로 두면
+            어긋난다(구현 결정 247과 같은 결) — 상점을 거치면 **이름이 목록의 것과
+            같고 골드가 함께 빠진다.** 손으로 치면 그 둘이 다 새어 나간다.
+
+            지우는 것은 여기 목록에서 그대로 한다 — 파는 것이 아니라 잃거나 쓴 것을
+            치우는 자리라 골드가 돌아오지 않는다.
           */}
           {editing && (
             <div className="char__shoprow">
               <button type="button" className="char__shopopen" onClick={() => setShopOpen(true)}>
                 상점
-              </button>
-            </div>
-          )}
-
-          {editing && (
-            <div className="sheet__add">
-              <input
-                className="sheet__input"
-                value={newItem}
-                placeholder="아이템을 적는다"
-                aria-label="새 아이템"
-                onChange={(e) => setNewItem(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addItem()
-                  }
-                }}
-              />
-              <button
-                type="button"
-                className="sheet__add-button"
-                disabled={newItem.trim() === ''}
-                onClick={addItem}
-              >
-                더하기
               </button>
             </div>
           )}
