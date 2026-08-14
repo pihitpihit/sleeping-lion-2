@@ -50,6 +50,7 @@ describe('열람 모드', () => {
     expect(html).not.toContain('sheet__save')
   })
 
+  /** 글자가 아니라 연필 그림이지만 **읽어주는 이름은 그대로** 「고치기」다. */
   it('고치기 문이 있다', () => {
     expect(render(fixture())).toContain('고치기')
   })

@@ -19,6 +19,7 @@ import { LevelBadge } from './LevelBadge'
 import { changesOf } from './characterLog'
 import { writeLog } from './characterNet'
 import { LogView } from './LogView'
+import { PencilIcon } from './PencilIcon'
 import { PerkText } from './PerkText'
 import { perkRowsOf } from './perks'
 import { ownerBadge } from '../satchel/perkSource'
@@ -356,10 +357,7 @@ export function CharacterSheet({
             모인다.
           */}
           <div className="char__blockhead">
-            <h3 className="sheet__label">
-              레벨
-              <span className="char__hint"> — 경험치가 정한다</span>
-            </h3>
+            <h3 className="sheet__label">레벨</h3>
             {/*
               **그림 하나로 말한다.** 「손에 드는 카드」라고 적어 두었는데 카드
               두 장에 수가 얹힌 그림이면 그것으로 족하다 — 읽어주는 쪽에는
@@ -951,20 +949,4 @@ function markClass(move: Move): string {
   if (move === 'up') return ' is-up'
   if (move === 'down') return ' is-down'
   return ''
-}
-
-/** 고치기 단추의 연필. 직접 그린 도형이다(Creator Pack 격리 규칙 밖). */
-function PencilIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path
-        d="M4 20h4L19.2 8.8a2.1 2.1 0 0 0 0-3L18.2 4.8a2.1 2.1 0 0 0-3 0L4 16v4Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.9"
-        strokeLinejoin="round"
-      />
-      <path d="M14.4 5.6 18.4 9.6" fill="none" stroke="currentColor" strokeWidth="1.9" />
-    </svg>
-  )
 }

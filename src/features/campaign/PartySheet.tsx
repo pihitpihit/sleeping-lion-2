@@ -1,5 +1,6 @@
 import { useId, useState } from 'react'
 import { ConfirmDialog } from '../satchel/board/ConfirmDialog'
+import { PencilIcon } from './PencilIcon'
 import { draftOf, isDirty, partyDiff, type PartyDraft } from './partyDraft'
 import {
   MAX_REPUTATION,
@@ -294,8 +295,14 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
           readOnly ? (
             <p className="sheet__locked">서버에 닿지 못해 지금은 고칠 수 없다.</p>
           ) : (
-            <button type="button" className="sheet__edit" onClick={startEditing}>
-              고치기
+            <button
+              type="button"
+              className="sheet__edit"
+              aria-label="고치기"
+              title="고치기"
+              onClick={startEditing}
+            >
+              <PencilIcon />
             </button>
           )
         ) : (
