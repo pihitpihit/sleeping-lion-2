@@ -42,8 +42,20 @@ HOLE_TOP = 7.5
 HOLE_DX, HOLE_Y = 19.5, 31   # 아래로 벌어진 두 끝
 BODYTIP_Y = 20               # 몸통이 홈 안으로 솟은 끝
 
-# 어깨의 눈 — 왼쪽 것만 적고 오른쪽은 거울로 뜬다.
-EYE = dict(top=(10, 40), bottom=(19, 51), out=(5, 48), inn=(20, 42))
+# 어깨의 삼각 홈.
+#
+# ┌──────────────────────────────────────────────────────────────────────────┐
+# │ **가운데 홈과 테 사이의 폭만큼 세 변에서 물려 짓는다.**                    │
+# └──────────────────────────────────────────────────────────────────────────┘
+#
+# 어깨는 세 선이 두르는 삼각꼴이다 — 짧은 곡선(끝→골), 옆면, 그리고 **가운데
+# 곡선을 골 너머로 늘인 선**.
+#
+# **두 변만 물린다.** 짧은 곡선과 옆면에서는 테와 같은 폭만큼 안으로 밀지만,
+# **밑변은 늘인 곡선 위에 그대로 얹는다** — 형님이 짚은 자리다. 밑변까지 밀면
+# 홈이 위로 들려 어깨가 두꺼워지고, 무엇보다 가운데 곡선과 한 결로 안 읽힌다.
+MARGIN = 5.0        # 홈과 테 사이의 폭. 가운데 갈매기 홈과 같게 둔다
+BASE_RUN = 26       # 골에서 밑변을 얼마나 늘일 것인가
 
 
 def sag(a, b, amount):
@@ -86,14 +98,53 @@ def chevron():
             f"L {CX-HOLE_DX:.1f} {HOLE_Y:.1f} Z")
 
 
+def _offset(a, b, inside, m):
+    """`a`→`b` 선을 `inside`가 있는 쪽으로 `m`만큼 민다."""
+    dx, dy = b[0]-a[0], b[1]-a[1]
+    n = (dx*dx + dy*dy) ** 0.5
+    nx, ny = -dy/n, dx/n
+    if (inside[0]-a[0])*nx + (inside[1]-a[1])*ny < 0:
+        nx, ny = -nx, -ny
+    return ((a[0]+nx*m, a[1]+ny*m), (b[0]+nx*m, b[1]+ny*m))
+
+
+def _cross(l1, l2):
+    """두 선이 만나는 점."""
+    (x1, y1), (x2, y2) = l1
+    (x3, y3), (x4, y4) = l2
+    d = (x1-x2)*(y3-y4) - (y1-y2)*(x3-x4)
+    a = x1*y2 - y1*x2
+    b = x3*y4 - y3*x4
+    return ((a*(x3-x4) - (x1-x2)*b)/d, (a*(y3-y4) - (y1-y2)*b)/d)
+
+
 def eye(sign):
-    """어깨의 눈. 왼쪽 위에서 오른쪽 아래로 누운 씨앗 꼴이다."""
+    """어깨의 삼각 홈. 세 변에서 같은 폭만큼 물려 짓는다."""
     def px(p):
         return (CX + sign*(CX - p[0]), p[1])
-    t, b, o, i = (px(EYE[k]) for k in ('top', 'bottom', 'out', 'inn'))
-    return (f"M {t[0]:.1f} {t[1]:.1f} "
-            f"Q {o[0]:.1f} {o[1]:.1f} {b[0]:.1f} {b[1]:.1f} "
-            f"Q {i[0]:.1f} {i[1]:.1f} {t[0]:.1f} {t[1]:.1f} Z")
+
+    tip = px((CX - TIP_DX, TIP_Y))
+    val = px((CX - VALLEY_DX, VALLEY_Y))
+    body = px((CX - BODY_DX, BODY_Y))
+    apex = (CX, APEX_Y)
+
+    # 가운데 곡선이 골에서 나아가던 방향 — 그대로 늘여 밑변을 삼는다.
+    ctrl = px(((CX + (CX-VALLEY_DX))/2, (APEX_Y + VALLEY_Y)/2 + 2*LONG_SAG))
+    dx, dy = val[0]-ctrl[0], val[1]-ctrl[1]
+    n = (dx*dx + dy*dy) ** 0.5
+    far = (val[0] + dx/n*BASE_RUN, val[1] + dy/n*BASE_RUN)
+
+    inside = ((tip[0] + val[0] + far[0])/3, (tip[1] + val[1] + far[1])/3)
+    upper = _offset(tip, val, inside, MARGIN)     # 짧은 곡선 쪽
+    outer = _offset(tip, body, inside, MARGIN)    # 옆면 쪽
+    base = (val, far)                             # 늘인 곡선 = 밑변. 밀지 않는다
+
+    p1 = _cross(upper, outer)
+    p2 = _cross(upper, base)
+    p3 = _cross(outer, base)
+    del apex
+    return (f"M {p1[0]:.1f} {p1[1]:.1f} L {p2[0]:.1f} {p2[1]:.1f} "
+            f"L {p3[0]:.1f} {p3[1]:.1f} Z")
 
 
 def path():
