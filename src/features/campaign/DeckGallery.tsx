@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { useScrollLock } from './useScrollLock'
 import { CardFace, type CardOwner } from '../satchel/widgets/deck/CardFace'
 import {
   CARD_FACE_URL,
@@ -50,6 +51,9 @@ interface Props {
  * **무엇이 늘어서는가**다. 갈라 두면 그쪽만 통째로 덮인다.
  */
 export function DeckGallery({ composition, owner, onClose }: Props) {
+  // 떠 있는 동안 뒤쪽 화면이 따라 구르지 않게 붙들어 둔다.
+  useScrollLock()
+
   return createPortal(
     /*
       **바깥을 눌러 닫는 길은 두지 않는다.** 화면을 통째로 덮으면서 바깥이랄 것이

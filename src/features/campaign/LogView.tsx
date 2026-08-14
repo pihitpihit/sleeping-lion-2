@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useScrollLock } from './useScrollLock'
 import { describeChange, reasonText, whenText, type LogEntry } from './characterLog'
 import { fetchLog } from './characterNet'
 
@@ -29,6 +30,9 @@ export function LogView({ characterId, onClose }: { characterId: string; onClose
     되는 자리다 — 닫았다 열면 다시 잰다.
   */
   const [now] = useState(() => Date.now())
+
+  // 떠 있는 동안 뒤쪽 시트가 따라 구르지 않게 붙들어 둔다.
+  useScrollLock()
 
   useEffect(() => {
     let alive = true
