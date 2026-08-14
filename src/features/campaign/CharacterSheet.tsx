@@ -1,4 +1,5 @@
-import { useEffect, useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { ConfirmDialog } from '../satchel/board/ConfirmDialog'
 import {
   CHECK_MARK_URL,
@@ -20,6 +21,7 @@ import { changesOf } from './characterLog'
 import { writeLog } from './characterNet'
 import { LogView } from './LogView'
 import { PencilIcon } from './PencilIcon'
+import { useHiddenAbove } from './useHiddenAbove'
 import { PerkText } from './PerkText'
 import { perkRowsOf } from './perks'
 import { ownerBadge } from '../satchel/perkSource'
@@ -53,6 +55,17 @@ interface Props {
    * 두 단으로 선다. 머리도 이때만 위에 붙어 따라온다.
    */
   standalone?: boolean
+  /**
+   * 띠에 요약을 그릴 자리.
+   *
+   * **가려진 값을 띠가 대신 말한다**(형님이 짚었다). 화면 밖으로 나간 칸의 수를
+   * 띠에 작은 배지로 세운다 — 레벨·손패·경험·골드.
+   *
+   * 왜 자리만 받아 와서 여기서 그리는가: **고치는 동안의 값은 초안이 들고 있고**
+   * 그것은 이 컴포넌트 안에 있다. 페이지가 저장된 값으로 배지를 그리면 골드를
+   * 120에서 340으로 옮겨 놓고 내려갔을 때 띠만 120이라 말한다.
+   */
+  chipSlot?: HTMLElement | null
 }
 
 /**
@@ -112,8 +125,18 @@ export function CharacterSheet({
   standalone = false,
   onEdit,
   onRemove,
+  chipSlot = null,
 }: Props) {
   const noteId = useId()
+
+  /*
+    띠가 대신 말할 두 칸. 레벨 눈금(레벨·손패)과 값 줄(경험·골드)이며, **각자
+    가려질 때 각자 뜬다** — 한꺼번에 띄우면 아직 보이는 값을 띠가 또 적는다.
+  */
+  const levelRef = useRef<HTMLElement>(null)
+  const tallyRef = useRef<HTMLDivElement>(null)
+  const levelHidden = useHiddenAbove(levelRef)
+  const tallyHidden = useHiddenAbove(tallyRef)
 
   /** 고칠 수 있는 사람인가. 남의 것과 오프라인은 편집으로 들어갈 수조차 없다. */
   const canEdit = mine && !offline
@@ -270,6 +293,65 @@ export function CharacterSheet({
         .join(' ')}
     >
       {/* ------------------------------------------------------------------
+          띠에 앉는 요약
+          ------------------------------------------------------------------
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **가려진 칸의 수를 띠가 대신 말한다.**                            │
+          └──────────────────────────────────────────────────────────────────┘
+
+          긴 시트라 조금만 내려도 레벨과 값이 화면 밖으로 나간다 — 그것을 보려고
+          도로 올라갔다 내려오게 하지 않는다(형님이 짚었다).
+
+          **그림 안의 수를 그냥 줄이지 않는다.** 왕관 안의 수는 이 크기에서
+          읽히지 않으므로 그림만 내고 수는 옆에 세운다(`bare`) — 형님이 말한
+          「(기호) (수치)」 꼴이다.
+
+          자리는 페이지가 띠 안에 내주고(`chipSlot`) 그리는 것은 여기서 한다.
+          **초안이 여기 있기 때문**이다: 고치는 중이면 고치는 값이 그대로 뜬다.
+          ------------------------------------------------------------------ */}
+      {chipSlot !== null &&
+        (levelHidden || tallyHidden) &&
+        createPortal(
+          <>
+            {levelHidden && (
+              <>
+                <span className="tchip">
+                  <LevelBadge level={level} bare />
+                  <b className="tchip__n sl-numeral" aria-hidden="true">
+                    {level}
+                  </b>
+                </span>
+                {info !== null && info.handSize > 0 && (
+                  <span className="tchip">
+                    <HandCards count={info.handSize} bare />
+                    <b className="tchip__n sl-numeral" aria-hidden="true">
+                      {info.handSize}
+                    </b>
+                  </span>
+                )}
+              </>
+            )}
+            {tallyHidden && (
+              <>
+                <span className="tchip" role="img" aria-label={`경험 ${shown.xp}`}>
+                  <img className="tchip__i" src={XP_STAR_URL} alt="" aria-hidden="true" />
+                  <b className="tchip__n sl-numeral" aria-hidden="true">
+                    {shown.xp}
+                  </b>
+                </span>
+                <span className="tchip tchip--coin" role="img" aria-label={`골드 ${shown.gold}`}>
+                  <Coin />
+                  <b className="tchip__n sl-numeral" aria-hidden="true">
+                    {shown.gold}
+                  </b>
+                </span>
+              </>
+            )}
+          </>,
+          chipSlot,
+        )}
+
+      {/* ------------------------------------------------------------------
           이름과 클래스 표식
           ------------------------------------------------------------------
           ┌──────────────────────────────────────────────────────────────────┐
@@ -345,7 +427,7 @@ export function CharacterSheet({
           사람이 정할 것이 아니다. 지나온 눈금에 표를 내어 어디까지 왔는지
           보인다.
           ------------------------------------------------------------------ */}
-        <section className="sheet__block">
+        <section className="sheet__block" ref={levelRef}>
           {/*
             ┌──────────────────────────────────────────────────────────────┐
             │ **손패는 여기 선다 — 클래스 수치라 레벨표와 한 자리다.**       │
@@ -433,7 +515,7 @@ export function CharacterSheet({
           캐럿은 안쪽이 한 칸, 바깥쪽이 여러 칸이다: 골드를 8에서 340으로 옮기는
           일이 있으므로 한 칸짜리만으로는 손이 남아나지 않는다.
           ------------------------------------------------------------------ */}
-        <div className="tally">
+        <div className="tally" ref={tallyRef}>
           <Tally
             kind="xp"
             label="경험"

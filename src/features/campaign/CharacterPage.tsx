@@ -23,6 +23,9 @@ import './JournalPage.css'
  * 파티에 들었으면 그 기록지로 가는 문을 내고, 안 들었으면 **드는 자리**를 낸다.
  */
 export function CharacterPage() {
+  /** 띠 안의 요약 자리. 시트가 여기에 배지를 그린다. */
+  const [chipSlot, setChipSlot] = useState<HTMLElement | null>(null)
+
   const session = useAuthStore((s) => s.session)
   const [id, setId] = useState(() => characterIdFromHash(window.location.hash))
   const scrolled = useScrolled()
@@ -125,6 +128,12 @@ export function CharacterPage() {
                     </>
                   )}
                 </span>
+                {/*
+                  **가려진 값이 여기로 흡수된다.** 자리만 내주고 그리는 것은
+                  시트가 한다(`chipSlot`) — 고치는 중의 값은 시트의 초안에 있다.
+                  배지가 서면 부제 줄은 물러난다(`:has`, `JournalPage.css`).
+                */}
+                <span className="topbar__chips" ref={setChipSlot} />
               </span>
             </>
           )}
@@ -182,6 +191,7 @@ export function CharacterPage() {
             key={character.id}
             character={character}
             standalone
+            chipSlot={chipSlot}
             mine={mine}
             onEdit={(edits) => void edit(edits)}
             onRemove={() => {

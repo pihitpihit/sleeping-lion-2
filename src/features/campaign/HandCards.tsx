@@ -30,7 +30,7 @@ import './HandCards.css'
  * 수는 SVG 안에 넣지 않고 **위에 얹는다** — 그래야 `sl-numeral`(Pirata One)이
  * 그대로 먹고 색도 CSS가 정한다.
  */
-export function HandCards({ count }: { count: number }) {
+export function HandCards({ count, bare = false }: { count: number; bare?: boolean }) {
   // 한 화면에 여럿 설 수 있다(생성 화면의 캐러셀) — 열쇠를 가른다. 콜론은 뺀다.
   const lift = `hand-lift-${useId().replace(/:/g, '')}`
 
@@ -72,9 +72,12 @@ export function HandCards({ count }: { count: number }) {
           />
         </g>
       </svg>
-      <span className="hand__n sl-numeral" aria-hidden="true">
-        {count}
-      </span>
+      {/* 작게 설 때는 수를 밖에 적는다 — `LevelBadge`와 같은 손질. */}
+      {!bare && (
+        <span className="hand__n sl-numeral" aria-hidden="true">
+          {count}
+        </span>
+      )}
     </span>
   )
 }

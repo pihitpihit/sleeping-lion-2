@@ -20,7 +20,7 @@ const CROWN_URL = `${import.meta.env.BASE_URL}assets/creator-pack/general/level-
  * 크기는 부모가 글자 크기로 정한다. 왕관도 수도 그것을 따라 함께 큰다 —
  * 두 값을 따로 주면 어느 한쪽만 고쳤을 때 수가 왕관 밖으로 나간다.
  */
-export function LevelBadge({ level }: { level: number }) {
+export function LevelBadge({ level, bare = false }: { level: number; bare?: boolean }) {
   return (
     <span className="levelbadge" role="img" aria-label={`레벨 ${level}`}>
       <span
@@ -28,9 +28,15 @@ export function LevelBadge({ level }: { level: number }) {
         aria-hidden="true"
         style={{ '--crown': `url(${CROWN_URL})` } as React.CSSProperties}
       />
-      <span className="levelbadge__n sl-numeral" aria-hidden="true">
-        {level}
-      </span>
+      {/*
+        **띠에서는 수를 밖에 적는다.** 왕관 안의 수는 24px 남짓으로 줄면 읽히지
+        않는다 — 그때는 그림만 내고 수는 옆에 나란히 세운다(`bare`).
+      */}
+      {!bare && (
+        <span className="levelbadge__n sl-numeral" aria-hidden="true">
+          {level}
+        </span>
+      )}
     </span>
   )
 }
