@@ -271,6 +271,32 @@ function ClassCard({ choice, perks }: { choice: Choice; perks: readonly ClassPer
 
       {choice.handSize > 0 && <HandCards count={choice.handSize} />}
 
+      {/*
+        **레벨표가 특혜보다 위에 선다**(형님이 짚었다). 클래스를 고를 때 먼저 묻는
+        것은 "얼마나 단단한가"이고, 특혜는 그다음에 읽는 긴 글이다 — 긴 것이
+        앞에 서면 짧고 굵은 것이 화면 밖으로 밀린다.
+      */}
+      {choice.hp.length === 9 && (
+        <ol className="classcard__levels" aria-label="레벨별 경험과 최대 체력">
+          {choice.hp.map((hp, i) => (
+            <li key={i} className="classcard__level">
+              <span className="classcard__level-n sl-numeral" aria-hidden="true">
+                {i + 1}
+              </span>
+              <span className="classcard__level-hp sl-numeral" aria-hidden="true">
+                {hp}
+              </span>
+              <span className="classcard__level-xp sl-numeral" aria-hidden="true">
+                {XP_THRESHOLDS[i]}
+              </span>
+              <span className="sheet__hidden">
+                레벨 {i + 1}, 최대 체력 {hp}, 경험 {XP_THRESHOLDS[i]}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+
       {rows.length > 0 && (
         <div className="classcard__perks">
           <h3 className="classcard__perks-title">특혜</h3>
@@ -293,27 +319,6 @@ function ClassCard({ choice, perks }: { choice: Choice; perks: readonly ClassPer
             ))}
           </ul>
         </div>
-      )}
-
-      {choice.hp.length === 9 && (
-        <ol className="classcard__levels" aria-label="레벨별 최대 체력">
-          {choice.hp.map((hp, i) => (
-            <li key={i} className="classcard__level">
-              <span className="classcard__level-n sl-numeral" aria-hidden="true">
-                {i + 1}
-              </span>
-              <span className="classcard__level-hp sl-numeral" aria-hidden="true">
-                {hp}
-              </span>
-              <span className="classcard__level-xp sl-numeral" aria-hidden="true">
-                {XP_THRESHOLDS[i]}
-              </span>
-              <span className="sheet__hidden">
-                레벨 {i + 1}, 최대 체력 {hp}, 경험 {XP_THRESHOLDS[i]}
-              </span>
-            </li>
-          ))}
-        </ol>
       )}
     </article>
   )
