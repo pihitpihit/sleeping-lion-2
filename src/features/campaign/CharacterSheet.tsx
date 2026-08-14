@@ -17,7 +17,7 @@ import { DeckPreview } from './DeckPreview'
 import { classInfoOf, maxHpFor, useClassStore } from './classStore'
 import { HandCards } from './HandCards'
 import { LevelBadge } from './LevelBadge'
-import { changesOf } from './characterLog'
+import { splitByShop, type Purchase } from './characterLog'
 import { writeLog } from './characterNet'
 import { LogView } from './LogView'
 import { PencilIcon } from './PencilIcon'
@@ -178,6 +178,13 @@ export function CharacterSheet({
   const [logOpen, setLogOpen] = useState(false)
   /** 상점이 열려 있는가. **편집 중에만 연다** — 사는 것은 값을 고치는 일이다. */
   const [shopOpen, setShopOpen] = useState(false)
+  /**
+   * 이번 편집 동안 상점에서 산 것들.
+   *
+   * **로그를 두 줄로 가르려고 들고 있는다**(`splitByShop`) — 산 만큼은 「상점
+   * 거래」로, 나머지는 「직접 수정」으로 남는다. 값 자체는 초안이 이미 들고 있다.
+   */
+  const [bought, setBought] = useState<Purchase[]>([])
 
   /**
    * 화면에 그리는 값.
@@ -203,11 +210,13 @@ export function CharacterSheet({
 
   function startEditing() {
     setDraft(draftOf(character))
+    setBought([])
     setWantsEdit(true)
   }
 
   function stopEditing() {
     setWantsEdit(false)
+    setBought([])
     setAsking(null)
   }
 
@@ -221,11 +230,16 @@ export function CharacterSheet({
         저장이 되돌아가지 않는다 — 기록은 읽어 보는 것이지 정본이 아니다.
       */
       /*
-        **시트에서 고친 것은 언제나 「직접 수정」이다.** 사람이 고를 것이 아니라
-        경로가 정하는 것이다 — 시나리오 정산으로 들어오는 길은 따로 난다(형님이
-        짚었다). 그래서 고르는 자리를 두지 않는다.
+        **한 번 저장했다고 한 가지 일을 한 것이 아니다.** 상점에서 사고 나서
+        경험치도 손으로 올린 채 저장할 수 있다 — 한 줄로 남기면 골드가 왜 줄었는지
+        알 수 없으므로 갈라 남긴다(형님이 정했다).
+
+        고르는 자리는 여전히 없다. **경로가 정한다**(구현 결정 380) — 상점을 거쳐
+        온 것만 「상점 거래」가 되고 나머지는 「직접 수정」이다.
       */
-      void writeLog(character.id, character.ownerId, 'manual', changesOf(character, edits))
+      const { shop, manual } = splitByShop(character, edits, bought)
+      if (shop.length > 0) void writeLog(character.id, character.ownerId, 'shop', shop)
+      if (manual.length > 0) void writeLog(character.id, character.ownerId, 'manual', manual)
     }
     stopEditing()
   }
@@ -872,6 +886,7 @@ export function CharacterSheet({
           onBuy={(item: ShopItem) => {
             set('items', [...draft.items, item.name])
             set('gold', Math.max(0, draft.gold - item.cost))
+            setBought((b) => [...b, { name: item.name, cost: item.cost }])
           }}
           onClose={() => setShopOpen(false)}
         />

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { LOG_REASONS, changesOf, describeChange, reasonText, whenText } from './characterLog'
+import {
+  LOG_REASONS,
+  changesOf,
+  describeChange,
+  reasonText,
+  whenText,
+  splitByShop,
+} from './characterLog'
 import type { Character } from './types'
 
 function fixture(over: Partial<Character> = {}): Character {
@@ -139,5 +146,42 @@ describe('고친 까닭', () => {
   /** 서버 값을 믿지 않는다 — 모르는 것이 와도 화면이 서야 한다. */
   it('모르는 까닭은 기타로 읽는다', () => {
     expect(reasonText('무엇인가')).toBe(reasonText('other'))
+  })
+})
+
+describe('splitByShop', () => {
+  const base = fixture({ gold: 200, items: ['낡은 검'] })
+
+  it('산 것이 없으면 통째로 직접 수정이다', () => {
+    const { shop, manual } = splitByShop(base, { gold: 250 }, [])
+    expect(shop).toEqual([])
+    expect(manual).toEqual([{ field: 'gold', from: 200, to: 250 }])
+  })
+
+  it('산 만큼은 상점 거래로 갈라 나간다', () => {
+    const edits = { gold: 160, items: ['낡은 검', '가죽 장화'] }
+    const { shop, manual } = splitByShop(base, edits, [{ name: '가죽 장화', cost: 40 }])
+    expect(shop).toEqual([
+      { field: 'gold', from: 200, to: 160 },
+      { field: 'items', from: ['낡은 검'], to: ['낡은 검', '가죽 장화'] },
+    ])
+    // 상점이 이미 말한 만큼이면 직접 수정 줄은 안 남는다.
+    expect(manual).toEqual([])
+  })
+
+  it('사고 나서 손으로도 고쳤으면 그 나머지만 직접 수정이다', () => {
+    // 40을 쓰고(200→160) 손으로 30을 더 올려 190으로 저장한다.
+    const edits = { gold: 190, items: ['낡은 검', '가죽 장화'], xp: 95 }
+    const { shop, manual } = splitByShop(base, edits, [{ name: '가죽 장화', cost: 40 }])
+    expect(shop[0]).toEqual({ field: 'gold', from: 200, to: 160 })
+    expect(manual).toEqual([
+      { field: 'xp', from: 60, to: 95 },
+      { field: 'gold', from: 160, to: 190 },
+    ])
+  })
+
+  it('공짜로 받은 것은 골드 줄을 안 남긴다 — 안 움직인 값을 적지 않는다', () => {
+    const { shop } = splitByShop(base, { items: ['낡은 검', '표식'] }, [{ name: '표식', cost: 0 }])
+    expect(shop).toEqual([{ field: 'items', from: ['낡은 검'], to: ['낡은 검', '표식'] }])
   })
 })

@@ -27,19 +27,23 @@ import type { Character, CharacterEdits } from './types'
  * **고친 갈래는 셋뿐이다.** 더 잘게 쪼개면 고를 때마다 생각해야 하고, 생각하기
  * 싫으면 아무거나 고르게 된다.
  *
+ * `shop`은 시트에서 고친 것이지만 **왜 그렇게 됐는지가 다르다** — 골드가 빠지고
+ * 아이템이 는 것은 손으로 맞춘 것과 값만 같을 뿐이다(형님이 정했다).
+ *
  * `created`는 고친 것이 아니라 **처음 생긴 것**이다. 셋 중 어디에도 안 들어맞아
  * 따로 둔다 — 이것이 없으면 기록이 중간부터 시작해 **맨 아래 줄이 첫 정산인
  * 것처럼 읽힌다.**
  */
-export type LogReason = 'created' | 'scenario' | 'manual' | 'other'
+export type LogReason = 'created' | 'scenario' | 'manual' | 'shop' | 'other'
 
-export const LOG_REASONS: readonly LogReason[] = ['created', 'scenario', 'manual', 'other']
+export const LOG_REASONS: readonly LogReason[] = ['created', 'scenario', 'manual', 'shop', 'other']
 
 /** 화면에 적는 말. **흔히 쓰는 낱말로 둔다** — 우리끼리만 아는 말은 안 쓴다. */
 export const REASON_TEXT: Readonly<Record<LogReason, string>> = {
   created: '생성',
   scenario: '시나리오 정산',
   manual: '직접 수정',
+  shop: '상점 거래',
   other: '기타',
 }
 
@@ -278,4 +282,62 @@ export function campaignChangesOf(
     out.push({ field, from: before[field], to })
   }
   return out
+}
+
+/* --------------------------------------------------------------------------
+   상점 거래 갈라내기
+   -------------------------------------------------------------------------- */
+
+/** 이번 편집 동안 상점에서 산 것 하나. */
+export interface Purchase {
+  readonly name: string
+  readonly cost: number
+}
+
+/**
+ * 저장할 것을 **상점 거래와 직접 수정으로 가른다.**
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **한 번 저장했다고 한 가지 일을 한 것이 아니다.**                         │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 상점에서 사고 나서 경험치도 손으로 올린 채 저장할 수 있다. 그것을 한 줄로
+ * 남기면 골드가 왜 줄었는지 알 수 없다 — **산 만큼은 상점 거래로, 나머지는 직접
+ * 수정으로** 두 줄을 남긴다.
+ *
+ * 가르는 자리는 「산 뒤 · 손대기 전」의 값이다: 골드는 `before - 값의 합`이고
+ * 아이템은 `before + 산 것`이다. 상점 줄이 거기까지를 말하고, 직접 수정 줄이
+ * 그 뒤부터를 말한다.
+ *
+ * 순수 함수라 표로 못박는다 — 여기가 틀리면 **기록이 거짓말을 한다.**
+ */
+export function splitByShop(
+  before: Character,
+  edits: CharacterEdits,
+  bought: readonly Purchase[],
+): { shop: LogChange[]; manual: LogChange[] } {
+  if (bought.length === 0) return { shop: [], manual: changesOf(before, edits) }
+
+  const spent = bought.reduce((sum, b) => sum + b.cost, 0)
+  // 시트가 0에서 멎게 하므로(음수 골드는 뜻이 없다) 여기서도 같이 멎는다.
+  const midGold = Math.max(0, before.gold - spent)
+  const midItems = [...before.items, ...bought.map((b) => b.name)]
+
+  const shop: LogChange[] = []
+  if (spent > 0) shop.push({ field: 'gold', from: before.gold, to: midGold })
+  shop.push({ field: 'items', from: before.items, to: midItems })
+
+  /* 나머지는 「산 뒤」의 값에서 이어 센다 — 골드와 아이템만 자리가 옮겨져 있다. */
+  const mid: Record<string, unknown> = { ...before, gold: midGold, items: midItems }
+  const manual: LogChange[] = []
+  for (const field of ['xp', 'gold', 'checkmarks', 'perks', 'items', 'notes', 'retired'] as const) {
+    const to = edits[field]
+    if (to === undefined) continue
+    const from = mid[field]
+    // 상점이 이미 말한 만큼이면 다시 적지 않는다.
+    if (JSON.stringify(from) === JSON.stringify(to)) continue
+    manual.push({ field, from, to })
+  }
+
+  return { shop, manual }
 }
