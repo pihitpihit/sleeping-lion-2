@@ -158,10 +158,10 @@
   text-overflow: ellipsis;
 }
 
+/* 왕관의 크기는 이 글자 크기 하나로 정해진다(`LevelBadge.css`). */
 .journal__char-level {
   flex: none;
-  font-size: 1.3rem;
-  color: var(--sl-gold);
+  font-size: 0.95rem;
 }
 
 /* --------------------------------------------------------------------------

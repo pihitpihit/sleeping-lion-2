@@ -4,6 +4,7 @@ import type { Identity } from '../net/types'
 import { useJournalStore } from './campaignStore'
 import { classInfoOf, useClassStore } from './classStore'
 import { classIconUrl } from './character'
+import { LevelBadge } from './LevelBadge'
 import { Crew } from './Crew'
 import type { MyCharacter } from './mineNet'
 import { useMineStore } from './mineStore'
@@ -271,8 +272,9 @@ function MyCharacters({
                     </span>
                   </span>
 
-                  <span className="journal__char-level sl-numeral" aria-label={`레벨 ${c.level}`}>
-                    {c.level}
+                  {/* 수만 있으면 그것이 레벨인 줄 모른다 — 왕관 안에 앉힌다. */}
+                  <span className="journal__char-level">
+                    <LevelBadge level={c.level} />
                   </span>
                 </a>
               </li>
