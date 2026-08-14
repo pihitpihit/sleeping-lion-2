@@ -681,6 +681,8 @@
   font-family: inherit;
   text-align: left;
   color: var(--sl-text);
+  /* 이제 단추가 아니라 그 캐릭터로 가는 문이다. */
+  text-decoration: none;
   background: rgb(0 0 0 / 24%);
   border: 1px solid var(--sl-border);
   border-left: 2px solid var(--sl-gold-dim);
@@ -691,12 +693,6 @@
 .roster__row:hover {
   border-color: var(--sl-border-strong);
   border-left-color: var(--sl-gold);
-}
-
-.roster__row--open {
-  border-left-color: var(--sl-gold);
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
 }
 
 /* 은퇴한 캐릭터는 접어둔 것이라 결을 낮춘다. 지운 것이 아니라 물러난 것이다. */
@@ -713,8 +709,7 @@
   원반을 깔면 둘 다 제 색으로 보인다.
 */
 .roster__badge,
-.char__badge,
-.roster__badge {
+.char__badge {
   width: 36px;
   height: 36px;
   color: var(--sl-void);
@@ -734,13 +729,10 @@
   white-space: nowrap;
 }
 
-.roster__stats {
+/* 레벨 왕관. 크기는 글자 크기 하나로 정해진다(`LevelBadge.css`). */
+.roster__level {
   flex: none;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  color: var(--sl-text-muted);
+  font-size: 0.95rem;
 }
 
 .roster__toggle,

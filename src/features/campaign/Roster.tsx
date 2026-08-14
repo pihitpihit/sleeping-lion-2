@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { Identity } from '../net/types'
 import { classIconUrl, levelForXp } from './character'
-import { CharacterSheet } from './CharacterSheet'
 import { useCharacterStore } from './characterStore'
+import { LevelBadge } from './LevelBadge'
 
 interface Props {
   campaignId: string
@@ -18,12 +18,17 @@ interface Props {
  * │ **다 보이되, 고치는 것은 제 것만**(SPEC 6장).                             │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
- * 줄만 늘어놓고 누르면 그 자리에서 펼친다. 화면을 따로 두지 않은 이유는 정산할
- * 때 **여럿을 번갈아 보기 때문**이다 — 넷이 앉아 골드를 나누는 자리에서 화면을
- * 오갈 일이 아니다.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **여기서는 펼치지도 고치지도 않는다 — 줄을 누르면 그 캐릭터로 간다.**     │
+ * └──────────────────────────────────────────────────────────────────────────┘
  *
- * 한 번에 하나만 펼친다. 여럿을 펼치면 폰에서 스크롤이 길어져 어느 것을 보고
- * 있는지 알 수 없다.
+ * 처음에는 줄을 누르면 그 자리에서 시트가 펼쳐지고 제 것이면 고칠 수도 있었다.
+ * 형님이 걷었다 — 캐릭터에는 **제 주소가 있고**(`#/character/<id>`) 시트는 거기
+ * 한 장이면 된다. 같은 시트를 두 자리에서 열면 어느 쪽에서 고쳤는지 흐려지고,
+ * 무엇보다 **파티 기록지가 캐릭터 편집기까지 겸하게 된다.**
+ *
+ * 여기 남는 것은 **누가 몇 레벨인지** 한눈에 보는 몫이다. 무엇까지 보일지는
+ * 다시 이야기하기로 했다.
  *
  * **은퇴한 캐릭터는 접어 둔다.** 지우지 않은 것은 파티 기록의 일부이기 때문이고,
  * 목록 맨 앞을 차지하지 않는 것은 지금 쓰는 것이 아니기 때문이다.
@@ -34,10 +39,7 @@ export function Roster({ campaignId, me, readOnly = false }: Props) {
   const offline = useCharacterStore((s) => s.offline)
   const error = useCharacterStore((s) => s.error)
   const load = useCharacterStore((s) => s.load)
-  const edit = useCharacterStore((s) => s.edit)
-  const remove = useCharacterStore((s) => s.remove)
 
-  const [openId, setOpenId] = useState<string | null>(null)
   const [showRetired, setShowRetired] = useState(false)
 
   useEffect(() => {
@@ -64,17 +66,12 @@ export function Roster({ campaignId, me, readOnly = false }: Props) {
 
       <ul className="roster__list">
         {shown.map((character) => {
-          const open = character.id === openId
           const mine = character.ownerId === me.userId
           const iconUrl = classIconUrl(character.classIcon)
           return (
             <li key={character.id} className={character.retired ? 'roster__row--retired' : ''}>
-              <button
-                type="button"
-                className={`roster__row${open ? ' roster__row--open' : ''}`}
-                aria-expanded={open}
-                onClick={() => setOpenId(open ? null : character.id)}
-              >
+              {/* 줄은 그 캐릭터로 가는 문이다 — 시트는 제 주소에 한 장뿐이다. */}
+              <a className="roster__row" href={`#/character/${character.id}`}>
                 <span className="roster__badge">
                   {iconUrl ? (
                     <img src={iconUrl} alt="" draggable={false} />
@@ -88,38 +85,12 @@ export function Roster({ campaignId, me, readOnly = false }: Props) {
                   {mine && <span className="crew__me"> (나)</span>}
                 </span>
 
-                <span className="roster__stats">
-                  {/* 레벨은 경험치에서 나온다 — 표에 옛 값이 남아 있어도 여기서
-                      다시 뽑으므로 시트와 같은 수를 말한다. */}
-                  <span className="sl-numeral" aria-label={`레벨 ${levelForXp(character.xp)}`}>
-                    L{levelForXp(character.xp)}
-                  </span>
-                  <span className="sl-numeral" aria-label={`경험 ${character.xp}`}>
-                    {character.xp}xp
-                  </span>
-                  <span className="sl-numeral" aria-label={`골드 ${character.gold}`}>
-                    {character.gold}g
-                  </span>
+                {/* 레벨은 경험치에서 나온다 — 표에 옛 값이 남아 있어도 여기서
+                    다시 뽑으므로 시트와 같은 수를 말한다. */}
+                <span className="roster__level">
+                  <LevelBadge level={levelForXp(character.xp)} />
                 </span>
-              </button>
-
-              {open && (
-                <CharacterSheet
-                  /*
-                    **`key`로 다시 태운다.** 초안을 이펙트로 맞추면 남이 고친 값이
-                    치고 있는 글자를 덮어쓴다 — 파티 기록지와 같은 이유다.
-                  */
-                  key={character.id}
-                  character={character}
-                  mine={mine}
-                  offline={locked}
-                  onEdit={(edits) => void edit(character.id, edits)}
-                  onRemove={() => {
-                    void remove(character.id)
-                    setOpenId(null)
-                  }}
-                />
-              )}
+              </a>
             </li>
           )
         })}
