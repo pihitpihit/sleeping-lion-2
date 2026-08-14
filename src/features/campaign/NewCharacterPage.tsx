@@ -186,52 +186,59 @@ export function NewCharacterPage() {
         </ul>
 
         {/* ----------------------------------------------------------------
-            이름 — 아래에 둔다
+            아래 띠 — 이름과 두 단추가 함께 따라다닌다
             ----------------------------------------------------------------
             클래스를 고르고 나서 이름을 짓는 것이 실제 순서다. **잘못된 이름은
             그 자리에서 짚어 준다** — 세운 뒤에는 서버가 고치기를 거절하므로
             (`0017`) 여기서 놓치면 거두고 새로 세우는 수밖에 없다.
+
+            **이름 칸도 단추와 함께 붙어 온다**(형님이 짚었다). 클래스 카드가
+            길어 이름을 적고 나면 단추가 화면 밖으로 밀리고, 반대로 단추를 보러
+            내려가면 무슨 이름을 적었는지 안 보였다 — 짓는 것과 누르는 것이 한
+            동작이므로 한 덩어리로 따라다녀야 한다.
             ---------------------------------------------------------------- */}
-        <div className="newchar__name">
-          {/*
+        <div className="newchar__foot">
+          <div className="newchar__name">
+            {/*
             **제목을 걷었다.** 빈 칸에 「캐릭터 이름 입력」이라 적혀 있으므로 위에
             「이름」을 한 번 더 적으면 같은 말을 두 번 한다. 읽어주는 쪽에는
             `aria-label`이 그대로 간다 — 눈에 보이는 글자만 걷은 것이다.
           */}
-          <input
-            id="newchar-name"
-            className="sheet__input newchar__input"
-            aria-label="캐릭터 이름"
-            value={name}
-            placeholder="캐릭터 이름 입력"
-            /* 다듬으면 줄어들 수 있으므로 칸 자체는 조금 넉넉하게 받는다. */
-            maxLength={NAME_MAX * 2}
-            disabled={busy}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <p className={`newchar__warn${warn === null ? ' newchar__warn--ok' : ''}`} role="alert">
-            {warn === null ? ' ' : nameProblemText(warn)}
-          </p>
-        </div>
+            <input
+              id="newchar-name"
+              className="sheet__input newchar__input"
+              aria-label="캐릭터 이름"
+              value={name}
+              placeholder="캐릭터 이름 입력"
+              /* 다듬으면 줄어들 수 있으므로 칸 자체는 조금 넉넉하게 받는다. */
+              maxLength={NAME_MAX * 2}
+              disabled={busy}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <p className={`newchar__warn${warn === null ? ' newchar__warn--ok' : ''}`} role="alert">
+              {warn === null ? ' ' : nameProblemText(warn)}
+            </p>
+          </div>
 
-        {error !== null && (
-          <p className="journal__error" role="alert">
-            {error}
-          </p>
-        )}
+          {error !== null && (
+            <p className="journal__error" role="alert">
+              {error}
+            </p>
+          )}
 
-        <div className="sheet__bar">
-          <a className="sheet__cancel" href="#/journal">
-            그만두기
-          </a>
-          <button
-            type="button"
-            className="sheet__save"
-            disabled={busy || problem !== null || picked === null}
-            onClick={() => void make()}
-          >
-            생성
-          </button>
+          <div className="sheet__bar">
+            <a className="sheet__cancel" href="#/journal">
+              취소
+            </a>
+            <button
+              type="button"
+              className="sheet__save"
+              disabled={busy || problem !== null || picked === null}
+              onClick={() => void make()}
+            >
+              생성
+            </button>
+          </div>
         </div>
       </div>
     </div>

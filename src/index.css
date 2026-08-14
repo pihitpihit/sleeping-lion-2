@@ -139,3 +139,103 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ==========================================================================
+   화면 하나가 터졌을 때 — `RouteBoundary`
+   --------------------------------------------------------------------------
+   어두운 빈 화면 대신 무슨 일인지 적는다. 이 자리는 무엇이든 잘못됐을 때 뜨는
+   곳이므로 다른 화면의 클래스를 빌리지 않는다 — 빌린 쪽이 망가져서 여기 왔을
+   수도 있다.
+   ========================================================================== */
+
+.crash {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: calc(var(--sl-safe-top) + 1.5rem) calc(var(--sl-safe-right) + 1rem)
+    calc(var(--sl-safe-bottom) + 1.5rem) calc(var(--sl-safe-left) + 1rem);
+}
+
+.crash__box {
+  width: 100%;
+  max-width: 30rem;
+  padding: 1.4rem 1.2rem;
+  border: 1px solid var(--sl-border);
+  border-radius: 10px;
+  background: var(--sl-panel);
+}
+
+.crash__title {
+  margin: 0 0 0.6rem;
+  font-family: var(--sl-font-ko-display);
+  font-size: 1.25rem;
+  color: var(--sl-gold-bright);
+}
+
+.crash__body {
+  margin: 0 0 0.8rem;
+  color: var(--sl-text);
+  line-height: 1.6;
+}
+
+/* 무엇이 터졌는지 그대로 적는다 — 형님이 읽어서 옮겨 줄 수 있어야 한다. */
+.crash__why {
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 6px;
+  background: var(--sl-void);
+  color: var(--sl-text-faint);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.crash__acts {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.crash__go,
+.crash__home {
+  padding: 0.55rem 1rem;
+  border-radius: 8px;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.crash__go {
+  border: 1px solid var(--sl-gold-dim);
+  background: var(--sl-raised);
+  color: var(--sl-gold-bright);
+}
+
+.crash__home {
+  border: 1px solid transparent;
+  color: var(--sl-text-muted);
+}
+
+/*
+  조각을 받아 오는 동안.
+
+  **곧바로 내지 않는다** — 대개 눈 깜짝할 사이라 띄우면 깜빡임만 남는다. 느린
+  자리에서만 서서히 떠올라, 빈 화면을 고장으로 읽지 않게 한다.
+*/
+.pageload {
+  position: fixed;
+  inset: auto 0 calc(var(--sl-safe-bottom) + 1.2rem);
+  display: block;
+  height: 1.2rem;
+  opacity: 0;
+  animation: pageload-in 0.4s ease 0.5s forwards;
+  background: radial-gradient(circle 4px at 50% 50%, var(--sl-gold-dim) 98%, transparent 100%)
+    no-repeat;
+}
+
+@keyframes pageload-in {
+  to {
+    opacity: 1;
+  }
+}

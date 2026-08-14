@@ -121,7 +121,7 @@ export function WidgetSettingsDialog({
         {placing && (
           <footer className="widget-settings__foot">
             <button type="button" className="widget-settings__cancel" onClick={onClose}>
-              그만두기
+              취소
             </button>
             <button
               type="button"

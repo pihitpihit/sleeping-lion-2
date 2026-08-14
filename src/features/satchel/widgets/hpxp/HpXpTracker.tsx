@@ -51,29 +51,38 @@ export function HpXpTracker({ instanceId, mode, rotation, settings }: WidgetProp
   const adjust = useHpXpStore((s) => s.adjust)
 
   return (
-    <div
-      ref={ref}
-      className={`hpxp hpxp--${layout.orientation}`}
-      style={
-        {
-          '--hpxp-mark': `${layout.markSize}px`,
-          '--hpxp-number': `${layout.numberSize}px`,
-        } as React.CSSProperties
-      }
-    >
-      {/* 테두리 문양. 내용 위에 얹히므로 포인터를 받지 않는다. */}
-      <span className="hpxp__frame" aria-hidden="true" />
+    /*
+      **알약이 위젯 테를 물지 않게 한 겹 띄운다**(형님이 짚었다). 원소 트래커가
+      제 안쪽에 여백을 두는 것과 같은 값이다 — 위젯마다 다르면 나란히 놓았을 때
+      한쪽만 헐거워 보인다.
 
-      {(['hp', 'xp'] as const).map((track) => (
-        <Dial
-          key={track}
-          track={track}
-          value={values[track]}
-          rotation={rotation}
-          disabled={mode !== 'play'}
-          onAdjust={(delta) => adjust(slot, track, delta)}
-        />
-      ))}
+      재는 자리(`ref`)는 안쪽 알약이므로 배치는 좁아진 만큼 알아서 따라온다.
+    */
+    <div className="hpxp__pad">
+      <div
+        ref={ref}
+        className={`hpxp hpxp--${layout.orientation}`}
+        style={
+          {
+            '--hpxp-mark': `${layout.markSize}px`,
+            '--hpxp-number': `${layout.numberSize}px`,
+          } as React.CSSProperties
+        }
+      >
+        {/* 테두리 문양. 내용 위에 얹히므로 포인터를 받지 않는다. */}
+        <span className="hpxp__frame" aria-hidden="true" />
+
+        {(['hp', 'xp'] as const).map((track) => (
+          <Dial
+            key={track}
+            track={track}
+            value={values[track]}
+            rotation={rotation}
+            disabled={mode !== 'play'}
+            onAdjust={(delta) => adjust(slot, track, delta)}
+          />
+        ))}
+      </div>
     </div>
   )
 }

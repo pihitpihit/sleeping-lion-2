@@ -91,7 +91,7 @@ export function PasswordChange() {
             setError(null)
           }}
         >
-          그만두기
+          취소
         </button>
       </div>
     </form>

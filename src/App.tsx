@@ -7,6 +7,7 @@ import { useAuthStore } from './features/auth/authStore'
 import { setPendingRoute } from './features/auth/pendingRoute'
 import { useApprovalStore } from './features/auth/approval'
 import { PendingPage } from './features/auth/PendingPage'
+import { RouteBoundary } from './RouteBoundary'
 
 export default function App() {
   const [route, setRoute] = useState(() => readRoute(window.location.hash) ?? HOME_ROUTE)
@@ -104,9 +105,17 @@ export default function App() {
      * 링크로 옮겼을 때 앞의 결과가 남는다. 실제로 그랬다.
      */
     return (
-      <Suspense fallback={null}>
-        <LazyPage key={route} />
-      </Suspense>
+      /*
+        **그물을 화면 바깥에 친다.** 조각을 못 불러오면 그 예외가 위로 올라와
+        트리가 통째로 걷힌다 — 남는 것은 바탕색뿐이라 어두운 빈 화면이 된다.
+        경계가 라우트를 함께 받는 것은 다른 화면으로 옮길 때 앞의 오류를
+        놓아주기 위해서다(`RouteBoundary`).
+      */
+      <RouteBoundary route={route}>
+        <Suspense fallback={<span className="pageload" aria-hidden="true" />}>
+          <LazyPage key={route} />
+        </Suspense>
+      </RouteBoundary>
     )
   }
 

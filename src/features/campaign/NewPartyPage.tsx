@@ -79,48 +79,51 @@ export function NewPartyPage() {
           만든 다음 기록지에서 보낸다.
         </p>
 
-        <div className="newchar__name">
-          {/* 칸에 「파티 이름 입력」이라 적혀 있으므로 제목을 또 두지 않는다. */}
-          <input
-            id="newparty-name"
-            className="sheet__input newchar__input"
-            aria-label="파티 이름"
-            value={name}
-            placeholder="파티 이름 입력"
-            /* 다듬으면 줄어들 수 있으므로 칸 자체는 조금 넉넉하게 받는다. */
-            maxLength={NAME_MAX * 2}
-            disabled={busy}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && problem === null) {
-                e.preventDefault()
-                void make()
-              }
-            }}
-          />
-          <p className={`newchar__warn${warn === null ? ' newchar__warn--ok' : ''}`} role="alert">
-            {warn === null ? ' ' : nameProblemText(warn, '파티')}
-          </p>
-        </div>
+        {/* 이름과 두 단추는 한 덩어리로 따라다닌다 — 캐릭터 생성과 같은 틀이다. */}
+        <div className="newchar__foot">
+          <div className="newchar__name">
+            {/* 칸에 「파티 이름 입력」이라 적혀 있으므로 제목을 또 두지 않는다. */}
+            <input
+              id="newparty-name"
+              className="sheet__input newchar__input"
+              aria-label="파티 이름"
+              value={name}
+              placeholder="파티 이름 입력"
+              /* 다듬으면 줄어들 수 있으므로 칸 자체는 조금 넉넉하게 받는다. */
+              maxLength={NAME_MAX * 2}
+              disabled={busy}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && problem === null) {
+                  e.preventDefault()
+                  void make()
+                }
+              }}
+            />
+            <p className={`newchar__warn${warn === null ? ' newchar__warn--ok' : ''}`} role="alert">
+              {warn === null ? ' ' : nameProblemText(warn, '파티')}
+            </p>
+          </div>
 
-        {error !== null && (
-          <p className="journal__error" role="alert">
-            {error}
-          </p>
-        )}
+          {error !== null && (
+            <p className="journal__error" role="alert">
+              {error}
+            </p>
+          )}
 
-        <div className="sheet__bar">
-          <a className="sheet__cancel" href="#/journal">
-            그만두기
-          </a>
-          <button
-            type="button"
-            className="sheet__save"
-            disabled={busy || problem !== null}
-            onClick={() => void make()}
-          >
-            생성
-          </button>
+          <div className="sheet__bar">
+            <a className="sheet__cancel" href="#/journal">
+              취소
+            </a>
+            <button
+              type="button"
+              className="sheet__save"
+              disabled={busy || problem !== null}
+              onClick={() => void make()}
+            >
+              생성
+            </button>
+          </div>
         </div>
       </div>
     </div>

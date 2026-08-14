@@ -48,6 +48,16 @@ const PILLARS = [
     body: '원소와 보정 덱, 주도권 순서. 싸움이 붙으면 꺼내 쓴다.',
     href: '#/satchel',
   },
+  /*
+    셋째 문. 두 축(SPEC 1장) 어디에도 안 들어가는 자리다 — **적지도 굴리지도
+    않고 그냥 들여다본다.** 표식이 무엇인지, 눈금이 어디부터인지 같은 것들.
+  */
+  {
+    ordinal: 'III',
+    title: '참고',
+    body: '표식과 눈금, 헷갈릴 때 펼쳐 보는 것들. 적지도 굴리지도 않는다.',
+    href: '#/reference',
+  },
 ] as const
 
 export function WelcomePage() {

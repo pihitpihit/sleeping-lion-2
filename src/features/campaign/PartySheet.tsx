@@ -313,7 +313,7 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
               /* 고친 것이 있으면 한 번 묻는다. 없으면 버릴 것도 없다. */
               onClick={() => (dirty ? setAsking(true) : stopEditing())}
             >
-              그만두기
+              취소
             </button>
             <button type="button" className="sheet__save" disabled={!dirty} onClick={save}>
               {dirty ? '저장' : '고친 것 없음'}
