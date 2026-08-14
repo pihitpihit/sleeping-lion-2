@@ -790,20 +790,6 @@ export function CharacterSheet({
           {/*
             상점 — **사는 일은 고르는 일이라 늘어놓을 자리가 필요하다.**
 
-            여기 칸은 「무엇을 들었나」를 적는 자리다. 무엇을 살 수 있나는 그보다
-            넓게 펴 놓고 값을 견주는 일이므로 팝업으로 낸다(형님이 정했다).
-          */}
-          {editing && (
-            <div className="char__shoprow">
-              <button type="button" className="char__shopopen" onClick={() => setShopOpen(true)}>
-                상점
-              </button>
-            </div>
-          )}
-
-          {/*
-            상점 — **사는 일은 고르는 일이라 늘어놓을 자리가 필요하다.**
-
             이 칸은 「무엇을 들었나」를 적는 자리다. 무엇을 살 수 있나는 그보다
             넓게 펴 놓고 값을 견주는 일이므로 팝업으로 낸다(형님이 정했다).
           */}
