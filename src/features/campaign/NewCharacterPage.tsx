@@ -102,7 +102,7 @@ export function NewCharacterPage() {
   if (session === null) return null
 
   return (
-    <div className="journal">
+    <div className="journal journal--nozoom">
       <header className="topbar" style={{ '--tb': scrolled } as CSSProperties}>
         <div className="topbar__inner">
           <a className="journal__back" href="#/journal" aria-label="일지로">
