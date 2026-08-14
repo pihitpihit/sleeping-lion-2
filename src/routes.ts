@@ -44,6 +44,13 @@ export const LAZY_ROUTES: Record<string, ComponentType> = {
     import('./features/auth/AdminPage').then((m) => ({ default: m.AdminPage })),
   ),
   /*
+    모험 — **시나리오를 실제로 시작하는 자리.** 판을 여는 문이 행낭 안쪽에만
+    있었는데, 판을 여는 것은 도구를 꺼내는 것보다 앞선 일이다(형님이 정했다).
+  */
+  '/adventure': lazyPage(() =>
+    import('./features/adventure/AdventurePage').then((m) => ({ default: m.AdventurePage })),
+  ),
+  /*
     참조 — 찾아보는 자리. 일지·행낭과 나란한 셋째 문이며 **무엇도 고치지 않는다.**
   */
   '/reference': lazyPage(() =>

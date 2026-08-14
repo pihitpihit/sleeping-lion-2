@@ -1,0 +1,153 @@
+/* ==========================================================================
+   모험 — `#/adventure`
+   --------------------------------------------------------------------------
+   갈래는 둘뿐이다: 새로 시작하거나, 도는 것에 끼거나. 고르면 그 아래가 펴진다.
+   ========================================================================== */
+
+.adv {
+  max-width: 44rem;
+  margin: 0 auto;
+}
+
+.adv__empty {
+  padding: 1.5rem 0;
+  text-align: center;
+  line-height: 1.7;
+  color: var(--sl-text-muted);
+}
+
+.adv__empty a {
+  color: var(--sl-gold);
+}
+
+/* 두 갈래는 나란히 선다 — 어느 쪽이 먼저랄 것이 없다. */
+.adv__choices {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+
+.adv__choice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.9rem 0.8rem;
+  font-family: inherit;
+  text-align: left;
+  color: var(--sl-text);
+  background: var(--sl-panel);
+  border: 1px solid var(--sl-border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.adv__choice--on {
+  border-color: var(--sl-gold-dim);
+  background: var(--sl-raised);
+}
+
+/* 도는 것이 없으면 잠긴다 — 눌러도 될 것처럼 보이면 안 된다. */
+.adv__choice:disabled {
+  color: var(--sl-text-faint);
+  cursor: default;
+}
+
+.adv__choice-title {
+  font-family: var(--sl-font-ko-display);
+  font-size: 1.05rem;
+  color: var(--sl-gold-bright);
+}
+
+.adv__choice:disabled .adv__choice-title {
+  color: var(--sl-text-faint);
+}
+
+.adv__choice-sub {
+  font-size: 0.8rem;
+  color: var(--sl-text-muted);
+}
+
+.adv__panel {
+  margin-top: 0.9rem;
+  padding: 1rem 1.1rem 0.4rem;
+  background: var(--sl-panel);
+  border: 1px solid var(--sl-border);
+  border-radius: 10px;
+}
+
+.adv__title {
+  margin: 0 0 0.7rem;
+  font-family: var(--sl-font-ko-display);
+  font-size: 1rem;
+  color: var(--sl-gold);
+}
+
+.adv__parties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adv__party {
+  padding: 0.45rem 0.9rem;
+  font-family: inherit;
+  font-size: 0.92rem;
+  color: var(--sl-text);
+  background: var(--sl-raised);
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.adv__party--on {
+  color: var(--sl-void);
+  background: var(--sl-gold);
+  border-color: var(--sl-gold);
+}
+
+/* 아직 안 붙은 칸이 있다는 것을 숨기지 않는다. */
+.adv__soon {
+  margin: 0.9rem 0 0;
+  font-size: 0.8rem;
+  color: var(--sl-text-faint);
+}
+
+.adv__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0 0 0.8rem;
+  padding: 0;
+  list-style: none;
+}
+
+.adv__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.6rem 0.7rem;
+  background: var(--sl-raised);
+  border: 1px solid var(--sl-border);
+  border-radius: 8px;
+}
+
+.adv__where {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.adv__where b {
+  font-weight: 400;
+  color: var(--sl-text);
+}
+
+.adv__when {
+  font-size: 0.78rem;
+  color: var(--sl-text-faint);
+}

@@ -1,5 +1,10 @@
+import { useEffect } from 'react'
 import { LOCALE, messages } from '../../i18n/messages'
 import { AccountStrip } from '../auth/AccountStrip'
+import { useAuthStore } from '../auth/authStore'
+import { useMineStore } from '../campaign/mineStore'
+import { useAdventureStore } from '../adventure/adventureStore'
+import { adventureNote } from '../adventure/adventureNote'
 import { SignMedallion } from './SignMedallion'
 import './WelcomePage.css'
 
@@ -52,8 +57,18 @@ const PILLARS = [
     셋째 문. 두 축(SPEC 1장) 어디에도 안 들어가는 자리다 — **적지도 굴리지도
     않고 그냥 들여다본다.** 표식이 무엇인지, 눈금이 어디부터인지 같은 것들.
   */
+  /*
+    모험 — **시나리오를 실제로 시작하는 자리.** 앞의 셋과 결이 다르다: 일지는
+    적고 행낭은 굴리고 참조는 들여다보는데, 여기서는 **판을 연다.**
+  */
   {
     ordinal: 'III',
+    title: '모험',
+    body: '판을 열고 상에 둘러앉는다. 시나리오는 여기서 시작한다.',
+    href: '#/adventure',
+  },
+  {
+    ordinal: 'IV',
     title: '참조',
     body: '표식과 눈금, 헷갈릴 때 펼쳐 보는 것들. 적지도 굴리지도 않는다.',
     href: '#/reference',
@@ -61,6 +76,30 @@ const PILLARS = [
 ] as const
 
 export function WelcomePage() {
+  /*
+    **대문이 서버를 본다.** 모험 소식과 「열 수 있는가」는 물어봐야 아는 것이라
+    여기서 한 번 읽는다. 못 닿아도 대문은 그대로 선다(절대 원칙 3) — 배지가 없고
+    모험 칸이 잠길 뿐이다.
+  */
+  const userId = useAuthStore((s) => s.session?.userId ?? null)
+  const mine = useMineStore((s) => s.characters)
+  const loadMine = useMineStore((s) => s.load)
+  const adventures = useAdventureStore((s) => s.items)
+  const loadAdventures = useAdventureStore((s) => s.load)
+
+  useEffect(() => {
+    if (userId === null) return
+    void loadMine(userId)
+    void loadAdventures()
+  }, [userId, loadMine, loadAdventures])
+
+  /*
+    **파티에 든 캐릭터가 하나는 있어야 연다.** 판은 파티 단위로 열리므로
+    (구현 결정 19) 어느 파티인지 말할 수 없으면 열 데가 없다.
+  */
+  const canAdventure = mine.some((c) => !c.retired && c.partyId !== null)
+  const note = adventureNote(adventures.map((a) => a.partyName))
+
   return (
     <div className="welcome">
       <main className="welcome__sign">
@@ -88,6 +127,11 @@ export function WelcomePage() {
 
         <ul className="welcome__pillars">
           {PILLARS.map((pillar) => {
+            /* 모험만 조건이 붙는다 — 나머지 셋은 언제나 열린다. */
+            const isAdventure = pillar.title === '모험'
+            const locked = isAdventure && !canAdventure
+            const href = locked ? null : pillar.href
+
             const inner = (
               <>
                 <span className="welcome__pillar-ordinal" aria-hidden="true">
@@ -95,12 +139,18 @@ export function WelcomePage() {
                 </span>
                 <h2 className="welcome__pillar-title">{pillar.title}</h2>
                 <p className="welcome__pillar-body">{pillar.body}</p>
-                {pillar.href ? (
+                {/* 도는 모험이 있으면 카드가 그것을 말한다. */}
+                {isAdventure && note !== null && (
+                  <span className="welcome__pillar-badge">{note}</span>
+                )}
+                {href ? (
                   <span className="welcome__pillar-enter">
                     열기<span aria-hidden="true"> →</span>
                   </span>
                 ) : (
-                  <span className="welcome__pillar-status">채비 중</span>
+                  <span className="welcome__pillar-status">
+                    {locked ? '파티에 든 캐릭터가 있어야 한다' : '채비 중'}
+                  </span>
                 )}
               </>
             )
@@ -109,8 +159,8 @@ export function WelcomePage() {
               <li key={pillar.ordinal} className="welcome__pillar-slot">
                 {/* 카드 전체가 누르는 영역이어야 한다. 제목 글자만 누르게 하면
                     폰에서 쓸 수 없다. */}
-                {pillar.href ? (
-                  <a className="welcome__pillar welcome__pillar--open" href={pillar.href}>
+                {href ? (
+                  <a className="welcome__pillar welcome__pillar--open" href={href}>
                     {inner}
                   </a>
                 ) : (
