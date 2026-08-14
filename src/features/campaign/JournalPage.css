@@ -2215,6 +2215,12 @@
   border-color: var(--sl-gold-dim);
 }
 
+/* 생성은 맨 아래 한 줄뿐이다. 이끼색으로 두어 정산과 갈린다. */
+.logview__why--created {
+  color: var(--sl-moss);
+  border-color: var(--sl-moss);
+}
+
 /* 고치는 동안의 증감. 수는 `sl-numeral`이 이미 맡고 여기서는 색만 정한다. */
 .tally__delta {
   margin: 0 0.05em;

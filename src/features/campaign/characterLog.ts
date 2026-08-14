@@ -24,15 +24,20 @@ import type { Character, CharacterEdits } from './types'
  * 「골드 120 → 160」이 전투에서 노획한 것인지 손으로 맞춘 것인지 나중에 알 수
  * 없다. 정산이 맞았는지 되짚는 것이 기록을 두는 까닭이므로 그 둘이 갈려야 한다.
  *
- * **세 갈래뿐이다.** 더 잘게 쪼개면 고를 때마다 생각해야 하고, 생각하기 싫으면
- * 아무거나 고르게 된다.
+ * **고친 갈래는 셋뿐이다.** 더 잘게 쪼개면 고를 때마다 생각해야 하고, 생각하기
+ * 싫으면 아무거나 고르게 된다.
+ *
+ * `created`는 고친 것이 아니라 **처음 생긴 것**이다. 셋 중 어디에도 안 들어맞아
+ * 따로 둔다 — 이것이 없으면 기록이 중간부터 시작해 **맨 아래 줄이 첫 정산인
+ * 것처럼 읽힌다.**
  */
-export type LogReason = 'scenario' | 'manual' | 'other'
+export type LogReason = 'created' | 'scenario' | 'manual' | 'other'
 
-export const LOG_REASONS: readonly LogReason[] = ['scenario', 'manual', 'other']
+export const LOG_REASONS: readonly LogReason[] = ['created', 'scenario', 'manual', 'other']
 
 /** 화면에 적는 말. **흔히 쓰는 낱말로 둔다** — 우리끼리만 아는 말은 안 쓴다. */
 export const REASON_TEXT: Readonly<Record<LogReason, string>> = {
+  created: '생성',
   scenario: '시나리오 정산',
   manual: '직접 수정',
   other: '기타',
@@ -86,6 +91,7 @@ export function changesOf(before: Character, edits: CharacterEdits): LogChange[]
 }
 
 const FIELD_NAME: Readonly<Record<string, string>> = {
+  created: '생성',
   xp: '경험',
   gold: '골드',
   checkmarks: '전투 목표',
@@ -114,6 +120,12 @@ function asStrings(v: unknown): string[] {
  */
 export function describeChange(change: LogChange): string {
   const name = FIELD_NAME[change.field] ?? change.field
+
+  /*
+    **이름은 적지 않는다.** 기록은 캐릭터 한 장의 것이라 누구인지는 이미 알고,
+    무엇보다 우리말 조사(을/를)가 받침에 따라 갈려 이름을 넣으면 어색해진다.
+  */
+  if (change.field === 'created') return '캐릭터를 만들었다'
 
   if (change.field === 'retired') {
     return change.to === true ? '은퇴시켰다' : '다시 나섰다'

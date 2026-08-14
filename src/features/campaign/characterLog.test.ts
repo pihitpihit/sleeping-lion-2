@@ -121,10 +121,18 @@ describe('언제 고쳤는가', () => {
  * 없다 — 정산이 맞았는지 되짚는 것이 기록을 두는 까닭이다.
  */
 describe('고친 까닭', () => {
-  it('세 갈래가 저마다 다른 말을 한다', () => {
+  it('갈래마다 저마다 다른 말을 한다', () => {
     const said = LOG_REASONS.map(reasonText)
-    expect(new Set(said).size).toBe(3)
+    expect(new Set(said).size).toBe(LOG_REASONS.length)
     expect(said.every((s) => s.trim() !== '')).toBe(true)
+  })
+
+  /**
+   * 처음 한 줄이 없으면 기록이 중간부터 시작해 **맨 아래 줄이 첫 정산인 것처럼
+   * 읽힌다.** 이름은 안 적는다 — 조사가 받침에 따라 갈린다.
+   */
+  it('생성은 한 줄로 적는다', () => {
+    expect(describeChange({ field: 'created', from: null, to: true })).toBe('캐릭터를 만들었다')
   })
 
   /** 서버 값을 믿지 않는다 — 모르는 것이 와도 화면이 서야 한다. */

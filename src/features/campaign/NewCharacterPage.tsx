@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useAuthStore } from '../auth/authStore'
 import { XP_THRESHOLDS, classIconUrl } from './character'
-import { createCharacter } from './characterNet'
+import { createCharacter, writeLog } from './characterNet'
 import { NAME_MAX, checkName, nameProblemText, tidyName } from './nameRules'
 import { choicesOf, type Choice } from './classChoices'
 import { useClassStore } from './classStore'
@@ -84,6 +84,11 @@ export function NewCharacterPage() {
     try {
       // 파티 없이 세운다. 드는 것은 캐릭터 화면에서 따로 한다(`0015`).
       const made = await createCharacter(null, userId, tidyName(name), picked.icon, picked.classId)
+      /*
+        **처음 한 줄을 남긴다.** 이것이 없으면 기록이 중간부터 시작해 맨 아래
+        줄이 첫 정산인 것처럼 읽힌다. 실패해도 삼킨다 — 캐릭터는 이미 섰다.
+      */
+      void writeLog(made.id, userId, 'created', [{ field: 'created', from: null, to: true }])
       void loadMine(userId)
       window.location.hash = `#/character/${made.id}`
     } catch (cause) {
