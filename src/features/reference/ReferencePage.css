@@ -1,8 +1,8 @@
 /* ==========================================================================
-   참고 — `#/reference`
+   참조 — `#/reference`
    --------------------------------------------------------------------------
-   찾아보는 자리라 **훑기 좋게** 늘어놓는다. 표식은 그림이 먼저 눈에 들어와야
-   하므로 이름보다 앞에 서고, 칸은 손가락이 아니라 눈이 지나가는 자리다.
+   찾아보는 자리라 **훑기 좋게** 늘어놓는다. 섹션은 접히고(`<details>`), 표식은
+   그림이 먼저 눈에 들어와야 하므로 이름보다 앞에 선다.
    ========================================================================== */
 
 .ref {
@@ -10,44 +10,81 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 0.7rem;
+}
+
+.ref__lead {
+  margin: 0 0 0.3rem;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: var(--sl-text-muted);
 }
 
 .ref__block {
-  padding: 1rem 1.1rem 1.2rem;
   border: 1px solid var(--sl-border);
   border-radius: 10px;
   background: var(--sl-panel);
 }
 
-.ref__title {
-  margin: 0 0 0.4rem;
-  font-family: var(--sl-font-ko-display);
-  font-size: 1.1rem;
+/*
+  여닫는 줄.
+
+  **기본 삼각형을 걷고 우리 캐럿을 단다** — 브라우저마다 모양이 다르고, 사파리
+  것은 우리 결과 어긋난다. 캐럿은 열리면 반 바퀴 돈다.
+*/
+.ref__summary {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 0.9rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.ref__summary::-webkit-details-marker {
+  display: none;
+}
+
+.ref__summary::after {
+  content: '';
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-left: auto;
+  border-right: 2px solid var(--sl-gold-dim);
+  border-bottom: 2px solid var(--sl-gold-dim);
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 0.15s ease;
+}
+
+.ref__block[open] > .ref__summary::after {
+  transform: translateY(2px) rotate(225deg);
+}
+
+.ref__summary:hover .ref__title {
   color: var(--sl-gold-bright);
 }
 
-.ref__hint,
-.ref__note {
-  margin: 0 0 0.8rem;
-  font-size: 0.86rem;
+.ref__title {
+  font-family: var(--sl-font-ko-display);
+  font-size: 1.05rem;
+  color: var(--sl-gold);
+}
+
+/* 몇 가지가 들었는지. 접힌 채로도 무게를 가늠할 수 있다. */
+.ref__count {
+  padding: 0.05rem 0.4rem;
+  font-size: 0.85rem;
+  color: var(--sl-text-faint);
+  background: var(--sl-raised);
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+}
+
+.ref__hint {
+  margin: 0 0.9rem 0.6rem;
+  font-size: 0.82rem;
   line-height: 1.55;
   color: var(--sl-text-muted);
-}
-
-.ref__group + .ref__group {
-  margin-top: 1rem;
-}
-
-.ref__subtitle {
-  margin: 0 0 0.3rem;
-  font-size: 0.92rem;
-  color: var(--sl-text);
-}
-
-.ref__note {
-  margin-bottom: 0.5rem;
-  font-size: 0.8rem;
 }
 
 /*
@@ -59,7 +96,7 @@
 .ref__marks {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 0.9rem 0.9rem;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
   gap: 0.45rem;

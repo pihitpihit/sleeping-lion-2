@@ -27,6 +27,11 @@
 */
 .journal--nozoom {
   touch-action: pan-x pan-y;
+  /*
+    가로로는 어차피 갈 데가 없다. `clip`으로 잘라 두면 **문서가 옆으로 흐를
+    길 자체가 사라진다** — `hidden`은 스크롤 상자를 만들어 붙박이 띠가 죽는다.
+  */
+  overflow-x: clip;
 }
 
 /* --------------------------------------------------------------------------
@@ -136,7 +141,8 @@
   align-items: center;
   justify-content: center;
   gap: 0.34rem;
-  margin: 0;
+  /* 띠 안에 든다 — 점 줄과 이름 칸 사이는 조금만 띄운다. */
+  margin: 0 0 0.5rem;
   padding: 0 0.5rem;
   list-style: none;
 }
@@ -328,6 +334,12 @@
 */
 .newchar__foot {
   position: sticky;
+  /*
+    **띠 위에서는 옆으로 밀리지 않는다.** 카드를 넘기려다 손가락이 띠에 얹히면
+    그 몸짓이 문서로 넘어가 화면 전체가 옆으로 흘렀다(형님이 짚었다). 세로로
+    미는 것만 남기면 그 자리가 막힌다.
+  */
+  touch-action: pan-y;
   bottom: 0;
   z-index: 2;
   margin-top: 0.4rem;
@@ -353,10 +365,8 @@
   opacity: 1;
 }
 
-/* 취소는 링크지만 단추처럼 선다 — 옆의 생성과 나란히 놓이기 때문이다. */
+/* 취소는 링크지만 단추처럼 선다 — 자리와 키는 `.sheet__cancel`이 이미 맞춘다. */
 a.sheet__cancel {
-  display: inline-flex;
-  align-items: center;
   text-decoration: none;
 }
 

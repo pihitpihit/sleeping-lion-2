@@ -792,6 +792,8 @@
 
 .topbar {
   position: sticky;
+  /* 띠를 밀어 화면이 옆으로 흐르지 않게 — 세로로 미는 것만 남긴다. */
+  touch-action: pan-y;
   top: 0;
   z-index: 5;
   margin: calc(-1 * (var(--sl-safe-top) + 0.5rem)) calc(-1 * (var(--sl-safe-right) + 1rem)) 1rem
@@ -1584,11 +1586,23 @@
   background: linear-gradient(180deg, transparent 0%, var(--sl-void) 35%);
 }
 
+/*
+  나란히 선 두 단추.
+
+  **키를 글자에 맡기지 않는다.** 하나는 `<button>`이고 하나는 `<a>`라 기본
+  줄높이가 다르다 — 같은 여백을 주어도 링크 쪽이 본문 줄높이(1.6)를 물려받아
+  더 높게 섰다(형님이 짚었다). 줄높이를 못박고 테 두께까지 맞춰야 둘이 같아진다.
+*/
 .sheet__save,
 .sheet__cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.55rem 1.1rem;
   font-family: inherit;
   font-size: 0.95rem;
+  line-height: 1.25;
+  border: 1px solid transparent;
   border-radius: 0.25rem;
   cursor: pointer;
 }

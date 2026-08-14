@@ -54,7 +54,7 @@ const PILLARS = [
   */
   {
     ordinal: 'III',
-    title: '참고',
+    title: '참조',
     body: '표식과 눈금, 헷갈릴 때 펼쳐 보는 것들. 적지도 굴리지도 않는다.',
     href: '#/reference',
   },

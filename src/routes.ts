@@ -37,7 +37,7 @@ export const LAZY_ROUTES: Record<string, ComponentType> = {
   '/gate': lazy(() => import('./features/auth/AdminPage').then((m) => ({ default: m.AdminPage }))),
   '/admin': lazy(() => import('./features/auth/AdminPage').then((m) => ({ default: m.AdminPage }))),
   /*
-    참고 — 찾아보는 자리. 일지·행낭과 나란한 셋째 문이며 **무엇도 고치지 않는다.**
+    참조 — 찾아보는 자리. 일지·행낭과 나란한 셋째 문이며 **무엇도 고치지 않는다.**
   */
   '/reference': lazy(() =>
     import('./features/reference/ReferencePage').then((m) => ({ default: m.ReferencePage })),
