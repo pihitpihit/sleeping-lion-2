@@ -30,6 +30,8 @@ export interface MyCharacter {
   classIcon: number
   classId: string | null
   retired: boolean
+  /** 지우기로 표시된 시각. 유예 동안은 목록에 그대로 있다(`0022`). */
+  deletedAt: number | null
   /** 어느 기록지의 것인가. **아직 파티에 안 들었으면 `null`.** */
   campaignId: string | null
   /** 어느 파티인가. 줄의 부제이자 기록지로 가는 열쇠다. 안 들었으면 `null`. */
@@ -44,6 +46,7 @@ interface Row {
   class_icon: number | null
   class_id: string | null
   retired: boolean | null
+  deleted_at: string | null
   campaign_id: string | null
   campaign: {
     id: string
@@ -61,7 +64,7 @@ interface Row {
  * 가리킨다).
  */
 const COLUMNS =
-  'id, name, xp, class_icon, class_id, retired, campaign_id, campaign:campaigns(id, name, party:parties(id, name))'
+  'id, name, xp, class_icon, class_id, retired, deleted_at, campaign_id, campaign:campaigns(id, name, party:parties(id, name))'
 
 function toMine(row: Row): MyCharacter {
   /*
@@ -82,6 +85,7 @@ function toMine(row: Row): MyCharacter {
     classIcon: hasClassIcon(row.class_icon ?? 0) ? (row.class_icon as number) : 0,
     classId: typeof row.class_id === 'string' && row.class_id !== '' ? row.class_id : null,
     retired: row.retired === true,
+    deletedAt: typeof row.deleted_at === 'string' ? Date.parse(row.deleted_at) || null : null,
     campaignId: row.campaign_id,
     partyId: party?.id ?? null,
     // 기록지 이름을 먼저 쓴다 — 파티 시트에서 고치는 이름이 그쪽이고, 목록에 뜨는

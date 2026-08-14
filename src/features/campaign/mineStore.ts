@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { sweepDeletedCharacters } from './characterNet'
 import { fetchMyCharacters, type MyCharacter } from './mineNet'
 
 /**
@@ -24,6 +25,12 @@ export const useMineStore = create<MineState>((set) => ({
   loaded: false,
 
   load: async (userId) => {
+    /*
+      **유예가 지난 것을 지나가며 치운다**(구현 결정 72와 같은 짜임). 사람은
+      이틀이 끝나기를 지켜보지 않는다 — 목록을 읽기 전에 부르므로 지난 것은
+      애초에 안 온다. 실패해도 삼킨다(함수 안에서).
+    */
+    void sweepDeletedCharacters()
     try {
       set({ characters: await fetchMyCharacters(userId), loaded: true })
     } catch {

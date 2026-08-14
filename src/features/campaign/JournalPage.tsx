@@ -5,6 +5,7 @@ import { useJournalStore } from './campaignStore'
 import { classInfoOf, useClassStore } from './classStore'
 import { classIconUrl } from './character'
 import { LevelBadge } from './LevelBadge'
+import { graceShort } from './grace'
 import { Crew } from './Crew'
 import type { MyCharacter } from './mineNet'
 import { useMineStore } from './mineStore'
@@ -229,6 +230,9 @@ function MyCharacters({
     void loadClasses()
   }, [loadClasses])
 
+  /* 남은 시간은 열 때 한 번만 잰다 — 렌더 중에 `Date.now()`를 부르지 않는다. */
+  const [now] = useState(() => Date.now())
+
   // 은퇴한 캐릭터는 상에 없다. 지우지 않은 것은 기록의 일부이므로 파티 기록지
   // 안에는 남아 있고, 여기서만 접는다.
   const active = characters.filter((c) => !c.retired)
@@ -269,6 +273,15 @@ function MyCharacters({
                       >
                         {c.partyName ?? '파티 없음'}
                       </span>
+                      {/*
+                        **지운 것도 목록에 남는다**(`0022`) — 아무 표시가 없으면
+                        멀쩡한 캐릭터로 읽히므로 언제 사라지는지 여기서 말한다.
+                      */}
+                      {c.deletedAt !== null && (
+                        <span className="journal__char-doom">
+                          삭제 {graceShort(c.deletedAt, now)}
+                        </span>
+                      )}
                     </span>
                   </span>
 

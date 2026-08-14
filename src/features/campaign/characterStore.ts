@@ -1,11 +1,6 @@
 import { create } from 'zustand'
 import { NetError } from '../net/adapter'
-import {
-  createCharacter,
-  deleteCharacter,
-  fetchCharacters,
-  pushCharacterEdits,
-} from './characterNet'
+import { createCharacter, fetchCharacters, markDeleted, pushCharacterEdits } from './characterNet'
 import { mirrorCharacters, mirroredCharacters } from './db'
 import type { Character, CharacterEdits } from './types'
 
@@ -151,8 +146,9 @@ export const useCharacterStore = create<CharacterState>((set, get) => ({
     }
     set({ busy: true, error: null })
     try {
-      await deleteCharacter(id)
-      const next = get().characters.filter((c) => c.id !== id)
+      /* 지우기는 표시만 한다 — 유예 동안은 목록에 그대로 있어야 한다(`0022`). */
+      const marked = await markDeleted(id)
+      const next = get().characters.map((c) => (c.id === id ? marked : c))
       const campaignId = get().campaignId
       if (campaignId) await mirrorCharacters(campaignId, next)
       set({ characters: next })

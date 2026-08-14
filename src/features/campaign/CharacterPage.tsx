@@ -44,6 +44,7 @@ export function CharacterPage() {
   const edit = useOneCharacterStore((s) => s.edit)
   const join = useOneCharacterStore((s) => s.join)
   const remove = useOneCharacterStore((s) => s.remove)
+  const restore = useOneCharacterStore((s) => s.restore)
 
   /** 들 수 있는 파티 — 내가 든 것뿐이다. 서버도 같은 것을 본다(`0015`). */
   const entries = useJournalStore((s) => s.entries)
@@ -203,10 +204,13 @@ export function CharacterPage() {
             chipSlot={chipSlot}
             mine={mine}
             onEdit={(edits) => void edit(edits)}
-            onRemove={() => {
-              void remove()
-              window.location.hash = '#/journal'
-            }}
+            /*
+              **지운 뒤에도 이 화면에 남는다.** 표시만 된 것이라 들여다볼 수 있고
+              되돌릴 수도 있어야 한다 — 목록으로 튕겨 내면 되돌리려고 다시 찾아
+              들어와야 한다(`0022`).
+            */
+            onRemove={() => void remove()}
+            onRestore={() => void restore()}
           />
         </>
       )}

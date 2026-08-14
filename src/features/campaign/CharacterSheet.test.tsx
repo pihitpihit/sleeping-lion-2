@@ -31,6 +31,7 @@ function fixture(over: Partial<Character> = {}): Character {
     items: ['가죽 장화'],
     notes: '',
     retired: false,
+    deletedAt: null,
     createdAt: 0,
     updatedAt: 0,
     version: 1,

@@ -36,6 +36,7 @@ interface Row {
   items: string[] | null
   notes: string
   retired: boolean
+  deleted_at: string | null
   created_at: string
   updated_at: string
   version: number
@@ -44,7 +45,7 @@ interface Row {
 }
 
 const COLUMNS =
-  'id, campaign_id, owner_id, name, class_icon, class_id, level, xp, gold, checkmarks, perks, items, notes, retired, created_at, updated_at, version, owner:profiles!characters_owner_id_fkey(display_name)'
+  'id, campaign_id, owner_id, name, class_icon, class_id, level, xp, gold, checkmarks, perks, items, notes, retired, deleted_at, created_at, updated_at, version, owner:profiles!characters_owner_id_fkey(display_name)'
 
 /**
  * 어디서 온 값이든 쓸 수 있는 캐릭터로 다듬는다.
@@ -70,6 +71,7 @@ export function sanitizeCharacter(row: Row): Character {
     items: Array.isArray(row.items) ? row.items.filter((i) => typeof i === 'string') : [],
     notes: typeof row.notes === 'string' ? row.notes : '',
     retired: row.retired === true,
+    deletedAt: typeof row.deleted_at === 'string' ? Date.parse(row.deleted_at) || null : null,
     createdAt: Date.parse(row.created_at) || now,
     updatedAt: Date.parse(row.updated_at) || now,
     version: typeof row.version === 'number' ? row.version : 1,
@@ -178,10 +180,55 @@ export async function pushCharacterEdits(id: string, edits: CharacterEdits): Pro
   return sanitizeCharacter(data as unknown as Row)
 }
 
-/** 캐릭터를 거둔다. 은퇴와 다르다 — 은퇴는 접어두는 것이고 이것은 없애는 것이다. */
-export async function deleteCharacter(id: string): Promise<void> {
-  const { error } = await supabase().from('characters').delete().eq('id', id)
+/**
+ * 지우기로 표시한다 — **그 자리에서 없애지 않는다.**
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **잘못 눌렀다는 것은 대개 한참 뒤에 안다.**                               │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 이틀 동안은 목록에 그대로 있고 들여다볼 수 있으며 언제든 되돌릴 수 있다.
+ * 그 뒤에 서버가 거둔다(`sweep_deleted_characters`).
+ *
+ * **시각은 서버가 찍는다** — 기기 시계가 어긋나 있으면 유예가 늘거나 준다.
+ */
+export async function markDeleted(id: string): Promise<Character> {
+  const { data, error } = await supabase()
+    .from('characters')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+    .select(COLUMNS)
+    .single()
   if (error) throw error
+  return sanitizeCharacter(data as unknown as Row)
+}
+
+/** 표시를 지운다 — 되돌리기. 유예 안이라면 언제든. */
+export async function unmarkDeleted(id: string): Promise<Character> {
+  const { data, error } = await supabase()
+    .from('characters')
+    .update({ deleted_at: null })
+    .eq('id', id)
+    .select(COLUMNS)
+    .single()
+  if (error) throw error
+  return sanitizeCharacter(data as unknown as Row)
+}
+
+/**
+ * 유예가 지난 것을 서버가 거둔다.
+ *
+ * 잊힌 판을 치우는 것과 같은 짜임이다(`sweepStaleBattles`, 구현 결정 72) —
+ * **사람은 유예가 끝나기를 지켜보지 않는다.** 실패해도 삼킨다: 치우는 일이지
+ * 화면이 여기 매달릴 까닭이 없다.
+ */
+export async function sweepDeletedCharacters(): Promise<void> {
+  try {
+    const { error } = await supabase().rpc('sweep_deleted_characters')
+    if (error) throw error
+  } catch (cause) {
+    console.error('[sweep]', cause)
+  }
 }
 
 /* --------------------------------------------------------------------------

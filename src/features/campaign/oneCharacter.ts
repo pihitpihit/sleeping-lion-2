@@ -1,6 +1,12 @@
 import { create } from 'zustand'
 import { NetError } from '../net/adapter'
-import { deleteCharacter, fetchCharacter, joinParty, pushCharacterEdits } from './characterNet'
+import {
+  fetchCharacter,
+  joinParty,
+  markDeleted,
+  pushCharacterEdits,
+  unmarkDeleted,
+} from './characterNet'
 import type { Character, CharacterEdits } from './types'
 
 /**
@@ -28,6 +34,7 @@ interface OneCharacterState {
   /** 파티에 들거나 나온다. 시트에서 고치는 칸이 아니라 따로 하는 일이다. */
   join: (campaignId: string | null) => Promise<void>
   remove: () => Promise<void>
+  restore: () => Promise<void>
   reset: () => void
 }
 
@@ -82,13 +89,32 @@ export const useOneCharacterStore = create<OneCharacterState>((set, get) => ({
     }
   },
 
+  /**
+   * 지운다 — **표시만 하고 이틀 뒤에 진짜로 사라진다**(`0022`).
+   *
+   * 화면에서 캐릭터를 치우지 않는다: 유예 동안은 목록에도 있고 들여다볼 수도
+   * 있어야 한다(형님이 정했다). 돌아온 줄을 그대로 앉힌다.
+   */
   remove: async () => {
     const before = get().character
     if (!before) return
     set({ busy: true, error: null })
     try {
-      await deleteCharacter(before.id)
-      set({ character: null })
+      set({ character: await markDeleted(before.id) })
+    } catch (cause) {
+      set({ error: messageOf(cause) })
+    } finally {
+      set({ busy: false })
+    }
+  },
+
+  /** 되돌린다. 유예 안이면 언제든. */
+  restore: async () => {
+    const before = get().character
+    if (!before) return
+    set({ busy: true, error: null })
+    try {
+      set({ character: await unmarkDeleted(before.id) })
     } catch (cause) {
       set({ error: messageOf(cause) })
     } finally {

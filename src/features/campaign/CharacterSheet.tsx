@@ -22,6 +22,7 @@ import { writeLog } from './characterNet'
 import { LogView } from './LogView'
 import { PencilIcon } from './PencilIcon'
 import { useHiddenAbove } from './useHiddenAbove'
+import { graceText } from './grace'
 import { PerkText } from './PerkText'
 import { perkRowsOf } from './perks'
 import { ownerBadge } from '../satchel/perkSource'
@@ -44,7 +45,10 @@ interface Props {
   /** 서버에 못 닿는 중. 내 것이어도 잠근다. */
   offline?: boolean
   onEdit: (edits: CharacterEdits) => void
+  /** 지운다 — **표시만 하고 이틀 뒤에 사라진다**(`0022`). */
   onRemove: () => void
+  /** 지우기를 물린다. 유예 안이면 언제든. */
+  onRestore?: () => void
   /**
    * 혼자 서는 시트인가.
    *
@@ -125,6 +129,7 @@ export function CharacterSheet({
   standalone = false,
   onEdit,
   onRemove,
+  onRestore,
   chipSlot = null,
 }: Props) {
   const noteId = useId()
@@ -144,8 +149,24 @@ export function CharacterSheet({
   const levelHidden = useHiddenAbove(levelRef, bar)
   const tallyHidden = useHiddenAbove(tallyRef, bar)
 
-  /** 고칠 수 있는 사람인가. 남의 것과 오프라인은 편집으로 들어갈 수조차 없다. */
-  const canEdit = mine && !offline
+  /** 지우기로 표시되어 있는가. 유예 동안은 들여다보기만 한다. */
+  const pendingDelete = character.deletedAt !== null
+
+  /*
+    **지금 시각은 열 때 한 번만 잰다.** 렌더 중에 `Date.now()`를 부르면 같은
+    입력에 다른 결과가 나온다(구현 결정 12·376과 같은 자리). 「1일 3시간 뒤」가
+    보는 동안 멎어 있어도 되는 자리다 — 다시 열면 다시 잰다.
+  */
+  const [now] = useState(() => Date.now())
+
+  /**
+   * 고칠 수 있는 사람인가.
+   *
+   * 남의 것과 오프라인은 편집으로 들어갈 수조차 없다. **지우기로 표시된 것도
+   * 마찬가지다** — 화면에서 잠그는 것은 헛손질을 줄이는 것이고 진짜로 막는 것은
+   * 서버다(`0022`의 트리거).
+   */
+  const canEdit = mine && !offline && !pendingDelete
 
   const [wantsEdit, setWantsEdit] = useState(false)
   const [draft, setDraft] = useState<SheetDraft>(() => draftOf(character))
@@ -298,6 +319,30 @@ export function CharacterSheet({
         .filter(Boolean)
         .join(' ')}
     >
+      {/* ------------------------------------------------------------------
+          삭제 예정 띠
+          ------------------------------------------------------------------
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **언제 사라지는지 화면이 말한다.**                                │
+          └──────────────────────────────────────────────────────────────────┘
+
+          목록에 그대로 있으므로 아무 표시가 없으면 멀쩡한 캐릭터로 읽힌다.
+          되돌리는 문도 여기 함께 낸다 — 되돌릴 수 있다는 것을 아는 자리와 되돌
+          리는 자리가 갈리면 찾으러 다녀야 한다.
+          ------------------------------------------------------------------ */}
+      {pendingDelete && character.deletedAt !== null && (
+        <div className="char__doom" role="status">
+          <span className="char__doom-text">
+            삭제 예정 — <b>{graceText(character.deletedAt, now)}</b>
+          </span>
+          {mine && onRestore && (
+            <button type="button" className="char__undo" onClick={onRestore}>
+              삭제 취소
+            </button>
+          )}
+        </div>
+      )}
+
       {/* ------------------------------------------------------------------
           띠에 앉는 요약
           ------------------------------------------------------------------
@@ -799,7 +844,7 @@ export function CharacterSheet({
             {shown.retired ? '다시 나선다' : '은퇴시킨다'}
           </button>
           <button type="button" className="char__remove" onClick={() => setAsking('remove')}>
-            거둔다
+            삭제한다
           </button>
         </div>
       )}
@@ -823,7 +868,9 @@ export function CharacterSheet({
         </div>
       )}
 
-      {logOpen && <LogView source="character" id={character.id} onClose={() => setLogOpen(false)} />}
+      {logOpen && (
+        <LogView source="character" id={character.id} onClose={() => setLogOpen(false)} />
+      )}
 
       {/*
         ┌────────────────────────────────────────────────────────────────────┐
@@ -887,9 +934,14 @@ export function CharacterSheet({
 
       {asking === 'remove' && (
         <ConfirmDialog
-          title={`'${character.name || '이름 없음'}'을 거둡니까?`}
-          description="레벨·경험·골드·아이템·특혜가 모두 사라진다. 되돌릴 수 없다."
-          confirmLabel="거둔다"
+          title={`'${character.name || '이름 없음'}'을 삭제합니까?`}
+          /*
+            **이제는 되돌릴 수 있다.** 그래도 뜸은 그대로 5초다 — 유예가 있다고
+            해서 손가락이 미끄러져도 되는 것은 아니고, 사라진 줄 모르고 이틀을
+            보내면 그때는 진짜로 없다.
+          */
+          description="이틀 뒤에 사라진다. 그동안은 목록에 남고 언제든 되돌릴 수 있다."
+          confirmLabel="삭제한다"
           onConfirm={() => {
             setAsking(null)
             onRemove()

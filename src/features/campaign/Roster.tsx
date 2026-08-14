@@ -3,6 +3,7 @@ import type { Identity } from '../net/types'
 import { classIconUrl, levelForXp } from './character'
 import { useCharacterStore } from './characterStore'
 import { LevelBadge } from './LevelBadge'
+import { graceShort } from './grace'
 
 interface Props {
   campaignId: string
@@ -41,6 +42,8 @@ export function Roster({ campaignId, me, readOnly = false }: Props) {
   const load = useCharacterStore((s) => s.load)
 
   const [showRetired, setShowRetired] = useState(false)
+  /* 남은 시간은 열 때 한 번만 잰다. */
+  const [now] = useState(() => Date.now())
 
   useEffect(() => {
     void load(campaignId)
@@ -83,6 +86,12 @@ export function Roster({ campaignId, me, readOnly = false }: Props) {
                 <span className="roster__name">
                   {character.name || '이름 없음'}
                   {mine && <span className="crew__me"> (나)</span>}
+                  {/* 지운 것도 무리에 남는다 — 언제 사라지는지 함께 적는다. */}
+                  {character.deletedAt !== null && (
+                    <span className="journal__char-doom">
+                      삭제 {graceShort(character.deletedAt, now)}
+                    </span>
+                  )}
                 </span>
 
                 {/* 레벨은 경험치에서 나온다 — 표에 옛 값이 남아 있어도 여기서
