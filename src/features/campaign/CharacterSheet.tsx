@@ -135,8 +135,14 @@ export function CharacterSheet({
   */
   const levelRef = useRef<HTMLElement>(null)
   const tallyRef = useRef<HTMLDivElement>(null)
-  const levelHidden = useHiddenAbove(levelRef)
-  const tallyHidden = useHiddenAbove(tallyRef)
+  /*
+    띠를 직접 재려면 그 요소가 있어야 한다. 자리를 내준 것이 띠 안에 있으므로
+    거슬러 올라가 찾는다 — **높이를 짐작하면 아이폰에서 한참 늦는다**(안전영역이
+    얹혀 띠가 100px 가까이 된다).
+  */
+  const bar = chipSlot === null ? null : chipSlot.closest<HTMLElement>('.topbar')
+  const levelHidden = useHiddenAbove(levelRef, bar)
+  const tallyHidden = useHiddenAbove(tallyRef, bar)
 
   /** 고칠 수 있는 사람인가. 남의 것과 오프라인은 편집으로 들어갈 수조차 없다. */
   const canEdit = mine && !offline
@@ -310,9 +316,8 @@ export function CharacterSheet({
           **초안이 여기 있기 때문**이다: 고치는 중이면 고치는 값이 그대로 뜬다.
           ------------------------------------------------------------------ */}
       {chipSlot !== null &&
-        (levelHidden || tallyHidden) &&
         createPortal(
-          <>
+          <span className={`tchips${levelHidden || tallyHidden ? ' tchips--on' : ''}`}>
             {levelHidden && (
               <>
                 <span className="tchip">
@@ -347,7 +352,7 @@ export function CharacterSheet({
                 </span>
               </>
             )}
-          </>,
+          </span>,
           chipSlot,
         )}
 
