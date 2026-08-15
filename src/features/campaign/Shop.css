@@ -84,7 +84,7 @@
     calc(var(--sl-safe-left) + 1rem);
 }
 
-.shop__define,
+.shop__find,
 .shop__list,
 .shop__note,
 .shop__empty,
@@ -94,26 +94,43 @@
   margin-right: auto;
 }
 
-/* 새 아이템 — 이름·값·등록이 한 줄이다. 좁으면 값과 단추가 아래로 접힌다. */
-.shop__define {
+/*
+  찾기 — **적기 전에 먼저 찾는다.**
+
+  꼬리표를 다는 것과 같은 결이다: 치는 대로 걸러 주고 **없을 때만 「추가」가
+  나온다.** 단추가 늘 서 있으면 이미 있는 것을 또 적게 된다.
+*/
+.shop__find {
   display: flex;
-  flex-wrap: wrap;
   gap: 0.4rem;
   margin-bottom: 0.8rem;
 }
 
-.shop__name {
-  flex: 1 1 12rem;
+.shop__query {
+  flex: 1;
   min-width: 0;
-}
-
-.shop__cost {
-  flex: 0 0 5rem;
-  text-align: center;
 }
 
 .shop__add {
   flex: none;
+}
+
+/* 값 묻는 팝업의 칸 — 금화를 옆에 세워 무엇을 적는 자리인지 말한다. */
+.shop__ask {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.shop__ask svg {
+  width: 22px;
+  height: 22px;
+}
+
+.shop__cost {
+  flex: 0 0 6rem;
+  text-align: center;
 }
 
 .shop__error {

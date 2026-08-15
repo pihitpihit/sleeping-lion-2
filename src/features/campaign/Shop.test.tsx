@@ -61,6 +61,14 @@ describe('ShopPanel', () => {
     expect(render(80)).toContain('초안에 담긴다')
   })
 
+  /*
+    **적기 전에 먼저 찾는다.** 아무것도 안 친 상태에서는 더할 것이 없으므로
+    「추가」가 없어야 한다 — 늘 서 있으면 이미 있는 것을 또 적게 된다.
+  */
+  it('아무것도 안 쳤으면 「추가」가 없다', () => {
+    expect(render(80)).not.toContain('추가')
+  })
+
   it('들고 있는 것은 그렇다고 적는다', () => {
     const html = render(500, ITEMS, ['가죽 장화'])
     expect(html).toContain('보유')

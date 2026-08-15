@@ -1,6 +1,5 @@
-import { createPortal } from 'react-dom'
+import { MiniDialog } from './MiniDialog'
 import { Price } from './Price'
-import './ItemDropDialog.css'
 
 /**
  * 아이템을 뺄 때 묻는다 — **그냥 뺄지, 값을 되돌려 받을지.**
@@ -32,36 +31,32 @@ export function ItemDropDialog({
   onRefund: () => void
   onCancel: () => void
 }) {
-  return createPortal(
-    <div className="itemdrop" role="presentation">
-      <section
-        className="itemdrop__panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label={`'${name}' 빼기`}
-      >
-        <h2 className="itemdrop__title">
+  return (
+    <MiniDialog
+      label={`'${name}' 빼기`}
+      title={
+        <>
           <b>{name}</b>을 뺍니까?
-        </h2>
-        <p className="itemdrop__body">
-          상점에 되판 것이면 값을 돌려받고, 잃거나 써 없앤 것이면 그냥 뺀다.
-        </p>
+        </>
+      }
+    >
+      <p className="mini__body">
+        상점에 되판 것이면 값을 돌려받고, 잃거나 써 없앤 것이면 그냥 뺀다.
+      </p>
 
-        <div className="itemdrop__acts">
-          {cost !== null && (
-            <button type="button" className="itemdrop__refund" onClick={onRefund}>
-              값을 돌려받는다 <Price cost={cost} />
-            </button>
-          )}
-          <button type="button" className="itemdrop__plain" onClick={onDrop}>
-            그냥 뺀다
+      <div className="mini__acts">
+        {cost !== null && (
+          <button type="button" className="mini__go" onClick={onRefund}>
+            값을 돌려받는다 <Price cost={cost} />
           </button>
-          <button type="button" className="itemdrop__cancel" onClick={onCancel}>
-            취소
-          </button>
-        </div>
-      </section>
-    </div>,
-    document.body,
+        )}
+        <button type="button" className="mini__alt" onClick={onDrop}>
+          그냥 뺀다
+        </button>
+        <button type="button" className="mini__cancel" onClick={onCancel}>
+          취소
+        </button>
+      </div>
+    </MiniDialog>
   )
 }
