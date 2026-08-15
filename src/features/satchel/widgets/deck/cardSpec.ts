@@ -282,13 +282,32 @@ export interface CardSpec {
 }
 
 /**
+ * 축복·저주 카드인가 — **뽑히면 덱에서 아예 빠지는 것.**
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **버리는 것이 아니라 없애는 것이다.**                                     │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 규칙서가 그렇게 적는다: *"If a BLESS or CURSE card is drawn, it should be
+ * **removed** from the player's deck instead of being placed into the discard."*
+ * 한 번 쓰이면 그만이라 다음 섞기에 돌아오지 않는다.
+ */
+export function isOneShot(spec: CardSpec): boolean {
+  return spec.marks.some((mark) => mark.def.id === 'bless' || mark.def.id === 'curse')
+}
+
+/**
  * 섞기는 값에서 나온다 — **곱하기 카드 둘(×0·×2)만 섞기 표식을 달고 있다.**
  *
  * 따로 적어 두지 않는 이유는 적을 자리가 늘면 그만큼 어긋날 자리가 늘기
  * 때문이다. 굴림 카드에는 섞기가 붙지 않는데, 굴림은 값이 곱하기가 아니므로
  * 이 규칙 하나로 함께 걸러진다.
+ *
+ * **축복·저주는 값이 ×2·×0이지만 섞기가 안 붙는다.** 실물 카드에 그 표식이
+ * 없다 — 뽑히면 덱에서 빠지는 카드라 섞을 일이 없다.
  */
-function shufflesFor(effect: CardEffect): boolean {
+function shufflesFor(effect: CardEffect, marks: readonly CardMark[]): boolean {
+  if (marks.some((mark) => mark.def.id === 'bless' || mark.def.id === 'curse')) return false
   return effect.kind === 'multiply'
 }
 
@@ -349,7 +368,7 @@ function parseUncached(id: string): CardSpec | null {
     valueId,
     effect,
     rolling,
-    shuffleAfter: shufflesFor(effect),
+    shuffleAfter: shufflesFor(effect, marks),
     marks,
   }
 }

@@ -1,4 +1,5 @@
 import { HpXpTracker } from './hpxp/HpXpTracker'
+import { BlessWidget, CurseWidget } from './boon/BoonWidget'
 import { RoundTracker } from './round/RoundTracker'
 import { isHpXpSizeAllowed } from './hpxp/hpxp'
 import { HpXpSettingsEditor } from './hpxp/HpXpSettingsEditor'
@@ -82,6 +83,29 @@ const DEFINITIONS: WidgetDefinition[] = [
       Editor: DeckSettingsEditor,
     },
     Component: AttackDeck,
+  },
+  /*
+    축복·저주 — **한 칸짜리 단추.** 누르면 누구에게 줄지 고르는 팝업이 뜨고,
+    고른 덱의 아직 안 뽑은 카드에 섞여 든다(규칙서: *shuffle … into its
+    remaining attack modifier deck*).
+
+    설정이 없다 — 받는 쪽은 줄 때마다 고르는 것이지 위젯에 매어 둘 것이 아니다.
+  */
+  {
+    id: 'bless',
+    name: '축복',
+    defaultSize: { w: 1, h: 1 },
+    minSize: { w: 1, h: 1 },
+    maxSize: { w: 1, h: 1 },
+    Component: BlessWidget,
+  },
+  {
+    id: 'curse',
+    name: '저주',
+    defaultSize: { w: 1, h: 1 },
+    minSize: { w: 1, h: 1 },
+    maxSize: { w: 1, h: 1 },
+    Component: CurseWidget,
   },
   {
     id: 'round',

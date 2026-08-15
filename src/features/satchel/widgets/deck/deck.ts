@@ -26,6 +26,7 @@ import {
   valueHasArt,
   type CardMark,
   type CardSpec,
+  isOneShot,
 } from './cardSpec'
 
 export {
@@ -489,7 +490,28 @@ export function freshDeck(composition: DeckComposition = STANDARD_COMPOSITION): 
 
 /** 버린 것을 되돌려 전부 섞는다. 공개된 카드는 사라진다 — 실물과 같다. */
 export function reshuffle(state: DeckState, rng: Rng): DeckState {
-  return { draw: shuffle([...state.draw, ...state.discard], rng), discard: [] }
+  /*
+    **축복·저주는 돌아오지 않는다.** 뽑히면 덱에서 빠지는 카드라(규칙서) 버린
+    더미를 되돌릴 때 걸러 낸다 — 공개된 채로 남겨 두었다가 여기서 없앤다.
+    곧바로 지우면 방금 무엇이 나왔는지 화면에서 사라진다.
+  */
+  const back = state.discard.filter((card) => !isOneShot(card.spec))
+  return { draw: shuffle([...state.draw, ...back], rng), discard: [] }
+}
+
+/**
+ * 아직 안 뽑은 카드에 섞어 넣는다 — **축복·저주가 들어오는 길.**
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **버린 더미가 아니라 남은 덱에 섞인다.**                                  │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 규칙서가 그렇게 적는다: *"shuffle a CURSE card into its **remaining** attack
+ * modifier deck."* 이미 뽑아 놓은 것은 건드리지 않는다.
+ */
+export function shuffleIn(state: DeckState, cards: readonly Card[], rng: Rng): DeckState {
+  if (cards.length === 0) return state
+  return { draw: shuffle([...state.draw, ...cards], rng), discard: state.discard }
 }
 
 export interface DrawResult {

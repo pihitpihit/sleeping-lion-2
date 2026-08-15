@@ -26,6 +26,7 @@ import {
   revealRemainingRatio,
   revealedCard,
   shuffle,
+  shuffleIn,
   specSpeech,
   totalCount,
   type DeckState,
@@ -527,5 +528,32 @@ describe('퍽 연동', () => {
     // 설정이 아니라 표준 덱에 퍽을 얹은 결과다.
     expect(resolved.p1).toBe(6)
     expect(resolved.p0).toBe(6)
+  })
+})
+
+describe('축복·저주', () => {
+  const bless = makeCard('b1', 'x2.bless')!
+  const curse = makeCard('c1', 'x0.curse')!
+
+  /** 실물 카드에 섞기 표식이 없다 — 뽑히면 덱에서 빠지는 카드라 섞을 일이 없다. */
+  it('값은 ×2·×0이지만 섞기가 안 붙는다', () => {
+    expect(bless.spec.shuffleAfter).toBe(false)
+    expect(curse.spec.shuffleAfter).toBe(false)
+    // 표식 없는 곱하기 카드는 그대로 섞기다.
+    expect(makeCard('x', 'x2')!.spec.shuffleAfter).toBe(true)
+  })
+
+  it('아직 안 뽑은 카드에만 섞여 든다 — 버린 더미는 그대로다', () => {
+    const before: DeckState = { draw: [makeCard('a', 'p1')!], discard: [makeCard('d', 'm1')!] }
+    const after = shuffleIn(before, [curse], () => 0)
+    expect(after.draw).toHaveLength(2)
+    expect(after.discard).toEqual(before.discard)
+  })
+
+  /** 규칙서: 뽑히면 버리는 더미가 아니라 **덱에서 없앤다**. */
+  it('섞을 때 버린 더미에서 걸러진다', () => {
+    const state: DeckState = { draw: [], discard: [bless, makeCard('d', 'm1')!] }
+    const after = reshuffle(state, () => 0)
+    expect(after.draw.map((c) => c.kindId)).toEqual(['m1'])
   })
 })

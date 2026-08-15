@@ -3,8 +3,10 @@ import {
   createDeck,
   drawTurn,
   freshDeck,
+  makeCard,
   needsShuffle,
   reshuffle,
+  shuffleIn,
   STANDARD_COMPOSITION,
   type Card,
   type DeckComposition,
@@ -69,6 +71,15 @@ interface AttackDeckState {
   /** 이 인스턴스만 처음으로. */
   reset: (instanceId: string) => void
 
+  /**
+   * 축복·저주를 **아직 안 뽑은 카드에 섞어 넣는다.**
+   *
+   * 구성을 함께 받는 까닭은 `reveal`과 같다 — 아직 한 번도 안 뽑은 덱이면 이
+   * 자리에서 만들어야 하고, 그 구성은 퍽에 따라 다르다. 미리 만들어 두면
+   * 퍽으로 바뀐 덱이 표준 20장으로 굳는다.
+   */
+  bestow: (instanceId: string, kindId: string, count: number, composition: DeckComposition) => void
+
   /** 뜬 판을 통째로 앉힌다. */
   hydrate: (byInstance: Record<string, DeckState>) => void
 }
@@ -109,6 +120,22 @@ export const useAttackDeckStore = create<AttackDeckState>((set, get) => ({
       }
       // 바뀐 것이 없으면 같은 객체를 돌려준다 — 괜한 렌더를 만들지 않는다.
       return touched ? { byInstance: next } : s
+    }),
+
+  bestow: (instanceId, kindId, count, composition) =>
+    set((s) => {
+      const cards: Card[] = []
+      for (let n = 0; n < count; n += 1) {
+        /* 열쇠는 카드마다 달라야 한다 — 같은 열쇠가 둘이면 React가 헷갈린다. */
+        const card = makeCard(`${kindId}-${instanceId}-${Date.now()}-${n}`, kindId)
+        if (card) cards.push(card)
+      }
+      if (cards.length === 0) return s
+
+      const current = s.byInstance[instanceId] ?? createDeck(Math.random, composition)
+      return {
+        byInstance: { ...s.byInstance, [instanceId]: shuffleIn(current, cards, Math.random) },
+      }
     }),
 
   resetAll: () => set({ byInstance: {} }),
