@@ -25,6 +25,7 @@ import { Shop } from './Shop'
 import { ItemDropDialog } from './ItemDropDialog'
 import { Price } from './Price'
 import { costOf, useShopStore } from './shopStore'
+import { fold } from './searchFold'
 import type { ShopItem } from './shopNet'
 import { useHiddenAbove } from './useHiddenAbove'
 import { graceText } from './grace'
@@ -922,7 +923,7 @@ export function CharacterSheet({
                 if (cost !== null) {
                   set('gold', draft.gold + cost)
                   setBought((b) => {
-                    const at = b.findIndex((x) => x.name.trim() === name.trim())
+                    const at = b.findIndex((x) => fold(x.name) === fold(name))
                     return at === -1 ? b : b.filter((_, i) => i !== at)
                   })
                 }

@@ -6,6 +6,7 @@ import type { ShopItem } from './shopNet'
 import { Coin } from '../satchel/widgets/gold/Coin'
 import { Price } from './Price'
 import { MiniDialog } from './MiniDialog'
+import { fold } from './searchFold'
 import './Shop.css'
 
 /**
@@ -121,10 +122,14 @@ export function ShopPanel({
   const [dropping, setDropping] = useState<ShopItem | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const folded = query.trim().toLocaleLowerCase()
-  const shown = (items ?? []).filter((i) => i.name.toLocaleLowerCase().includes(folded))
+  /*
+    **공백과 대소문자를 안 가리고 견준다**(`fold`). 「가죽 장화」를 「가죽장화」로
+    쳐도 나와야 한다 — 못 찾으면 없는 줄 알고 같은 것을 또 적는다(형님이 짚었다).
+  */
+  const folded = fold(query)
+  const shown = (items ?? []).filter((i) => fold(i.name).includes(folded))
   /* 똑같은 이름이 이미 있으면 더할 것이 없다 — 부분만 맞는 것은 다른 물건이다. */
-  const exists = (items ?? []).some((i) => i.name.trim().toLocaleLowerCase() === folded)
+  const exists = (items ?? []).some((i) => fold(i.name) === folded)
   const canAdd = canDefine && folded !== '' && !exists
 
   return (
@@ -193,7 +198,7 @@ export function ShopPanel({
                 **들고 있는 것은 그렇다고 말한다.** 같은 것을 두 개 사는 일이
                 없지는 않으므로 막지는 않고 몇 개인지만 적는다.
               */
-              const have = owned.filter((n) => n.trim() === item.name.trim()).length
+              const have = owned.filter((n) => fold(n) === fold(item.name)).length
               return (
                 <li key={item.id} className="shop__row">
                   <span className="shop__itemname">

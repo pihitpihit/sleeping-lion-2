@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { addShopItem, listShopItems, removeShopItem, type ShopItem } from './shopNet'
+import { fold } from './searchFold'
 
 /**
  * 상점 목록 — **상점 팝업과 캐릭터 시트가 함께 본다.**
@@ -54,12 +55,12 @@ export const useShopStore = create<ShopState>((set, get) => ({
 /**
  * 이름으로 값 찾기.
  *
- * **다듬어 견준다** — 목록의 이름과 시트에 담긴 이름은 같은 자리에서 온 것이지만,
- * 예전에 손으로 적어 둔 것이 섞여 있을 수 있다(그 길은 걷었다). 모르면 `null`이며
- * 그때는 값을 안 적는다(구현 결정 115).
+ * **공백과 대소문자를 안 가리고 견준다**(`fold`) — 예전에 손으로 적어 둔 것이
+ * 섞여 있을 수 있고(그 길은 걷었다) 띄어쓰기 하나로 값이 안 붙으면 사람은 그것을
+ * 고장으로 읽는다. 모르면 `null`이며 그때는 값을 안 적는다(구현 결정 115).
  */
 export function costOf(items: readonly ShopItem[], name: string): number | null {
-  const folded = name.trim().toLocaleLowerCase()
-  const found = items.find((i) => i.name.trim().toLocaleLowerCase() === folded)
+  const folded = fold(name)
+  const found = items.find((i) => fold(i.name) === folded)
   return found ? found.cost : null
 }
