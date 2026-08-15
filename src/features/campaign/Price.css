@@ -1,0 +1,19 @@
+/* 값 — 금화 그림에 수. 상점과 시트가 함께 쓴다.
+   쓰는 쪽이 스타일을 따로 챙겨야 하면 언젠가 빠뜨린다(구현 결정 356). */
+.price {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  flex: none;
+}
+
+.price svg {
+  width: 17px;
+  height: 17px;
+}
+
+.price__n {
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--sl-gold);
+}

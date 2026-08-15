@@ -467,6 +467,19 @@
   border-radius: 0.2rem;
 }
 
+/*
+  줄의 첫 칸이 남는 자리를 다 쓴다.
+
+  아이템 줄에 **값이 끼면서 칸이 셋**이 되었다(이름·값·×). `space-between`에만
+  맡기면 값이 한가운데 떠 어느 줄의 것인지 흐려진다 — 이름을 늘려 값과 ×를
+  오른쪽으로 몬다. 업적 줄(칸 둘)에서는 달라지는 것이 없다.
+*/
+.sheet__achievements > li > span:first-child {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .sheet__remove {
   flex: none;
   width: 32px;

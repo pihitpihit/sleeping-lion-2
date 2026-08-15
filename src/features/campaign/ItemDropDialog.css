@@ -1,0 +1,90 @@
+/* ==========================================================================
+   아이템을 뺄 때 묻는 팝업
+   --------------------------------------------------------------------------
+   갈래가 셋이라 `ConfirmDialog`를 못 쓴다 — 되돌림·그냥·취소. 뜸도 없다:
+   초안을 고치는 일이라 저장 전이면 언제든 물릴 수 있다.
+   ========================================================================== */
+
+.itemdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(6 5 4 / 78%);
+}
+
+.itemdrop__panel {
+  width: 100%;
+  max-width: 24rem;
+  padding: 1.1rem 1.1rem 1rem;
+  background: var(--sl-panel);
+  border: 1px solid var(--sl-border-strong);
+  border-radius: 10px;
+}
+
+.itemdrop__title {
+  margin: 0 0 0.5rem;
+  font-family: var(--sl-font-ko-display);
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--sl-text);
+}
+
+.itemdrop__title b {
+  font-weight: 400;
+  color: var(--sl-gold-bright);
+}
+
+.itemdrop__body {
+  margin: 0 0 1rem;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: var(--sl-text-muted);
+}
+
+/* 세로로 쌓는다 — 「값을 돌려받는다」 줄에 금화가 붙어 가로로는 좁다. */
+.itemdrop__acts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.itemdrop__refund,
+.itemdrop__plain,
+.itemdrop__cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  border-radius: 0.3rem;
+  cursor: pointer;
+}
+
+/* 되돌려 받는 쪽이 흔한 길이다 — 금빛으로 앞세운다. */
+.itemdrop__refund {
+  color: var(--sl-void);
+  background: var(--sl-gold);
+  border: 1px solid var(--sl-gold);
+}
+
+.itemdrop__refund .price__n {
+  color: var(--sl-void);
+}
+
+.itemdrop__plain {
+  color: var(--sl-text);
+  background: var(--sl-raised);
+  border: 1px solid var(--sl-border);
+}
+
+.itemdrop__cancel {
+  color: var(--sl-text-muted);
+  background: none;
+  border: 1px solid transparent;
+}

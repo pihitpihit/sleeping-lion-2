@@ -153,13 +153,6 @@
   overflow-wrap: anywhere;
 }
 
-/* 값은 금빛이다 — 목록에서 눈이 값을 먼저 훑는다. */
-.shop__price {
-  flex: none;
-  font-size: 1.15rem;
-  color: var(--sl-gold);
-}
-
 .shop__buy {
   flex: none;
   padding: 0.4rem 0.8rem;
@@ -202,4 +195,15 @@
   margin: 1rem auto 0;
   font-size: 0.8rem;
   color: var(--sl-text-faint);
+}
+
+/* 들고 있는 것 — 막지는 않고 몇 개인지만 적는다. */
+.shop__have {
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.35rem;
+  font-size: 0.72rem;
+  color: var(--sl-moss-bright);
+  border: 1px solid var(--sl-moss);
+  border-radius: 999px;
+  white-space: nowrap;
 }

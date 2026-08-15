@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useScrollLock } from './useScrollLock'
-import { addShopItem, listShopItems, removeShopItem, type ShopItem } from './shopNet'
+import { useShopStore } from './shopStore'
+import type { ShopItem } from './shopNet'
 import { Coin } from '../satchel/widgets/gold/Coin'
+import { Price } from './Price'
 import './Shop.css'
 
 /**
@@ -26,35 +28,30 @@ import './Shop.css'
  */
 export function Shop({
   gold,
+  owned,
   userId,
   onBuy,
   onClose,
 }: {
   /** 지금 가진 금화. **초안의 값이다** — 방금 산 것이 곧바로 빠진다. */
   gold: number
+  /** 지금 들고 있는 것들. **초안의 값이다** — 방금 산 것이 곧바로 표시된다. */
+  owned: readonly string[]
   userId: string | null
   onBuy: (item: ShopItem) => void
   onClose: () => void
 }) {
-  const [items, setItems] = useState<ShopItem[] | null>(null)
-  const [failed, setFailed] = useState(false)
+  const items = useShopStore((s) => s.items)
+  const loaded = useShopStore((s) => s.loaded)
+  const load = useShopStore((s) => s.load)
+  const define = useShopStore((s) => s.add)
+  const drop = useShopStore((s) => s.drop)
 
   useScrollLock()
 
   useEffect(() => {
-    let alive = true
-    listShopItems()
-      .then((rows) => {
-        if (alive) setItems(rows)
-      })
-      .catch((cause: unknown) => {
-        console.error('[shop]', cause)
-        if (alive) setFailed(true)
-      })
-    return () => {
-      alive = false
-    }
-  }, [])
+    void load()
+  }, [load])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -64,25 +61,14 @@ export function Shop({
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  async function define(name: string, cost: number) {
-    if (userId === null) return
-    const made = await addShopItem(name, cost, userId)
-    setItems((prev) => [...(prev ?? []), made].sort(byCost))
-  }
-
-  async function drop(id: string) {
-    await removeShopItem(id)
-    setItems((prev) => (prev ?? []).filter((i) => i.id !== id))
-  }
-
   return createPortal(
     <div className="shop">
       <ShopPanel
-        items={items}
-        failed={failed}
+        items={loaded ? items : null}
         gold={gold}
+        owned={owned}
         canDefine={userId !== null}
-        onDefine={define}
+        onDefine={(name, cost) => define(name, cost, userId ?? '')}
         onDrop={drop}
         onBuy={onBuy}
         onClose={onClose}
@@ -90,10 +76,6 @@ export function Shop({
     </div>,
     document.body,
   )
-}
-
-function byCost(a: ShopItem, b: ShopItem): number {
-  return a.cost - b.cost || a.name.localeCompare(b.name)
 }
 
 /**
@@ -104,8 +86,8 @@ function byCost(a: ShopItem, b: ShopItem): number {
  */
 export function ShopPanel({
   items,
-  failed,
   gold,
+  owned,
   canDefine,
   onDefine,
   onDrop,
@@ -113,8 +95,8 @@ export function ShopPanel({
   onClose,
 }: {
   items: readonly ShopItem[] | null
-  failed: boolean
   gold: number
+  owned: readonly string[]
   canDefine: boolean
   onDefine: (name: string, cost: number) => void | Promise<void>
   onDrop: (id: string) => void | Promise<void>
@@ -207,9 +189,7 @@ export function ShopPanel({
         {/* ----------------------------------------------------------------
             목록
             ---------------------------------------------------------------- */}
-        {failed ? (
-          <p className="shop__empty">목록을 불러오지 못했다.</p>
-        ) : items === null ? (
+        {items === null ? (
           <p className="shop__empty">읽는 중…</p>
         ) : items.length === 0 ? (
           <p className="shop__empty">아직 적어 둔 것이 없다. 위에서 한 줄 적으면 된다.</p>
@@ -217,12 +197,22 @@ export function ShopPanel({
           <ul className="shop__list">
             {items.map((item) => {
               const short = item.cost > gold
+              /*
+                **들고 있는 것은 그렇다고 말한다.** 같은 것을 두 개 사는 일이
+                없지는 않으므로 막지는 않고 몇 개인지만 적는다.
+              */
+              const have = owned.filter((n) => n.trim() === item.name.trim()).length
               return (
                 <li key={item.id} className="shop__row">
-                  <span className="shop__itemname">{item.name}</span>
-                  <span className="shop__price sl-numeral" aria-label={`${item.cost} 골드`}>
-                    {item.cost}
+                  <span className="shop__itemname">
+                    {item.name}
+                    {have > 0 && (
+                      <span className="shop__have">
+                        보유{have > 1 && <span className="sl-numeral"> {have}</span>}
+                      </span>
+                    )}
                   </span>
+                  <Price cost={item.cost} />
                   {/*
                     **모자라면 못 산다.** 규칙을 판정하는 것이 아니라 셈이다 —
                     골드가 음수가 되는 자리는 뜻이 없다. 까닭을 글자로도 적는다.

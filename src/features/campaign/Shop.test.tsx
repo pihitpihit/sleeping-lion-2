@@ -14,12 +14,12 @@ const ITEMS = [
   { id: 'b', name: '값비싼 반지', cost: 150 },
 ]
 
-function render(gold: number, items: typeof ITEMS | null = ITEMS) {
+function render(gold: number, items: typeof ITEMS | null = ITEMS, owned: string[] = []) {
   return renderToStaticMarkup(
     <ShopPanel
       items={items}
-      failed={false}
       gold={gold}
+      owned={owned}
       canDefine
       onDefine={noop}
       onDrop={noop}
@@ -34,9 +34,10 @@ describe('ShopPanel', () => {
     expect(render(80)).toContain('가진 골드 80')
   })
 
-  it('적어 둔 것이 이름과 값으로 늘어선다', () => {
+  it('적어 둔 것이 이름과 값으로 늘어선다 — 값은 금화 그림에 수로 적는다', () => {
     const html = render(80)
     expect(html).toContain('가죽 장화')
+    // 읽어주는 쪽에는 우리말로 간다(`Price`).
     expect(html).toContain('20 골드')
   })
 
@@ -58,5 +59,19 @@ describe('ShopPanel', () => {
 
   it('초안에 담긴다는 것을 알린다 — 저장을 안 누르면 안 남는다', () => {
     expect(render(80)).toContain('초안에 담긴다')
+  })
+
+  it('들고 있는 것은 그렇다고 적는다', () => {
+    const html = render(500, ITEMS, ['가죽 장화'])
+    expect(html).toContain('보유')
+  })
+
+  it('둘 이상이면 몇 개인지 함께 적는다', () => {
+    const html = render(500, ITEMS, ['가죽 장화', '가죽 장화'])
+    expect(html).toMatch(/보유<[^>]*>\s*2/)
+  })
+
+  it('안 들고 있으면 아무 표도 안 붙는다', () => {
+    expect(render(500, ITEMS, [])).not.toContain('보유')
   })
 })

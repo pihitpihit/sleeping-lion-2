@@ -22,6 +22,9 @@ import { writeLog } from './characterNet'
 import { LogView } from './LogView'
 import { PencilIcon } from './PencilIcon'
 import { Shop } from './Shop'
+import { ItemDropDialog } from './ItemDropDialog'
+import { Price } from './Price'
+import { costOf, useShopStore } from './shopStore'
 import type { ShopItem } from './shopNet'
 import { useHiddenAbove } from './useHiddenAbove'
 import { graceText } from './grace'
@@ -185,6 +188,18 @@ export function CharacterSheet({
    * 거래」로, 나머지는 「직접 수정」으로 남는다. 값 자체는 초안이 이미 들고 있다.
    */
   const [bought, setBought] = useState<Purchase[]>([])
+  /** 뺄지 물어보는 중인 아이템의 자리. 값이 아니라 **자리**를 든다 — 같은 이름이 둘일 수 있다. */
+  const [dropping, setDropping] = useState<number | null>(null)
+
+  /*
+    상점 목록. **값을 붙이려면 이름으로 찾아야 한다** — 들고 있는 것은 이름뿐이다.
+    상점 팝업과 같은 스토어라 거기서 한 줄 적으면 시트도 그 값을 바로 안다.
+  */
+  const shopItems = useShopStore((s) => s.items)
+  const loadShop = useShopStore((s) => s.load)
+  useEffect(() => {
+    void loadShop()
+  }, [loadShop])
 
   /**
    * 화면에 그리는 값.
@@ -764,28 +779,28 @@ export function CharacterSheet({
 
           {shown.items.length > 0 && (
             <ul className="sheet__achievements">
-              {shown.items.map((item, index) => (
-                <li key={`${index}-${item}`}>
-                  <span>{item}</span>
-                  {/* 지우는 단추는 편집 중에만 낸다. 열람 화면에 ×가 늘어서 있으면
-                    누를 수 있는 줄 알고 손이 간다. */}
-                  {editing && (
-                    <button
-                      type="button"
-                      className="sheet__remove"
-                      aria-label={`아이템 '${item}' 지우기`}
-                      onClick={() =>
-                        set(
-                          'items',
-                          draft.items.filter((_, i) => i !== index),
-                        )
-                      }
-                    >
-                      ×
-                    </button>
-                  )}
-                </li>
-              ))}
+              {shown.items.map((item, index) => {
+                /* 목록에 없는 이름이면 값을 모른다 — 그때는 안 적는다(구현 결정 115). */
+                const cost = costOf(shopItems, item)
+                return (
+                  <li key={`${index}-${item}`}>
+                    <span>{item}</span>
+                    {cost !== null && <Price cost={cost} />}
+                    {/* 지우는 단추는 편집 중에만 낸다. 열람 화면에 ×가 늘어서 있으면
+                      누를 수 있는 줄 알고 손이 간다. */}
+                    {editing && (
+                      <button
+                        type="button"
+                        className="sheet__remove"
+                        aria-label={`아이템 '${item}' 빼기`}
+                        onClick={() => setDropping(index)}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           )}
 
@@ -879,9 +894,49 @@ export function CharacterSheet({
         골드는 **초안의 값**을 넘긴다: 방금 산 것이 그 자리에서 빠져야 다음 것을
         살 수 있는지 알 수 있다.
       */}
+      {/*
+        **없어지는 길이 하나가 아니다.** 상점에 되팔면 금화가 돌아오고, 잃거나 써
+        없앤 것은 그냥 사라진다 — 값이 같아도 어느 쪽인지는 사람만 안다(형님이
+        정했다). 되돌려 받은 것은 **산 목록에서도 한 벌 무른다**: 그래야 로그의
+        상점 줄이 실제로 오간 만큼만 말한다.
+      */}
+      {dropping !== null &&
+        (() => {
+          const name = draft.items[dropping] ?? ''
+          const cost = costOf(shopItems, name)
+          const cut = () =>
+            set(
+              'items',
+              draft.items.filter((_, i) => i !== dropping),
+            )
+          return (
+            <ItemDropDialog
+              name={name}
+              cost={cost}
+              onDrop={() => {
+                cut()
+                setDropping(null)
+              }}
+              onRefund={() => {
+                cut()
+                if (cost !== null) {
+                  set('gold', draft.gold + cost)
+                  setBought((b) => {
+                    const at = b.findIndex((x) => x.name.trim() === name.trim())
+                    return at === -1 ? b : b.filter((_, i) => i !== at)
+                  })
+                }
+                setDropping(null)
+              }}
+              onCancel={() => setDropping(null)}
+            />
+          )
+        })()}
+
       {shopOpen && (
         <Shop
           gold={shown.gold}
+          owned={shown.items}
           userId={character.ownerId}
           onBuy={(item: ShopItem) => {
             set('items', [...draft.items, item.name])
