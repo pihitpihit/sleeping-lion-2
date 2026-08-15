@@ -1,0 +1,162 @@
+/* ==========================================================================
+   함께 적어 두고 골라 담는 목록 — 상점과 업적이 나눠 쓴다
+   --------------------------------------------------------------------------
+   덱 펼쳐 보기와 같은 짜임이다 — 화면을 통째로 덮고, 머리는 안 구르고 목록만
+   구른다. 나가는 길은 × 단추와 Escape.
+
+   머리에 무엇을 얹을지(가진 금화 따위)와 줄 끝에 무엇을 세울지(구매·담기)만
+   쓰는 쪽이 정한다 — 나머지 모양은 여기 하나다.
+   ========================================================================== */
+
+.cat {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  background: rgb(6 5 4 / 88%);
+}
+
+.cat__panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* 머리는 제 바탕을 깐다 — 목록이 그 밑을 지나가면 글자가 겹쳐 읽힌다. */
+.cat__head {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: calc(var(--sl-safe-top) + 0.7rem) calc(var(--sl-safe-right) + 1rem) 0.7rem
+    calc(var(--sl-safe-left) + 1rem);
+  background: var(--sl-bg);
+  border-bottom: 1px solid var(--sl-border);
+}
+
+.cat__title {
+  margin: 0;
+  font-family: var(--sl-font-ko-display);
+  font-size: 1.2rem;
+  color: var(--sl-gold-bright);
+}
+
+/* 가진 금화. 시트가 쓰는 것과 같은 조각이라 같은 값으로 읽힌다. */
+.cat__close {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--sl-text-muted);
+  background: none;
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.cat__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.9rem calc(var(--sl-safe-right) + 1rem) calc(var(--sl-safe-bottom) + 1.5rem)
+    calc(var(--sl-safe-left) + 1rem);
+}
+
+.cat__find,
+.cat__list,
+.cat__empty,
+/*
+  찾기 — **적기 전에 먼저 찾는다.**
+
+  꼬리표를 다는 것과 같은 결이다: 치는 대로 걸러 주고 **없을 때만 「추가」가
+  나온다.** 단추가 늘 서 있으면 이미 있는 것을 또 적게 된다.
+*/
+/* 알맹이는 넓은 화면에서 가운데로 모인다 — 줄이 화면 끝까지 늘어지면 안 읽힌다. */
+.cat__find,
+.cat__list,
+.cat__empty {
+  max-width: 40rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cat__find {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+}
+
+.cat__query {
+  flex: 1;
+  min-width: 0;
+}
+
+.cat__add {
+  flex: none;
+}
+
+/* 값 묻는 팝업의 칸 — 금화를 옆에 세워 무엇을 적는 자리인지 말한다. */
+.cat__empty {
+  padding: 1.2rem 0;
+  text-align: center;
+  color: var(--sl-text-muted);
+}
+
+.cat__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0;
+  list-style: none;
+}
+
+.cat__row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  background: var(--sl-panel);
+  border: 1px solid var(--sl-border);
+  border-radius: 8px;
+}
+
+.cat__name {
+  flex: 1;
+  min-width: 0;
+  color: var(--sl-text);
+  overflow-wrap: anywhere;
+}
+
+/* 모자라면 죽는다. **까닭을 글자로도 말한다** — 눌러도 안 되는 채로 두지 않는다. */
+.cat__drop {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--sl-text-faint);
+  background: none;
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.cat__drop:hover {
+  color: var(--sl-ember);
+  border-color: var(--sl-ember);
+}
+
+/* 들고 있는 것 — 막지는 않고 몇 개인지만 적는다. */
+.cat__have {
+  margin-left: 0.4rem;
+  padding: 0.05rem 0.35rem;
+  font-size: 0.72rem;
+  color: var(--sl-moss-bright);
+  border: 1px solid var(--sl-moss);
+  border-radius: 999px;
+  white-space: nowrap;
+}

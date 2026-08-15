@@ -14,6 +14,7 @@ import { useAuthStore } from '../auth/authStore'
 import { campaignChangesOf } from './characterLog'
 import { writeCampaignLog } from './campaignNet'
 import { LogView } from './LogView'
+import { AchievementPicker } from './AchievementPicker'
 
 interface Props {
   campaign: Campaign
@@ -58,6 +59,8 @@ interface Props {
 export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   /** 로그 팝업이 열려 있는가. 읽기·편집 어느 쪽에서나 연다. */
   const [logOpen, setLogOpen] = useState(false)
+  /** 업적을 고르는 중인가. **편집 중에만 연다** — 담는 것은 값을 고치는 일이다. */
+  const [picking, setPicking] = useState(false)
   /** 누가 고쳤는지 남기려면 내가 누구인지 알아야 한다. */
   const userId = useAuthStore((s) => s.session?.userId ?? null)
   const nameId = useId()
@@ -67,7 +70,6 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
 
   const [wantsEdit, setWantsEdit] = useState(false)
   const [draft, setDraft] = useState<PartyDraft>(() => draftOf(campaign))
-  const [newAchievement, setNewAchievement] = useState('')
   const [asking, setAsking] = useState(false)
 
   /**
@@ -95,13 +97,11 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
 
   function startEditing() {
     setDraft(draftOf(campaign))
-    setNewAchievement('')
     setWantsEdit(true)
   }
 
   function stopEditing() {
     setWantsEdit(false)
-    setNewAchievement('')
     setAsking(false)
   }
 
@@ -127,13 +127,6 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
       }
     }
     stopEditing()
-  }
-
-  function addAchievement() {
-    const value = newAchievement.trim()
-    if (value === '') return
-    set('achievements', [...draft.achievements, value])
-    setNewAchievement('')
   }
 
   return (
@@ -268,28 +261,17 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
             <p className="sheet__empty">아직 없다.</p>
           )}
 
+          {/*
+            업적 목록 — **들어오는 길은 여기 하나뿐이다.**
+
+            손으로 적는 칸이 있었는데 걷었다(형님이 정했다). 같은 것을 사람마다
+            다르게 적어 두면 나중에 무엇이 무엇인지 알 수 없다 — 아이템을 상점
+            하나로 모은 것과 같은 결이다(구현 결정 334·345).
+          */}
           {editing && (
-            <div className="sheet__add">
-              <input
-                className="sheet__input"
-                value={newAchievement}
-                placeholder="업적을 적는다"
-                aria-label="새 업적"
-                onChange={(e) => setNewAchievement(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    addAchievement()
-                  }
-                }}
-              />
-              <button
-                type="button"
-                className="sheet__add-button"
-                disabled={newAchievement.trim() === ''}
-                onClick={addAchievement}
-              >
-                더하기
+            <div className="char__shoprow">
+              <button type="button" className="char__shopopen" onClick={() => setPicking(true)}>
+                업적 고르기
               </button>
             </div>
           )}
@@ -358,6 +340,16 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
       </div>
 
       {logOpen && <LogView source="campaign" id={campaign.id} onClose={() => setLogOpen(false)} />}
+
+      {/* 담은 것은 **초안에 담긴다** — 저장을 눌러야 남는다(구현 결정 165). */}
+      {picking && (
+        <AchievementPicker
+          owned={shown.achievements}
+          userId={userId}
+          onPick={(name) => set('achievements', [...draft.achievements, name])}
+          onClose={() => setPicking(false)}
+        />
+      )}
 
       {asking && (
         <ConfirmDialog
