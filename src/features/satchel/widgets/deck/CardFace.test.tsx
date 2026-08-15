@@ -246,3 +246,20 @@ describe('굴림으로 이어진 뽑기', () => {
     expect(backs).toEqual([2, 1, 0])
   })
 })
+
+describe('덱 주인 표식', () => {
+  const owner = (letter: string) => ({ iconUrl: null, letter, name: '주인' })
+
+  /** 실물 몬스터 덱의 `M`이 그 서체로 박혀 있다. */
+  it('라틴 한 글자는 글룸헤이븐 서체로 적는다', () => {
+    const html = renderToStaticMarkup(<CardFace card={card('p1')} owner={owner('M')} />)
+    expect(html).toContain('sl-numeral')
+  })
+
+  /** Pirata One은 라틴 전용이라 한글은 대체 서체로 떨어진다(구현 결정 39). */
+  it('한글 첫 글자에는 안 붙인다', () => {
+    const html = renderToStaticMarkup(<CardFace card={card('p1')} owner={owner('바')} />)
+    expect(html).toContain('바')
+    expect(html).not.toContain('sl-numeral')
+  })
+})

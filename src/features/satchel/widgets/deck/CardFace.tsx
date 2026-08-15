@@ -39,6 +39,11 @@ export interface CardOwner {
   name: string
 }
 
+/** 라틴 글자·숫자 한 자인가. 글룸헤이븐 서체를 붙일지 정한다. */
+function isLatin(letter: string): boolean {
+  return /^[A-Za-z0-9]$/.test(letter)
+}
+
 function markBadgeColor(mark: CardMark): string {
   return mark.def.color ?? '#5A4830'
 }
@@ -147,7 +152,15 @@ export function CardFace({ card, owner }: { card: Card; owner?: CardOwner | null
           {owner.iconUrl ? (
             <img className="deck__owner-icon" src={owner.iconUrl} alt="" />
           ) : (
-            <span className="deck__owner-letter">{owner.letter}</span>
+            /*
+              **라틴 한 글자면 글룸헤이븐 서체로 적는다**(`sl-numeral`). 몬스터
+              덱의 `M`이 그것이며 실물 카드에도 그 서체로 박혀 있다. 한글은 안
+              붙인다 — Pirata One은 라틴 전용이라 대체 서체로 떨어진다
+              (구현 결정 39).
+            */
+            <span className={`deck__owner-letter${isLatin(owner.letter) ? ' sl-numeral' : ''}`}>
+              {owner.letter}
+            </span>
           )}
         </span>
       )}
