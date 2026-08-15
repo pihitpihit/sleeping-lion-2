@@ -7,7 +7,7 @@ import {
   parseCardSpec,
   type DeckComposition,
 } from './deck'
-import { sanitizeCharacterId } from '../../roster'
+import { sanitizeCharacterId, slotKeyFor } from '../../roster'
 
 /**
  * 공격 보정 덱의 인스턴스별 설정.
@@ -31,7 +31,22 @@ import { sanitizeCharacterId } from '../../roster'
  * **클래스별 퍽 목록은 담지 않는다.** 그것은 게임 콘텐츠이므로 SPEC 3장에 걸린다.
  * 우리가 다루는 것은 종류와 장수까지다.
  */
+/**
+ * 누구의 덱인가.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **몬스터 덱은 상에 하나뿐이고 퍽을 안 읽는다.**                           │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 규칙서가 그렇게 적는다(글룸헤이븐 5쪽·사자의 턱 규칙서): 캐릭터는 각자 제 덱을
+ * 갖고 **몬스터는 한 덱을 함께 쓴다.** 그 덱은 표준 20장에서 시작하며 특혜·아이템
+ * 으로 바뀌지 않는다 — 저주·축복만 섞여 든다.
+ */
+export type DeckOwner = 'character' | 'monster'
+
 export interface AttackDeckSettings {
+  /** 캐릭터 덱인가 몬스터 덱인가. 옛 설정에는 없으므로 캐릭터로 친다. */
+  owner: DeckOwner
   /** 종류 id → 장수. */
   composition: Record<string, number>
   /**
@@ -45,7 +60,7 @@ export interface AttackDeckSettings {
 }
 
 export function defaultAttackDeckSettings(): AttackDeckSettings {
-  return { composition: { ...STANDARD_COMPOSITION }, characterId: null }
+  return { owner: 'character', composition: { ...STANDARD_COMPOSITION }, characterId: null }
 }
 
 function clampCount(raw: unknown): number | null {
@@ -64,9 +79,10 @@ export function sanitizeAttackDeckSettings(raw: unknown): AttackDeckSettings {
 
   const value = raw as Partial<AttackDeckSettings>
   const characterId = sanitizeCharacterId(value.characterId)
+  const owner: DeckOwner = value.owner === 'monster' ? 'monster' : 'character'
 
   if (typeof value.composition !== 'object' || value.composition === null) {
-    return { ...defaultAttackDeckSettings(), characterId }
+    return { ...defaultAttackDeckSettings(), owner, characterId }
   }
 
   const source = value.composition as Record<string, unknown>
@@ -82,9 +98,10 @@ export function sanitizeAttackDeckSettings(raw: unknown): AttackDeckSettings {
   }
 
   // 한 장도 없는 덱은 만들지 않는다. 뽑을 것이 없으면 위젯이 고장난 것처럼 보인다.
-  if (compositionSize(composition) === 0) return { ...defaultAttackDeckSettings(), characterId }
+  if (compositionSize(composition) === 0)
+    return { ...defaultAttackDeckSettings(), owner, characterId }
 
-  return { composition, characterId }
+  return { owner, composition, characterId }
 }
 
 /** 지금 구성이 표준 덱 그대로인가 — '표준으로 되돌리기'를 낼지 정한다. */
@@ -97,4 +114,19 @@ export function isStandardComposition(composition: DeckComposition): boolean {
   return STANDARD_KINDS.every(
     (spec) => countOf(composition, spec.id) === countOf(STANDARD_COMPOSITION, spec.id),
   )
+}
+
+/**
+ * 이 덱의 값이 담기는 열쇠.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **몬스터 덱은 상에 하나뿐이므로 모두가 같은 자리를 봐야 한다.**           │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 캐릭터 덱은 고른 캐릭터의 id다(구현 결정 75). 몬스터 덱은 **못박은 한 낱말**이며
+ * 그래서 전투에 앉은 넷이 한 덱에서 뽑는다 — 실물에서 몬스터 덱이 상 가운데
+ * 하나뿐인 것과 같다. 인스턴스 id로 두면 기기마다 다른 덱을 본다.
+ */
+export function deckSlotKey(settings: AttackDeckSettings, instanceId: string): string {
+  return settings.owner === 'monster' ? 'monster' : slotKeyFor(settings.characterId, instanceId)
 }

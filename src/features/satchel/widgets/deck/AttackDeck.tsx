@@ -20,10 +20,17 @@ import {
 } from './deck'
 import { useAttackDeckStore } from './deckStore'
 import { resolveComposition } from './perks'
-import { sanitizeAttackDeckSettings } from './settings'
-import { slotKeyFor } from '../../roster'
+import { deckSlotKey, sanitizeAttackDeckSettings } from './settings'
 import { useCardOwner, usePerkChanges } from '../../perkSource'
 import './AttackDeck.css'
+
+/**
+ * 몬스터 덱의 표식 — 실물 카드에 박힌 그대로 `M`이다(구현 결정 200).
+ *
+ * 그림이 없으므로 글자로 간다. 클래스 표식이 없는 클래스를 첫 글자로 대신하는
+ * 것과 같은 손질이다(구현 결정 211).
+ */
+const MONSTER_OWNER = { iconUrl: null, letter: 'M', name: '몬스터' }
 
 /**
  * 공격 보정 덱.
@@ -51,7 +58,7 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
    * 서로 보이려면 같은 열쇠여야 한다. 실물에서도 뽑은 카드는 상 위에 펼쳐져
    * 다 보인다. 안 골랐으면 종전대로 인스턴스 id다.
    */
-  const slot = slotKeyFor(deckSettings.characterId, instanceId)
+  const slot = deckSlotKey(deckSettings, instanceId)
   const { ref, size } = useBoardSize<HTMLDivElement>()
   const layout = computeDeckLayout(size)
 
@@ -77,9 +84,17 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
    * 실제로 켠 특혜가 사실에 가깝다(`perks.ts`). 캐릭터를 안 골랐거나 그 클래스의
    * 특혜 표가 아직 안 들어왔으면 `null`이고 설정값이 쓰인다.
    */
-  const perkChanges = usePerkChanges(deckSettings.characterId)
-  /** 카드 왼쪽 아래 홈에 앉을 표식. 캐릭터를 안 골랐으면 `null`이고 홈은 빈다. */
-  const owner = useCardOwner(deckSettings.characterId)
+  const monster = deckSettings.owner === 'monster'
+  /* **몬스터 덱은 퍽을 안 읽는다.** 특혜·아이템으로 바뀌는 것은 캐릭터 덱뿐이다. */
+  const perkChanges = usePerkChanges(monster ? null : deckSettings.characterId)
+  /**
+   * 카드 왼쪽 아래 홈에 앉을 표식.
+   *
+   * 실물에서 그 자리는 덱 주인의 것이고 **몬스터 덱에는 `M`이 박혀 있다**
+   * (구현 결정 200). 캐릭터를 안 골랐으면 `null`이고 홈은 빈다.
+   */
+  const character = useCardOwner(deckSettings.characterId)
+  const owner = monster ? MONSTER_OWNER : character
   const composition = resolveComposition(deckSettings.composition, perkChanges)
 
   /**

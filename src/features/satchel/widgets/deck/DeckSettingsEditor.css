@@ -170,3 +170,33 @@
   font-size: 0.95rem;
   color: var(--sl-gold);
 }
+
+/*
+  누구의 덱인가 — 캐릭터냐 몬스터냐.
+
+  **먼저 고르는 것이라 맨 위에 선다.** 갈래가 둘뿐이라 목록보다 나란한 두 칸이
+  낫다 — 무엇이 켜져 있는지 한눈에 든다.
+*/
+.deck-settings__owner {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.7rem;
+}
+
+.deck-settings__side {
+  flex: 1;
+  padding: 0.5rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.92rem;
+  color: var(--sl-text-muted);
+  background: var(--sl-raised);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.3rem;
+  cursor: pointer;
+}
+
+.deck-settings__side--on {
+  color: var(--sl-void);
+  background: var(--sl-gold);
+  border-color: var(--sl-gold);
+}

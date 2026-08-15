@@ -15,9 +15,8 @@ import {
 } from './deck'
 import { useAttackDeckStore } from './deckStore'
 import { resolveComposition } from './perks'
-import { isStandardComposition, sanitizeAttackDeckSettings } from './settings'
+import { deckSlotKey, isStandardComposition, sanitizeAttackDeckSettings } from './settings'
 import { usePerkChanges } from '../../perkSource'
-import { slotKeyFor } from '../../roster'
 import './DeckSettingsEditor.css'
 
 /**
@@ -44,8 +43,14 @@ const STANDARD_KIND_IDS = new Set(STANDARD_KINDS.map((spec) => spec.id))
 export function DeckSettingsEditor({ value, onChange, instanceId }: WidgetSettingsEditorProps) {
   const settings = sanitizeAttackDeckSettings(value)
 
-  /** 캐릭터의 특혜에서 나온 변경. 읽을 수 없으면 `null`이고 설정값으로 간다. */
-  const perkChanges = usePerkChanges(settings.characterId)
+  const monster = settings.owner === 'monster'
+
+  /**
+   * 캐릭터의 특혜에서 나온 변경. 읽을 수 없으면 `null`이고 설정값으로 간다.
+   *
+   * **몬스터 덱은 퍽을 안 읽는다** — 특혜·아이템으로 바뀌는 것은 캐릭터 덱뿐이다.
+   */
+  const perkChanges = usePerkChanges(monster ? null : settings.characterId)
   const fromPerks = perkChanges !== null
 
   /** 실제로 덱이 될 구성. 화면에 뜨는 것도 이것이라야 한다. */
@@ -58,7 +63,7 @@ export function DeckSettingsEditor({ value, onChange, instanceId }: WidgetSettin
    * 위젯이 쓰는 것과 **같은 함수로 뽑는다** — 두 곳에서 따로 지으면 언젠가
    * 어긋나서 다른 덱을 다시 짜게 된다.
    */
-  const slot = instanceId === null ? null : slotKeyFor(settings.characterId, instanceId)
+  const slot = instanceId === null ? null : deckSlotKey(settings, instanceId)
   const drawn = useAttackDeckStore((s) => (slot === null ? undefined : s.byInstance[slot]))
   const resetDeck = useAttackDeckStore((s) => s.reset)
 
@@ -89,13 +94,44 @@ export function DeckSettingsEditor({ value, onChange, instanceId }: WidgetSettin
   return (
     <div className="deck-settings">
       {/*
-        누구의 덱인지 먼저 고른다. 구성을 정하는 퍽이 그 캐릭터의 것이고,
-        전투에서 뽑은 카드가 모일 열쇠도 그 id다.
+        ┌──────────────────────────────────────────────────────────────────┐
+        │ **누구의 덱인지가 먼저다.**                                       │
+        └──────────────────────────────────────────────────────────────────┘
+
+        규칙서가 둘로 가른다: 캐릭터는 각자 제 덱을 갖고 **몬스터는 한 덱을 함께
+        쓴다**(글룸헤이븐 5쪽). 그래서 몬스터 덱은 고를 캐릭터가 없고 퍽도 안
+        읽으며, 전투에 앉은 넷이 **같은 한 덱**에서 뽑는다.
       */}
-      <CharacterPicker
-        value={settings.characterId}
-        onChange={(characterId) => onChange({ ...settings, characterId })}
-      />
+      <div className="deck-settings__owner" role="group" aria-label="누구의 덱인가">
+        <button
+          type="button"
+          className={`deck-settings__side${monster ? '' : ' deck-settings__side--on'}`}
+          aria-pressed={!monster}
+          onClick={() => onChange({ ...settings, owner: 'character' })}
+        >
+          캐릭터
+        </button>
+        <button
+          type="button"
+          className={`deck-settings__side${monster ? ' deck-settings__side--on' : ''}`}
+          aria-pressed={monster}
+          onClick={() => onChange({ ...settings, owner: 'monster' })}
+        >
+          몬스터
+        </button>
+      </div>
+
+      {monster ? (
+        <p className="deck-settings__hint">
+          몬스터 덱은 <strong>상에 하나뿐이다</strong> — 전투에 앉은 사람 모두가 이 한 덱에서
+          뽑는다. 퍽은 안 읽는다.
+        </p>
+      ) : (
+        <CharacterPicker
+          value={settings.characterId}
+          onChange={(characterId) => onChange({ ...settings, characterId })}
+        />
+      )}
 
       <hr className="deck-settings__rule" />
 
@@ -106,7 +142,9 @@ export function DeckSettingsEditor({ value, onChange, instanceId }: WidgetSettin
       <p className="deck-settings__hint">
         {fromPerks
           ? '캐릭터 시트에서 켠 특혜대로 짜인 덱이다. 상자를 켜고 끄면 여기가 따라 바뀐다.'
-          : '퍽으로 바뀐 덱을 여기에 옮겨 적는다. 표준 덱은 20장이다.'}
+          : monster
+            ? '표준 20장에서 시작한다. 저주·축복이 섞여 들면 여기서 장수를 맞춘다.'
+            : '퍽으로 바뀐 덱을 여기에 옮겨 적는다. 표준 덱은 20장이다.'}
       </p>
 
       <ul className="deck-settings__list">
