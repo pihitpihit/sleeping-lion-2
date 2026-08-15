@@ -131,15 +131,6 @@ export function ReferencePage() {
             </details>
           )
         })}
-
-        <details className="ref__block">
-          <summary className="ref__summary">
-            <span className="ref__title">채비 중</span>
-          </summary>
-          <p className="ref__hint">
-            규칙 요약과 그 밖에 찾아볼 것들이 여기로 온다. 무엇을 먼저 놓을지는 형님이 정한다.
-          </p>
-        </details>
       </div>
     </div>
   )
