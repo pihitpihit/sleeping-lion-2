@@ -550,10 +550,16 @@ describe('축복·저주', () => {
     expect(after.discard).toEqual(before.discard)
   })
 
-  /** 규칙서: 뽑히면 버리는 더미가 아니라 **덱에서 없앤다**. */
-  it('섞을 때 버린 더미에서 걸러진다', () => {
-    const state: DeckState = { draw: [], discard: [bless, makeCard('d', 'm1')!] }
-    const after = reshuffle(state, () => 0)
-    expect(after.draw.map((c) => c.kindId)).toEqual(['m1'])
+  /** 규칙서: 뽑히면 버리는 더미가 아니라 **덱에서 없앤다**(형님이 짚었다). */
+  it('뽑히면 그 자리에서 사라진다 — 버린 더미에 안 남는다', () => {
+    const state: DeckState = { draw: [bless, makeCard('a', 'p1')!], discard: [] }
+    const first = drawOne(state, () => 0)
+    expect(first.card?.kindId).toBe('x2.bless')
+    expect(first.state.discard).toHaveLength(0)
+    expect(first.state.draw).toHaveLength(1)
+
+    // 보통 카드는 그대로 버린 더미에 쌓인다.
+    const second = drawOne(first.state, () => 0)
+    expect(second.state.discard.map((c) => c.kindId)).toEqual(['p1'])
   })
 })

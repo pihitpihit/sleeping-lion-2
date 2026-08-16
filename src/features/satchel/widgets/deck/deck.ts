@@ -491,12 +491,10 @@ export function freshDeck(composition: DeckComposition = STANDARD_COMPOSITION): 
 /** 버린 것을 되돌려 전부 섞는다. 공개된 카드는 사라진다 — 실물과 같다. */
 export function reshuffle(state: DeckState, rng: Rng): DeckState {
   /*
-    **축복·저주는 돌아오지 않는다.** 뽑히면 덱에서 빠지는 카드라(규칙서) 버린
-    더미를 되돌릴 때 걸러 낸다 — 공개된 채로 남겨 두었다가 여기서 없앤다.
-    곧바로 지우면 방금 무엇이 나왔는지 화면에서 사라진다.
+    **축복·저주는 여기 올 일이 없다.** 뽑히는 순간 사라지므로(`drawOne`) 버린
+    더미에 아예 안 들어간다 — 걸러 낼 것도 없다.
   */
-  const back = state.discard.filter((card) => !isOneShot(card.spec))
-  return { draw: shuffle([...state.draw, ...back], rng), discard: [] }
+  return { draw: shuffle([...state.draw, ...state.discard], rng), discard: [] }
 }
 
 /**
@@ -544,8 +542,22 @@ export function drawOne(state: DeckState, rng: Rng): DrawResult {
   const [top, ...rest] = working.draw
   if (!top) return { state: working, card: null, reshuffled }
 
+  /*
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │ **축복·저주는 버린 더미로 안 간다 — 그 자리에서 사라진다.**             │
+    └────────────────────────────────────────────────────────────────────────┘
+
+    규칙서 그대로다: *"it should be **removed** from the player's deck instead of
+    being placed into the discard."* 형님이 짚었다 — 한동안 버린 더미에 남겼다가
+    섞을 때 걸러 냈는데, 그러면 **버린 더미의 장수가 실물과 다르다.**
+
+    방금 무엇이 나왔는지는 뽑기가 돌려주는 것으로 화면이 크게 띄우므로
+    (`drawTurn`의 `chain`) 사라져도 안 보이지 않는다.
+  */
+  const discard = isOneShot(top.spec) ? working.discard : [top, ...working.discard]
+
   return {
-    state: { draw: rest, discard: [top, ...working.discard] },
+    state: { draw: rest, discard },
     card: top,
     reshuffled,
   }

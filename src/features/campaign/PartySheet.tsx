@@ -17,6 +17,8 @@ import { LogView } from './LogView'
 import { AchievementPicker } from './AchievementPicker'
 import { useUnlockStore } from './unlockStore'
 import { ConditionText } from './ConditionText'
+import { GreatOak } from './GreatOak'
+import { MAX_PROSPERITY, cardNo, prosperityRow } from '../rules/prosperity'
 import { markClass, moveOf } from './sheetDraft'
 
 interface Props {
@@ -197,9 +199,60 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
           곳이 어긋난다 — 실물에서도 눈금 옆에 인쇄돼 있어 읽기만 하던 수다.
           -------------------------------------------------------------------- */}
         <section className="sheet__block">
-          <h2 className="sheet__label">평판과 물건값</h2>
+          <h2 className="sheet__label">번영도 · 평판 · 물건값</h2>
 
-          <div className="tally">
+          <div className="tally tally--three">
+            {/*
+              번영도 — **상점에 풀리는 아이템 카드가 여기서 정해진다**
+              (`rules/prosperity.ts`). 떡갈나무에서 얻은 것은 그 칸에서 따로
+              보인다: 어디서 온 번영도인지 갈려야 되짚을 수 있다.
+            */}
+            <div className="tally__item tally__item--pros">
+              {editing && (
+                <span className="tally__carets tally__carets--left">
+                  <button
+                    type="button"
+                    className="tally__caret"
+                    aria-label="번영도 1 내리기"
+                    disabled={shown.prosperity <= 1}
+                    onClick={() => set('prosperity', shown.prosperity - 1)}
+                  >
+                    ‹
+                  </button>
+                </span>
+              )}
+
+              <span className="tally__art" role="img" aria-label={`번영도 ${shown.prosperity}`}>
+                <span
+                  className={`tally__n tally__n--solo sl-numeral${markClass(
+                    editing ? moveOf(campaign.prosperity, shown.prosperity) : null,
+                  )}`}
+                  aria-hidden="true"
+                >
+                  {shown.prosperity}
+                </span>
+              </span>
+
+              {editing && (
+                <span className="tally__carets tally__carets--right">
+                  <button
+                    type="button"
+                    className="tally__caret"
+                    aria-label="번영도 1 올리기"
+                    disabled={shown.prosperity >= MAX_PROSPERITY}
+                    onClick={() => set('prosperity', shown.prosperity + 1)}
+                  >
+                    ›
+                  </button>
+                </span>
+              )}
+
+              <span className="tally__label">
+                번영도 · 카드 {cardNo(prosperityRow(shown.prosperity).from)}–
+                {cardNo(prosperityRow(shown.prosperity).to)}
+              </span>
+            </div>
+
             <div className="tally__item tally__item--rep">
               {editing && (
                 <span className="tally__carets tally__carets--left">
@@ -384,6 +437,24 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
               </button>
             </div>
           )}
+        </section>
+
+        {/* ------------------------------------------------------------------
+          위대한 떡갈나무 — **파티원이 금화를 모아 기부한다**
+          ------------------------------------------------------------------
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **금화 100개 기부로 열린다(B봉투).**                              │
+          └──────────────────────────────────────────────────────────────────┘
+
+          그 조건은 개봉 조건 표의 한 줄이라(글이 DB에만 있다) 코드가 알아볼 수
+          없다 — **칸은 늘 서고 열리기 전에는 판이 비어 있을 뿐이다.**
+
+          기부는 파티원의 골드를 함께 깎아야 하므로 서버 함수가 한 번에 한다
+          (`0030`) — 캐릭터는 제 것만 고칠 수 있다(`0005`).
+          ------------------------------------------------------------------ */}
+        <section className="sheet__block">
+          <h2 className="sheet__label">위대한 떡갈나무</h2>
+          <GreatOak campaignId={campaign.id} total={campaign.oak} canDonate={!readOnly} />
         </section>
 
         {/* ------------------------------------------------------------------

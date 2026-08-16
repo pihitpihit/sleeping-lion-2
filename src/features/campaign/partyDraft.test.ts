@@ -19,6 +19,8 @@ function fixture(over: Partial<Campaign> = {}): Campaign {
     notes: '',
     achievements: ['첫 밤'],
     unlocks: {},
+    oak: 0,
+    prosperity: 1,
     globalAchievements: {},
     reputation: 2,
     createdAt: 0,

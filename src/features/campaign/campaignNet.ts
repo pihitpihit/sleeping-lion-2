@@ -25,6 +25,8 @@ interface Row {
   achievements: string[] | null
   unlocks: Record<string, number> | null
   global_achievements: Record<string, number> | null
+  oak: number | null
+  prosperity: number | null
   reputation: number
   created_at: string
   updated_at: string
@@ -32,7 +34,7 @@ interface Row {
 }
 
 const COLUMNS =
-  'id, party_id, name, location, notes, achievements, global_achievements, reputation, unlocks, created_at, updated_at, version'
+  'id, party_id, name, location, notes, achievements, global_achievements, reputation, prosperity, unlocks, oak, created_at, updated_at, version'
 
 function toCampaign(row: Row): Campaign {
   return sanitizeCampaign({
@@ -44,6 +46,8 @@ function toCampaign(row: Row): Campaign {
     achievements: row.achievements ?? [],
     unlocks: row.unlocks ?? {},
     globalAchievements: row.global_achievements ?? {},
+    oak: typeof row.oak === 'number' ? row.oak : 0,
+    prosperity: typeof row.prosperity === 'number' ? row.prosperity : 1,
     reputation: row.reputation,
     createdAt: Date.parse(row.created_at),
     updatedAt: Date.parse(row.updated_at),
@@ -97,6 +101,7 @@ export async function pushEdits(id: string, edits: CampaignEdits): Promise<Campa
   if (edits.notes !== undefined) patch.notes = edits.notes
   if (edits.achievements !== undefined) patch.achievements = edits.achievements
   if (edits.unlocks !== undefined) patch.unlocks = edits.unlocks
+  if (edits.prosperity !== undefined) patch.prosperity = edits.prosperity
   if (edits.globalAchievements !== undefined)
     patch.global_achievements = edits.globalAchievements
   if (edits.reputation !== undefined) patch.reputation = edits.reputation
@@ -177,4 +182,32 @@ export async function fetchCampaignLog(campaignId: string, limit = 200): Promise
         : [],
     }
   })
+}
+
+/* --------------------------------------------------------------------------
+   위대한 떡갈나무 — 기부(`0030`)
+   -------------------------------------------------------------------------- */
+
+/**
+ * 파티원이 나눠 낸 것을 한 번에 얹는다.
+ *
+ * ┌────────────────────────────────────────────────────────────────────────┐
+ * │ **남의 골드를 깎는 일이라 서버가 한다.**                                │
+ * └────────────────────────────────────────────────────────────────────────┘
+ *
+ * 캐릭터는 제 것만 고칠 수 있으므로(`0005`) 화면에서는 넷의 골드를 함께 깎을 수
+ * 없다. 하나라도 어긋나면 **통째로 거절된다** — 반만 깎이는 것이 가장 나쁘다.
+ *
+ * @returns 얹고 난 뒤 판에 쌓인 값.
+ */
+export async function donateToOak(
+  campaignId: string,
+  gifts: Readonly<Record<string, number>>,
+): Promise<number> {
+  const { data, error } = await supabase().rpc('donate_to_oak', {
+    p_campaign: campaignId,
+    p_gifts: gifts,
+  })
+  if (error) throw error
+  return typeof data === 'number' ? data : 0
 }

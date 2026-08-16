@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie'
 import { clampReputation } from './reputation'
+import { MAX_PROSPERITY } from '../rules/prosperity'
 import type { Campaign, Character } from './types'
 
 /**
@@ -91,6 +92,11 @@ export function sanitizeCampaign(raw: Partial<Campaign> & { id: string }): Campa
     reputation: clampReputation(typeof raw.reputation === 'number' ? raw.reputation : 0),
     globalAchievements: sanitizeUnlocks(raw.globalAchievements),
     unlocks: sanitizeUnlocks(raw.unlocks),
+    oak: typeof raw.oak === 'number' && raw.oak > 0 ? Math.trunc(raw.oak) : 0,
+    prosperity:
+      typeof raw.prosperity === 'number'
+        ? Math.max(1, Math.min(MAX_PROSPERITY, Math.trunc(raw.prosperity)))
+        : 1,
     createdAt: typeof raw.createdAt === 'number' ? raw.createdAt : now,
     updatedAt: typeof raw.updatedAt === 'number' ? raw.updatedAt : now,
     version: typeof raw.version === 'number' ? raw.version : 1,

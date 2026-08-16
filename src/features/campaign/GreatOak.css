@@ -1,0 +1,171 @@
+/* ==========================================================================
+   위대한 떡갈나무
+   --------------------------------------------------------------------------
+   ┌────────────────────────────────────────────────────────────────────────┐
+   │ **판은 실물 그대로 늘어놓는다.**                                        │
+   └────────────────────────────────────────────────────────────────────────┘
+
+   수만 적으면 「얼마나 왔나」가 안 보인다 — 칸을 그리면 실물을 보던 눈이 그대로
+   읽는다. 채워진 칸은 금빛, 번영도 표식이 박힌 칸은 테가 도드라진다.
+   ========================================================================== */
+
+.oak__facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.6rem;
+}
+
+.oak__fact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.84rem;
+  color: var(--sl-text-muted);
+}
+
+.oak__fact svg {
+  width: 20px;
+  height: 20px;
+}
+
+.oak__fact b {
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--sl-text);
+}
+
+.oak__fact--pros b {
+  color: var(--sl-gold);
+}
+
+/*
+  판. 사진처럼 열여덟 칸씩 늘어서지만 **폭에 맞춰 접힌다** — 폰에서 열여덟이
+  한 줄에 서면 칸이 점이 된다.
+*/
+.oak__track {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2.6rem, 1fr));
+  gap: 0.2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.oak__cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.1rem;
+  background: rgb(0 0 0 / 26%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+}
+
+/* 번영도 표식이 박힌 칸 — 실물에서 금빛 삼각이 그려진 자리다. */
+.oak__cell--mark {
+  border-color: var(--sl-gold-dim);
+}
+
+/* 채워진 칸. */
+.oak__cell--on {
+  background: rgb(201 162 39 / 22%);
+  border-color: var(--sl-gold-dim);
+}
+
+.oak__cell--on.oak__cell--mark {
+  background: var(--sl-gold);
+}
+
+.oak__no {
+  font-size: 0.72rem;
+  color: var(--sl-text-faint);
+}
+
+.oak__cell--on .oak__no {
+  color: var(--sl-gold-bright);
+}
+
+.oak__cell--on.oak__cell--mark .oak__no {
+  color: var(--sl-void);
+}
+
+/* --------------------------------------------------------------------------
+   기부 팝업 — 누가 얼마씩 낼지
+   -------------------------------------------------------------------------- */
+
+.oak__gifts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0 0 0.8rem;
+  padding: 0;
+  list-style: none;
+}
+
+.oak__gift {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.4rem 0.5rem;
+  background: var(--sl-raised);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.4rem;
+}
+
+.oak__who {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.oak__who b {
+  font-weight: 400;
+  color: var(--sl-text);
+}
+
+.oak__have {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--sl-text-faint);
+}
+
+.oak__have svg {
+  width: 14px;
+  height: 14px;
+}
+
+.oak__amount {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.oak__amount b {
+  min-width: 2.5rem;
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: var(--sl-gold);
+}
+
+.oak__sum {
+  margin: 0 0 0.8rem;
+  font-size: 0.86rem;
+  color: var(--sl-ember);
+}
+
+.oak__sum--ok {
+  color: var(--sl-text-muted);
+}
+
+.oak__sum b {
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--sl-text);
+}

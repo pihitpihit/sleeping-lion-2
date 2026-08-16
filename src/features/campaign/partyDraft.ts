@@ -1,3 +1,4 @@
+import { MAX_PROSPERITY } from '../rules/prosperity'
 import { clampReputation } from './reputation'
 import type { Campaign, CampaignEdits } from './types'
 
@@ -27,6 +28,8 @@ export interface PartyDraft {
   achievements: string[]
   /** 전역 업적 — `{ 이름: 횟수 }`. 되풀이해 이룬다. */
   globalAchievements: Record<string, number>
+  /** 번영도 1~9. */
+  prosperity: number
   reputation: number
   /** 개봉 조건을 어디까지 켰는가 — `{ 조건 id: 켠 칸 수 }`. */
   unlocks: Record<string, number>
@@ -40,6 +43,7 @@ export function draftOf(campaign: Campaign): PartyDraft {
     notes: campaign.notes,
     achievements: [...campaign.achievements],
     globalAchievements: { ...campaign.globalAchievements },
+    prosperity: campaign.prosperity,
     reputation: campaign.reputation,
     unlocks: { ...campaign.unlocks },
   }
@@ -80,6 +84,9 @@ export function partyDiff(campaign: Campaign, draft: PartyDraft): CampaignEdits 
 
   const reputation = clampReputation(draft.reputation)
   if (reputation !== campaign.reputation) edits.reputation = reputation
+
+  const prosperity = Math.max(1, Math.min(MAX_PROSPERITY, Math.trunc(draft.prosperity)))
+  if (prosperity !== campaign.prosperity) edits.prosperity = prosperity
 
   // 빈 줄은 업적이 아니다. 걸러 내되 차례는 지킨다.
   const achievements = draft.achievements.map((s) => s.trim()).filter((s) => s !== '')

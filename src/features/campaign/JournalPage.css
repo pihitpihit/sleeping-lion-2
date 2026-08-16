@@ -2556,3 +2556,8 @@
 .tally__item--flat .tally__n--solo {
   color: var(--sl-text-muted);
 }
+
+/* 세 칸이 서는 줄 — 번영도·평판·물건값. 좁으면 두 줄로 접힌다. */
+.tally--three {
+  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+}

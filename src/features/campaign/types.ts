@@ -43,8 +43,24 @@ export interface Campaign {
    * 「… n회 달성」이 있다(형님이 짚었다). 그래서 켰다/껐다가 아니라 수다.
    */
   globalAchievements: Record<string, number>
+  /**
+   * 번영도 1~9. **상점에 풀리는 아이템 카드가 여기서 정해진다**
+   * (`rules/prosperity.ts`).
+   *
+   * 떡갈나무에서 얻는 번영도는 여기 더하지 않고 따로 보인다 — **어디서 온
+   * 것인지 갈려야 되짚을 수 있다.**
+   */
+  prosperity: number
   /** −20 ~ +20. 상점 가격 보정이 여기서 나온다(`reputation.ts`). */
   reputation: number
+  /**
+   * 위대한 떡갈나무에 쌓인 금화(`0030`).
+   *
+   * **담기는 것은 이것 하나뿐이다** — 번영도와 다음 표식은 여기서 셈해서 낸다
+   * (`rules/greatOak.ts`). 기부는 파티원의 골드를 함께 깎아야 하므로 화면이
+   * 아니라 서버 함수가 한 번에 한다.
+   */
+  oak: number
   /**
    * 봉투·상자 개봉 조건을 어디까지 켰는가 — `{ 조건 id: 켠 칸 수 }`.
    *
@@ -76,6 +92,7 @@ export type CampaignEdits = Partial<
     | 'notes'
     | 'achievements'
     | 'globalAchievements'
+    | 'prosperity'
     | 'reputation'
     | 'unlocks'
   >
