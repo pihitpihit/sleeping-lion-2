@@ -18,7 +18,7 @@ import { AchievementPicker } from './AchievementPicker'
 import { useUnlockStore } from './unlockStore'
 import { ConditionText } from './ConditionText'
 import { GreatOak } from './GreatOak'
-import { MAX_PROSPERITY, cardNo, prosperityRow } from '../rules/prosperity'
+import { PROSPERITY_TICKS, cardNo, levelForTicks, markAt, prosperityRow } from '../rules/prosperity'
 import { markClass, moveOf } from './sheetDraft'
 
 interface Props {
@@ -210,60 +210,9 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
           곳이 어긋난다 — 실물에서도 눈금 옆에 인쇄돼 있어 읽기만 하던 수다.
           -------------------------------------------------------------------- */}
         <section className="sheet__block">
-          <h2 className="sheet__label">번영도 · 평판 · 물건값</h2>
+          <h2 className="sheet__label">평판과 물건값</h2>
 
-          <div className="tally tally--three">
-            {/*
-              번영도 — **상점에 풀리는 아이템 카드가 여기서 정해진다**
-              (`rules/prosperity.ts`). 떡갈나무에서 얻은 것은 그 칸에서 따로
-              보인다: 어디서 온 번영도인지 갈려야 되짚을 수 있다.
-            */}
-            <div className="tally__item tally__item--pros">
-              {editing && (
-                <span className="tally__carets tally__carets--left">
-                  <button
-                    type="button"
-                    className="tally__caret"
-                    aria-label="번영도 1 내리기"
-                    disabled={shown.prosperity <= 1}
-                    onClick={() => set('prosperity', shown.prosperity - 1)}
-                  >
-                    ‹
-                  </button>
-                </span>
-              )}
-
-              <span className="tally__art" role="img" aria-label={`번영도 ${shown.prosperity}`}>
-                <span
-                  className={`tally__n tally__n--solo sl-numeral${markClass(
-                    editing ? moveOf(campaign.prosperity, shown.prosperity) : null,
-                  )}`}
-                  aria-hidden="true"
-                >
-                  {shown.prosperity}
-                </span>
-              </span>
-
-              {editing && (
-                <span className="tally__carets tally__carets--right">
-                  <button
-                    type="button"
-                    className="tally__caret"
-                    aria-label="번영도 1 올리기"
-                    disabled={shown.prosperity >= MAX_PROSPERITY}
-                    onClick={() => set('prosperity', shown.prosperity + 1)}
-                  >
-                    ›
-                  </button>
-                </span>
-              )}
-
-              <span className="tally__label">
-                번영도 · 카드 {cardNo(prosperityRow(shown.prosperity).from)}–
-                {cardNo(prosperityRow(shown.prosperity).to)}
-              </span>
-            </div>
-
+          <div className="tally">
             <div className="tally__item tally__item--rep">
               {editing && (
                 <span className="tally__carets tally__carets--left">
@@ -470,6 +419,65 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
           기부는 파티원의 골드를 함께 깎아야 하므로 서버 함수가 한 번에 한다
           (`0030`) — 캐릭터는 제 것만 고칠 수 있다(`0005`).
           ------------------------------------------------------------------ */}
+        {/* ------------------------------------------------------------------
+          번영도 — **눈금이 레벨을 정한다**
+          ------------------------------------------------------------------
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **레벨은 고르는 값이 아니다.**                                    │
+          └──────────────────────────────────────────────────────────────────┘
+
+          실물 판이 네모를 길게 늘어놓고 어떤 자리 위에 레벨을 굵게 적는다
+          (형님이 찍어 보내 주었다). 담기는 것은 칸 수 하나이고 레벨은 셈해서
+          낸다(`rules/prosperity.ts`) — 캐릭터 레벨을 경험치에서 뽑는 것과 같다.
+
+          **떡갈나무와 같은 조건으로 열린다**(형님이 정했다).
+          ------------------------------------------------------------------ */}
+        {oakOpen && (
+          <section className="sheet__block">
+            <h2 className="sheet__label">번영도</h2>
+
+            <div className="pros__head">
+              <span className="pros__level">
+                레벨 <b className="sl-numeral">{levelForTicks(shown.prosperity)}</b>
+              </span>
+              <span className="pros__cards">
+                아이템 카드{' '}
+                <b className="sl-numeral">
+                  {cardNo(prosperityRow(levelForTicks(shown.prosperity)).from)}–
+                  {cardNo(prosperityRow(levelForTicks(shown.prosperity)).to)}
+                </b>
+              </span>
+            </div>
+
+            <ol className="pros__track" aria-label={`번영도 ${shown.prosperity}칸`}>
+              {Array.from({ length: PROSPERITY_TICKS }, (_, i) => i + 1).map((n) => {
+                const mark = markAt(n)
+                return (
+                  <li key={n} className="pros__slot">
+                    {/* 문턱 칸 위에 레벨을 굵게 — 실물 판이 그렇다. */}
+                    <span className="pros__mark sl-numeral">{mark ?? ''}</span>
+                    <button
+                      type="button"
+                      aria-label={`번영도 ${n}칸`}
+                      aria-pressed={n <= shown.prosperity}
+                      className={[
+                        'pros__box',
+                        n <= shown.prosperity ? 'pros__box--on' : '',
+                        mark !== null ? 'pros__box--mark' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                      disabled={!editing}
+                      /* 앞에서부터 찬다 — 같은 칸을 다시 누르면 그 앞까지만 남는다. */
+                      onClick={() => set('prosperity', shown.prosperity === n ? n - 1 : n)}
+                    />
+                  </li>
+                )
+              })}
+            </ol>
+          </section>
+        )}
+
         {oakOpen && (
           <section className="sheet__block">
             <h2 className="sheet__label">위대한 떡갈나무</h2>

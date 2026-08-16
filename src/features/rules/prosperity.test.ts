@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { PROSPERITY_ROWS, cardNo, prosperityRow, unlockedThrough } from './prosperity'
+import {
+  PROSPERITY_ROWS,
+  PROSPERITY_TICKS,
+  cardNo,
+  clampTicks,
+  levelForTicks,
+  markAt,
+  prosperityRow,
+  unlockedThrough,
+} from './prosperity'
 
 /*
   인쇄된 표가 정본이다 — 형님이 찍어 보낸 시트를 그대로 적어 두고 식을 지나온
@@ -42,5 +51,29 @@ describe('번영도별 아이템 카드', () => {
   it('번호는 시트처럼 세 자리로 적는다', () => {
     expect(cardNo(1)).toBe('001')
     expect(cardNo(70)).toBe('070')
+  })
+})
+
+describe('번영도 눈금', () => {
+  it('문턱을 지날 때마다 레벨이 오른다', () => {
+    expect(levelForTicks(0)).toBe(1)
+    expect(levelForTicks(3)).toBe(1)
+    expect(levelForTicks(4)).toBe(2)
+    expect(levelForTicks(8)).toBe(2)
+    expect(levelForTicks(9)).toBe(3)
+    expect(levelForTicks(64)).toBe(9)
+  })
+
+  it('칸 밖으로 안 나간다', () => {
+    expect(clampTicks(-1)).toBe(0)
+    expect(clampTicks(999)).toBe(PROSPERITY_TICKS)
+    expect(levelForTicks(999)).toBe(9)
+  })
+
+  /** 실물 판에서 그 자리 위에 레벨이 굵게 적혀 있다. */
+  it('문턱 칸에는 레벨이 적힌다', () => {
+    expect(markAt(4)).toBe(2)
+    expect(markAt(64)).toBe(9)
+    expect(markAt(5)).toBeNull()
   })
 })

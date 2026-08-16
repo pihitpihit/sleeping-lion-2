@@ -2566,3 +2566,78 @@
 .tally__n--word {
   font-size: 1.1rem;
 }
+
+/* --------------------------------------------------------------------------
+   번영도 눈금 — 실물 판의 그 줄(`0034`)
+   --------------------------------------------------------------------------
+   네모가 길게 늘어서고 문턱 칸 위에 레벨이 굵게 적힌다. 폰에서는 접히지만
+   **차례는 그대로**다 — 왼쪽에서 오른쪽으로 찬다.
+   -------------------------------------------------------------------------- */
+
+.pros__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.8rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--sl-text-muted);
+}
+
+.pros__level b {
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: var(--sl-gold);
+}
+
+.pros__cards b {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--sl-text);
+}
+
+.pros__track {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pros__slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 문턱 자리에만 수가 뜬다. 빈 자리도 높이는 잡아 둔다 — 줄이 들쭉날쭉하면 못 센다. */
+.pros__mark {
+  min-height: 0.9rem;
+  font-size: 0.72rem;
+  line-height: 1;
+  color: var(--sl-gold-dim);
+}
+
+.pros__box {
+  width: 13px;
+  height: 13px;
+  padding: 0;
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.15rem;
+  cursor: pointer;
+}
+
+.pros__box:disabled {
+  cursor: default;
+}
+
+.pros__box--mark {
+  border-color: var(--sl-gold-dim);
+}
+
+.pros__box--on {
+  background: var(--sl-gold);
+  border-color: var(--sl-gold);
+}
