@@ -41,6 +41,7 @@ import {
   toggleOf,
   type Move,
   type SheetDraft,
+  markClass,
 } from './sheetDraft'
 import type { Character, CharacterEdits } from './types'
 
@@ -1152,16 +1153,4 @@ function Caret({
       <span aria-hidden="true">{children}</span>
     </button>
   )
-}
-
-/**
- * 바뀐 자리에 붙일 클래스.
- *
- * **오른 것은 녹색, 내린 것은 붉은색.** 되돌려 놓으면 색도 함께 사라지고,
- * 저장하면 견줄 것이 없어져 저절로 물러난다(`sheetDraft.ts`).
- */
-function markClass(move: Move): string {
-  if (move === 'up') return ' is-up'
-  if (move === 'down') return ' is-down'
-  return ''
 }

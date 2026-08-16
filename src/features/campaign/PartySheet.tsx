@@ -17,6 +17,7 @@ import { LogView } from './LogView'
 import { AchievementPicker } from './AchievementPicker'
 import { useUnlockStore } from './unlockStore'
 import { ConditionText } from './ConditionText'
+import { markClass, moveOf } from './sheetDraft'
 
 interface Props {
   campaign: Campaign
@@ -58,6 +59,11 @@ interface Props {
  * 이펙트로 맞추면 렌더가 꼬리를 물고, 무엇보다 남이 고친 값이 **치고 있는 글자를
  * 덮어쓴다.**
  */
+/** 눈금 밖으로 안 나간다 — 캐럿이 다섯 칸씩 움직이므로 여기서 한 번 더 본다. */
+function clampRep(next: number): number {
+  return Math.max(MIN_REPUTATION, Math.min(MAX_REPUTATION, next))
+}
+
 export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   /** 로그 팝업이 열려 있는가. 읽기·편집 어느 쪽에서나 연다. */
   const [logOpen, setLogOpen] = useState(false)
@@ -78,7 +84,6 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   const nameId = useId()
   const placeId = useId()
   const noteId = useId()
-  const repId = useId()
 
   const [wantsEdit, setWantsEdit] = useState(false)
   const [draft, setDraft] = useState<PartyDraft>(() => draftOf(campaign))
@@ -178,62 +183,100 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
         </section>
 
         {/* --------------------------------------------------------------------
-          평판 — 가격 보정이 여기서 나온다
+          평판과 물건값 — **캐릭터 시트의 경험·골드와 같은 짜임**
+          --------------------------------------------------------------------
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **읽을 때는 수만, 고칠 때 캐럿이 돋는다.**                        │
+          └──────────────────────────────────────────────────────────────────┘
+
+          들여다보는 동안에는 손잡이가 자리만 차지한다(구현 결정 333·364와 같은
+          자리). 두 값을 한 줄에 나란히 두면 **평판이 물건값을 정한다**는 것이
+          그림으로 읽힌다.
+
+          **물건값은 입력받지 않는다.** 평판에서 나오는 값이라 사람이 적으면 두
+          곳이 어긋난다 — 실물에서도 눈금 옆에 인쇄돼 있어 읽기만 하던 수다.
           -------------------------------------------------------------------- */}
-        <section className="sheet__block sheet__block--rep">
-          <label className="sheet__label" htmlFor={repId}>
-            평판
-          </label>
+        <section className="sheet__block">
+          <h2 className="sheet__label">평판과 물건값</h2>
 
-          <div className="sheet__rep">
-            <button
-              type="button"
-              className="sheet__step"
-              aria-label="평판 1 내리기"
-              disabled={!editing || shown.reputation <= MIN_REPUTATION}
-              onClick={() => set('reputation', shown.reputation - 1)}
+          <div className="tally">
+            <div className="tally__item tally__item--rep">
+              {editing && (
+                <span className="tally__carets tally__carets--left">
+                  <button
+                    type="button"
+                    className="tally__caret"
+                    aria-label="평판 5 내리기"
+                    disabled={shown.reputation <= MIN_REPUTATION}
+                    onClick={() => set('reputation', clampRep(shown.reputation - 5))}
+                  >
+                    «
+                  </button>
+                  <button
+                    type="button"
+                    className="tally__caret"
+                    aria-label="평판 1 내리기"
+                    disabled={shown.reputation <= MIN_REPUTATION}
+                    onClick={() => set('reputation', clampRep(shown.reputation - 1))}
+                  >
+                    ‹
+                  </button>
+                </span>
+              )}
+
+              <span className="tally__art" role="img" aria-label={`평판 ${shown.reputation}`}>
+                <span
+                  className={`tally__n tally__n--solo sl-numeral${markClass(
+                    editing ? moveOf(campaign.reputation, shown.reputation) : null,
+                  )}`}
+                  aria-hidden="true"
+                >
+                  {shown.reputation > 0 ? `+${shown.reputation}` : shown.reputation}
+                </span>
+              </span>
+
+              {editing && (
+                <span className="tally__carets tally__carets--right">
+                  <button
+                    type="button"
+                    className="tally__caret"
+                    aria-label="평판 1 올리기"
+                    disabled={shown.reputation >= MAX_REPUTATION}
+                    onClick={() => set('reputation', clampRep(shown.reputation + 1))}
+                  >
+                    ›
+                  </button>
+                  <button
+                    type="button"
+                    className="tally__caret"
+                    aria-label="평판 5 올리기"
+                    disabled={shown.reputation >= MAX_REPUTATION}
+                    onClick={() => set('reputation', clampRep(shown.reputation + 5))}
+                  >
+                    »
+                  </button>
+                </span>
+              )}
+
+              <span className="tally__label">평판</span>
+            </div>
+
+            {/*
+              읽어주는 값이다 — 평판이 바뀌면 함께 읽히도록 `aria-live`를 건다.
+            */}
+            <div
+              className={`tally__item tally__item--${modifier > 0 ? 'up' : modifier < 0 ? 'down' : 'flat'}`}
+              aria-live="polite"
             >
-              −
-            </button>
-
-            <input
-              id={repId}
-              className="sheet__rep-value sl-numeral"
-              type="number"
-              inputMode="numeric"
-              min={MIN_REPUTATION}
-              max={MAX_REPUTATION}
-              value={shown.reputation}
-              disabled={!editing}
-              onChange={(e) => set('reputation', Number(e.target.value))}
-            />
-
-            <button
-              type="button"
-              className="sheet__step"
-              aria-label="평판 1 올리기"
-              disabled={!editing || shown.reputation >= MAX_REPUTATION}
-              onClick={() => set('reputation', shown.reputation + 1)}
-            >
-              +
-            </button>
+              <span className="tally__art">
+                <span className="tally__n tally__n--solo sl-numeral" aria-hidden="true">
+                  {priceModifierLabel(modifier)}
+                </span>
+              </span>
+              <span className="tally__label">물건값</span>
+              <span className="sheet__hidden">{priceModifierSpeech(modifier)}</span>
+            </div>
           </div>
-
-          {/*
-          입력이 아니라 **읽어주는 값**이다. `output`으로 두어 읽는 쪽에도 그렇게
-          전해진다. 평판이 바뀌면 함께 읽히도록 `aria-live`를 건다.
-        */}
-          <output
-            className={`sheet__price sheet__price--${modifier > 0 ? 'up' : modifier < 0 ? 'down' : 'flat'}`}
-            htmlFor={repId}
-            aria-live="polite"
-          >
-            <span className="sheet__price-label">물건값</span>
-            <span className="sheet__price-value sl-numeral" aria-hidden="true">
-              {priceModifierLabel(modifier)}
-            </span>
-            <span className="sheet__hidden">{priceModifierSpeech(modifier)}</span>
-          </output>
         </section>
 
         {/* --------------------------------------------------------------------

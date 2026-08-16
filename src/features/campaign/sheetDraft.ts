@@ -160,3 +160,18 @@ export function toggleOf(before: boolean, after: boolean): Move {
   if (!after && before) return 'down'
   return null
 }
+
+/**
+ * 바뀐 자리에 붙일 클래스 — **두 시트가 나눠 쓴다.**
+ *
+ * **오른 것은 녹색, 내린 것은 붉은색.** 되돌려 놓으면 색도 함께 사라지고,
+ * 저장하면 견줄 것이 없어져 저절로 물러난다.
+ *
+ * 파티 기록지의 평판도 같은 색을 쓴다 — **같은 뜻이 화면 두 곳에서 다른 색이면
+ * 그것부터 헷갈린다**(구현 결정 255와 같은 결).
+ */
+export function markClass(move: Move): string {
+  if (move === 'up') return ' is-up'
+  if (move === 'down') return ' is-down'
+  return ''
+}

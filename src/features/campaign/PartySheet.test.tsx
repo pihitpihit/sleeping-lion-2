@@ -57,10 +57,10 @@ describe('열람 모드', () => {
     expect(render(fixture())).toContain('고치기')
   })
 
-  /** 칸이 다 잠겨 있다 — 스치기만 해도 값이 바뀌던 것이 이 모드의 요점이다. */
-  it('평판 손잡이가 잠겨 있다', () => {
+  /** 읽을 때는 손잡이가 아예 없다 — 스치기만 해도 값이 바뀌던 것이 이 모드의 요점이다. */
+  it('평판 손잡이가 없다', () => {
     const html = render(fixture())
-    expect(html).not.toMatch(/<button[^>]*class="sheet__step"(?![^>]*disabled)/)
+    expect(html).not.toContain('tally__caret')
   })
 
   it('서버에 못 닿으면 고칠 길이 없고 왜인지 적는다', () => {
@@ -77,9 +77,14 @@ describe('열람 모드', () => {
 describe('물건값', () => {
   /** 평판에서 나오는 값이라 입력받지 않는다 — 사람이 적으면 두 곳이 어긋난다. */
   it('평판에서 나온다', () => {
-    expect(render(fixture({ reputation: 0 }))).toContain('sheet__price--flat')
-    expect(render(fixture({ reputation: 10 }))).toContain('sheet__price--down')
-    expect(render(fixture({ reputation: -10 }))).toContain('sheet__price--up')
+    expect(render(fixture({ reputation: 0 }))).toContain('tally__item--flat')
+    expect(render(fixture({ reputation: 10 }))).toContain('tally__item--down')
+    expect(render(fixture({ reputation: -10 }))).toContain('tally__item--up')
+  })
+
+  /** 읽을 때는 손잡이가 자리만 차지한다 — 캐럿은 편집 중에만 돋는다. */
+  it('읽기 모드에는 손잡이가 없다', () => {
+    expect(render(fixture())).not.toContain('tally__caret')
   })
 
   it('읽어주는 쪽에는 우리말이 간다', () => {

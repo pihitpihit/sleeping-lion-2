@@ -97,6 +97,7 @@
 
 /* 양피지 원반. 글룸헤이븐 표식은 거의 검정이라 어두운 바탕에서 묻힌다 —
    물들이지 않고 바탕을 깐다(구현 결정 41). */
+
 .journal__char-badge {
   flex: none;
   width: 38px;
@@ -139,6 +140,7 @@
 }
 
 /* 클래스와 파티. **파티가 부제다** — 캐릭터가 어디 속했는지 말하는 이름표다. */
+
 .journal__char-sub {
   display: flex;
   align-items: baseline;
@@ -159,6 +161,7 @@
 }
 
 /* 왕관의 크기는 이 글자 크기 하나로 정해진다(`LevelBadge.css`). */
+
 .journal__char-level {
   flex: none;
   font-size: 0.95rem;
@@ -252,8 +255,7 @@
 
 .journal__new-input:focus,
 .sheet__input:focus,
-.sheet__notes:focus,
-.sheet__rep-value:focus {
+.sheet__notes:focus {
   outline: 2px solid var(--sl-gold);
   outline-offset: 1px;
 }
@@ -288,6 +290,7 @@
   세로로 세우기만 한다. 편집 중임을 알리는 금빛 테를 두르려면 상자가 있어야
   하므로 `display: contents`로 지우지 않는다.
 */
+
 .sheet {
   display: flex;
   flex-direction: column;
@@ -324,106 +327,8 @@
    어긋난다. 결을 달리해 눌러도 되는 것과 아닌 것을 눈으로 가른다.
    -------------------------------------------------------------------------- */
 
-.sheet__block--rep {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-areas:
-    'label price'
-    'rep   price';
-  align-items: center;
-  gap: 0.45rem 1rem;
-}
-
-.sheet__block--rep .sheet__label {
-  grid-area: label;
-}
-
-.sheet__rep {
-  grid-area: rep;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.sheet__step {
-  width: 44px;
-  height: 44px;
-  flex: none;
-  font-size: 1.2rem;
-  line-height: 1;
-  color: var(--sl-text);
-  background: var(--sl-panel);
-  border: 1px solid var(--sl-border);
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-.sheet__step:disabled {
-  color: var(--sl-text-faint);
-  cursor: default;
-}
-
-.sheet__step:not(:disabled):hover {
-  border-color: var(--sl-border-strong);
-  color: var(--sl-gold);
-}
-
-.sheet__rep-value {
-  width: 4rem;
-  padding: 0.4rem;
-  font-size: 1.4rem;
-  text-align: center;
-  color: var(--sl-text);
-  background: rgb(0 0 0 / 30%);
-  border: 1px solid var(--sl-border);
-  border-radius: 0.25rem;
-}
-
-/* 숫자 입력의 위아래 화살표는 지운다 — 우리 단추가 이미 그 일을 한다. */
-.sheet__rep-value::-webkit-outer-spin-button,
-.sheet__rep-value::-webkit-inner-spin-button {
-  appearance: none;
-  margin: 0;
-}
-
-.sheet__rep-value {
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-
-.sheet__price {
-  grid-area: price;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-  padding: 0.5rem 0.9rem;
-  background: rgb(0 0 0 / 30%);
-  border: 1px solid var(--sl-border);
-  border-radius: 0.3rem;
-}
-
-.sheet__price-label {
-  font-size: 0.75rem;
-  color: var(--sl-text-faint);
-}
-
-.sheet__price-value {
-  font-size: 1.6rem;
-  line-height: 1;
-  color: var(--sl-text-muted);
-}
-
-/* 비싸지면 잉걸빛, 싸지면 이끼색. 방향이 색으로도 읽힌다. */
-.sheet__price--up .sheet__price-value {
-  color: var(--sl-ember);
-}
-
-.sheet__price--down .sheet__price-value {
-  color: var(--sl-moss-bright);
-}
-
 /* 읽어주는 쪽에만 가는 말. 화면에서는 자리를 차지하지 않는다. */
+
 .sheet__hidden {
   position: absolute;
   width: 1px;
@@ -440,6 +345,7 @@
    -------------------------------------------------------------------------- */
 
 /* 아직 없다고 말해 준다 — 빈 칸만 있으면 고장으로 읽힌다. 시트 두 곳이 함께 쓴다. */
+
 .sheet__empty {
   margin: 0;
   font-size: 0.85rem;
@@ -474,6 +380,7 @@
   맡기면 값이 한가운데 떠 어느 줄의 것인지 흐려진다 — 이름을 늘려 값과 ×를
   오른쪽으로 몬다. 업적 줄(칸 둘)에서는 달라지는 것이 없다.
 */
+
 .sheet__achievements > li > span:first-child {
   flex: 1;
   min-width: 0;
@@ -609,6 +516,7 @@
 }
 
 /* 되돌릴 수 있는 것과 없는 것을 색으로 가른다. */
+
 .crew__revoke:not(:disabled):hover,
 .crew__leave:not(:disabled):hover {
   color: var(--sl-ember) !important;
@@ -637,8 +545,7 @@
 
 /* 잠긴 칸은 만질 수 없다는 것이 보여야 한다. */
 .sheet__input:disabled,
-.sheet__notes:disabled,
-.sheet__rep-value:disabled {
+.sheet__notes:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
@@ -658,6 +565,7 @@
    -------------------------------------------------------------------------- */
 
 /* 캐릭터를 세우는 자리는 일지 하나뿐이다 — 여기서는 길만 알려 준다. */
+
 .roster__hint {
   margin: 0;
   font-size: 0.85rem;
@@ -709,6 +617,7 @@
 }
 
 /* 은퇴한 캐릭터는 접어둔 것이라 결을 낮춘다. 지운 것이 아니라 물러난 것이다. */
+
 .roster__row--retired .roster__row {
   opacity: 0.55;
   border-left-color: var(--sl-border);
@@ -721,6 +630,7 @@
   넷은 색 있는 원반이라, 흰빛으로 물들이면 뒤쪽 넷이 함께 표백된다. 양피지 색
   원반을 깔면 둘 다 제 색으로 보인다.
 */
+
 .roster__badge,
 .char__badge {
   width: 36px;
@@ -743,6 +653,7 @@
 }
 
 /* 레벨 왕관. 크기는 글자 크기 하나로 정해진다(`LevelBadge.css`). */
+
 .roster__level {
   flex: none;
   font-size: 0.95rem;
@@ -850,6 +761,7 @@
   그래서 줄 자체에 높이를 주고 그것이 `--tb`를 따르게 한다. 안쪽 것들은 넘치지
   않게 제 크기를 그 안에서 잡는다.
 */
+
 .topbar__inner {
   display: flex;
   align-items: center;
@@ -860,6 +772,7 @@
 }
 
 /* 뒤로가기도 함께 줄어든다 — 혼자 44px로 남으면 그것이 띠 높이를 붙든다. */
+
 .topbar .journal__back {
   width: calc(46px - 6px * var(--tb));
   height: calc(46px - 6px * var(--tb));
@@ -872,6 +785,7 @@
 }
 
 /* 양피지 원반 — 표식은 거의 검정이라 물들이지 않고 바탕을 깐다(구현 결정 41). */
+
 .topbar__badge {
   flex: none;
   display: inline-flex;
@@ -932,6 +846,7 @@
 }
 
 /* 파티 기록지로 — 펼친 기록지 그림. 급하게 누르는 자리라 44px를 지킨다. */
+
 .topbar__party {
   flex: none;
   display: inline-flex;
@@ -1000,6 +915,7 @@
   로스터 줄에 매달리는 `.char`는 상자를 지킨다(구현 결정 177) — 그쪽은 눌린
   줄과 한 덩어리로 보여야 한다. **안쪽 칸만 평평해진다.**
 */
+
 .paper .sheet__block {
   padding: 0;
   background: none;
@@ -1012,6 +928,7 @@
 
   폭과 자리잡기는 `.paper`가 이미 한다 — 여기서는 상자만 지운다.
 */
+
 .char--solo {
   padding: 0;
   background: none;
@@ -1028,6 +945,7 @@
   자식이 된다. 넓어지면 상자가 살아나 각자 한 단이 된다. **DOM을 갈아 끼우지
   않으므로 좁힐 때 차례가 흐트러지지 않는다.**
 */
+
 .paper__col {
   display: contents;
 }
@@ -1074,6 +992,7 @@
   칸이든) 반드시 무엇인가가 오기 때문이다. 두 단으로 서면 양쪽 첫 칸이 머리
   밑에 나란히 서는데 그때도 맞다.
 */
+
 /*
   ┌────────────────────────────────────────────────────────────────────────┐
   │ **`.paper .sheet__block`이 이 규칙을 이겨 선이 글자를 덮었다.**            │
@@ -1086,6 +1005,7 @@
 
   **여백은 선을 긋는 규칙이 함께 잡는다.** 두 곳에서 정하면 또 어긋난다.
 */
+
 .paper .paper__col > * {
   position: relative;
   padding-top: 1.3rem;
@@ -1151,6 +1071,7 @@
 }
 
 /* 이름은 생성할 때 정한다 — 여기서는 읽기만 한다(칸이 아니라 글이다). */
+
 .char__name {
   margin: 0;
   font-family: var(--sl-font-ko-display);
@@ -1163,6 +1084,7 @@
 }
 
 /* 이름줄에 붙는 클래스 이름. 주인 이름과 갈리게 금빛으로 둔다. */
+
 .char__class {
   color: var(--sl-gold-dim);
 }
@@ -1226,6 +1148,7 @@
 
   세 자리라 좁은 칸에서 넘치므로 칸에 맞춰 줄인다.
 */
+
 .char__level-xp,
 .char__level-hp {
   font-size: 0.62rem;
@@ -1252,6 +1175,7 @@
   화면은 클래스를 붙이는데 규칙이 없어 아무 표도 안 났다. 클래스 이름만 있고
   규칙이 없는 것은 **시험이 못 잡는 자리다** — 마크업은 멀쩡하기 때문이다.
 */
+
 .char__level--on {
   color: var(--sl-void);
   background: var(--sl-gold);
@@ -1264,6 +1188,7 @@
   켜진 칸은 금색 바탕이라 옅은 푸름·붉음이 묻힌다. **같은 색의 어두운 쪽**으로
   바꿔 대비를 낸다 — 색이 갈리는 것은 그대로 두고 밝기만 뒤집는다.
 */
+
 .char__level--on .char__level-xp {
   color: #12327a;
 }
@@ -1273,6 +1198,7 @@
 }
 
 /* 지나온 눈금. 어디까지 왔는지 한눈에 보인다. */
+
 .char__level--past {
   color: var(--sl-text-muted);
   background: rgb(201 162 39 / 14%);
@@ -1295,6 +1221,7 @@
   격자로 못박으면 어떤 폭에서도 줄 하나가 묶음 하나다. 셋씩 여섯 줄이면 지금까지
   몇 개를 채웠는지 세지 않고도 보인다.
 */
+
 .char__checks {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 36px));
@@ -1305,6 +1232,7 @@
   네모는 격자 칸을 채운다. 30px으로 못박아 두었을 때보다 조금 크다 — 한 줄에
   셋만 서므로 자리가 남고, **급하게 누르는 화면이라 클수록 낫다.**
 */
+
 .char__check {
   display: flex;
   align-items: center;
@@ -1327,6 +1255,7 @@
   원본이 거의 검정이라 **물들이지 않는다**(구현 결정 15) — 켜진 칸이 금빛이라
   그대로 읽힌다.
 */
+
 .char__check-mark {
   width: 74%;
   height: 74%;
@@ -1404,6 +1333,7 @@
 }
 
 /* 상자가 셋까지 붙는다. 줄마다 수가 달라도 글의 왼쪽 끝은 맞아야 한다. */
+
 .char__perkboxes {
   flex: none;
   display: flex;
@@ -1505,6 +1435,7 @@
 
 /* 덱 위젯이 쓰는 것과 같은 그림이다. 시트에서 본 것과 상 위에서 뽑는 것이
    달라 보이면 같은 덱이라는 것을 알 수 없다. */
+
 .deckview__medallion {
   width: 24px;
   height: 24px;
@@ -1522,6 +1453,7 @@
   **물들이지 않는다.** 팩의 원소 아이콘은 색 있는 원반에 흰 문양이 얹힌 통짜
   배지라, 흰빛으로 뽑으면 문양이 사라지고 흰 점만 남는다 — 카드에서 겪은 자리다.
 */
+
 .imark__badge {
   width: 16px;
   height: 16px;
@@ -1529,6 +1461,7 @@
 }
 
 /* 당기기는 밀기를 반 바퀴 돌려 쓴다 — 파일은 그대로 두고 그릴 때만 돌린다. */
+
 .imark__badge--turned {
   transform: rotate(180deg);
 }
@@ -1540,6 +1473,7 @@
 
   팩 그림에는 수가 없다(밀기2·치료1) — 카드에서와 같이 옆에 따로 적는다.
 */
+
 .imark {
   display: inline-flex;
   align-items: center;
@@ -1557,6 +1491,7 @@
 
   크기 규칙이 없으면 SVG가 제 크기대로 펴져 알약을 뚫고 나온다.
 */
+
 .imark__glyph {
   width: 14px;
   height: 14px;
@@ -1570,6 +1505,7 @@
 }
 
 /* 표준에서 얼마나 달라졌는가. **특혜가 실제로 먹었는지 여기서 보인다.** */
+
 .deckview__delta {
   font-size: 0.75rem;
   color: var(--sl-gold);
@@ -1606,6 +1542,7 @@
   줄높이가 다르다 — 같은 여백을 주어도 링크 쪽이 본문 줄높이(1.6)를 물려받아
   더 높게 섰다(형님이 짚었다). 줄높이를 못박고 테 두께까지 맞춰야 둘이 같아진다.
 */
+
 .sheet__save,
 .sheet__cancel {
   display: inline-flex;
@@ -1627,6 +1564,7 @@
   글자 단추보다 자리를 덜 차지해 시트가 그만큼 넓어진다. 읽어주는 쪽에는
   `aria-label`이 우리말로 간다.
 */
+
 .sheet__edit {
   display: inline-flex;
   align-items: center;
@@ -1658,6 +1596,7 @@
   **사라지지 않고 자리를 지킨다** — 없어지면 저장이 어디 있었는지 다시 찾아야
   하고, 눌러도 안 되는 까닭이 화면에 남지 않는다. 그래서 글자로도 말한다.
 */
+
 .sheet__save:disabled {
   color: var(--sl-text-faint);
   background: none;
@@ -1677,6 +1616,7 @@
 }
 
 /* 왜 고칠 수 없는지. 단추를 그냥 없애면 까닭이 화면에 남지 않는다. */
+
 .sheet__locked {
   margin: 0;
   font-size: 0.85rem;
@@ -1684,6 +1624,7 @@
 }
 
 /* 편집 중인 시트는 테를 금색으로 물들인다 — 어느 모드인지 한눈에 갈려야 한다. */
+
 .char--editing,
 .sheet--editing {
   outline: 1px solid var(--sl-gold-dim);
@@ -1692,6 +1633,7 @@
 }
 
 /* 알약 아래, 카드를 펼쳐 보는 문. */
+
 .deckview__open {
   align-self: flex-start;
   margin-top: 0.2rem;
@@ -1718,6 +1660,7 @@
    -------------------------------------------------------------------------- */
 
 /* 단추가 아니라 문이다 — 생성은 별도 화면으로 간다(`#/character/new`). */
+
 .journal__newchar {
   display: block;
   text-align: center;
@@ -1740,6 +1683,7 @@
   **한 톤 낮춘다.** 일지는 캐릭터를 보는 자리이고 파티는 그 캐릭터가 속한 곳이다
   (2026-08-12 전환) — 둘 다 금빛이면 무엇이 먼저인지 화면이 말하지 않는다.
 */
+
 .journal__newparty {
   color: var(--sl-gold);
   background: none;
@@ -1751,6 +1695,7 @@
 }
 
 /* 아직 파티에 안 든 캐릭터. 빈칸으로 두면 빠뜨린 것처럼 보인다. */
+
 .journal__char-party--none {
   color: var(--sl-text-faint);
   font-style: italic;
@@ -1829,6 +1774,7 @@
   값 메달. 표식보다 조금 크게 둔다 — 원본에 여백이 둘려 있어 같은 크기로 두면
   알맹이가 작아 보인다(덱 알약도 24 대 16으로 두었다).
 */
+
 .imark__medal {
   width: 1.45em;
   height: 1.45em;
@@ -1837,6 +1783,7 @@
 }
 
 /* 표식 앞뒤로 머리카락만큼 띄운다 — 글자에 붙으면 낱말의 일부로 읽힌다. */
+
 .perktext .imark,
 .perktext > .imark__badge,
 .perktext > .imark__medal,
@@ -1864,6 +1811,7 @@
   흘려 놓으면 값의 자릿수에 따라 자리가 밀려 화면이 흔들린다 — 반씩 못박으면
   340이든 8이든 늘 같은 자리에 선다. 테를 둘러 "여기까지가 한 값"이라고 말한다.
 */
+
 .tally {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1909,6 +1857,7 @@
 
   물들이지 않는다 — 두께감까지 구워 담은 그림이다(`tools/bake_xp_star.py`).
 */
+
 .tally__item--xp .tally__art img {
   transform: scale(1.28);
 }
@@ -1917,6 +1866,7 @@
   수는 그림 밖에 얹는다 — `sl-numeral`이 그대로 먹고 색은 여기서 정한다.
   **글자에 어두운 테를 두른다**: 금화든 별이든 바탕이 밝아 흰 수만으로는 묻힌다.
 */
+
 .tally__n {
   position: absolute;
   font-size: 1.25rem;
@@ -1936,6 +1886,7 @@
   붙이고, **표식은 가운데 자리를 지킨다** — 캐럿이 생겼다고 그림이 옆으로
   밀리면 읽던 자리가 흔들린다.
 */
+
 .tally__item {
   position: relative;
 }
@@ -1983,6 +1934,7 @@
   저장을 누르기 전에 무엇을 건드렸는지 한눈에 보여야 한다. **되돌려 놓으면 색도
   사라지고**, 저장하면 견줄 것이 없어져 저절로 물러난다.
 */
+
 .tally__n.is-up {
   color: #9ae6a0;
 }
@@ -1992,6 +1944,7 @@
 }
 
 /* 켠 칸은 녹색으로 또렷하게, 끈 칸은 붉은빛으로 옅게 — 지운 자리는 흔적만 남는다. */
+
 .char__check.is-up,
 .char__perk.is-up,
 .char__perkbox.is-up {
@@ -2015,6 +1968,7 @@
 }
 
 /* 표식 밑의 글. **경험만 적는다** — 골드는 표식 위의 수가 전부다. */
+
 .tally__label {
   font-size: 0.82rem;
   color: var(--sl-text-muted);
@@ -2022,6 +1976,7 @@
 }
 
 /* 레벨과 손패가 나란히 선다. 둘 다 「이 캐릭터는 이렇다」를 말하는 값이다. */
+
 .char__facts {
   display: inline-flex;
   align-items: center;
@@ -2039,6 +1994,7 @@
   43px이므로 왕관도 43px이어야 하는데, 왕관은 폭이 `3.1em`이고 비가 152:104라
   높이는 `3.1 × 0.684 = 2.12em`이다 → **글자 크기를 43/2.12 = 20.3px**로 둔다.
 */
+
 .levelchip {
   display: inline-flex;
   align-items: center;
@@ -2050,6 +2006,7 @@
 }
 
 /* 손패 — 그림 하나를 테 안에 담는다. 경험·골드 칸과 같은 결이다. */
+
 .handchip {
   display: inline-flex;
   align-items: center;
@@ -2066,6 +2023,7 @@
 }
 
 /* 그림 안에 앉는 수. 카드가 36px이라 넉넉히 키워도 넘치지 않는다. */
+
 .handchip .hand__n {
   font-size: 1.24rem;
 }
@@ -2076,6 +2034,7 @@
   레벨표 위에 손패가 선다. **클래스 수치라 레벨별 최대 체력과 한 자리다** —
   띠의 부제 줄에 넣었더니 그림 높이가 줄을 밀어 올려 띠가 통째로 두꺼워졌다.
 */
+
 .char__blockhead {
   display: flex;
   align-items: center;
@@ -2120,6 +2079,7 @@
 }
 
 /* 뒤쪽 화면이 살짝 비친다 — 덮은 것이지 딴 화면으로 넘어온 것이 아니다. */
+
 .logview {
   position: fixed;
   inset: 0;
@@ -2140,6 +2100,7 @@
   머리는 안 구르고 목록만 구른다 — 한참 내린 뒤 닫으려고 도로 올라오게 하지
   않는다(구현 결정 192). 제 바탕을 깔아야 글이 밑을 지나가도 겹쳐 읽히지 않는다.
 */
+
 .logview__head {
   position: sticky;
   top: 0;
@@ -2197,6 +2158,7 @@
 }
 
 /* 한 번의 저장이 한 덩어리다 — 여러 칸을 함께 고치므로 줄이 여럿일 수 있다. */
+
 .logview__entry {
   display: flex;
   flex-direction: column;
@@ -2222,6 +2184,7 @@
 }
 
 /* 기록 한 덩어리의 머리 — 언제와 왜가 나란히 선다. */
+
 .logview__meta {
   display: flex;
   align-items: baseline;
@@ -2237,18 +2200,21 @@
 }
 
 /* 전투에서 받은 것은 눈에 띄어야 한다 — 되짚을 때 찾는 것이 대개 이것이다. */
+
 .logview__why--scenario {
   color: var(--sl-gold);
   border-color: var(--sl-gold-dim);
 }
 
 /* 생성은 맨 아래 한 줄뿐이다. 이끼색으로 두어 정산과 갈린다. */
+
 .logview__why--created {
   color: var(--sl-moss);
   border-color: var(--sl-moss);
 }
 
 /* 고치는 동안의 증감. 수는 `sl-numeral`이 이미 맡고 여기서는 색만 정한다. */
+
 .tally__delta {
   margin: 0 0.05em;
 }
@@ -2283,6 +2249,7 @@
   줄이 하나 느는 셈이므로 **여닫는 것이 보여야 한다.** 툭 나타나면 띠가 튀는
   것으로 읽히므로 키와 짙기를 함께 굴린다. 안이 비어 있어도 자리는 0이다.
 */
+
 .topbar__chips {
   display: block;
   /* 윗줄과 같은 상자 안에 선다 — 넓은 화면에서 혼자 왼쪽 끝으로 가면 안 된다. */
@@ -2323,6 +2290,7 @@
 }
 
 /* 뒤늦게 합류하는 배지도 툭 끼어들지 않는다 — 줄이 열린 뒤에 하나씩 스민다. */
+
 .tchip {
   animation: tchip-in 0.18s ease both;
 }
@@ -2351,6 +2319,7 @@
 
 /* 그림 넷의 잉크 크기를 눈으로 맞춘다 — 상자를 같게 두면 뾰족한 것이 작아 보인다
    (구현 결정 346과 같은 자리). */
+
 .tchip .levelbadge {
   font-size: 9px;
 }
@@ -2365,6 +2334,7 @@
   **뾰족한 것은 둥근 것보다 작아 보인다** — 상자를 같게 두면 별만 작다. 시트가
   쓰는 것과 같은 비(1.28배)를 여기서도 쓴다(구현 결정 346).
 */
+
 .tchip__i {
   width: 22px;
   height: 22px;
@@ -2396,6 +2366,7 @@
 
 /* 시트 머리 밑의 띠. 되돌리는 문을 함께 낸다 — 아는 자리와 되돌리는 자리가
    갈리면 찾으러 다녀야 한다. */
+
 .char__doom {
   display: flex;
   align-items: center;
@@ -2431,6 +2402,7 @@
 }
 
 /* 상점으로 가는 문 — 아이템 칸 안, 편집 중에만 선다. */
+
 .char__shoprow {
   display: flex;
   margin-bottom: 0.5rem;
@@ -2477,6 +2449,7 @@
 }
 
 /* 상자가 하나에서 열까지라 줄바꿈을 허락한다 — 좁은 화면에서 글을 밀지 않는다. */
+
 .unlock__boxes {
   flex: none;
   display: flex;
@@ -2502,6 +2475,7 @@
 }
 
 /* 켠 것은 금빛으로 찬다 — 전투 목표 체크와 같은 결이다. */
+
 .unlock__box--on {
   background: var(--sl-gold);
   border-color: var(--sl-gold);
@@ -2512,6 +2486,7 @@
 }
 
 /* 전역 업적은 몇 번 이뤘는지 함께 적는다 — 되풀이해 이루는 것이라 수가 곧 값이다. */
+
 .global__count {
   flex: none;
   font-size: 1.05rem;
@@ -2523,6 +2498,7 @@
   **물들이지 않고 양피지 원반을 깐다**(구현 결정 41): 표식이 거의 검정이라
   어두운 바탕에서 묻힌다. 글줄에 얹히므로 밑선을 맞춘다(구현 결정 321).
 */
+
 .unlock__icon {
   display: inline-flex;
   align-items: center;
@@ -2542,7 +2518,41 @@
 }
 
 /* 「A봉투」의 A — 알파벳은 글룸헤이븐 서체다(형님이 정했다). */
+
 .unlock__latin {
   font-size: 1.15em;
   color: var(--sl-gold-bright);
+}
+
+/*
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ **그림 없이 수만 서는 칸 — 파티 기록지의 평판·물건값.**                  │
+  └────────────────────────────────────────────────────────────────────────┘
+
+  `.tally__n`은 표식 위에 얹히려고 절대 위치를 쓰는데(캐릭터 시트의 별·금화)
+  여기는 얹을 그림이 없다 — **자리 잡는 규칙을 되돌리고 크기를 올린다.**
+*/
+.tally__n--solo {
+  position: static;
+  font-size: 2rem;
+  color: var(--sl-text);
+  text-shadow: none;
+}
+
+/* 평판은 금빛으로 — 이 칸에서 눈이 먼저 가는 수다. */
+.tally__item--rep .tally__n--solo {
+  color: var(--sl-gold);
+}
+
+/* 물건값은 오르면 잉걸빛, 내리면 푸른빛 — 싸지는 쪽이 반갑다. */
+.tally__item--up .tally__n--solo {
+  color: var(--sl-ember);
+}
+
+.tally__item--down .tally__n--solo {
+  color: #8dbce8;
+}
+
+.tally__item--flat .tally__n--solo {
+  color: var(--sl-text-muted);
 }
