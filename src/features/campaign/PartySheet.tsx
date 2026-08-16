@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { ConfirmDialog } from '../satchel/board/ConfirmDialog'
 import { PencilIcon } from './PencilIcon'
 import { draftOf, isDirty, partyDiff, type PartyDraft } from './partyDraft'
@@ -15,6 +15,7 @@ import { campaignChangesOf } from './characterLog'
 import { writeCampaignLog } from './campaignNet'
 import { LogView } from './LogView'
 import { AchievementPicker } from './AchievementPicker'
+import { useUnlockStore } from './unlockStore'
 
 interface Props {
   campaign: Campaign
@@ -61,6 +62,16 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   const [logOpen, setLogOpen] = useState(false)
   /** 업적을 고르는 중인가. **편집 중에만 연다** — 담는 것은 값을 고치는 일이다. */
   const [picking, setPicking] = useState(false)
+
+  /*
+    개봉 조건 표. **글은 DB에만 있다**(`0027`) — 아무것도 안 넣었으면 이 칸이
+    통째로 안 보이고 나머지는 그대로 돈다(절대 원칙 3).
+  */
+  const conditions = useUnlockStore((s) => s.items)
+  const loadConditions = useUnlockStore((s) => s.load)
+  useEffect(() => {
+    void loadConditions()
+  }, [loadConditions])
   /** 누가 고쳤는지 남기려면 내가 누구인지 알아야 한다. */
   const userId = useAuthStore((s) => s.session?.userId ?? null)
   const nameId = useId()
@@ -276,6 +287,63 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
             </div>
           )}
         </section>
+
+        {/* ------------------------------------------------------------------
+          봉투·상자 개봉 조건
+          ------------------------------------------------------------------
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **인쇄된 캠페인 시트의 그 칸이다.**                               │
+          └──────────────────────────────────────────────────────────────────┘
+
+          형님이 실물을 찍어 보내 주었다 — 조건이 줄로 늘어서고 줄마다 체크상자가
+          붙는데 하나는 상자가 열 개다(금화 기부).
+
+          **켠 것은 줄 번호가 아니라 조건 id로 센다**(`0027`). 특혜 상자는 번호를
+          이어 붙여 셌지만(구현 결정 136) 그 짜임은 표를 다시 넣을 때 번호가 밀리면
+          켠 것이 딴 줄을 가리킨다.
+
+          글은 게임 콘텐츠라 레포에 없다 — 표가 비었으면 이 칸이 아예 안 나온다.
+          ------------------------------------------------------------------ */}
+        {conditions.length > 0 && (
+          <section className="sheet__block">
+            <h2 className="sheet__label">봉투·상자 개봉 조건</h2>
+            <p className="sheet__empty">시트의 줄 그대로다. 이룬 만큼 상자를 켠다.</p>
+
+            <ul className="unlock__rows">
+              {conditions.map((cond) => {
+                const on = shown.unlocks[cond.id] ?? 0
+                return (
+                  <li key={cond.id} className="unlock__row">
+                    <span className="unlock__boxes">
+                      {Array.from({ length: cond.boxes }, (_, i) => i + 1).map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          aria-label={`${cond.text} — ${n}번째 상자`}
+                          aria-pressed={n <= on}
+                          className={`unlock__box${n <= on ? ' unlock__box--on' : ''}`}
+                          disabled={!editing}
+                          /*
+                            **켠 칸은 앞에서부터 찬다.** 몇 번째를 눌렀느냐가 곧
+                            몇 칸 켰느냐다 — 같은 칸을 다시 누르면 그 앞까지만
+                            남는다. 열 칸짜리를 하나씩 되돌릴 수 있어야 한다.
+                          */
+                          onClick={() =>
+                            set('unlocks', {
+                              ...draft.unlocks,
+                              [cond.id]: on === n ? n - 1 : n,
+                            })
+                          }
+                        />
+                      ))}
+                    </span>
+                    <span className="unlock__text">{cond.text}</span>
+                  </li>
+                )
+              })}
+            </ul>
+          </section>
+        )}
 
         <section className="sheet__block">
           <label className="sheet__label" htmlFor={noteId}>

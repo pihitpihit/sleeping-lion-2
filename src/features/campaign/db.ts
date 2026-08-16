@@ -60,6 +60,23 @@ export const db = new SleepingLionDb()
  * 서버가 준 것도 거른다 — 스키마를 올린 뒤이거나 남이 다른 판으로 쓴 값일 수
  * 있다. **한 자락도 믿지 않는다.**
  */
+/**
+ * 켠 칸 수만 건져낸다.
+ *
+ * **모양이 아닌 것은 버린다** — 서버 값을 믿지 않는다(구현 결정 139의 뒷면과 같은
+ * 결). 0 이하는 안 적힌 것과 같으므로 걷는다.
+ */
+function sanitizeUnlocks(raw: unknown): Record<string, number> {
+  if (typeof raw !== 'object' || raw === null) return {}
+  const out: Record<string, number> = {}
+  for (const [id, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof value !== 'number' || !Number.isFinite(value)) continue
+    const n = Math.max(0, Math.trunc(value))
+    if (n > 0) out[id] = n
+  }
+  return out
+}
+
 export function sanitizeCampaign(raw: Partial<Campaign> & { id: string }): Campaign {
   const now = Date.now()
   return {
@@ -72,6 +89,7 @@ export function sanitizeCampaign(raw: Partial<Campaign> & { id: string }): Campa
       ? raw.achievements.filter((item): item is string => typeof item === 'string')
       : [],
     reputation: clampReputation(typeof raw.reputation === 'number' ? raw.reputation : 0),
+    unlocks: sanitizeUnlocks(raw.unlocks),
     createdAt: typeof raw.createdAt === 'number' ? raw.createdAt : now,
     updatedAt: typeof raw.updatedAt === 'number' ? raw.updatedAt : now,
     version: typeof raw.version === 'number' ? raw.version : 1,

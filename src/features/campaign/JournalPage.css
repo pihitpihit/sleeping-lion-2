@@ -2451,3 +2451,62 @@
   color: var(--sl-gold-bright);
   border-color: var(--sl-gold);
 }
+
+/* --------------------------------------------------------------------------
+   봉투·상자 개봉 조건 — 인쇄된 캠페인 시트의 그 칸(`0027`)
+   --------------------------------------------------------------------------
+   특혜 줄과 같은 짜임이다: **상자 묶음은 줄어들지 않고** 글이 그 옆에서 접힌다.
+   -------------------------------------------------------------------------- */
+
+.unlock__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.unlock__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--sl-text);
+}
+
+/* 상자가 하나에서 열까지라 줄바꿈을 허락한다 — 좁은 화면에서 글을 밀지 않는다. */
+.unlock__boxes {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  max-width: 40%;
+  /* 글의 첫 줄과 밑선을 맞춘다. */
+  padding-top: 0.2em;
+}
+
+.unlock__box {
+  width: 13px;
+  height: 13px;
+  padding: 0;
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.15rem;
+  cursor: pointer;
+}
+
+.unlock__box:disabled {
+  cursor: default;
+}
+
+/* 켠 것은 금빛으로 찬다 — 전투 목표 체크와 같은 결이다. */
+.unlock__box--on {
+  background: var(--sl-gold);
+  border-color: var(--sl-gold);
+}
+
+.unlock__text {
+  min-width: 0;
+}

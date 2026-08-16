@@ -18,6 +18,7 @@ function fixture(over: Partial<Campaign> = {}): Campaign {
     location: '광장',
     notes: '',
     achievements: ['첫 밤'],
+    unlocks: {},
     reputation: 2,
     createdAt: 0,
     updatedAt: 0,

@@ -115,6 +115,7 @@ const FIELD_NAME: Readonly<Record<string, string>> = {
   location: '머무는 곳',
   reputation: '평판',
   achievements: '업적',
+  unlocks: '개봉 조건',
 }
 
 /** 글자를 담는 칸. 값이 짧아 무엇으로 바뀌었는지 그대로 보여 준다. */
@@ -122,6 +123,15 @@ const TEXT_FIELDS: readonly string[] = ['name', 'location']
 
 function asNumbers(v: unknown): number[] {
   return Array.isArray(v) ? v.filter((n): n is number => typeof n === 'number') : []
+}
+
+/** 켠 칸을 다 센다. 모양이 아닌 것은 0으로 친다. */
+function countBoxes(v: unknown): number {
+  if (typeof v !== 'object' || v === null) return 0
+  return Object.values(v as Record<string, unknown>).reduce<number>(
+    (sum, n) => sum + (typeof n === 'number' && n > 0 ? Math.trunc(n) : 0),
+    0,
+  )
 }
 
 function asStrings(v: unknown): string[] {
@@ -171,6 +181,18 @@ export function describeChange(change: LogChange): string {
     if (added.length > 0) parts.push(`${added.join('·')}번 켬`)
     if (removed.length > 0) parts.push(`${removed.join('·')}번 끔`)
     return `${name} ${parts.join(', ')}`
+  }
+
+  /*
+    개봉 조건은 표(`{ 조건 id: 켠 칸 수 }`)라 통째로 늘어놓을 수가 없다 —
+    **몇 칸 켰는지만 센다.** 어느 줄인지는 조건 글이 있어야 알 수 있고 그 글은
+    DB에만 있다(`0027`).
+  */
+  if (change.field === 'unlocks') {
+    const from = countBoxes(change.from)
+    const to = countBoxes(change.to)
+    const delta = to - from
+    return `${name} ${from} → ${to} (${delta > 0 ? '+' : '−'}${Math.abs(delta)})`
   }
 
   if (change.field === 'achievements') {
@@ -276,7 +298,7 @@ export function campaignChangesOf(
   edits: Record<string, unknown>,
 ): LogChange[] {
   const out: LogChange[] = []
-  for (const field of ['name', 'location', 'reputation', 'achievements', 'notes']) {
+  for (const field of ['name', 'location', 'reputation', 'achievements', 'unlocks', 'notes']) {
     const to = edits[field]
     if (to === undefined) continue
     out.push({ field, from: before[field], to })

@@ -26,6 +26,8 @@ export interface PartyDraft {
   notes: string
   achievements: string[]
   reputation: number
+  /** 개봉 조건을 어디까지 켰는가 — `{ 조건 id: 켠 칸 수 }`. */
+  unlocks: Record<string, number>
 }
 
 /** 지금 레코드를 초안으로 뜬다. 배열은 **사본으로** 뜬다 — 원본을 건드리면 안 된다. */
@@ -36,7 +38,17 @@ export function draftOf(campaign: Campaign): PartyDraft {
     notes: campaign.notes,
     achievements: [...campaign.achievements],
     reputation: campaign.reputation,
+    unlocks: { ...campaign.unlocks },
   }
+}
+
+/** 두 표가 같은가. 열쇠가 다르거나 수가 다르면 고친 것이다. */
+function sameCounts(a: Record<string, number>, b: Record<string, number>): boolean {
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)])
+  for (const key of keys) {
+    if ((a[key] ?? 0) !== (b[key] ?? 0)) return false
+  }
+  return true
 }
 
 function sameStrings(a: readonly string[], b: readonly string[]): boolean {
@@ -69,6 +81,13 @@ export function partyDiff(campaign: Campaign, draft: PartyDraft): CampaignEdits 
   // 빈 줄은 업적이 아니다. 걸러 내되 차례는 지킨다.
   const achievements = draft.achievements.map((s) => s.trim()).filter((s) => s !== '')
   if (!sameStrings(achievements, campaign.achievements)) edits.achievements = achievements
+
+  /* 0으로 내려간 것은 열쇠째 걷는다 — 안 켠 것과 같은 값을 두 모양으로 두지 않는다. */
+  const unlocks: Record<string, number> = {}
+  for (const [id, count] of Object.entries(draft.unlocks)) {
+    if (count > 0) unlocks[id] = count
+  }
+  if (!sameCounts(unlocks, campaign.unlocks)) edits.unlocks = unlocks
 
   return edits
 }

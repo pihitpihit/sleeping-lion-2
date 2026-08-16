@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ClassDataEditor } from '../campaign/ClassDataEditor'
 import { ClassPerkEditor } from '../campaign/ClassPerkEditor'
+import { UnlockEditor } from '../campaign/UnlockEditor'
 import { approveUser, listPendingUsers, useApprovalStore, type PendingUser } from './approval'
 import './PendingPage.css'
 
@@ -136,6 +137,8 @@ export function AdminPage() {
       <ClassDataEditor />
 
       <ClassPerkEditor />
+
+      <UnlockEditor />
     </main>
   )
 }

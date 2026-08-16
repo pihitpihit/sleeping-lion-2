@@ -38,6 +38,16 @@ export interface Campaign {
   achievements: string[]
   /** −20 ~ +20. 상점 가격 보정이 여기서 나온다(`reputation.ts`). */
   reputation: number
+  /**
+   * 봉투·상자 개봉 조건을 어디까지 켰는가 — `{ 조건 id: 켠 칸 수 }`.
+   *
+   * **줄 번호가 아니라 조건 id로 센다**(`0027`). 표를 다시 넣어 순서가 바뀌어도
+   * 켠 것이 딴 줄을 가리키지 않는다 — 특혜 상자와 갈리는 자리다(구현 결정 136).
+   *
+   * 조건의 글은 게임 콘텐츠라 DB에만 있다. **없어도 앱은 완전히 돈다**(절대 원칙 3)
+   * — 그때는 이 칸이 안 보인다.
+   */
+  unlocks: Record<string, number>
 
   createdAt: number
   updatedAt: number
@@ -52,7 +62,7 @@ export interface Campaign {
 
 /** 기록지에서 사람이 고치는 부분. 나머지는 서버가 관리한다. */
 export type CampaignEdits = Partial<
-  Pick<Campaign, 'name' | 'location' | 'notes' | 'achievements' | 'reputation'>
+  Pick<Campaign, 'name' | 'location' | 'notes' | 'achievements' | 'reputation' | 'unlocks'>
 >
 
 /* ==========================================================================

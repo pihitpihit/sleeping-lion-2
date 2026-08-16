@@ -24,6 +24,7 @@ function fixture(over: Partial<Campaign> = {}): Campaign {
     name: '잠자는 사자',
     location: '광장',
     notes: '',
+    unlocks: {},
     achievements: ['첫 밤'],
     reputation: 2,
     createdAt: 0,

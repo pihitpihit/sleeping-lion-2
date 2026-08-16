@@ -63,10 +63,26 @@ describe('sanitizeCampaign', () => {
       notes: '문 앞에서 만나기로',
       achievements: ['첫 걸음'],
       reputation: 12,
+      unlocks: { 'cond-1': 3 },
       createdAt: 100,
       updatedAt: 200,
       version: 3,
     }
     expect(sanitizeCampaign(source)).toEqual(source)
+  })
+})
+
+describe('개봉 조건 진행', () => {
+  /** 서버 값을 믿지 않는다 — 모양이 아닌 것은 버린다. */
+  it('수가 아닌 것과 0 이하는 걷는다', () => {
+    const c = sanitizeCampaign({
+      id: 'a',
+      unlocks: { good: 2, zero: 0, minus: -1, text: '셋' } as unknown as Record<string, number>,
+    })
+    expect(c.unlocks).toEqual({ good: 2 })
+  })
+
+  it('없으면 빈 표다 — 없는 열쇠는 0으로 읽는다', () => {
+    expect(sanitizeCampaign({ id: 'a' }).unlocks).toEqual({})
   })
 })
