@@ -2636,3 +2636,10 @@
   color: var(--sl-void);
   background: var(--sl-ember);
 }
+
+/* 드는 데 걸린 까닭 — 눌러도 안 되는 채로 두지 않는다. */
+.joinparty__error {
+  margin: 0.6rem 0 0;
+  font-size: 0.85rem;
+  color: var(--sl-ember);
+}

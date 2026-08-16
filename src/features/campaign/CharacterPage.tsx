@@ -27,6 +27,8 @@ import './JournalPage.css'
 export function CharacterPage() {
   /** 띠 안의 요약 자리. 시트가 여기에 배지를 그린다. */
   const [chipSlot, setChipSlot] = useState<HTMLElement | null>(null)
+  /** 드는 데 걸린 까닭. 시트의 오류와 자리가 다르다 — 드는 칸 안에 적는다. */
+  const [joinError, setJoinError] = useState<string | null>(null)
 
   const session = useAuthStore((s) => s.session)
   const refreshParties = useJournalStore((s) => s.refresh)
@@ -59,6 +61,7 @@ export function CharacterPage() {
    * 얻는다(없으면 그때 만들어진다, `fetchOrCreateFor`).
    */
   async function joinParty(partyId: string) {
+    setJoinError(null)
     const entry = entries.find((e) => e.party.id === partyId)
     if (entry === undefined || session === null) return
     try {
@@ -70,7 +73,13 @@ export function CharacterPage() {
       await join(campaign.id)
       void refreshParties({ userId: session.userId, displayName: session.displayName })
     } catch (cause) {
-      console.error('[join]', cause)
+      /*
+        **조용히 실패하지 않는다.** 여기를 `console.error`로만 두었더니 가입이
+        RLS에 막히는 동안 화면에는 아무 일도 안 일어났고, 누른 사람은 단추가
+        물든 것만 보았다(형님이 짚었다) — 눌러도 안 되는 까닭이 화면에 남아야
+        한다(구현 결정 172와 같은 결).
+      */
+      setJoinError(cause instanceof Error ? cause.message : '파티에 들지 못했다.')
     }
   }
   const remove = useOneCharacterStore((s) => s.remove)
@@ -219,6 +228,7 @@ export function CharacterPage() {
           {!character.campaignId && mine && (
             <JoinParty
               busy={busy}
+              error={joinError}
               parties={entries.map((e) => ({
                 partyId: e.party.id,
                 name: e.campaign?.name || e.party.name || '이름 없는 파티',
@@ -261,11 +271,14 @@ export function CharacterPage() {
 function JoinParty({
   parties,
   busy,
+  error,
   onJoin,
 }: {
   /** 있는 파티 전부. **내 파티가 아니어도 든다**(`0036`). */
   parties: readonly { partyId: string; name: string; mine: boolean }[]
   busy: boolean
+  /** 드는 데 걸렸으면 그 까닭. */
+  error: string | null
   onJoin: (partyId: string) => void
 }) {
   /*
@@ -304,6 +317,11 @@ function JoinParty({
             ))}
           </ul>
         </>
+      )}
+      {error !== null && (
+        <p className="joinparty__error" role="alert">
+          {error}
+        </p>
       )}
     </section>
   )

@@ -160,13 +160,21 @@ export const supabasePartyAdapter: PartyAdapter = {
   async joinParty(partyId, who) {
     /*
       **제 이름으로만 든다** — RLS가 `user_id = auth.uid()`를 본다(`0036`).
-      이미 들어 있으면 조용히 성공으로 친다: 오류가 아니다.
+
+      ┌──────────────────────────────────────────────────────────────────────┐
+      │ **`upsert`를 쓰지 않는다 — RLS 밑에서는 통째로 거절된다.**            │
+      └──────────────────────────────────────────────────────────────────────┘
+
+      `upsert`는 `insert ... on conflict do update`로 나가고, Postgres는 그 길에
+      **UPDATE 정책**까지 요구한다. `party_members`에는 UPDATE 정책이 없다(들거나
+      나갈 뿐 고칠 것이 없다) — 그래서 부딪히지 않는 첫 가입까지 거절됐다.
+      평 INSERT로 넣고 **이미 들어 있으면(`23505`) 성공으로 친다.**
     */
     try {
       const { error } = await supabase()
         .from('party_members')
-        .upsert({ party_id: partyId, user_id: who.userId }, { onConflict: 'party_id,user_id' })
-      if (error) throw error
+        .insert({ party_id: partyId, user_id: who.userId })
+      if (error && error.code !== '23505') throw error
     } catch (cause) {
       return fail(cause, '파티에 들지 못했다.')
     }
