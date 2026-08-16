@@ -1,4 +1,5 @@
 import { PROSPERITY_ROWS, cardNo } from '../rules/prosperity'
+import { levelExtra, stickerExtra } from '../rules/enhancement'
 import {
   DIFFICULTIES,
   DIFFICULTY_MOD,
@@ -142,6 +143,80 @@ export function ProsperityTable() {
               <td className="sl-numeral">
                 {cardNo(row.from)}–{cardNo(row.to)}
               </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+/**
+ * 카드 향상 가격표.
+ *
+ * **값이 늘어선 표일 뿐 카드의 글이 아니다** — 그래서 레포에 둘 수 있다
+ * (`rules/enhancement.ts`).
+ *
+ * 실물이 세 칸으로 갈라 적는다: 능력치·효과·더하는 값. 여기서도 그대로 가른다 —
+ * 상 위에서 찾는 순서가 그것이다(무엇을 붙일지 먼저, 얼마를 더할지 나중).
+ */
+export function EnhanceTable({
+  title,
+  rows,
+}: {
+  title: string
+  rows: readonly { name: string; gold: number }[]
+}) {
+  return (
+    <div className="gtable gtable--narrow">
+      <table className="gtable__t">
+        <caption className="gtable__cap">{title}</caption>
+        <thead>
+          <tr>
+            <th scope="col">붙이는 것</th>
+            <th scope="col">금화</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.name}>
+              <th scope="row">{row.name}</th>
+              <td className="sl-numeral">{row.gold}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+/** 카드 레벨과 이미 붙은 스티커가 더하는 값. */
+export function EnhanceExtraTable() {
+  return (
+    <div className="gtable gtable--narrow">
+      <table className="gtable__t">
+        <caption className="gtable__cap">더하는 값</caption>
+        <thead>
+          <tr>
+            <th scope="col">카드 레벨</th>
+            <th scope="col">금화</th>
+          </tr>
+        </thead>
+        <tbody>
+          {Array.from({ length: 9 }, (_, i) => i + 1).map((level) => (
+            <tr key={level}>
+              <th scope="row" className="sl-numeral">
+                {level}
+              </th>
+              <td className="sl-numeral">+{levelExtra(level)}</td>
+            </tr>
+          ))}
+          {Array.from({ length: 4 }, (_, i) => i).map((n) => (
+            <tr key={`s${n}`}>
+              <th scope="row">
+                스티커 <span className="sl-numeral">{n}</span>
+              </th>
+              <td className="sl-numeral">+{stickerExtra(n)}</td>
             </tr>
           ))}
         </tbody>

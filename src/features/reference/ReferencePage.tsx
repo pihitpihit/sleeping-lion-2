@@ -2,7 +2,20 @@ import type { CSSProperties } from 'react'
 import { MARKS } from '../satchel/widgets/deck/cardSpec'
 import { InlineMark } from '../campaign/InlineMark'
 import { useScrolled } from '../campaign/useScrolled'
-import { DifficultyTable, ProsperityTable, ScenarioLevelTable } from './ScenarioLevelTable'
+import {
+  DifficultyTable,
+  EnhanceExtraTable,
+  EnhanceTable,
+  ProsperityTable,
+  ScenarioLevelTable,
+} from './ScenarioLevelTable'
+import {
+  ENHANCE_EFFECTS,
+  ENHANCE_STATS,
+  ENHANCE_SUMMON,
+  MULTI_TARGET_FACTOR,
+  hexCost,
+} from '../rules/enhancement'
 /*
   띠(`topbar`)와 바깥 틀(`journal`)은 이제 일지만의 것이 아니라 **앱의 공통
   껍데기**다 — 생성 화면 둘이 이미 같은 것을 쓰고 있다. 옮겨 담는 것은 쓰는
@@ -125,6 +138,37 @@ export function ReferencePage() {
 
           <ul className="ref__notes">
             <li className="ref__src">캠페인 시트의 번영도 표</li>
+          </ul>
+        </details>
+
+        {/*
+          카드 향상 — 형님이 실물 표를 찍어 보내 주었다(2026-08-16).
+          **값이 늘어선 표일 뿐 카드의 글이 아니라** 레포에 둘 수 있다.
+        */}
+        <details className="ref__block">
+          <summary className="ref__summary">
+            <span className="ref__title">카드 향상 가격</span>
+          </summary>
+
+          <p className="ref__hint">
+            값은 셋이 겹쳐 정해진다 — <strong>기본 비용 → 곱 → 더함</strong>. 복수 대상이면 기본
+            비용이 <b className="sl-numeral">{MULTI_TARGET_FACTOR}</b>배가 되고, 카드 레벨과 이미
+            붙은 스티커는 그 뒤에 더해진다.
+          </p>
+
+          <div className="ref__papers">
+            <EnhanceTable title="능력치" rows={ENHANCE_STATS} />
+            <EnhanceTable title="효과" rows={ENHANCE_EFFECTS} />
+            <EnhanceTable title="소환물" rows={ENHANCE_SUMMON} />
+            <EnhanceExtraTable />
+          </div>
+
+          <ul className="ref__notes">
+            <li>
+              공격 칸(육각)에 붙일 때는 <b className="sl-numeral">200</b>을 칸 수로 나눈 만큼,
+              내림이다 — 세 칸이면 <b className="sl-numeral">{hexCost(3)}</b>.
+            </li>
+            <li className="ref__src">캠페인 시트의 향상 가격표</li>
           </ul>
         </details>
 
