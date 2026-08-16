@@ -107,6 +107,14 @@ export const mockPartyAdapter: PartyAdapter = {
     write(db)
   },
 
+  async disbandParty(partyId) {
+    await wait()
+    const db = read()
+    db.parties = db.parties.filter((p) => p.id !== partyId)
+    db.members = db.members.filter((m) => m.partyId !== partyId)
+    write(db)
+  },
+
   async joinParty(partyId, who) {
     await wait()
     const db = read()

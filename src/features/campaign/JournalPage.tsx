@@ -200,6 +200,9 @@ export function JournalPage() {
                 partyId={current.party.id}
                 partyName={current.party.name}
                 me={me}
+                onDisbanded={() => {
+                  window.location.hash = '#/journal'
+                }}
                 onLeave={() => {
                   void leave(current.party.id, me)
                   window.location.hash = '#/journal'

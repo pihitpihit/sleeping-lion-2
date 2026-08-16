@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { ConfirmDialog } from '../satchel/board/ConfirmDialog'
 import { partyAdapter, useNetRevision } from '../net'
 import { NetError } from '../net/adapter'
 import type { Identity, Member } from '../net/types'
@@ -8,6 +9,8 @@ interface Props {
   partyName: string
   me: Identity
   onLeave: () => void
+  /** 해산이 끝나면 알린다 — 이 기록지는 이제 없다. */
+  onDisbanded: () => void
 }
 
 /**
@@ -20,7 +23,18 @@ interface Props {
  * **시각을 렌더 안에서 읽지 않는다.** 불러올 때 함께 찍어 두고 그것으로 남은
  * 시간을 셈한다(react-hooks/purity). 만료가 이틀이라 시간 단위로 보이면 그만이다.
  */
-export function Crew({ partyId, partyName, me, onLeave }: Props) {
+export function Crew({ partyId, partyName, me, onLeave, onDisbanded }: Props) {
+  /** 무엇을 물으려고 팝업을 띄웠는가. */
+  const [asking, setAsking] = useState<'leave' | 'disband' | null>(null)
+
+  function disband() {
+    partyAdapter
+      .disbandParty(partyId)
+      .then(() => onDisbanded())
+      .catch((cause: unknown) => {
+        setError(cause instanceof NetError ? cause.message : '해산하지 못했다.')
+      })
+  }
   const revision = useNetRevision()
   const [members, setMembers] = useState<Member[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -73,17 +87,49 @@ export function Crew({ partyId, partyName, me, onLeave }: Props) {
       </p>
 
       <div className="crew__actions">
-        <button
-          type="button"
-          className="crew__leave"
-          onClick={() => {
-            if (!window.confirm(`'${partyName}'에서 나가시겠습니까?`)) return
-            onLeave()
-          }}
-        >
+        {/*
+          **되돌릴 수 없는 일은 `window.confirm`으로 묻지 않는다**(구현 결정 36).
+          나가는 것은 다시 들면 그만이라 뜸이 짧고, 해산은 기록지가 함께 가므로
+          기본 5초를 그대로 쓴다.
+        */}
+        <button type="button" className="crew__leave" onClick={() => setAsking('leave')}>
           동행을 그만둔다
         </button>
+        <button type="button" className="crew__disband" onClick={() => setAsking('disband')}>
+          파티 해산
+        </button>
       </div>
+
+      {asking === 'leave' && (
+        <ConfirmDialog
+          title={`'${partyName}'에서 나갑니까?`}
+          description="파티는 남는다 — 다시 들 수 있다."
+          confirmLabel="나간다"
+          delayMs={1500}
+          onConfirm={() => {
+            setAsking(null)
+            onLeave()
+          }}
+          onCancel={() => setAsking(null)}
+        />
+      )}
+
+      {asking === 'disband' && (
+        <ConfirmDialog
+          title={`'${partyName}'을 해산합니까?`}
+          /*
+            **캐릭터는 남는다**(`0037`) — 파티에 들기 전 상태로 돌아갈 뿐이다.
+            사라지는 것은 기록지(평판·업적·개봉 조건·떡갈나무)와 파티 그 자체다.
+          */
+          description="기록지가 함께 사라진다 — 평판·업적·개봉 조건·떡갈나무. 캐릭터는 남는다. 남의 캐릭터가 들어 있으면 서버가 거절한다."
+          confirmLabel="해산한다"
+          onConfirm={() => {
+            setAsking(null)
+            disband()
+          }}
+          onCancel={() => setAsking(null)}
+        />
+      )}
     </section>
   )
 }

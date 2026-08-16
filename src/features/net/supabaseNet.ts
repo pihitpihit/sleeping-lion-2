@@ -147,6 +147,16 @@ export const supabasePartyAdapter: PartyAdapter = {
     }
   },
 
+  async disbandParty(partyId) {
+    try {
+      const { error } = await supabase().from('parties').delete().eq('id', partyId)
+      if (error) throw error
+      announce()
+    } catch (cause) {
+      fail(cause, '파티를 해산하지 못했다. 남의 캐릭터가 들어 있는지 보라.')
+    }
+  },
+
   async joinParty(partyId, who) {
     /*
       **제 이름으로만 든다** — RLS가 `user_id = auth.uid()`를 본다(`0036`).

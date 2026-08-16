@@ -15,6 +15,14 @@ export interface PartyAdapter {
   listMembers(partyId: string): Promise<Member[]>
   /** 파티를 떠난다. 마지막 한 명이 나가면 파티도 함께 사라진다. */
   leaveParty(partyId: string, userId: string): Promise<void>
+  /**
+   * 파티를 해산한다 — **기록지도 함께 간다.**
+   *
+   * 캐릭터는 남는다(`0037`) — 파티에 들기 전 상태로 돌아갈 뿐이다. **남의
+   * 캐릭터가 든 파티는 서버가 거절한다**: 남의 기록을 날리는 일은 그 사람이
+   * 할 일이다.
+   */
+  disbandParty(partyId: string): Promise<void>
 
   /**
    * 파티에 든다 — **초대 없이 제 발로.**
@@ -52,6 +60,7 @@ export const notReadyPartyAdapter: PartyAdapter = {
   createParty: notReady,
   listMembers: async () => [],
   leaveParty: notReady,
+  disbandParty: notReady,
   joinParty: notReady,
   subscribe: () => () => {},
 }

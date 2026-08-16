@@ -2619,3 +2619,20 @@
   font-size: 0.78rem;
   color: var(--sl-moss-bright);
 }
+
+/* 해산 — 되돌릴 수 없는 자리라 잉걸빛이다(치우는 일에 이미 쓰는 색). */
+.crew__disband {
+  padding: 0.5rem 0.9rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--sl-ember);
+  background: none;
+  border: 1px solid var(--sl-ember);
+  border-radius: 0.3rem;
+  cursor: pointer;
+}
+
+.crew__disband:hover {
+  color: var(--sl-void);
+  background: var(--sl-ember);
+}
