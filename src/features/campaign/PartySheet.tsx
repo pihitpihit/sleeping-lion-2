@@ -110,6 +110,17 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   const dirty = editing && isDirty(campaign, draft)
   const modifier = shopPriceModifier(shown.reputation)
 
+  /*
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │ **떡갈나무는 B봉투가 열려야 나온다**(형님이 정했다).                    │
+    └────────────────────────────────────────────────────────────────────────┘
+
+    그 줄에 표가 달려 있고(`0033`) 상자가 다 차면 열린다 — **코드가 글을 뒤져
+    찾지 않는다**: 문구를 한 번 고치면 조용히 어긋난다.
+  */
+  const gates = conditions.filter((c) => c.opensOak)
+  const oakOpen = gates.length > 0 && gates.every((c) => (shown.unlocks[c.id] ?? 0) >= c.boxes)
+
   function set<K extends keyof PartyDraft>(key: K, value: PartyDraft[K]) {
     setDraft((d) => ({ ...d, [key]: value }))
   }
@@ -322,7 +333,14 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
               aria-live="polite"
             >
               <span className="tally__art">
-                <span className="tally__n tally__n--solo sl-numeral" aria-hidden="true">
+                {/*
+                  **말로 적히는 값은 작게 둔다**(형님이 짚었다) — 「그대로」가
+                  수와 같은 크기로 서면 칸을 넘고 옆 칸과 키도 안 맞는다.
+                */}
+                <span
+                  className={`tally__n tally__n--solo sl-numeral${modifier === 0 ? ' tally__n--word' : ''}`}
+                  aria-hidden="true"
+                >
                   {priceModifierLabel(modifier)}
                 </span>
               </span>
@@ -452,10 +470,12 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
           기부는 파티원의 골드를 함께 깎아야 하므로 서버 함수가 한 번에 한다
           (`0030`) — 캐릭터는 제 것만 고칠 수 있다(`0005`).
           ------------------------------------------------------------------ */}
-        <section className="sheet__block">
-          <h2 className="sheet__label">위대한 떡갈나무</h2>
-          <GreatOak campaignId={campaign.id} total={campaign.oak} canDonate={!readOnly} />
-        </section>
+        {oakOpen && (
+          <section className="sheet__block">
+            <h2 className="sheet__label">위대한 떡갈나무</h2>
+            <GreatOak campaignId={campaign.id} total={campaign.oak} canDonate={!readOnly} />
+          </section>
+        )}
 
         {/* ------------------------------------------------------------------
           봉투·상자 개봉 조건

@@ -33,7 +33,6 @@ export function BattlePanel({ onClose }: Props) {
   const busy = useBattleStore((s) => s.busy)
   const error = useBattleStore((s) => s.error)
   const look = useBattleStore((s) => s.look)
-  const open = useBattleStore((s) => s.open)
   const join = useBattleStore((s) => s.join)
   const leave = useBattleStore((s) => s.leave)
   const close = useBattleStore((s) => s.close)
@@ -185,14 +184,15 @@ export function BattlePanel({ onClose }: Props) {
                       열린 판에 앉는다
                     </button>
                   ) : (
-                    <button
-                      type="button"
-                      className="battle__go"
-                      disabled={busy || partyId === ''}
-                      onClick={() => void open(partyId, session.userId)}
-                    >
-                      판을 편다
-                    </button>
+                    /*
+                      **판을 여는 자리는 모험 화면 하나뿐이다**(`#/adventure`).
+                      누가 앉을지와 시나리오 레벨을 미리 정해야 하므로(`0032`)
+                      여기서 바로 열 수가 없다 — 창구를 둘로 두면 어긋난다
+                      (구현 결정 247과 같은 결).
+                    */
+                    <a className="battle__go" href="#/adventure">
+                      모험을 편다
+                    </a>
                   )}
                 </div>
 

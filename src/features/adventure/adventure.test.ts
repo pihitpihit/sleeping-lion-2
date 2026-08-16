@@ -26,13 +26,14 @@ describe('dedupeParties', () => {
   const of = (partyId: string | null, partyName: string | null, retired = false) => ({
     partyId,
     partyName,
+    campaignId: partyId === null ? null : `g-${partyId}`,
     retired,
   })
 
   it('같은 파티는 한 번만 — 캐릭터를 둘 세울 수 있다', () => {
     expect(dedupeParties([of('p1', '사자'), of('p1', '사자'), of('p2', '늑대')])).toEqual([
-      { id: 'p1', name: '사자' },
-      { id: 'p2', name: '늑대' },
+      { id: 'p1', name: '사자', campaignId: 'g-p1' },
+      { id: 'p2', name: '늑대', campaignId: 'g-p2' },
     ])
   })
 
@@ -45,6 +46,8 @@ describe('dedupeParties', () => {
   })
 
   it('이름이 비어 있어도 고를 수는 있어야 한다', () => {
-    expect(dedupeParties([of('p1', '')])).toEqual([{ id: 'p1', name: '이름 없는 파티' }])
+    expect(dedupeParties([of('p1', '')])).toEqual([
+      { id: 'p1', name: '이름 없는 파티', campaignId: 'g-p1' },
+    ])
   })
 })

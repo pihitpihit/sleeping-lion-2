@@ -29,6 +29,14 @@ export const OAK_STEP = 10
  */
 export const OAK_MARK_EVERY = 50
 
+/**
+ * 판이 열릴 때 딸려 오는 번영도.
+ *
+ * **B봉투를 여는 것 자체가 번영도 하나**다(형님이 정했다) — 금화 100개를 낸
+ * 삯이며 판에 오르기 전의 몫이라 표식과 따로 센다.
+ */
+export const OAK_UNLOCK_BONUS = 1
+
 /** 판의 모든 칸. 사진처럼 열씩 늘어선다. */
 export const OAK_CELLS: readonly number[] = Array.from(
   { length: (OAK_LAST - OAK_FIRST) / OAK_STEP + 1 },

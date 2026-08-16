@@ -207,28 +207,32 @@ function PriceDialog({
           done()
         }}
       >
+        {/*
+          **두 칸을 같은 모양으로 세운다**(형님이 짚었다). 하나는 금화를 밖에
+          달고 하나는 안 달아 서로 다른 물건처럼 보였다 — 이름표가 다른 것으로
+          족하고, 금화는 그 이름표 안에 든다.
+        */}
         <label className="shop__field">
-          <span className="shop__fieldname">값</span>
-          <span className="shop__fieldrow">
-            <input
-              className="sheet__input shop__cost sl-numeral"
-              value={cost}
-              placeholder="값"
-              aria-label="가격"
-              inputMode="numeric"
-              maxLength={4}
-              autoFocus
-              onChange={(e) => setCost(e.target.value.replace(/[^0-9]/g, ''))}
-            />
-            <Coin />
+          <span className="shop__fieldname">
+            <Coin />값
           </span>
+          <input
+            className="sheet__input shop__num sl-numeral"
+            value={cost}
+            placeholder="0"
+            aria-label="가격"
+            inputMode="numeric"
+            maxLength={4}
+            autoFocus
+            onChange={(e) => setCost(e.target.value.replace(/[^0-9]/g, ''))}
+          />
         </label>
 
         {/* 카드에 박힌 번호. 번영도 표가 이 번호로 말한다(`prosperity.ts`). */}
         <label className="shop__field">
           <span className="shop__fieldname">카드 번호</span>
           <input
-            className="sheet__input shop__cost sl-numeral"
+            className="sheet__input shop__num sl-numeral"
             value={no}
             placeholder="000"
             aria-label="카드 번호"

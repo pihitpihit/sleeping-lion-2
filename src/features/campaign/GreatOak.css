@@ -169,3 +169,15 @@
   font-weight: 400;
   color: var(--sl-text);
 }
+
+/* 번영도가 어디서 왔는지 — 개봉의 삯과 표식을 갈라 적는다. */
+.oak__why {
+  margin-left: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--sl-text-faint);
+}
+
+.oak__why b {
+  font-size: 0.95rem;
+  color: var(--sl-text-muted);
+}

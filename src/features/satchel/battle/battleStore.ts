@@ -9,7 +9,8 @@ import {
   joinBattle,
   leaveBattle,
   listParticipants,
-  openBattle,
+  openAdventure,
+  findBattleById,
   watchBattleState,
   pushBattleState,
   sweepStaleBattles,
@@ -48,7 +49,12 @@ interface BattleState {
    * 두면 **본인은 공유 중인 줄 아는데 조작이 아무에게도 안 가는** 상태가 된다.
    */
   resume: (userId: string) => Promise<void>
-  open: (partyId: string, userId: string) => Promise<void>
+  /**
+   * 모험을 편다 — **참가자와 시나리오 레벨을 미리 정한다**(`0032`).
+   *
+   * 지정된 캐릭터의 주인에게만 그 판이 보인다.
+   */
+  open: (partyId: string, characterIds: readonly string[], level: number) => Promise<void>
   join: (battle: BattleRow, userId: string) => Promise<void>
   /** 자리에서 일어난다. 판은 남는다. */
   leave: (userId: string) => Promise<void>
@@ -150,10 +156,12 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     set({ battle: mine, participants: await listParticipants(mine.id) })
   },
 
-  open: async (partyId, userId) => {
+  open: async (partyId, characterIds, level) => {
     set({ busy: true, error: null })
     try {
-      const battle = await openBattle(partyId, userId)
+      const battleId = await openAdventure(partyId, characterIds, level)
+      const battle = await findBattleById(battleId)
+      if (battle === null) throw new Error('연 판을 찾지 못했다.')
       /**
        * **연 사람의 판이 첫 판이 된다.**
        *

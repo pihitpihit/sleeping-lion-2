@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   OAK_CELLS,
+  OAK_UNLOCK_BONUS,
   OAK_FIRST,
   OAK_LAST,
   checkGifts,
@@ -30,6 +31,11 @@ describe('떡갈나무 판', () => {
 })
 
 describe('번영도', () => {
+  /** B봉투를 여는 것 자체가 하나다 — 금화 100개를 낸 삯이다. */
+  it('판이 열리는 것만으로 하나를 받는다', () => {
+    expect(OAK_UNLOCK_BONUS).toBe(1)
+  })
+
   /** 100까지는 B봉투를 여는 기부라 판에 오르기 전이다. */
   it('첫 표식(150) 앞에서는 0이다', () => {
     expect(prosperityFrom(0)).toBe(0)

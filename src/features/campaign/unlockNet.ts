@@ -18,6 +18,8 @@ export interface UnlockCondition {
   /** 그 줄에 붙은 체크상자 수. 금화 기부처럼 여럿인 줄이 있다. */
   readonly boxes: number
   readonly sort: number
+  /** 이 줄이 다 차면 위대한 떡갈나무가 열린다(`0033`). */
+  readonly opensOak: boolean
 }
 
 interface Row {
@@ -25,12 +27,13 @@ interface Row {
   text: string | null
   boxes: number | null
   sort: number | null
+  opens_oak: boolean | null
 }
 
 export async function listUnlockConditions(): Promise<UnlockCondition[]> {
   const { data, error } = await supabase()
     .from('unlock_conditions')
-    .select('id, text, boxes, sort')
+    .select('id, text, boxes, sort, opens_oak')
     .order('sort', { ascending: true })
   if (error) throw error
 
@@ -40,6 +43,7 @@ export async function listUnlockConditions(): Promise<UnlockCondition[]> {
     // 모르는 값은 한 칸으로 친다 — 상자가 없는 줄은 켤 수가 없다.
     boxes: typeof row.boxes === 'number' && row.boxes > 0 ? Math.trunc(row.boxes) : 1,
     sort: typeof row.sort === 'number' ? row.sort : 0,
+    opensOak: row.opens_oak === true,
   }))
 }
 
@@ -51,7 +55,7 @@ export async function listUnlockConditions(): Promise<UnlockCondition[]> {
  * 그래서 표를 다시 넣는 것은 값을 처음 채울 때의 일이다.
  */
 export async function replaceUnlockConditions(
-  rows: readonly { text: string; boxes: number }[],
+  rows: readonly { text: string; boxes: number; opensOak?: boolean }[],
 ): Promise<void> {
   const client = supabase()
   const { error: wipe } = await client
@@ -61,8 +65,13 @@ export async function replaceUnlockConditions(
   if (wipe) throw wipe
   if (rows.length === 0) return
 
-  const { error } = await client
-    .from('unlock_conditions')
-    .insert(rows.map((row, i) => ({ text: row.text, boxes: row.boxes, sort: i })))
+  const { error } = await client.from('unlock_conditions').insert(
+    rows.map((row, i) => ({
+      text: row.text,
+      boxes: row.boxes,
+      sort: i,
+      opens_oak: row.opensOak === true,
+    })),
+  )
   if (error) throw error
 }

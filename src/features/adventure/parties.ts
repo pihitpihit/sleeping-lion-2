@@ -5,12 +5,19 @@
  * 나온다. 은퇴한 캐릭터는 세지 않는다.
  */
 export function dedupeParties(
-  characters: readonly { partyId: string | null; partyName: string | null; retired: boolean }[],
-): { id: string; name: string }[] {
-  const seen = new Map<string, string>()
+  characters: readonly {
+    partyId: string | null
+    partyName: string | null
+    campaignId: string | null
+    retired: boolean
+  }[],
+): { id: string; name: string; campaignId: string }[] {
+  const seen = new Map<string, { name: string; campaignId: string }>()
   for (const c of characters) {
-    if (c.retired || c.partyId === null) continue
-    if (!seen.has(c.partyId)) seen.set(c.partyId, c.partyName || '이름 없는 파티')
+    if (c.retired || c.partyId === null || c.campaignId === null) continue
+    if (!seen.has(c.partyId)) {
+      seen.set(c.partyId, { name: c.partyName || '이름 없는 파티', campaignId: c.campaignId })
+    }
   }
-  return [...seen].map(([id, name]) => ({ id, name }))
+  return [...seen].map(([id, v]) => ({ id, name: v.name, campaignId: v.campaignId }))
 }

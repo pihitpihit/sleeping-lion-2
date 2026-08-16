@@ -6,6 +6,7 @@ import { useCharacterStore } from './characterStore'
 import {
   OAK_CELLS,
   OAK_LAST,
+  OAK_UNLOCK_BONUS,
   checkGifts,
   isMark,
   prosperityFrom,
@@ -49,7 +50,11 @@ export function GreatOak({
   const members = useCharacterStore((s) => s.characters)
   const reloadCrew = useCharacterStore((s) => s.load)
 
-  const prosperity = prosperityFrom(total)
+  /*
+    **판이 열리는 것만으로 번영도 하나를 받는다**(형님이 정했다) — 금화 100개를
+    낸 삯이며 판에 오르기 전의 몫이라 표식과 따로 센다.
+  */
+  const prosperity = OAK_UNLOCK_BONUS + prosperityFrom(total)
   const left = toNextMark(total)
 
   return (
@@ -61,6 +66,10 @@ export function GreatOak({
         </span>
         <span className="oak__fact oak__fact--pros">
           번영도 <b className="sl-numeral">+{prosperity}</b>
+          <span className="oak__why">
+            (개봉 <b className="sl-numeral">1</b> + 표식{' '}
+            <b className="sl-numeral">{prosperityFrom(total)}</b>)
+          </span>
         </span>
         {left !== null && (
           <span className="oak__fact oak__fact--left">
@@ -182,12 +191,17 @@ function DonateDialog({
             </span>
 
             <span className="oak__amount">
+              {/*
+                **한 단위로 오르내린다**(형님이 짚었다). 열 단위여야 하는 것은
+                **이번에 내는 합산**이지 각자의 몫이 아니다 — 합이 안 맞으면
+                아래 단추가 잠긴다.
+              */}
               <button
                 type="button"
                 className="tally__caret"
-                aria-label={`${row.name} 10 줄이기`}
+                aria-label={`${row.name} 1 줄이기`}
                 disabled={row.amount <= 0}
-                onClick={() => set(row.id, row.amount - 10, row.gold)}
+                onClick={() => set(row.id, row.amount - 1, row.gold)}
               >
                 ‹
               </button>
@@ -195,9 +209,9 @@ function DonateDialog({
               <button
                 type="button"
                 className="tally__caret"
-                aria-label={`${row.name} 10 늘리기`}
-                disabled={row.amount + 10 > row.gold}
-                onClick={() => set(row.id, row.amount + 10, row.gold)}
+                aria-label={`${row.name} 1 늘리기`}
+                disabled={row.amount + 1 > row.gold}
+                onClick={() => set(row.id, row.amount + 1, row.gold)}
               >
                 ›
               </button>

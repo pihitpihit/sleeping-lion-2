@@ -27,6 +27,8 @@ export interface BattleRow {
   partyId: string
   openedBy: string
   openedAt: number
+  /** 이 모험의 시나리오 레벨(`0032`). 참가자들의 레벨에서 셈해 난이도로 보정한 값이다. */
+  level: number
 }
 
 export interface Participant {
@@ -47,6 +49,7 @@ interface RawBattle {
   party_id: string
   opened_by: string
   opened_at: string
+  level: number | null
 }
 
 function toBattle(row: RawBattle): BattleRow {
@@ -55,10 +58,11 @@ function toBattle(row: RawBattle): BattleRow {
     partyId: row.party_id,
     openedBy: row.opened_by,
     openedAt: Date.parse(row.opened_at) || 0,
+    level: typeof row.level === 'number' ? row.level : 1,
   }
 }
 
-const BATTLE_COLUMNS = 'id, party_id, opened_by, opened_at'
+const BATTLE_COLUMNS = 'id, party_id, opened_by, opened_at, level'
 
 /**
  * 이 파티에 열려 있는 판. 없으면 `null`.
@@ -269,4 +273,50 @@ export function watchBattleState(battleId: string, onState: (s: RuntimeSnapshot)
       onState(snapshot)
     },
   )
+}
+
+/**
+ * 모험을 편다 — **참가자를 미리 정한다**(`0032`).
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **아무 판에나 난입할 수 없다.**                                           │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 지정된 캐릭터의 주인에게만 그 판이 보인다(형님이 정했다). 판을 만들고 참가자
+ * 줄을 따로 넣는 동안에는 **방금 만든 판이 제 눈에도 안 보이므로** 서버 함수가
+ * 한 번에 한다 — 그 사이에 끊기면 아무도 못 보는 판이 남는다.
+ */
+export async function openAdventure(
+  partyId: string,
+  characterIds: readonly string[],
+  level: number,
+): Promise<string> {
+  const { data, error } = await supabase().rpc('open_adventure', {
+    p_party: partyId,
+    p_characters: characterIds,
+    p_level: level,
+  })
+  if (error) throw error
+  return typeof data === 'string' ? data : ''
+}
+
+/** 이 판에 참가자로 지정된 캐릭터들. 목록에 이름을 적으려면 알아야 한다. */
+export async function listBattleCharacters(battleId: string): Promise<string[]> {
+  const { data, error } = await supabase()
+    .from('battle_characters')
+    .select('character_id')
+    .eq('battle_id', battleId)
+  if (error) throw error
+  return ((data ?? []) as { character_id: string }[]).map((r) => r.character_id)
+}
+
+/** 판 하나를 열쇠로 읽는다. RLS가 「내 캐릭터가 참가한 판」만 준다(`0032`). */
+export async function findBattleById(battleId: string): Promise<BattleRow | null> {
+  const { data, error } = await supabase()
+    .from('battles')
+    .select(BATTLE_COLUMNS)
+    .eq('id', battleId)
+    .limit(1)
+  if (error || !data || data.length === 0) return null
+  return toBattle(data[0] as RawBattle)
 }

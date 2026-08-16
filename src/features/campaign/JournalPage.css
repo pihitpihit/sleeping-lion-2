@@ -2561,3 +2561,8 @@
 .tally--three {
   grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
 }
+
+/* 말로 적히는 값(「그대로」)은 작게 — 수와 같은 크기면 칸을 넘는다. */
+.tally__n--word {
+  font-size: 1.1rem;
+}
