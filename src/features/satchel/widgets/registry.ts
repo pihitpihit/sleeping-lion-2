@@ -1,5 +1,8 @@
 import { HpXpTracker } from './hpxp/HpXpTracker'
 import { BlessWidget, CurseWidget } from './boon/BoonWidget'
+import { CampaignStatus } from './campaign/CampaignStatus'
+import { CampaignSettingsEditor } from './campaign/CampaignSettingsEditor'
+import { sanitizeCampaignSettings } from './campaign/settings'
 import { RoundTracker } from './round/RoundTracker'
 import { isHpXpSizeAllowed } from './hpxp/hpxp'
 import { HpXpSettingsEditor } from './hpxp/HpXpSettingsEditor'
@@ -106,6 +109,19 @@ const DEFINITIONS: WidgetDefinition[] = [
     minSize: { w: 1, h: 1 },
     maxSize: { w: 1, h: 1 },
     Component: CurseWidget,
+  },
+  /*
+    캠페인 상태 — **읽는 위젯이다.** 시나리오 레벨 하나에서 금화 환산·함정 피해·
+    위험 지형·보너스 경험이 따라 나온다(`rules/scenarioLevel.ts`). 모험에 앉아
+    있으면 그 판의 레벨이 이긴다(`0032`).
+  */
+  {
+    id: 'campaign',
+    name: '캠페인 상태',
+    defaultSize: { w: 2, h: 2 },
+    minSize: { w: 1, h: 1 },
+    settings: { sanitize: sanitizeCampaignSettings, Editor: CampaignSettingsEditor },
+    Component: CampaignStatus,
   },
   {
     id: 'round',

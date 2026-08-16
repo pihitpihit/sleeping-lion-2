@@ -790,3 +790,30 @@ export function computeDeckLayout(box: { width: number; height: number }): DeckL
     markSize: cardWidth > 0 ? Math.max(MIN_MARK, cardWidth * MARK_RATIO) : 0,
   }
 }
+
+/**
+ * 덱에 임시로 들어 있는 카드 — **축복·저주가 몇 장 남았는가.**
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **퍽으로 들어온 것과 상황으로 들어온 것은 다르다.**                       │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 퍽은 판이 끝나도 남는 구성이고 축복·저주는 **이번 판에만** 있다(뽑히면 그
+ * 자리에서 사라진다). 그 둘이 섞여 보이면 「내 덱이 왜 스물한 장이지」가 된다 —
+ * 지금 남은 것만 따로 센다.
+ *
+ * 아직 안 뽑은 것만 센다: 뽑힌 것은 이미 없어졌다.
+ */
+export function tempCounts(state: DeckState): { id: string; name: string; count: number }[] {
+  const counts = new Map<string, { name: string; count: number }>()
+  for (const card of state.draw) {
+    if (!isOneShot(card.spec)) continue
+    for (const mark of card.spec.marks) {
+      if (mark.def.id !== 'bless' && mark.def.id !== 'curse') continue
+      const at = counts.get(mark.def.id)
+      if (at) at.count += 1
+      else counts.set(mark.def.id, { name: mark.def.name, count: 1 })
+    }
+  }
+  return [...counts].map(([id, v]) => ({ id, name: v.name, count: v.count }))
+}

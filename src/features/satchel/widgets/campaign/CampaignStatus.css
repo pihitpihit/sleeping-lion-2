@@ -1,0 +1,90 @@
+/* ==========================================================================
+   캠페인 상태 — 읽는 위젯
+   --------------------------------------------------------------------------
+   시나리오 레벨 하나에서 넷이 따라 나온다. 상 위에서 자꾸 묻게 되는 수들이라
+   한자리에 세워 둔다 — 적지도 굴리지도 않는다.
+   ========================================================================== */
+
+.cst {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.45rem 0.5rem;
+  container-type: size;
+}
+
+.cst__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--sl-border);
+}
+
+.cst__title {
+  font-size: 0.78rem;
+  color: var(--sl-text-muted);
+}
+
+.cst__level {
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: var(--sl-gold);
+}
+
+.cst__facts {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.2rem 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cst__fact {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.cst__name {
+  font-size: 0.72rem;
+  color: var(--sl-text-faint);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.cst__fact b {
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--sl-text);
+}
+
+/* 모험 밖이라는 것을 적어 둔다 — 안 적으면 어디서 온 수인지 모른다. */
+.cst__solo {
+  font-size: 0.68rem;
+  color: var(--sl-text-faint);
+}
+
+/* 설정의 레벨 손잡이. */
+.cstset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 0.6rem 0;
+}
+
+.cstset__n {
+  min-width: 2rem;
+  text-align: center;
+  font-size: 1.8rem;
+  color: var(--sl-gold);
+}

@@ -28,6 +28,7 @@ import {
   shuffle,
   shuffleIn,
   specSpeech,
+  tempCounts,
   totalCount,
   type DeckState,
   type Rng,
@@ -561,5 +562,28 @@ describe('축복·저주', () => {
     // 보통 카드는 그대로 버린 더미에 쌓인다.
     const second = drawOne(first.state, () => 0)
     expect(second.state.discard.map((c) => c.kindId)).toEqual(['p1'])
+  })
+})
+
+describe('임시로 든 카드', () => {
+  /** 퍽으로 든 것과 갈려야 한다 — 이번 판에만 있는 것만 센다. */
+  it('아직 안 뽑은 축복·저주를 종류별로 센다', () => {
+    const state: DeckState = {
+      draw: [
+        makeCard('a', 'x2.bless')!,
+        makeCard('b', 'x2.bless')!,
+        makeCard('c', 'x0.curse')!,
+        makeCard('d', 'p1')!,
+      ],
+      discard: [],
+    }
+    expect(tempCounts(state)).toEqual([
+      { id: 'bless', name: '축복', count: 2 },
+      { id: 'curse', name: '저주', count: 1 },
+    ])
+  })
+
+  it('보통 카드만 있으면 셀 것이 없다', () => {
+    expect(tempCounts({ draw: [makeCard('a', 'p1')!], discard: [] })).toEqual([])
   })
 })

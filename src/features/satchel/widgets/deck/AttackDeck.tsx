@@ -17,6 +17,7 @@ import {
   revealedChain,
   totalCount,
   type Card,
+  tempCounts,
 } from './deck'
 import { useAttackDeckStore } from './deckStore'
 import { resolveComposition } from './perks'
@@ -106,6 +107,9 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
    */
   const deck = stored ?? freshDeck(composition)
 
+  /* 이번 판에만 든 카드 — 축복·저주. 아직 안 뽑은 것만 센다. */
+  const temps = tempCounts(deck)
+
   const revealed = revealedCard(deck)
   /** 마지막 뽑기에 딸린 것 전부. 굴림이 없으면 한 장이다. */
   const chain = revealedChain(deck)
@@ -170,6 +174,26 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
         } as React.CSSProperties
       }
     >
+      {/*
+        ┌────────────────────────────────────────────────────────────────────┐
+        │ **임시로 든 카드는 따로 적는다 — 축복·저주.**                       │
+        └────────────────────────────────────────────────────────────────────┘
+
+        퍽은 판이 끝나도 남는 구성이고 축복·저주는 이번 판에만 있다(뽑히면 그
+        자리에서 사라진다). 그 둘이 섞여 보이면 **「내 덱이 왜 스물한 장이지」**가
+        된다 — 지금 남은 것만 센다(형님이 짚었다).
+      */}
+      {temps.length > 0 && (
+        <ul className="deck__temps" aria-label="임시로 든 카드">
+          {temps.map((t) => (
+            <li key={t.id} className={`deck__temp deck__temp--${t.id}`}>
+              <span className="deck__tempname">{t.name}</span>
+              <b className="sl-numeral">{t.count}</b>
+            </li>
+          ))}
+        </ul>
+      )}
+
       {/*
         더미 — 누르는 자리.
 

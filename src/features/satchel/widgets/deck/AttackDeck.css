@@ -518,3 +518,54 @@
     opacity: 1;
   }
 }
+
+/*
+  이번 판에만 든 카드 — 축복·저주.
+
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ **퍽으로 든 것과 갈려야 한다.**                                         │
+  └────────────────────────────────────────────────────────────────────────┘
+
+  퍽은 판이 끝나도 남는 구성이고 이것은 이번 판에만 있다. 카드 위에 얹되 **뽑는
+  자리를 가리지 않게** 위 모서리에 붙인다.
+*/
+.deck__temps {
+  position: absolute;
+  top: 0.15rem;
+  left: 0.15rem;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+.deck__temp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.05rem 0.3rem;
+  font-size: 0.62rem;
+  border-radius: 999px;
+  background: rgb(14 12 9 / 82%);
+  border: 1px solid var(--sl-border-strong);
+}
+
+.deck__temp b {
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+/* 축복은 밝게, 저주는 어둡게 — 실물 배지의 결을 따른다. */
+.deck__temp--bless {
+  color: #e8d9a8;
+  border-color: #b8a05a;
+}
+
+.deck__temp--curse {
+  color: #c9a9e8;
+  border-color: #8a6ab0;
+}
