@@ -356,48 +356,58 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
           이어 붙여 셌지만(구현 결정 136) 그 짜임은 표를 다시 넣을 때 번호가 밀리면
           켠 것이 딴 줄을 가리킨다.
 
-          글은 게임 콘텐츠라 레포에 없다 — 표가 비었으면 이 칸이 아예 안 나온다.
+          글은 게임 콘텐츠라 레포에 없다 — **표가 비어 있으면 왜 없는지 적는다.**
+          아예 안 내면 「UI가 안 보인다」가 된다(형님이 짚었다): 없어도 앱이 도는
+          것과 왜 없는지 안 보이는 것은 다르다(구현 결정 172와 같은 결).
           ------------------------------------------------------------------ */}
-        {conditions.length > 0 && (
-          <section className="sheet__block">
-            <h2 className="sheet__label">봉투·상자 개봉 조건</h2>
-            <p className="sheet__empty">시트의 줄 그대로다. 이룬 만큼 상자를 켠다.</p>
+        <section className="sheet__block">
+          <h2 className="sheet__label">봉투·상자 개봉 조건</h2>
 
-            <ul className="unlock__rows">
-              {conditions.map((cond) => {
-                const on = shown.unlocks[cond.id] ?? 0
-                return (
-                  <li key={cond.id} className="unlock__row">
-                    <span className="unlock__boxes">
-                      {Array.from({ length: cond.boxes }, (_, i) => i + 1).map((n) => (
-                        <button
-                          key={n}
-                          type="button"
-                          aria-label={`${cond.text} — ${n}번째 상자`}
-                          aria-pressed={n <= on}
-                          className={`unlock__box${n <= on ? ' unlock__box--on' : ''}`}
-                          disabled={!editing}
-                          /*
+          {conditions.length === 0 ? (
+            <p className="sheet__empty">
+              아직 표가 없다. 시트에 인쇄된 글이라 레포에 담지 않으므로{' '}
+              <a href="#/admin">주인장 화면</a>에서 한 줄씩 넣는다.
+            </p>
+          ) : (
+            <>
+              <p className="sheet__empty">시트의 줄 그대로다. 이룬 만큼 상자를 켠다.</p>
+
+              <ul className="unlock__rows">
+                {conditions.map((cond) => {
+                  const on = shown.unlocks[cond.id] ?? 0
+                  return (
+                    <li key={cond.id} className="unlock__row">
+                      <span className="unlock__boxes">
+                        {Array.from({ length: cond.boxes }, (_, i) => i + 1).map((n) => (
+                          <button
+                            key={n}
+                            type="button"
+                            aria-label={`${cond.text} — ${n}번째 상자`}
+                            aria-pressed={n <= on}
+                            className={`unlock__box${n <= on ? ' unlock__box--on' : ''}`}
+                            disabled={!editing}
+                            /*
                             **켠 칸은 앞에서부터 찬다.** 몇 번째를 눌렀느냐가 곧
                             몇 칸 켰느냐다 — 같은 칸을 다시 누르면 그 앞까지만
                             남는다. 열 칸짜리를 하나씩 되돌릴 수 있어야 한다.
                           */
-                          onClick={() =>
-                            set('unlocks', {
-                              ...draft.unlocks,
-                              [cond.id]: on === n ? n - 1 : n,
-                            })
-                          }
-                        />
-                      ))}
-                    </span>
-                    <span className="unlock__text">{cond.text}</span>
-                  </li>
-                )
-              })}
-            </ul>
-          </section>
-        )}
+                            onClick={() =>
+                              set('unlocks', {
+                                ...draft.unlocks,
+                                [cond.id]: on === n ? n - 1 : n,
+                              })
+                            }
+                          />
+                        ))}
+                      </span>
+                      <span className="unlock__text">{cond.text}</span>
+                    </li>
+                  )
+                })}
+              </ul>
+            </>
+          )}
+        </section>
 
         <section className="sheet__block">
           <label className="sheet__label" htmlFor={noteId}>

@@ -105,11 +105,21 @@ describe('기록지의 짜임 — 한 장의 종이', () => {
     // 단이 먼저 열리고 띠는 그 뒤에 온다.
     expect(bar).toBeGreaterThan(col)
     /*
-      칸은 여섯 — 이름·머무는 곳·평판·파티 업적·전역 업적·메모.
-      개봉 조건은 표가 비어 있으면 안 나오므로(`0027`) 여기서는 안 세어진다.
+      칸은 일곱 — 이름·머무는 곳·평판·파티 업적·전역 업적·개봉 조건·메모.
+      **개봉 조건은 표가 비어 있어도 선다** — 왜 비었는지 적어 주어야 「UI가 안
+      보인다」가 되지 않는다(형님이 짚었다).
     */
-    expect((html.match(/class="sheet__block/g) ?? []).length).toBe(6)
+    expect((html.match(/class="sheet__block/g) ?? []).length).toBe(7)
     // 단이 닫힌 뒤에 띠가 서는지: 띠 앞쪽에 칸이 다 들어 있다.
-    expect((html.slice(col, bar).match(/class="sheet__block/g) ?? []).length).toBe(6)
+    expect((html.slice(col, bar).match(/class="sheet__block/g) ?? []).length).toBe(7)
+  })
+})
+
+describe('개봉 조건 칸', () => {
+  /** 없어도 앱이 도는 것과 **왜 없는지 안 보이는 것**은 다르다(구현 결정 172). */
+  it('표가 비어 있으면 어디서 넣는지 적는다', () => {
+    const html = render(fixture())
+    expect(html).toContain('봉투·상자 개봉 조건')
+    expect(html).toContain('주인장 화면')
   })
 })
