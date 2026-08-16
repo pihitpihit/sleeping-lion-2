@@ -2510,3 +2510,10 @@
 .unlock__text {
   min-width: 0;
 }
+
+/* 전역 업적은 몇 번 이뤘는지 함께 적는다 — 되풀이해 이루는 것이라 수가 곧 값이다. */
+.global__count {
+  flex: none;
+  font-size: 1.05rem;
+  color: var(--sl-gold);
+}

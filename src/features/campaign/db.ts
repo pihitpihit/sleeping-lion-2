@@ -61,7 +61,7 @@ export const db = new SleepingLionDb()
  * 있다. **한 자락도 믿지 않는다.**
  */
 /**
- * 켠 칸 수만 건져낸다.
+ * 수만 건져낸다 — 켠 칸 수와 이룬 횟수가 같은 모양이다.
  *
  * **모양이 아닌 것은 버린다** — 서버 값을 믿지 않는다(구현 결정 139의 뒷면과 같은
  * 결). 0 이하는 안 적힌 것과 같으므로 걷는다.
@@ -89,6 +89,7 @@ export function sanitizeCampaign(raw: Partial<Campaign> & { id: string }): Campa
       ? raw.achievements.filter((item): item is string => typeof item === 'string')
       : [],
     reputation: clampReputation(typeof raw.reputation === 'number' ? raw.reputation : 0),
+    globalAchievements: sanitizeUnlocks(raw.globalAchievements),
     unlocks: sanitizeUnlocks(raw.unlocks),
     createdAt: typeof raw.createdAt === 'number' ? raw.createdAt : now,
     updatedAt: typeof raw.updatedAt === 'number' ? raw.updatedAt : now,

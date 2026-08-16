@@ -116,6 +116,7 @@ const FIELD_NAME: Readonly<Record<string, string>> = {
   reputation: '평판',
   achievements: '업적',
   unlocks: '개봉 조건',
+  globalAchievements: '전역 업적',
 }
 
 /** 글자를 담는 칸. 값이 짧아 무엇으로 바뀌었는지 그대로 보여 준다. */
@@ -123,6 +124,16 @@ const TEXT_FIELDS: readonly string[] = ['name', 'location']
 
 function asNumbers(v: unknown): number[] {
   return Array.isArray(v) ? v.filter((n): n is number => typeof n === 'number') : []
+}
+
+/** 수만 건져낸다. 모양이 아닌 것은 없는 것으로 친다. */
+function asCounts(v: unknown): Record<string, number> {
+  if (typeof v !== 'object' || v === null) return {}
+  const out: Record<string, number> = {}
+  for (const [key, n] of Object.entries(v as Record<string, unknown>)) {
+    if (typeof n === 'number' && n > 0) out[key] = Math.trunc(n)
+  }
+  return out
 }
 
 /** 켠 칸을 다 센다. 모양이 아닌 것은 0으로 친다. */
@@ -188,6 +199,22 @@ export function describeChange(change: LogChange): string {
     **몇 칸 켰는지만 센다.** 어느 줄인지는 조건 글이 있어야 알 수 있고 그 글은
     DB에만 있다(`0027`).
   */
+  /*
+    전역 업적은 **몇 번 이뤘는지**가 값이다(`0028`). 어느 것이 몇 번 늘었는지까지
+    적는다 — 이름이 곧 열쇠라 여기서는 적을 수 있다(개봉 조건과 갈리는 자리다).
+  */
+  if (change.field === 'globalAchievements') {
+    const from = asCounts(change.from)
+    const to = asCounts(change.to)
+    const parts: string[] = []
+    for (const key of new Set([...Object.keys(from), ...Object.keys(to)])) {
+      const delta = (to[key] ?? 0) - (from[key] ?? 0)
+      if (delta === 0) continue
+      parts.push(`${key} ${delta > 0 ? '+' : '−'}${Math.abs(delta)}`)
+    }
+    return `${name} ${parts.join(', ')}`
+  }
+
   if (change.field === 'unlocks') {
     const from = countBoxes(change.from)
     const to = countBoxes(change.to)
@@ -298,7 +325,15 @@ export function campaignChangesOf(
   edits: Record<string, unknown>,
 ): LogChange[] {
   const out: LogChange[] = []
-  for (const field of ['name', 'location', 'reputation', 'achievements', 'unlocks', 'notes']) {
+  for (const field of [
+    'name',
+    'location',
+    'reputation',
+    'achievements',
+    'globalAchievements',
+    'unlocks',
+    'notes',
+  ]) {
     const to = edits[field]
     if (to === undefined) continue
     out.push({ field, from: before[field], to })

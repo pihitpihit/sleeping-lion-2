@@ -64,6 +64,7 @@ describe('sanitizeCampaign', () => {
       achievements: ['첫 걸음'],
       reputation: 12,
       unlocks: { 'cond-1': 3 },
+      globalAchievements: { '드레이크 처치': 2 },
       createdAt: 100,
       updatedAt: 200,
       version: 3,

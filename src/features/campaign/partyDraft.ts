@@ -25,6 +25,8 @@ export interface PartyDraft {
   location: string
   notes: string
   achievements: string[]
+  /** 전역 업적 — `{ 이름: 횟수 }`. 되풀이해 이룬다. */
+  globalAchievements: Record<string, number>
   reputation: number
   /** 개봉 조건을 어디까지 켰는가 — `{ 조건 id: 켠 칸 수 }`. */
   unlocks: Record<string, number>
@@ -37,6 +39,7 @@ export function draftOf(campaign: Campaign): PartyDraft {
     location: campaign.location,
     notes: campaign.notes,
     achievements: [...campaign.achievements],
+    globalAchievements: { ...campaign.globalAchievements },
     reputation: campaign.reputation,
     unlocks: { ...campaign.unlocks },
   }
@@ -88,6 +91,12 @@ export function partyDiff(campaign: Campaign, draft: PartyDraft): CampaignEdits 
     if (count > 0) unlocks[id] = count
   }
   if (!sameCounts(unlocks, campaign.unlocks)) edits.unlocks = unlocks
+
+  const globals: Record<string, number> = {}
+  for (const [name, count] of Object.entries(draft.globalAchievements)) {
+    if (count > 0) globals[name] = count
+  }
+  if (!sameCounts(globals, campaign.globalAchievements)) edits.globalAchievements = globals
 
   return edits
 }

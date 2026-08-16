@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { CatalogPopup } from './Catalog'
 import { useAchievementStore } from './achievementStore'
+import type { AchievementScope } from './achievementNet'
 import './Shop.css'
 
 /**
@@ -16,18 +17,26 @@ import './Shop.css'
  * 담은 것은 **초안에 담긴다** — 기록지에서 저장을 눌러야 남는다(구현 결정 165).
  */
 export function AchievementPicker({
+  scope,
   owned,
   userId,
   onPick,
   onClose,
 }: {
+  /**
+   * 어느 표를 여는가.
+   *
+   * **실물 시트가 둘로 갈라 적는다**(형님이 짚었다) — 파티 업적과 전역 업적은
+   * 다른 표이고, 전역은 되풀이해 이룬다(`0028`).
+   */
+  scope: AchievementScope
   /** 지금 파티가 이룬 것들. **초안의 값이다** — 방금 담은 것이 곧바로 표시된다. */
   owned: readonly string[]
   userId: string | null
   onPick: (name: string) => void
   onClose: () => void
 }) {
-  const items = useAchievementStore((s) => s.items)
+  const all = useAchievementStore((s) => s.items)
   const loaded = useAchievementStore((s) => s.loaded)
   const load = useAchievementStore((s) => s.load)
   const define = useAchievementStore((s) => s.add)
@@ -38,6 +47,8 @@ export function AchievementPicker({
   useEffect(() => {
     void load()
   }, [load])
+
+  const items = all.filter((i) => i.scope === scope)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -50,8 +61,7 @@ export function AchievementPicker({
   return (
     <>
       <CatalogPopup
-        title="업적"
-        ownedWord="달성"
+        title={scope === 'global' ? '전역 업적' : '파티 업적'}
         entries={loaded ? items : null}
         owned={owned}
         canDefine={userId !== null}
@@ -70,10 +80,11 @@ export function AchievementPicker({
             것으로 적어 둔 것은 그대로 남는다.
           </>
         }
+        ownedWord={scope === 'global' ? '이룸' : '달성'}
         onAdd={(name) => {
           setError(null)
           /* 값이 없으므로 곧바로 들어간다 — 물어볼 것이 없다. */
-          void define(name, userId ?? '').catch((cause: unknown) => {
+          void define(name, scope, userId ?? '').catch((cause: unknown) => {
             console.error('[achievement]', cause)
             setError('적지 못했다. 같은 이름이 이미 있는지 보라.')
           })

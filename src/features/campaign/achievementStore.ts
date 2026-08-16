@@ -4,6 +4,7 @@ import {
   listAchievements,
   removeAchievement,
   type AchievementName,
+  type AchievementScope,
 } from './achievementNet'
 
 /**
@@ -15,7 +16,7 @@ interface AchievementState {
   items: AchievementName[]
   loaded: boolean
   load: () => Promise<void>
-  add: (name: string, userId: string) => Promise<void>
+  add: (name: string, scope: AchievementScope, userId: string) => Promise<void>
   drop: (id: string) => Promise<void>
 }
 
@@ -33,8 +34,8 @@ export const useAchievementStore = create<AchievementState>((set, get) => ({
   },
 
   /** 적지 못하면 그대로 던진다 — 화면이 까닭을 적어야 한다(같은 이름 등). */
-  add: async (name, userId) => {
-    const made = await addAchievement(name, userId)
+  add: async (name, scope, userId) => {
+    const made = await addAchievement(name, scope, userId)
     set({ items: [...get().items, made].sort((a, b) => a.name.localeCompare(b.name)) })
   },
 

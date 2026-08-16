@@ -36,6 +36,13 @@ export interface Campaign {
    * 우리가 목록을 담지 않는다(SPEC 3장).
    */
   achievements: string[]
+  /**
+   * 전역 업적 — **몇 번 이뤘는가**(`{ 이름: 횟수 }`).
+   *
+   * 파티 업적과 다른 표이며(`0028`) **되풀이해 이룰 수 있다** — 개봉 조건에
+   * 「… n회 달성」이 있다(형님이 짚었다). 그래서 켰다/껐다가 아니라 수다.
+   */
+  globalAchievements: Record<string, number>
   /** −20 ~ +20. 상점 가격 보정이 여기서 나온다(`reputation.ts`). */
   reputation: number
   /**
@@ -62,7 +69,16 @@ export interface Campaign {
 
 /** 기록지에서 사람이 고치는 부분. 나머지는 서버가 관리한다. */
 export type CampaignEdits = Partial<
-  Pick<Campaign, 'name' | 'location' | 'notes' | 'achievements' | 'reputation' | 'unlocks'>
+  Pick<
+    Campaign,
+    | 'name'
+    | 'location'
+    | 'notes'
+    | 'achievements'
+    | 'globalAchievements'
+    | 'reputation'
+    | 'unlocks'
+  >
 >
 
 /* ==========================================================================

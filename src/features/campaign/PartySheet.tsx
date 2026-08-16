@@ -61,7 +61,7 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   /** 로그 팝업이 열려 있는가. 읽기·편집 어느 쪽에서나 연다. */
   const [logOpen, setLogOpen] = useState(false)
   /** 업적을 고르는 중인가. **편집 중에만 연다** — 담는 것은 값을 고치는 일이다. */
-  const [picking, setPicking] = useState(false)
+  const [picking, setPicking] = useState<'party' | 'global' | null>(null)
 
   /*
     개봉 조건 표. **글은 DB에만 있다**(`0027`) — 아무것도 안 넣었으면 이 칸이
@@ -239,7 +239,7 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
           업적 — 사용자가 적는다. 우리는 목록을 갖고 있지 않다(SPEC 3장)
           -------------------------------------------------------------------- */}
         <section className="sheet__block">
-          <h2 className="sheet__label">업적</h2>
+          <h2 className="sheet__label">파티 업적</h2>
 
           {shown.achievements.length > 0 && (
             <ul className="sheet__achievements">
@@ -281,8 +281,62 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
           */}
           {editing && (
             <div className="char__shoprow">
-              <button type="button" className="char__shopopen" onClick={() => setPicking(true)}>
+              <button type="button" className="char__shopopen" onClick={() => setPicking('party')}>
                 업적 고르기
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* ------------------------------------------------------------------
+          전역 업적 — **되풀이해 이룬다**
+          ------------------------------------------------------------------
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **파티 업적과 다른 표다.**                                        │
+          └──────────────────────────────────────────────────────────────────┘
+
+          실물 시트가 둘로 갈라 적는다(형님이 짚었다). 개봉 조건에 「전역 업적 …
+          n회 달성」이 있는 것으로 보아 **여러 번 이룰 수 있다** — 그래서 켰다/껐다가
+          아니라 횟수다(`0028`).
+          ------------------------------------------------------------------ */}
+        <section className="sheet__block">
+          <h2 className="sheet__label">전역 업적</h2>
+
+          {Object.keys(shown.globalAchievements).length > 0 ? (
+            <ul className="sheet__achievements">
+              {Object.entries(shown.globalAchievements).map(([name, count]) => (
+                <li key={name}>
+                  <span>{name}</span>
+                  <span className="global__count sl-numeral" aria-label={`${count}회`}>
+                    ×{count}
+                  </span>
+                  {editing && (
+                    <button
+                      type="button"
+                      className="sheet__remove"
+                      aria-label={`전역 업적 '${name}' 한 번 빼기`}
+                      /* 한 번씩 되돌린다 — 0이 되면 줄째 걷힌다(`partyDiff`). */
+                      onClick={() =>
+                        set('globalAchievements', {
+                          ...draft.globalAchievements,
+                          [name]: Math.max(0, (draft.globalAchievements[name] ?? 0) - 1),
+                        })
+                      }
+                    >
+                      −
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            !editing && <p className="sheet__empty">아직 없다.</p>
+          )}
+
+          {editing && (
+            <div className="char__shoprow">
+              <button type="button" className="char__shopopen" onClick={() => setPicking('global')}>
+                전역 업적 고르기
               </button>
             </div>
           )}
@@ -410,12 +464,23 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
       {logOpen && <LogView source="campaign" id={campaign.id} onClose={() => setLogOpen(false)} />}
 
       {/* 담은 것은 **초안에 담긴다** — 저장을 눌러야 남는다(구현 결정 165). */}
-      {picking && (
+      {picking !== null && (
         <AchievementPicker
-          owned={shown.achievements}
+          scope={picking}
+          owned={picking === 'global' ? Object.keys(shown.globalAchievements) : shown.achievements}
           userId={userId}
-          onPick={(name) => set('achievements', [...draft.achievements, name])}
-          onClose={() => setPicking(false)}
+          onPick={(name) => {
+            if (picking === 'global') {
+              /* **전역 업적은 되풀이해 이룬다** — 담을 때마다 한 번 더 센다. */
+              set('globalAchievements', {
+                ...draft.globalAchievements,
+                [name]: (draft.globalAchievements[name] ?? 0) + 1,
+              })
+            } else {
+              set('achievements', [...draft.achievements, name])
+            }
+          }}
+          onClose={() => setPicking(null)}
         />
       )}
 

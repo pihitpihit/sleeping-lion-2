@@ -185,3 +185,21 @@ describe('splitByShop', () => {
     expect(shop).toEqual([{ field: 'items', from: ['낡은 검'], to: ['낡은 검', '표식'] }])
   })
 })
+
+describe('전역 업적 기록', () => {
+  it('무엇이 몇 번 늘었는지 적는다 — 이름이 곧 열쇠다', () => {
+    expect(
+      describeChange({
+        field: 'globalAchievements',
+        from: { 드레이크: 1 },
+        to: { 드레이크: 3 },
+      }),
+    ).toBe('전역 업적 드레이크 +2')
+  })
+
+  it('되돌린 것도 적는다', () => {
+    expect(
+      describeChange({ field: 'globalAchievements', from: { 가: 2 }, to: { 가: 1, 나: 1 } }),
+    ).toBe('전역 업적 가 −1, 나 +1')
+  })
+})

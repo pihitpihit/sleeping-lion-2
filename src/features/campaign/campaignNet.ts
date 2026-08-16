@@ -24,6 +24,7 @@ interface Row {
   notes: string
   achievements: string[] | null
   unlocks: Record<string, number> | null
+  global_achievements: Record<string, number> | null
   reputation: number
   created_at: string
   updated_at: string
@@ -31,7 +32,7 @@ interface Row {
 }
 
 const COLUMNS =
-  'id, party_id, name, location, notes, achievements, reputation, unlocks, created_at, updated_at, version'
+  'id, party_id, name, location, notes, achievements, global_achievements, reputation, unlocks, created_at, updated_at, version'
 
 function toCampaign(row: Row): Campaign {
   return sanitizeCampaign({
@@ -42,6 +43,7 @@ function toCampaign(row: Row): Campaign {
     notes: row.notes,
     achievements: row.achievements ?? [],
     unlocks: row.unlocks ?? {},
+    globalAchievements: row.global_achievements ?? {},
     reputation: row.reputation,
     createdAt: Date.parse(row.created_at),
     updatedAt: Date.parse(row.updated_at),
@@ -95,6 +97,8 @@ export async function pushEdits(id: string, edits: CampaignEdits): Promise<Campa
   if (edits.notes !== undefined) patch.notes = edits.notes
   if (edits.achievements !== undefined) patch.achievements = edits.achievements
   if (edits.unlocks !== undefined) patch.unlocks = edits.unlocks
+  if (edits.globalAchievements !== undefined)
+    patch.global_achievements = edits.globalAchievements
   if (edits.reputation !== undefined) patch.reputation = edits.reputation
 
   const { data, error } = await supabase()

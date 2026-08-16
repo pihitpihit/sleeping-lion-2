@@ -25,6 +25,7 @@ function fixture(over: Partial<Campaign> = {}): Campaign {
     location: '광장',
     notes: '',
     unlocks: {},
+    globalAchievements: {},
     achievements: ['첫 밤'],
     reputation: 2,
     createdAt: 0,
@@ -103,9 +104,12 @@ describe('기록지의 짜임 — 한 장의 종이', () => {
     expect(col).toBeGreaterThan(-1)
     // 단이 먼저 열리고 띠는 그 뒤에 온다.
     expect(bar).toBeGreaterThan(col)
-    // 칸은 다섯 — 이름·머무는 곳·평판·업적·메모.
-    expect((html.match(/class="sheet__block/g) ?? []).length).toBe(5)
+    /*
+      칸은 여섯 — 이름·머무는 곳·평판·파티 업적·전역 업적·메모.
+      개봉 조건은 표가 비어 있으면 안 나오므로(`0027`) 여기서는 안 세어진다.
+    */
+    expect((html.match(/class="sheet__block/g) ?? []).length).toBe(6)
     // 단이 닫힌 뒤에 띠가 서는지: 띠 앞쪽에 칸이 다 들어 있다.
-    expect((html.slice(col, bar).match(/class="sheet__block/g) ?? []).length).toBe(5)
+    expect((html.slice(col, bar).match(/class="sheet__block/g) ?? []).length).toBe(6)
   })
 })
