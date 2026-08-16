@@ -199,6 +199,7 @@ export function JournalPage() {
               <Crew
                 partyId={current.party.id}
                 partyName={current.party.name}
+                createdBy={current.party.createdBy}
                 me={me}
                 onDisbanded={() => {
                   window.location.hash = '#/journal'

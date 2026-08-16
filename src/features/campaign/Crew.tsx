@@ -7,6 +7,8 @@ import type { Identity, Member } from '../net/types'
 interface Props {
   partyId: string
   partyName: string
+  /** 이 파티를 세운 사람. **해산은 그 사람만 한다**(`0039`). */
+  createdBy: string
   me: Identity
   onLeave: () => void
   /** 해산이 끝나면 알린다 — 이 기록지는 이제 없다. */
@@ -23,7 +25,7 @@ interface Props {
  * **시각을 렌더 안에서 읽지 않는다.** 불러올 때 함께 찍어 두고 그것으로 남은
  * 시간을 셈한다(react-hooks/purity). 만료가 이틀이라 시간 단위로 보이면 그만이다.
  */
-export function Crew({ partyId, partyName, me, onLeave, onDisbanded }: Props) {
+export function Crew({ partyId, partyName, createdBy, me, onLeave, onDisbanded }: Props) {
   /** 무엇을 물으려고 팝업을 띄웠는가. */
   const [asking, setAsking] = useState<'leave' | 'disband' | null>(null)
 
@@ -95,9 +97,22 @@ export function Crew({ partyId, partyName, me, onLeave, onDisbanded }: Props) {
         <button type="button" className="crew__leave" onClick={() => setAsking('leave')}>
           동행을 그만둔다
         </button>
-        <button type="button" className="crew__disband" onClick={() => setAsking('disband')}>
-          파티 해산
-        </button>
+        {/*
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **해산은 만든 사람만 한다**(형님이 정했다, `0039`).               │
+          └──────────────────────────────────────────────────────────────────┘
+
+          나가는 것은 제 줄 하나라 누구나 언제든 하지만, 해산은 **남는 모두의
+          것을 없앤다.** 남이면 단추를 안 내되 **까닭은 적는다** — 그냥 없으면
+          어디에 있는지 찾아다닌다(구현 결정 172).
+        */}
+        {createdBy === me.userId ? (
+          <button type="button" className="crew__disband" onClick={() => setAsking('disband')}>
+            파티 해산
+          </button>
+        ) : (
+          <p className="crew__note">해산은 이 파티를 세운 사람만 한다.</p>
+        )}
       </div>
 
       {asking === 'leave' && (
@@ -122,6 +137,15 @@ export function Crew({ partyId, partyName, me, onLeave, onDisbanded }: Props) {
             사라지는 것은 기록지(평판·업적·개봉 조건·떡갈나무)와 파티 그 자체다.
           */
           description="기록지가 함께 사라진다 — 평판·업적·개봉 조건·떡갈나무. 캐릭터는 남는다. 남의 캐릭터가 들어 있으면 서버가 거절한다."
+          /*
+            **뜸만으로는 「잘못 골랐다」를 못 막는다.** 5초는 관성 탭을 막는
+            값이라(구현 결정 36) 손가락이 미끄러지는 것은 막지만, 지우려던 것이
+            이 파티가 맞는지는 **이름을 손으로 옮겨 적는 동안** 확인된다.
+          */
+          challenge={{
+            label: `해산하려면 파티 이름 '${partyName}'을 그대로 적는다.`,
+            answer: partyName,
+          }}
           confirmLabel="해산한다"
           onConfirm={() => {
             setAsking(null)

@@ -54,3 +54,23 @@ export function armProgress(remaining: number, total = CONFIRM_DELAY_MS): number
 export function isArmed(remaining: number): boolean {
   return remaining <= 0
 }
+
+/**
+ * 받아 적어야 하는 팝업에서, 친 것이 맞는가.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **뜸은 손가락을 막고, 받아 적기는 마음을 묻는다.**                        │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 5초 뜸은 관성 탭을 막는 값이라(구현 결정 36) 「잘못 눌렀다」는 막지만
+ * 「잘못 골랐다」는 못 막는다 — 지우려던 것이 이 파티가 맞는지는 **이름을 손으로
+ * 옮겨 적는 동안** 확인된다.
+ *
+ * 앞뒤 공백은 턴다. **눈에 안 보이는 차이로 막히면 고장으로 읽힌다**(구현 결정
+ * 168과 같은 결). 대소문자는 가리지 않는다 — 이름을 그대로 읽어 적는 자리다.
+ */
+export function matchesChallenge(typed: string, answer: string): boolean {
+  const want = answer.trim().toLocaleLowerCase()
+  if (want === '') return true
+  return typed.trim().toLocaleLowerCase() === want
+}

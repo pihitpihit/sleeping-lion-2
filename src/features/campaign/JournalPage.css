@@ -2643,3 +2643,11 @@
   font-size: 0.85rem;
   color: var(--sl-ember);
 }
+
+/* 왜 해산 단추가 없는지. 단추를 그냥 없애면 까닭이 화면에 안 남는다. */
+.crew__note {
+  margin: 0;
+  align-self: center;
+  font-size: 0.82rem;
+  color: var(--sl-text-faint);
+}

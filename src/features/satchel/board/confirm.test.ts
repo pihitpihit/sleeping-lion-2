@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { CONFIRM_DELAY_MS, armProgress, isArmed, remainingMs, secondsLeft } from './confirm'
+import {
+  CONFIRM_DELAY_MS,
+  armProgress,
+  isArmed,
+  matchesChallenge,
+  remainingMs,
+  secondsLeft,
+} from './confirm'
 
 describe('뜸', () => {
   it('시간이 갈수록 줄어든다', () => {
@@ -81,5 +88,24 @@ describe('눌러도 되는가', () => {
   it('뜸은 손이 멈출 만한 길이다', () => {
     expect(CONFIRM_DELAY_MS).toBeGreaterThanOrEqual(2000)
     expect(CONFIRM_DELAY_MS).toBeLessThan(10000)
+  })
+})
+
+describe('matchesChallenge', () => {
+  it('그대로 적으면 통과한다', () => {
+    expect(matchesChallenge('잠자는 사자', '잠자는 사자')).toBe(true)
+  })
+
+  it('앞뒤 공백은 턴다 — 눈에 안 보이는 차이로 막히면 고장으로 읽힌다', () => {
+    expect(matchesChallenge('  잠자는 사자 ', '잠자는 사자')).toBe(true)
+  })
+
+  it('다른 것을 적으면 안 통한다 — 이것이 「잘못 골랐다」를 막는다', () => {
+    expect(matchesChallenge('잠자는 사자2', '잠자는 사자')).toBe(false)
+    expect(matchesChallenge('', '잠자는 사자')).toBe(false)
+  })
+
+  it('받아 적을 것이 없으면 늘 통과한다 — 뜸만으로 사는 팝업이다', () => {
+    expect(matchesChallenge('', '')).toBe(true)
   })
 })

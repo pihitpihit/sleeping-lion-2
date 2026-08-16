@@ -187,3 +187,32 @@
     transition: none;
   }
 }
+
+/* 그대로 옮겨 적는 칸 — 엉뚱한 것을 고른 것을 여기서 잡는다. */
+.confirm__challenge {
+  display: block;
+  margin: 0.2rem 0 0.6rem;
+}
+
+.confirm__challenge-label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.82rem;
+  color: var(--sl-text-faint);
+}
+
+.confirm__challenge-input {
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--sl-text);
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+}
+
+.confirm__challenge-input:focus {
+  border-color: var(--sl-gold);
+  outline: none;
+}

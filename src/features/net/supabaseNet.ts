@@ -137,9 +137,17 @@ export const supabasePartyAdapter: PartyAdapter = {
 
   async leaveParty(partyId, _userId) {
     try {
-      // **자기 자신만 나간다.** RLS가 그렇게 정해 두었으므로 여기서 userId로
-      // 거르지 않는다 — 걸러 봐야 서버가 다시 본다.
-      const { error } = await supabase().from('party_members').delete().eq('party_id', partyId)
+      /*
+        **캐릭터를 데리고 나온다**(`0038`).
+
+        줄만 지우면 캐릭터는 그 기록지를 가리킨 채 남고, 그러면 파티원도 아니고
+        기록지도 못 읽어 **제 캐릭터가 목록에서 사라진다**(형님이 짚었다).
+        빼는 것과 나가는 것이 한 가지 일이라 서버 함수가 한 번에 한다 —
+        나눠 보내면 사이에 끊겼을 때 반만 된 꼴이 남는다.
+
+        자기 자신만 나가는 것은 그대로다: 함수가 `auth.uid()`만 본다.
+      */
+      const { error } = await supabase().rpc('leave_party', { p_party: partyId })
       if (error) throw error
       announce()
     } catch (cause) {

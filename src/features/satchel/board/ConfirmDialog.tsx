@@ -6,6 +6,7 @@ import {
   CONFIRM_TICK_MS,
   armProgress,
   isArmed,
+  matchesChallenge,
   remainingMs,
   secondsLeft,
 } from './confirm'
@@ -22,6 +23,12 @@ interface Props {
   onCancel: () => void
   /** 뜸의 길이. 시험에서만 줄인다. */
   delayMs?: number
+  /**
+   * 그대로 옮겨 적어야 실행 단추가 살아나는 글. **없으면 뜸만으로 산다.**
+   *
+   * 뜸은 손가락이 미끄러지는 것을 막고, 이것은 **엉뚱한 것을 고른 것**을 막는다.
+   */
+  challenge?: { readonly label: string; readonly answer: string }
 }
 
 /**
@@ -52,7 +59,9 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
   delayMs = CONFIRM_DELAY_MS,
+  challenge,
 }: Props) {
+  const [typed, setTyped] = useState('')
   const panelRef = useRef<HTMLDivElement | null>(null)
   const cancelRef = useRef<HTMLButtonElement | null>(null)
   const [remaining, setRemaining] = useState(delayMs)
@@ -104,7 +113,8 @@ export function ConfirmDialog({
     return () => document.removeEventListener('keydown', onKey, true)
   }, [onCancel])
 
-  const armed = isArmed(remaining)
+  const typedOk = challenge === undefined || matchesChallenge(typed, challenge.answer)
+  const armed = isArmed(remaining) && typedOk
   const left = secondsLeft(remaining)
 
   return createPortal(
@@ -144,6 +154,21 @@ export function ConfirmDialog({
           단추만 남는다. **살아나는 순간 한 번만** 알린다 — 매 초 알리면 세 번
           떠들고, 그 사이 취소를 읽던 것을 끊는다.
         */}
+        {challenge !== undefined && (
+          <label className="confirm__challenge">
+            <span className="confirm__challenge-label">{challenge.label}</span>
+            <input
+              type="text"
+              className="confirm__challenge-input"
+              value={typed}
+              autoComplete="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              onChange={(event) => setTyped(event.target.value)}
+            />
+          </label>
+        )}
+
         <p className="confirm__status" role="status">
           {armed ? `이제 ${confirmLabel} 단추를 누를 수 있다.` : ''}
         </p>
@@ -157,7 +182,13 @@ export function ConfirmDialog({
             className="confirm__arm"
             style={{ '--confirm-progress': armProgress(remaining, delayMs) } as React.CSSProperties}
             disabled={!armed}
-            aria-label={armed ? confirmLabel : `${confirmLabel} — ${left}초 뒤에 눌 수 있다`}
+            aria-label={
+              armed
+                ? confirmLabel
+                : typedOk
+                  ? `${confirmLabel} — ${left}초 뒤에 눌 수 있다`
+                  : `${confirmLabel} — ${challenge?.label ?? ''}`
+            }
             onClick={() => {
               // 살아나기 전의 탭은 여기까지 오지 않지만, 한 겹 더 둔다.
               // `disabled`는 화면의 약속이고 이 줄은 코드의 약속이다.
@@ -166,7 +197,7 @@ export function ConfirmDialog({
             }}
           >
             <span className="confirm__arm-label">{confirmLabel}</span>
-            {!armed && (
+            {!armed && typedOk && (
               <span className="confirm__arm-count sl-numeral" aria-hidden="true">
                 {left}
               </span>
