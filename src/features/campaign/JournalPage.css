@@ -2517,3 +2517,32 @@
   font-size: 1.05rem;
   color: var(--sl-gold);
 }
+
+/*
+  조건 글에 끼는 클래스 표식 — 실물에서는 잠긴 봉투에 찍힌 그림이다.
+  **물들이지 않고 양피지 원반을 깐다**(구현 결정 41): 표식이 거의 검정이라
+  어두운 바탕에서 묻힌다. 글줄에 얹히므로 밑선을 맞춘다(구현 결정 321).
+*/
+.unlock__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35em;
+  height: 1.35em;
+  vertical-align: -0.32em;
+  background: #d8cbaa;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.unlock__icon img {
+  width: 76%;
+  height: 76%;
+  object-fit: contain;
+}
+
+/* 「A봉투」의 A — 알파벳은 글룸헤이븐 서체다(형님이 정했다). */
+.unlock__latin {
+  font-size: 1.15em;
+  color: var(--sl-gold-bright);
+}

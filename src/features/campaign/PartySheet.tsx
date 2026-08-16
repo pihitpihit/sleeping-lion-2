@@ -16,6 +16,7 @@ import { writeCampaignLog } from './campaignNet'
 import { LogView } from './LogView'
 import { AchievementPicker } from './AchievementPicker'
 import { useUnlockStore } from './unlockStore'
+import { ConditionText } from './ConditionText'
 
 interface Props {
   campaign: Campaign
@@ -400,7 +401,9 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
                           />
                         ))}
                       </span>
-                      <span className="unlock__text">{cond.text}</span>
+                      <span className="unlock__text">
+                        <ConditionText text={cond.text} />
+                      </span>
                     </li>
                   )
                 })}
