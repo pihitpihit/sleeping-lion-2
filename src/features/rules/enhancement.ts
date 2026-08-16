@@ -15,6 +15,13 @@
 export interface EnhanceCost {
   readonly name: string
   readonly gold: number
+  /**
+   * 팩에 그림이 있는 것은 표식으로 그린다(`MARKS`의 id).
+   *
+   * **없는 것은 글자로 남는다** — 이동·공격·사정거리·반격·도약은 아직 팩에서 안
+   * 가져왔다. 흉내 내 그리지 않는다(구현 결정 205).
+   */
+  readonly mark?: string
 }
 
 /** 능력치에 붙이는 것. */
@@ -22,13 +29,13 @@ export const ENHANCE_STATS: readonly EnhanceCost[] = [
   { name: '이동', gold: 30 },
   { name: '공격', gold: 50 },
   { name: '사정거리', gold: 30 },
-  { name: '방어', gold: 100 },
-  { name: '밀기', gold: 30 },
-  { name: '당기기', gold: 30 },
-  { name: '관통', gold: 30 },
+  { name: '방어', mark: 'shield', gold: 100 },
+  { name: '밀기', mark: 'push', gold: 30 },
+  { name: '당기기', mark: 'pull', gold: 30 },
+  { name: '관통', mark: 'pierce', gold: 30 },
   { name: '반격', gold: 100 },
-  { name: '치료', gold: 30 },
-  { name: '대상', gold: 50 },
+  { name: '치료', mark: 'heal', gold: 30 },
+  { name: '대상', mark: 'targets', gold: 50 },
 ]
 
 /** 소환물의 능력치. 같은 이름이지만 값이 다르다. */
@@ -41,14 +48,14 @@ export const ENHANCE_SUMMON: readonly EnhanceCost[] = [
 
 /** 효과를 새로 붙이는 것. */
 export const ENHANCE_EFFECTS: readonly EnhanceCost[] = [
-  { name: '중독', gold: 75 },
-  { name: '부상', gold: 75 },
-  { name: '혼란', gold: 50 },
-  { name: '이동불가', gold: 100 },
-  { name: '무장해제', gold: 150 },
-  { name: '저주', gold: 75 },
-  { name: '강화', gold: 50 },
-  { name: '축복', gold: 50 },
+  { name: '중독', mark: 'poison', gold: 75 },
+  { name: '부상', mark: 'wound', gold: 75 },
+  { name: '혼란', mark: 'muddle', gold: 50 },
+  { name: '이동불가', mark: 'immobilize', gold: 100 },
+  { name: '무장해제', mark: 'disarm', gold: 150 },
+  { name: '저주', mark: 'curse', gold: 75 },
+  { name: '강화', mark: 'strengthen', gold: 50 },
+  { name: '축복', mark: 'bless', gold: 50 },
   { name: '도약', gold: 50 },
   { name: '특정 원소', gold: 100 },
   { name: '아무 원소', gold: 150 },

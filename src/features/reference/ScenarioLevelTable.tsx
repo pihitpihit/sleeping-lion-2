@@ -1,5 +1,14 @@
 import { PROSPERITY_ROWS, cardNo } from '../rules/prosperity'
 import { levelExtra, stickerExtra } from '../rules/enhancement'
+import { InlineMark } from '../campaign/InlineMark'
+import { MARKS, type CardMark } from '../satchel/widgets/deck/cardSpec'
+
+/** 표식 id로 그릴 것을 찾는다. 없으면 글자로 남는다. */
+function markOf(id: string | undefined): CardMark | null {
+  if (id === undefined) return null
+  const def = MARKS.find((m) => m.id === id)
+  return def ? { def, amount: null } : null
+}
 import {
   DIFFICULTIES,
   DIFFICULTY_MOD,
@@ -165,7 +174,7 @@ export function EnhanceTable({
   rows,
 }: {
   title: string
-  rows: readonly { name: string; gold: number }[]
+  rows: readonly { name: string; gold: number; mark?: string }[]
 }) {
   return (
     <div className="gtable gtable--narrow">
@@ -180,7 +189,15 @@ export function EnhanceTable({
         <tbody>
           {rows.map((row) => (
             <tr key={row.name}>
-              <th scope="row">{row.name}</th>
+              {/*
+                **팩에 그림이 있는 것은 그림으로 낸다**(형님이 정했다) — 카드에
+                그려지는 것과 같은 표식이라야 같은 것으로 읽힌다(구현 결정 319).
+                없는 것은 글자로 남는다: 흉내 내 그리지 않는다(구현 결정 205).
+              */}
+              <th scope="row" className="gtable__row">
+                {markOf(row.mark) && <InlineMark mark={markOf(row.mark)!} />}
+                {row.name}
+              </th>
               <td className="sl-numeral">{row.gold}</td>
             </tr>
           ))}

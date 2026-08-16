@@ -56,8 +56,13 @@ function announce() {
 export const supabasePartyAdapter: PartyAdapter = {
   async listParties() {
     try {
-      // 내가 속한 것만 온다 — RLS가 그렇게 거른다. userId를 넘겨받지만 쓰지 않는
-      // 이유가 이것이다. 클라이언트가 고른 것을 서버가 믿게 두지 않는다.
+      /*
+        **승인된 사람이면 다 온다**(`0035`) — RLS가 정한다. userId를 넘겨받지만
+        쓰지 않는 이유가 이것이다: 클라이언트가 고른 것을 서버가 믿게 두지 않는다.
+
+        보이는 것과 드는 것은 다른 일이다 — 기록지·캐릭터는 그대로 파티원만 보고
+        드는 것도 초대 링크가 있어야 한다(구현 결정 21).
+      */
       const { data, error } = await supabase()
         .from('parties')
         .select('id, name, created_by, created_at')
