@@ -457,40 +457,6 @@
   color: var(--sl-ember);
 }
 
-.crew__invites {
-  margin: 0.4rem 0 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.crew__invites > li {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  padding: 0.45rem 0.6rem;
-  background: rgb(0 0 0 / 24%);
-  border-left: 2px solid var(--sl-gold-dim);
-  border-radius: 0.2rem;
-}
-
-.crew__token {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.8rem;
-  color: var(--sl-text-muted);
-}
-
-.crew__left {
-  flex: 1;
-  min-width: 0;
-  font-size: 0.8rem;
-  color: var(--sl-text-faint);
-}
-
-.crew__invites button,
 .crew__actions button {
   padding: 0.35rem 0.7rem;
   font-family: inherit;
@@ -502,7 +468,6 @@
   cursor: pointer;
 }
 
-.crew__invites button:not(:disabled):hover,
 .crew__actions button:not(:disabled):hover {
   color: var(--sl-gold);
   border-color: var(--sl-border-strong);
@@ -517,7 +482,6 @@
 
 /* 되돌릴 수 있는 것과 없는 것을 색으로 가른다. */
 
-.crew__revoke:not(:disabled):hover,
 .crew__leave:not(:disabled):hover {
   color: var(--sl-ember) !important;
 }
@@ -544,6 +508,7 @@
 }
 
 /* 잠긴 칸은 만질 수 없다는 것이 보여야 한다. */
+
 .sheet__input:disabled,
 .sheet__notes:disabled {
   opacity: 0.55;
@@ -2532,6 +2497,7 @@
   `.tally__n`은 표식 위에 얹히려고 절대 위치를 쓰는데(캐릭터 시트의 별·금화)
   여기는 얹을 그림이 없다 — **자리 잡는 규칙을 되돌리고 크기를 올린다.**
 */
+
 .tally__n--solo {
   position: static;
   font-size: 2rem;
@@ -2540,11 +2506,13 @@
 }
 
 /* 평판은 금빛으로 — 이 칸에서 눈이 먼저 가는 수다. */
+
 .tally__item--rep .tally__n--solo {
   color: var(--sl-gold);
 }
 
 /* 물건값은 오르면 잉걸빛, 내리면 푸른빛 — 싸지는 쪽이 반갑다. */
+
 .tally__item--up .tally__n--solo {
   color: var(--sl-ember);
 }
@@ -2558,11 +2526,13 @@
 }
 
 /* 세 칸이 서는 줄 — 번영도·평판·물건값. 좁으면 두 줄로 접힌다. */
+
 .tally--three {
   grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
 }
 
 /* 말로 적히는 값(「그대로」)은 작게 — 수와 같은 크기면 칸을 넘는다. */
+
 .tally__n--word {
   font-size: 1.1rem;
 }
@@ -2612,6 +2582,7 @@
 }
 
 /* 문턱 자리에만 수가 뜬다. 빈 자리도 높이는 잡아 둔다 — 줄이 들쭉날쭉하면 못 센다. */
+
 .pros__mark {
   min-height: 0.9rem;
   font-size: 0.72rem;
@@ -2640,4 +2611,11 @@
 .pros__box--on {
   background: var(--sl-gold);
   border-color: var(--sl-gold);
+}
+
+/* 아직 안 든 파티 — 목록에 다 뜨므로 어느 것이 새것인지 갈라 준다(`0036`). */
+
+.joinparty__new {
+  font-size: 0.78rem;
+  color: var(--sl-moss-bright);
 }

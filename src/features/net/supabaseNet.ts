@@ -1,7 +1,6 @@
 import { supabase } from '../auth/supabase'
 import { NetError, type PartyAdapter } from './adapter'
-import { INVITE_HOURS, makeToken } from './invite'
-import type { Invite, Member, Party } from './types'
+import type { Member, Party } from './types'
 
 /**
  * 진짜 백엔드에 붙는 파티.
@@ -148,123 +147,18 @@ export const supabasePartyAdapter: PartyAdapter = {
     }
   },
 
-  async listInvites(partyId) {
-    try {
-      const { data, error } = await supabase()
-        .from('invites')
-        .select('token, party_id, created_by, created_at, expires_at, revoked')
-        .eq('party_id', partyId)
-        .order('created_at', { ascending: false })
-      if (error) throw error
-      return (data ?? []).map((row): Invite => ({
-        token: row.token,
-        partyId: row.party_id,
-        createdBy: row.created_by,
-        createdAt: toMillis(row.created_at),
-        expiresAt: toMillis(row.expires_at),
-        revoked: row.revoked,
-      }))
-    } catch (cause) {
-      return fail(cause, '초대장을 불러오지 못했다.')
-    }
-  },
-
-  async createInvite(partyId, by, now) {
-    try {
-      const token = makeToken()
-      const expiresAt = now + INVITE_HOURS * 60 * 60 * 1000
-      const { data, error } = await supabase()
-        .from('invites')
-        .insert({
-          token,
-          party_id: partyId,
-          created_by: by.userId,
-          expires_at: new Date(expiresAt).toISOString(),
-        })
-        .select('token, party_id, created_by, created_at, expires_at, revoked')
-        .single()
-      if (error) throw error
-
-      announce()
-      return {
-        token: data.token,
-        partyId: data.party_id,
-        createdBy: data.created_by,
-        createdAt: toMillis(data.created_at),
-        expiresAt: toMillis(data.expires_at),
-        revoked: data.revoked,
-      }
-    } catch (cause) {
-      return fail(cause, '초대장을 만들지 못했다.')
-    }
-  },
-
-  async revokeInvite(token) {
+  async joinParty(partyId, who) {
+    /*
+      **제 이름으로만 든다** — RLS가 `user_id = auth.uid()`를 본다(`0036`).
+      이미 들어 있으면 조용히 성공으로 친다: 오류가 아니다.
+    */
     try {
       const { error } = await supabase()
-        .from('invites')
-        .update({ revoked: true })
-        .eq('token', token)
+        .from('party_members')
+        .upsert({ party_id: partyId, user_id: who.userId }, { onConflict: 'party_id,user_id' })
       if (error) throw error
-      announce()
     } catch (cause) {
-      fail(cause, '초대장을 거두지 못했다.')
-    }
-  },
-
-  /**
-   * 토큰만으로 초대장을 들여다본다.
-   *
-   * **파티 이름도 id도 주지 않는다.** 아직 파티원이 아닌 사람이 여는 자리이므로
-   * RLS는 초대장 자체를 감춘다. 대신 서버 함수가 **상태만** 돌려준다 — 그것이
-   * 없으면 "낡았다"와 "거두어졌다"와 "그런 것 없다"가 전부 '없다'로 뭉친다.
-   */
-  async findInvite(token) {
-    try {
-      const { data, error } = await supabase().rpc('peek_invite', { invite_token: token })
-      if (error) throw error
-
-      const state = String(data)
-      if (state === 'unknown') return null
-
-      const now = Date.now()
-      return {
-        token,
-        partyId: '',
-        createdBy: '',
-        createdAt: 0,
-        // `inviteState`가 읽을 수 있게 상태를 시각·플래그로 옮긴다.
-        expiresAt: state === 'expired' ? now - 1 : now + INVITE_HOURS * 60 * 60 * 1000,
-        revoked: state === 'revoked',
-      }
-    } catch (cause) {
-      return fail(cause, '초대장을 확인하지 못했다.')
-    }
-  },
-
-  async acceptInvite(token, _who, _now) {
-    try {
-      const { data: partyId, error } = await supabase().rpc('accept_invite', {
-        invite_token: token,
-      })
-      if (error) throw error
-
-      const { data, error: readError } = await supabase()
-        .from('parties')
-        .select('id, name, created_by, created_at')
-        .eq('id', partyId)
-        .single()
-      if (readError) throw readError
-
-      announce()
-      return {
-        id: data.id,
-        name: data.name,
-        createdBy: data.created_by,
-        createdAt: toMillis(data.created_at),
-      }
-    } catch (cause) {
-      return fail(cause, '초대장을 받지 못했다.')
+      return fail(cause, '파티에 들지 못했다.')
     }
   },
 

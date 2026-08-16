@@ -1,12 +1,5 @@
 import { NetError, type PartyAdapter } from './adapter'
-import {
-  INVITE_STATE_MESSAGE,
-  inviteExpiry,
-  inviteState,
-  looksLikeToken,
-  makeToken,
-} from './invite'
-import type { Invite, Member, Party } from './types'
+import type { Member, Party } from './types'
 
 /**
  * 가짜 백엔드.
@@ -32,10 +25,9 @@ const FAKE_DELAY_MS = 220
 interface MockDb {
   parties: Party[]
   members: Member[]
-  invites: Invite[]
 }
 
-const EMPTY: MockDb = { parties: [], members: [], invites: [] }
+const EMPTY: MockDb = { parties: [], members: [] }
 
 function read(): MockDb {
   try {
@@ -43,11 +35,10 @@ function read(): MockDb {
     if (raw === null) return EMPTY
     const value: unknown = JSON.parse(raw)
     if (typeof value !== 'object' || value === null) return EMPTY
-    const { parties, members, invites } = value as Record<string, unknown>
+    const { parties, members } = value as Record<string, unknown>
     return {
       parties: Array.isArray(parties) ? (parties as Party[]) : [],
       members: Array.isArray(members) ? (members as Member[]) : [],
-      invites: Array.isArray(invites) ? (invites as Invite[]) : [],
     }
   } catch {
     // 망가진 값은 없는 것으로 친다. 가짜 데이터라 되살릴 것이 없다.
@@ -71,7 +62,7 @@ function write(db: MockDb): void {
 const wait = () => new Promise((resolve) => setTimeout(resolve, FAKE_DELAY_MS))
 
 function newId(prefix: string): string {
-  return `${prefix}_${makeToken().slice(0, 12)}`
+  return `${prefix}-${Math.random().toString(36).slice(2, 10)}`
 }
 
 export const mockPartyAdapter: PartyAdapter = {
@@ -112,69 +103,22 @@ export const mockPartyAdapter: PartyAdapter = {
     // 아무도 남지 않으면 파티와 초대장을 함께 거둔다. 빈 파티가 쌓일 이유가 없다.
     if (!db.members.some((m) => m.partyId === partyId)) {
       db.parties = db.parties.filter((p) => p.id !== partyId)
-      db.invites = db.invites.filter((i) => i.partyId !== partyId)
     }
     write(db)
   },
 
-  async listInvites(partyId) {
-    await wait()
-    return read()
-      .invites.filter((i) => i.partyId === partyId && !i.revoked)
-      .sort((a, b) => b.createdAt - a.createdAt)
-  },
-
-  async createInvite(partyId, by, now) {
+  async joinParty(partyId, who) {
     await wait()
     const db = read()
-    if (!db.members.some((m) => m.partyId === partyId && m.userId === by.userId)) {
-      throw new NetError('이 파티의 사람만 초대할 수 있습니다.')
-    }
-    const invite: Invite = {
-      token: makeToken(),
-      partyId,
-      createdBy: by.userId,
-      createdAt: now,
-      expiresAt: inviteExpiry(now),
-      revoked: false,
-    }
-    db.invites.push(invite)
-    write(db)
-    return invite
-  },
-
-  async revokeInvite(token) {
-    await wait()
-    const db = read()
-    const invite = db.invites.find((i) => i.token === token)
-    if (invite) invite.revoked = true
-    write(db)
-  },
-
-  async findInvite(token) {
-    await wait()
-    if (!looksLikeToken(token)) return null
-    return read().invites.find((i) => i.token === token) ?? null
-  },
-
-  async acceptInvite(token, who, now) {
-    await wait()
-    const db = read()
-    const invite = looksLikeToken(token) ? db.invites.find((i) => i.token === token) : undefined
-
-    const state = inviteState(invite ?? null, now)
-    if (state !== 'ok') throw new NetError(INVITE_STATE_MESSAGE[state])
-
-    const party = db.parties.find((p) => p.id === invite!.partyId)
-    // 초대장은 살아 있는데 파티가 사라진 경우. 있는 그대로 말한다.
+    const party = db.parties.find((p) => p.id === partyId)
     if (!party) throw new NetError('그 파티는 이미 흩어졌습니다.')
 
-    const already = db.members.some((m) => m.partyId === party.id && m.userId === who.userId)
+    // 이미 들어 있으면 조용히 성공으로 친다 — 오류가 아니다.
+    const already = db.members.some((m) => m.partyId === partyId && m.userId === who.userId)
     if (!already) {
-      db.members.push({ ...who, partyId: party.id, joinedAt: now })
+      db.members.push({ ...who, partyId, joinedAt: Date.now() })
       write(db)
     }
-    return party
   },
 
   subscribe(listener) {

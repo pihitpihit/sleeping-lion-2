@@ -1,6 +1,8 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { useAuthStore } from '../auth/authStore'
 import { useJournalStore } from './campaignStore'
+import { fetchOrCreateFor } from './campaignNet'
+import { partyAdapter } from '../net'
 import { classIconUrl } from './character'
 import { CharacterSheet } from './CharacterSheet'
 import { classInfoOf, useClassStore } from './classStore'
@@ -27,6 +29,7 @@ export function CharacterPage() {
   const [chipSlot, setChipSlot] = useState<HTMLElement | null>(null)
 
   const session = useAuthStore((s) => s.session)
+  const refreshParties = useJournalStore((s) => s.refresh)
   const [id, setId] = useState(() => characterIdFromHash(window.location.hash))
   const scrolled = useScrolled()
 
@@ -43,6 +46,33 @@ export function CharacterPage() {
   const load = useOneCharacterStore((s) => s.load)
   const edit = useOneCharacterStore((s) => s.edit)
   const join = useOneCharacterStore((s) => s.join)
+
+  /**
+   * 파티에 들고 그 기록지에 캐릭터를 넣는다 — **두 걸음이 한 동작이다.**
+   *
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ **드는 것이 먼저다.** 기록지는 파티원만 읽는다.                         │
+   * └────────────────────────────────────────────────────────────────────────┘
+   *
+   * 초대 링크를 걷었으므로(`0036`) 목록에 남의 파티도 뜬다 — 그때는 아직 파티원이
+   * 아니라 기록지를 읽을 수도, 캐릭터를 넣을 수도 없다. 먼저 들고 나서 기록지를
+   * 얻는다(없으면 그때 만들어진다, `fetchOrCreateFor`).
+   */
+  async function joinParty(partyId: string) {
+    const entry = entries.find((e) => e.party.id === partyId)
+    if (entry === undefined || session === null) return
+    try {
+      await partyAdapter.joinParty(partyId, {
+        userId: session.userId,
+        displayName: session.displayName,
+      })
+      const campaign = await fetchOrCreateFor(partyId, entry.party.name)
+      await join(campaign.id)
+      void refreshParties({ userId: session.userId, displayName: session.displayName })
+    } catch (cause) {
+      console.error('[join]', cause)
+    }
+  }
   const remove = useOneCharacterStore((s) => s.remove)
   const restore = useOneCharacterStore((s) => s.restore)
 
@@ -190,10 +220,11 @@ export function CharacterPage() {
             <JoinParty
               busy={busy}
               parties={entries.map((e) => ({
-                campaignId: e.campaign?.id ?? '',
+                partyId: e.party.id,
                 name: e.campaign?.name || e.party.name || '이름 없는 파티',
+                mine: e.campaign !== null,
               }))}
-              onJoin={(campaignId) => void join(campaignId)}
+              onJoin={(partyId) => void joinParty(partyId)}
             />
           )}
 
@@ -232,11 +263,20 @@ function JoinParty({
   busy,
   onJoin,
 }: {
-  parties: readonly { campaignId: string; name: string }[]
+  /** 있는 파티 전부. **내 파티가 아니어도 든다**(`0036`). */
+  parties: readonly { partyId: string; name: string; mine: boolean }[]
   busy: boolean
-  onJoin: (campaignId: string) => void
+  onJoin: (partyId: string) => void
 }) {
-  const usable = parties.filter((p) => p.campaignId !== '')
+  /*
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │ **초대 링크 없이 제 발로 든다**(형님이 정했다, `0036`).                 │
+    └────────────────────────────────────────────────────────────────────────┘
+
+    승인된 사람만 들어오는 앱이라 그 안에서 또 문지기를 두면 링크를 주고받는
+    품만 는다. 그래서 목록에 **있는 파티가 다 보이고** 고르면 바로 든다.
+  */
+  const usable = parties
 
   return (
     <section className="joinparty">
@@ -250,14 +290,15 @@ function JoinParty({
           <p className="joinparty__hint">어느 파티에 넣을지 고른다.</p>
           <ul className="joinparty__list">
             {usable.map((p) => (
-              <li key={p.campaignId}>
+              <li key={p.partyId}>
                 <button
                   type="button"
                   className="joinparty__pick"
                   disabled={busy}
-                  onClick={() => onJoin(p.campaignId)}
+                  onClick={() => onJoin(p.partyId)}
                 >
                   {p.name}
+                  {!p.mine && <span className="joinparty__new"> · 새 파티</span>}
                 </button>
               </li>
             ))}

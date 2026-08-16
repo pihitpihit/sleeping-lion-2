@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import { partyAdapter, useNetRevision } from '../net'
 import { NetError } from '../net/adapter'
-import { inviteRoute, remainingLabel } from '../net/invite'
-import type { Identity, Invite, Member } from '../net/types'
+import type { Identity, Member } from '../net/types'
 
 interface Props {
   partyId: string
@@ -24,25 +23,15 @@ interface Props {
 export function Crew({ partyId, partyName, me, onLeave }: Props) {
   const revision = useNetRevision()
   const [members, setMembers] = useState<Member[]>([])
-  const [invites, setInvites] = useState<Invite[]>([])
-  const [readAt, setReadAt] = useState(0)
-  const [tick, setTick] = useState(0)
-  const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [copied, setCopied] = useState<string | null>(null)
 
   useEffect(() => {
     let alive = true
     void (async () => {
       try {
-        const [m, i] = await Promise.all([
-          partyAdapter.listMembers(partyId),
-          partyAdapter.listInvites(partyId),
-        ])
+        const m = await partyAdapter.listMembers(partyId)
         if (!alive) return
         setMembers(m)
-        setInvites(i)
-        setReadAt(Date.now())
         setError(null)
       } catch (cause) {
         // 파티원을 못 읽어도 기록지는 보여야 한다. 여기만 조용히 접는다.
@@ -52,36 +41,7 @@ export function Crew({ partyId, partyName, me, onLeave }: Props) {
     return () => {
       alive = false
     }
-  }, [partyId, revision, tick])
-
-  function run(work: () => Promise<unknown>) {
-    setBusy(true)
-    setError(null)
-    work()
-      .catch((cause: unknown) => {
-        setError(cause instanceof NetError ? cause.message : '뜻대로 되지 않았습니다.')
-      })
-      .finally(() => {
-        setBusy(false)
-        setTick((n) => n + 1)
-      })
-  }
-
-  /** 링크는 손으로 고르기 어렵다. 눌러서 베껴지게 하고, 막히면 주소를 펼쳐 준다. */
-  function copy(token: string) {
-    const url = new URL(window.location.href)
-    url.hash = '#' + inviteRoute(token)
-    const text = url.toString()
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        setCopied(token)
-        setTimeout(() => setCopied(null), 2000)
-      })
-      .catch(() => {
-        window.prompt('이 링크를 보내십시오', text)
-      })
-  }
+  }, [partyId, revision])
 
   return (
     <section className="sheet__block crew">
@@ -103,45 +63,19 @@ export function Crew({ partyId, partyName, me, onLeave }: Props) {
         </p>
       )}
 
-      {invites.length > 0 && (
-        <ul className="crew__invites">
-          {invites.map((invite) => (
-            <li key={invite.token}>
-              <code className="crew__token">…{invite.token.slice(-8)}</code>
-              <span className="crew__left">{remainingLabel(invite.expiresAt, readAt)}</span>
-              <button type="button" onClick={() => copy(invite.token)}>
-                {copied === invite.token ? '베꼈다' : '링크 베끼기'}
-              </button>
-              <button
-                type="button"
-                className="crew__revoke"
-                disabled={busy}
-                onClick={() => run(() => partyAdapter.revokeInvite(invite.token))}
-              >
-                거두기
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
+      {/*
+        **초대 링크를 걷었다**(형님이 정했다, `0036`). 승인된 사람만 들어오는
+        앱이라 그 안에서 또 문지기를 두면 링크를 주고받는 품만 는다 — 이제
+        누구든 일지에서 파티를 골라 제 발로 든다.
+      */}
       <p className="crew__hint">
-        링크를 만들어 메신저로 보낸다. 이틀이 지나면 스스로 낡고, 그전에 거둘 수도 있다.
+        승인된 사람이면 누구나 이 파티에 들 수 있다 — <a href="#/journal">일지</a>에서 고른다.
       </p>
 
       <div className="crew__actions">
         <button
           type="button"
-          className="crew__invite"
-          disabled={busy}
-          onClick={() => run(() => partyAdapter.createInvite(partyId, me, Date.now()))}
-        >
-          초대장을 쓴다
-        </button>
-        <button
-          type="button"
           className="crew__leave"
-          disabled={busy}
           onClick={() => {
             if (!window.confirm(`'${partyName}'에서 나가시겠습니까?`)) return
             onLeave()

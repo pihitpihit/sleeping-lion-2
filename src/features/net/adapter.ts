@@ -1,4 +1,4 @@
-import type { Identity, Invite, Member, Party } from './types'
+import type { Identity, Member, Party } from './types'
 
 /**
  * 파티의 바깥 경계.
@@ -16,18 +16,14 @@ export interface PartyAdapter {
   /** 파티를 떠난다. 마지막 한 명이 나가면 파티도 함께 사라진다. */
   leaveParty(partyId: string, userId: string): Promise<void>
 
-  listInvites(partyId: string): Promise<Invite[]>
-  createInvite(partyId: string, by: Identity, now: number): Promise<Invite>
-  revokeInvite(token: string): Promise<void>
-
-  /** 토큰만으로 초대장을 들여다본다. **파티 이름은 주지 않는다.** */
-  findInvite(token: string): Promise<Invite | null>
   /**
-   * 초대장을 받아 파티에 든다.
+   * 파티에 든다 — **초대 없이 제 발로.**
    *
-   * 이미 그 파티에 있으면 조용히 성공으로 친다 — 오류가 아니다.
+   * 승인된 사람만 들어오는 앱이므로(`0004`) 그 안에서 또 한 번 문지기를 두지
+   * 않는다(형님이 정했다, `0036`). **제 이름으로만 든다** — 남을 끌어들이지는
+   * 못한다.
    */
-  acceptInvite(token: string, who: Identity, now: number): Promise<Party>
+  joinParty(partyId: string, who: Identity): Promise<void>
 
   /** 무언가 바뀌면 부른다. 돌려주는 함수를 부르면 구독을 끊는다. */
   subscribe(listener: () => void): () => void
@@ -56,10 +52,6 @@ export const notReadyPartyAdapter: PartyAdapter = {
   createParty: notReady,
   listMembers: async () => [],
   leaveParty: notReady,
-  listInvites: async () => [],
-  createInvite: notReady,
-  revokeInvite: notReady,
-  findInvite: async () => null,
-  acceptInvite: notReady,
+  joinParty: notReady,
   subscribe: () => () => {},
 }

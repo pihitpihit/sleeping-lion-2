@@ -27,7 +27,6 @@ export const LAZY_ROUTES: Record<string, ComponentType> = {
   '/login': lazyPage(() =>
     import('./features/auth/LoginPage').then((m) => ({ default: m.LoginPage })),
   ),
-  '/join': lazyPage(() => import('./features/net/JoinPage').then((m) => ({ default: m.JoinPage }))),
   // 일지 — 축 ①. 목록과 기록지 한 장을 한 화면이 함께 다룬다.
   /*
     주인장 — 대기자 승인·클래스 수치·특혜 표. 관리자만 볼 수 있고, 서버가 다시
@@ -91,11 +90,10 @@ export const LAZY_ROUTES: Record<string, ComponentType> = {
 /**
  * 뒤에 값이 붙는 경로.
  *
- * `#/join/<토큰>`이 첫 사례이고 `#/journal/<기록지 id>`가 그 다음이다. 이것들
- * 때문에 react-router를 들이는 것은 아직 과하므로, **첫 마디만 보고 화면을 고르고
+ * `#/journal/<기록지 id>`가 그 사례다. 이것 때문에 react-router를 들이는 것은 아직 과하므로, **첫 마디만 보고 화면을 고르고
  * 나머지는 화면이 직접 읽는다.** 중첩이 생기면 그때 갈아탄다.
  */
-const PREFIX_ROUTES: readonly string[] = ['/join', '/journal', '/character']
+const PREFIX_ROUTES: readonly string[] = ['/journal', '/character']
 
 /**
  * 라우트에서 화면을 찾을 열쇠. `/join/abc` → `/join`
