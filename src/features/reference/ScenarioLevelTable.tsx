@@ -1,3 +1,4 @@
+import { PROSPERITY_ROWS, cardNo } from '../rules/prosperity'
 import {
   DIFFICULTIES,
   DIFFICULTY_MOD,
@@ -105,6 +106,44 @@ export function DifficultyTable() {
               </tr>
             )
           })}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+/**
+ * 번영도별로 상점에 풀리는 아이템 카드.
+ *
+ * **번호의 범위일 뿐 카드의 글이 아니다** — 그래서 레포에 둘 수 있다
+ * (`rules/prosperity.ts`). 아이템 이름은 여전히 DB에만 있다.
+ */
+export function ProsperityTable() {
+  return (
+    <div className="gtable gtable--narrow">
+      <table className="gtable__t">
+        <caption className="gtable__cap">번영도와 아이템 카드</caption>
+        <thead>
+          <tr>
+            <th scope="col">
+              번영도
+              <br />
+              레벨
+            </th>
+            <th scope="col">아이템 카드</th>
+          </tr>
+        </thead>
+        <tbody>
+          {PROSPERITY_ROWS.map((row) => (
+            <tr key={row.level}>
+              <th scope="row" className="sl-numeral">
+                {row.level}
+              </th>
+              <td className="sl-numeral">
+                {cardNo(row.from)}–{cardNo(row.to)}
+              </td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

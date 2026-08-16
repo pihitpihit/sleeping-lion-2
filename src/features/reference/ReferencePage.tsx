@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react'
 import { MARKS } from '../satchel/widgets/deck/cardSpec'
 import { InlineMark } from '../campaign/InlineMark'
 import { useScrolled } from '../campaign/useScrolled'
-import { DifficultyTable, ScenarioLevelTable } from './ScenarioLevelTable'
+import { DifficultyTable, ProsperityTable, ScenarioLevelTable } from './ScenarioLevelTable'
 /*
   띠(`topbar`)와 바깥 틀(`journal`)은 이제 일지만의 것이 아니라 **앱의 공통
   껍데기**다 — 생성 화면 둘이 이미 같은 것을 쓰고 있다. 옮겨 담는 것은 쓰는
@@ -99,6 +99,32 @@ export function ReferencePage() {
               경험은 그대로 둔다.
             </li>
             <li className="ref__src">글룸헤이븐 규칙서 15쪽 · 사자의 턱 규칙서 29쪽 (같은 표)</li>
+          </ul>
+        </details>
+
+        {/*
+          번영도와 아이템 카드 — 형님이 실물 시트를 찍어 보내 주었다(2026-08-16).
+          **번호의 범위일 뿐 카드의 글이 아니라** 레포에 둘 수 있다.
+        */}
+        <details className="ref__block">
+          <summary className="ref__summary">
+            <span className="ref__title">번영도와 아이템 카드</span>
+            <span className="ref__count sl-numeral" aria-hidden="true">
+              1–9
+            </span>
+          </summary>
+
+          <p className="ref__hint">
+            번영도가 오르면 상점에 카드가 풀린다. <strong>목록은 쌓인다</strong> — 그 줄까지의 것이
+            다 상점에 있다.
+          </p>
+
+          <div className="ref__papers">
+            <ProsperityTable />
+          </div>
+
+          <ul className="ref__notes">
+            <li className="ref__src">캠페인 시트의 번영도 표</li>
           </ul>
         </details>
 

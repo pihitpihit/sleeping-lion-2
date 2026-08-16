@@ -3,6 +3,7 @@ import { CatalogPopup, type CatalogEntry } from './Catalog'
 import { Coin } from '../satchel/widgets/gold/Coin'
 import { MiniDialog } from './MiniDialog'
 import { Price } from './Price'
+import { cardNo } from '../rules/prosperity'
 import { useShopStore } from './shopStore'
 import type { ShopItem } from './shopNet'
 import './Shop.css'
@@ -83,6 +84,16 @@ export function Shop({
             </b>
           </span>
         }
+        lead={(entry) => {
+          const item = byId.get(entry.id)
+          /* 아직 안 적은 것(−1)은 자리를 비운다 — 「없다」를 적으면 줄만 시끄럽다. */
+          if (item === undefined || item.no < 0) return null
+          return (
+            <span className="shop__no sl-numeral" aria-label={`카드 ${cardNo(item.no)}번`}>
+              {cardNo(item.no)}
+            </span>
+          )
+        }}
         tail={(entry) => {
           const item = byId.get(entry.id)
           if (item === undefined) return null
@@ -130,9 +141,9 @@ export function Shop({
         <PriceDialog
           name={asking}
           onCancel={() => setAsking(null)}
-          onDone={async (cost) => {
+          onDone={async (cost, no) => {
             try {
-              await define(asking, cost, userId ?? '')
+              await define(asking, cost, no, userId ?? '')
               setAsking(null)
             } catch (cause) {
               console.error('[shop]', cause)
@@ -158,19 +169,26 @@ function PriceDialog({
   onCancel,
 }: {
   name: string
-  onDone: (cost: number) => void | Promise<void>
+  onDone: (cost: number, no: number) => void | Promise<void>
   onCancel: () => void
 }) {
   const [cost, setCost] = useState('')
+  const [no, setNo] = useState('')
   const [busy, setBusy] = useState(false)
 
   const price = Number.parseInt(cost, 10)
   const ok = cost.trim() !== '' && Number.isFinite(price) && price >= 0
 
+  /*
+    **번호는 안 적어도 된다.** 실물 카드에 박힌 수라 손에 없으면 알 수 없고,
+    없는 채로도 사고파는 데는 지장이 없다 — 안 적으면 −1(아직 안 적었다)이다.
+  */
+  const noValue = no.trim() === '' ? -1 : Number.parseInt(no, 10)
+
   function done() {
     if (!ok || busy) return
     setBusy(true)
-    void Promise.resolve(onDone(price)).finally(() => setBusy(false))
+    void Promise.resolve(onDone(price, noValue)).finally(() => setBusy(false))
   }
 
   return (
@@ -189,17 +207,36 @@ function PriceDialog({
           done()
         }}
       >
-        <input
-          className="sheet__input shop__cost sl-numeral"
-          value={cost}
-          placeholder="값"
-          aria-label="가격"
-          inputMode="numeric"
-          maxLength={4}
-          autoFocus
-          onChange={(e) => setCost(e.target.value.replace(/[^0-9]/g, ''))}
-        />
-        <Coin />
+        <label className="shop__field">
+          <span className="shop__fieldname">값</span>
+          <span className="shop__fieldrow">
+            <input
+              className="sheet__input shop__cost sl-numeral"
+              value={cost}
+              placeholder="값"
+              aria-label="가격"
+              inputMode="numeric"
+              maxLength={4}
+              autoFocus
+              onChange={(e) => setCost(e.target.value.replace(/[^0-9]/g, ''))}
+            />
+            <Coin />
+          </span>
+        </label>
+
+        {/* 카드에 박힌 번호. 번영도 표가 이 번호로 말한다(`prosperity.ts`). */}
+        <label className="shop__field">
+          <span className="shop__fieldname">카드 번호</span>
+          <input
+            className="sheet__input shop__cost sl-numeral"
+            value={no}
+            placeholder="000"
+            aria-label="카드 번호"
+            inputMode="numeric"
+            maxLength={3}
+            onChange={(e) => setNo(e.target.value.replace(/[^0-9]/g, ''))}
+          />
+        </label>
       </form>
 
       <div className="mini__acts">

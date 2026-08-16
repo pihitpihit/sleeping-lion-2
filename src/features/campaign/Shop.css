@@ -77,3 +77,35 @@
   font-size: 0.8rem;
   color: var(--sl-text-faint);
 }
+
+/*
+  카드 번호 — 실물 카드에 박힌 수다(`0029`).
+
+  **줄 맨 앞에 세운다.** 실물이 번호로 정렬돼 있고 번영도 표도 번호로 말하므로
+  (`rules/prosperity.ts`) 눈이 먼저 번호를 따라간다. 아직 안 적은 것은 자리를
+  비운다 — 「없다」를 적으면 줄만 시끄럽다.
+*/
+.shop__no {
+  flex: none;
+  min-width: 2.6em;
+  font-size: 0.95rem;
+  color: var(--sl-text-faint);
+}
+
+/* 값 팝업의 칸 둘 — 값과 카드 번호. */
+.shop__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.shop__fieldname {
+  font-size: 0.78rem;
+  color: var(--sl-text-muted);
+}
+
+.shop__fieldrow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

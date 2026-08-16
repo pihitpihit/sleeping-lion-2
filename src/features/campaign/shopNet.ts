@@ -21,30 +21,44 @@ export interface ShopItem {
   readonly id: string
   readonly name: string
   readonly cost: number
+  /**
+   * 실물 카드에 박힌 번호. **아직 안 적었으면 −1**(`0029`).
+   *
+   * 캠페인 시트의 번영도 표가 번호의 범위로 말하므로(`rules/prosperity.ts`)
+   * 이름만으로는 그 표와 이을 수가 없다.
+   */
+  readonly no: number
 }
 
 interface Row {
   id: string
   name: string | null
   cost: number | null
+  no: number | null
 }
 
-const COLUMNS = 'id, name, cost'
+const COLUMNS = 'id, name, cost, no'
 
 function toItem(row: Row): ShopItem {
   return {
     id: row.id,
     name: typeof row.name === 'string' ? row.name : '',
     cost: typeof row.cost === 'number' ? row.cost : 0,
+    no: typeof row.no === 'number' ? Math.trunc(row.no) : -1,
   }
 }
 
-/** 적어 둔 것 전부. 값이 싼 것부터 — 상점은 값을 보고 고르는 자리다. */
+/**
+ * 적어 둔 것 전부 — **번호 차례로.**
+ *
+ * 실물 카드가 번호로 정렬돼 있고 번영도 표도 번호로 말한다(`prosperity.ts`).
+ * 아직 번호를 안 적은 것(−1)은 맨 앞에 모인다 — **적을 것이 남았다는 표가 된다.**
+ */
 export async function listShopItems(): Promise<ShopItem[]> {
   const { data, error } = await supabase()
     .from('shop_items')
     .select(COLUMNS)
-    .order('cost', { ascending: true })
+    .order('no', { ascending: true })
     .order('name', { ascending: true })
   if (error) throw error
   return ((data ?? []) as unknown as Row[]).map(toItem)
@@ -56,10 +70,15 @@ export async function listShopItems(): Promise<ShopItem[]> {
  * **적은 사람을 함께 남긴다** — 지우는 것은 적은 사람과 관리자뿐이다(`0023`).
  * 남이 적어 둔 것을 아무나 지우면 옆 사람이 사려던 것이 사라진다.
  */
-export async function addShopItem(name: string, cost: number, userId: string): Promise<ShopItem> {
+export async function addShopItem(
+  name: string,
+  cost: number,
+  no: number,
+  userId: string,
+): Promise<ShopItem> {
   const { data, error } = await supabase()
     .from('shop_items')
-    .insert({ name: name.trim(), cost, created_by: userId })
+    .insert({ name: name.trim(), cost, no, created_by: userId })
     .select(COLUMNS)
     .single()
   if (error) throw error

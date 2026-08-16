@@ -19,12 +19,13 @@ interface ShopState {
   items: ShopItem[]
   loaded: boolean
   load: () => Promise<void>
-  add: (name: string, cost: number, userId: string) => Promise<void>
+  add: (name: string, cost: number, no: number, userId: string) => Promise<void>
   drop: (id: string) => Promise<void>
 }
 
-function byCost(a: ShopItem, b: ShopItem): number {
-  return a.cost - b.cost || a.name.localeCompare(b.name)
+/** 번호 차례. 아직 안 적은 것(−1)은 맨 앞에 모인다 — 적을 것이 남았다는 표다. */
+function byNo(a: ShopItem, b: ShopItem): number {
+  return a.no - b.no || a.name.localeCompare(b.name)
 }
 
 export const useShopStore = create<ShopState>((set, get) => ({
@@ -33,7 +34,7 @@ export const useShopStore = create<ShopState>((set, get) => ({
 
   load: async () => {
     try {
-      set({ items: (await listShopItems()).sort(byCost), loaded: true })
+      set({ items: (await listShopItems()).sort(byNo), loaded: true })
     } catch (cause) {
       console.error('[shop]', cause)
       set({ loaded: true })
@@ -41,9 +42,9 @@ export const useShopStore = create<ShopState>((set, get) => ({
   },
 
   /** 적지 못하면 그대로 던진다 — 화면이 까닭을 적어야 한다(같은 이름 등). */
-  add: async (name, cost, userId) => {
-    const made = await addShopItem(name, cost, userId)
-    set({ items: [...get().items, made].sort(byCost) })
+  add: async (name, cost, no, userId) => {
+    const made = await addShopItem(name, cost, no, userId)
+    set({ items: [...get().items, made].sort(byNo) })
   },
 
   drop: async (id) => {

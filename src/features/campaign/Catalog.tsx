@@ -51,6 +51,8 @@ interface CatalogProps {
   canDefine: boolean
   /** 머리에 얹을 것(가진 금화 따위). */
   head?: ReactNode
+  /** 줄 앞에 세울 것(카드 번호 따위). 없으면 안 그린다. */
+  lead?: (entry: CatalogEntry) => ReactNode
   /** 줄 끝에 세울 것(구매·담기). */
   tail: (entry: CatalogEntry, ownedCount: number) => ReactNode
   /** 지울 때 함께 적을 말. 무엇이 함께 사라지는지는 목록마다 다르다. */
@@ -73,6 +75,7 @@ export function CatalogPanel({
   owned,
   canDefine,
   head,
+  lead,
   tail,
   dropNote,
   onAdd,
@@ -131,6 +134,7 @@ export function CatalogPanel({
               const have = owned.filter((n) => fold(n) === fold(entry.name)).length
               return (
                 <li key={entry.id} className="cat__row">
+                  {lead?.(entry)}
                   <span className="cat__name">
                     {entry.name}
                     {have > 0 && (
