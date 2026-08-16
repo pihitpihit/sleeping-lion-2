@@ -5,8 +5,10 @@ import { donateToOak } from './campaignNet'
 import { useCharacterStore } from './characterStore'
 import {
   OAK_CELLS,
+  OAK_BASE,
   OAK_LAST,
   OAK_UNLOCK_BONUS,
+  oakTotal,
   checkGifts,
   isMark,
   prosperityFrom,
@@ -34,7 +36,10 @@ export function GreatOak({
   canDonate,
 }: {
   campaignId: string
-  /** 서버에 담긴 값. 기부하면 그 자리에서 올라간다. */
+  /**
+   * 서버에 담긴 값 — **여는 기부 뒤로 더 낸 것**이다. 기부하면 그 자리에서
+   * 올라간다.
+   */
   total: number
   canDonate: boolean
 }) {
@@ -44,7 +49,12 @@ export function GreatOak({
     파티 목록까지 딸려 오는데, 여기서 바뀌는 것은 이 수 하나다.
   */
   const [added, setAdded] = useState<number | null>(null)
-  const total = added ?? saved
+  /*
+    **판이 말하는 수는 여는 기부 100을 더한 것이다**(형님이 짚었다) — 그 100이
+    곧 판의 시작점이라 열리는 순간 이미 쌓여 있다.
+  */
+  const donated = added ?? saved
+  const total = oakTotal(donated)
 
   /* 낼 사람과 가진 골드. **무리 목록이 이미 읽어 둔 것을 본다** — 두 번 읽지 않는다. */
   const members = useCharacterStore((s) => s.characters)
@@ -60,9 +70,19 @@ export function GreatOak({
   return (
     <div className="oak">
       <div className="oak__facts">
-        <span className="oak__fact">
+        {/*
+          **누적 기부량을 이름과 함께 적는다**(형님이 짚었다). 금화 그림과 수만
+          있으면 그것이 「지금 쌓인 것」인지 「이번에 낸 것」인지 알 수 없다.
+          끝(1000)을 함께 적어 얼마나 남았는지도 그 줄에서 읽힌다.
+        */}
+        <span className="oak__fact oak__fact--total">
           <Coin />
+          <span className="oak__name">누적 기부</span>
           <b className="sl-numeral">{total}</b>
+          <span className="oak__of sl-numeral">/ {OAK_LAST}</span>
+          <span className="oak__why">
+            (개봉 <b className="sl-numeral">{OAK_BASE}</b> 포함)
+          </span>
         </span>
         <span className="oak__fact oak__fact--pros">
           번영도 <b className="sl-numeral">+{prosperity}</b>

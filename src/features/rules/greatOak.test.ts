@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  OAK_BASE,
   OAK_CELLS,
   OAK_UNLOCK_BONUS,
   OAK_FIRST,
@@ -8,6 +9,7 @@ import {
   clampOak,
   isMark,
   prosperityFrom,
+  oakTotal,
   toNextMark,
 } from './greatOak'
 
@@ -27,6 +29,19 @@ describe('떡갈나무 판', () => {
   it('판 밖으로 안 나간다', () => {
     expect(clampOak(-5)).toBe(0)
     expect(clampOak(9999)).toBe(OAK_LAST)
+  })
+})
+
+describe('여는 기부', () => {
+  /** B봉투를 여는 100이 곧 판의 시작점이다(형님이 짚었다). */
+  it('열리는 순간 이미 100이 쌓여 있다', () => {
+    expect(oakTotal(0)).toBe(OAK_BASE)
+    expect(oakTotal(10)).toBe(110)
+    expect(oakTotal(900)).toBe(1000)
+  })
+
+  it('판 끝을 넘지 않는다', () => {
+    expect(oakTotal(99999)).toBe(1000)
   })
 })
 

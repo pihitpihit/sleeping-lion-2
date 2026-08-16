@@ -181,3 +181,18 @@
   font-size: 0.95rem;
   color: var(--sl-text-muted);
 }
+
+/* 누적 기부 — 이름과 끝을 함께 적어야 무엇의 수인지 읽힌다. */
+.oak__name {
+  color: var(--sl-text-muted);
+}
+
+.oak__fact--total b {
+  font-size: 1.35rem;
+  color: var(--sl-gold);
+}
+
+.oak__of {
+  font-size: 0.9rem;
+  color: var(--sl-text-faint);
+}
