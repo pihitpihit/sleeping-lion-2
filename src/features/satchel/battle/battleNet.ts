@@ -1,4 +1,5 @@
 import { isSupabaseConfigured, supabase } from '../../auth/supabase'
+import { clampLevel } from '../../rules/scenarioLevel'
 import { EchoGuard, watchRow } from '../changes'
 import { sanitizeRuntime, type RuntimeSnapshot } from '../runtime/snapshot'
 
@@ -272,6 +273,43 @@ export function watchBattleState(battleId: string, onState: (s: RuntimeSnapshot)
       if (battleEcho.isEcho(snapshot.at)) return
       onState(snapshot)
     },
+  )
+}
+
+/**
+ * 판의 난이도를 고친다.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **난이도는 상 위의 사실이지 사람의 것이 아니다.**                         │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 원소·라운드와 같은 결이다(구현 결정 23·32) — 한 사람이 3레벨을 보는데 옆 사람이
+ * 5레벨을 보면 어느 쪽이 판의 사실인지 알 수 없다. **앉은 사람이면 누구나** 고친다
+ * (`battles`의 UPDATE 정책이 `is_battle_participant`를 본다).
+ */
+export async function setBattleLevel(battleId: string, level: number): Promise<void> {
+  const { error } = await supabase()
+    .from('battles')
+    .update({ level: clampLevel(level) })
+    .eq('id', battleId)
+  if (error) throw error
+}
+
+/**
+ * 이 판의 줄이 바뀌면 받는다 — 지금은 난이도뿐이다.
+ *
+ * `battle_state`와 달리 **메아리를 가려내지 않는다.** 난이도는 초 단위로 여럿이
+ * 만지는 값이 아니라 한 판에 한두 번 정하는 값이고, 돌아온 것이 내가 쓴 것과
+ * 같으면 앉히나 마나다(구현 결정 102가 막으려던 「쓰고 나서 돌아오기까지 사이에
+ * 또 만진 것」이 여기서는 일어나지 않는다).
+ */
+export function watchBattleRow(battleId: string, onLevel: (level: number) => void) {
+  return watchRow(
+    `battle-row:${battleId}`,
+    'battles',
+    `id=eq.${battleId}`,
+    (row) => (typeof row.level === 'number' ? clampLevel(row.level) : 1),
+    onLevel,
   )
 }
 

@@ -1,0 +1,142 @@
+/* 난이도 표 팝업 — 화면을 덮되 표는 손에 맞는다(구현 결정 199와 같은 값). */
+.lvldlg {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 62%);
+}
+
+.lvldlg__panel {
+  width: 100%;
+  max-width: 26rem;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--sl-panel);
+  border: 1px solid var(--sl-border-strong);
+  border-radius: 0.4rem;
+  box-shadow: 0 1.2rem 3rem rgb(0 0 0 / 55%);
+}
+
+.lvldlg__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.7rem 0.8rem 0.5rem;
+}
+
+.lvldlg__title {
+  margin: 0;
+  font-family: var(--sl-font-ko-display);
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--sl-gold-bright);
+}
+
+.lvldlg__close {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  color: var(--sl-text-faint);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.lvldlg__close:hover {
+  color: var(--sl-gold);
+}
+
+/* --- 표 ------------------------------------------------------------------ */
+
+.lvl {
+  padding: 0 0.8rem 0.8rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.lvl__lead {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  color: var(--sl-text-faint);
+}
+
+/* 넓은 표는 제 상자 안에서 구른다 — 팝업이 옆으로 흐르지 않는다. */
+.lvl__scroll {
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.lvl__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.lvl__table th,
+.lvl__table td {
+  padding: 0.28rem 0.3rem;
+  text-align: center;
+  font-weight: 400;
+}
+
+.lvl__table thead th {
+  font-size: 0.72rem;
+  line-height: 1.15;
+  color: var(--sl-text-faint);
+  border-bottom: 1px solid var(--sl-border);
+}
+
+.lvl__table tbody td {
+  font-size: 1rem;
+  color: var(--sl-text);
+}
+
+.lvl__row--on td {
+  color: var(--sl-gold-bright);
+}
+
+.lvl__row--on {
+  background: rgb(196 154 74 / 12%);
+}
+
+/* 누르는 자리는 레벨 칸이다 — 줄 전체를 단추로 두면 표가 안 읽힌다. */
+.lvl__pick {
+  width: 2.2rem;
+  padding: 0.3rem 0;
+  font-family: inherit;
+  font-size: 1.05rem;
+  color: var(--sl-text);
+  background: rgb(0 0 0 / 25%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.lvl__pick:hover:not(:disabled) {
+  color: var(--sl-gold);
+  border-color: var(--sl-border-strong);
+}
+
+.lvl__pick:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.lvl__row--on .lvl__pick {
+  color: var(--sl-void);
+  background: var(--sl-gold);
+  border-color: var(--sl-gold-bright);
+}
+
+.lvl__locked {
+  margin: 0.6rem 0 0;
+  font-size: 0.8rem;
+  color: var(--sl-text-faint);
+}

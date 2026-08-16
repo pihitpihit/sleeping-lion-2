@@ -11,6 +11,8 @@ import {
   listParticipants,
   openAdventure,
   findBattleById,
+  setBattleLevel,
+  watchBattleRow,
   watchBattleState,
   pushBattleState,
   sweepStaleBattles,
@@ -56,6 +58,12 @@ interface BattleState {
    */
   open: (partyId: string, characterIds: readonly string[], level: number) => Promise<void>
   join: (battle: BattleRow, userId: string) => Promise<void>
+  /**
+   * 이 판의 난이도를 고친다 — **상 위의 모두에게 간다.**
+   *
+   * 안 앉았으면 아무 일도 안 한다: 그때 쓰는 값은 위젯 설정에 있다.
+   */
+  setLevel: (level: number) => Promise<void>
   /** 자리에서 일어난다. 판은 남는다. */
   leave: (userId: string) => Promise<void>
   /** 판을 접는다 — 행이 지워지고 값도 함께 간다. */
@@ -104,8 +112,29 @@ async function refreshParticipants(): Promise<void> {
   useBattleStore.setState({ participants: await listParticipants(battle.id) })
 }
 
+/**
+ * 판 줄을 듣는 통로. **방과 따로 둔다** — 방이 나르는 것은 판 값이고 이것은
+ * 판 자체의 칸(난이도)이라 표가 다르다(구현 결정 101).
+ */
+let rowWatch: { close: () => void } | null = null
+
+function watchRow(battleId: string): void {
+  rowWatch?.close()
+  rowWatch = watchBattleRow(battleId, (level) => {
+    const battle = useBattleStore.getState().battle
+    if (!battle || battle.id !== battleId || battle.level === level) return
+    useBattleStore.setState({ battle: { ...battle, level } })
+  })
+}
+
+function unwatchRow(): void {
+  rowWatch?.close()
+  rowWatch = null
+}
+
 function goToBattle(battleId: string): Promise<void> {
   void refreshParticipants()
+  watchRow(battleId)
   return enterRoom(battleRoom(battleId))
 }
 
@@ -116,6 +145,7 @@ function goToBattle(battleId: string): Promise<void> {
  * 않는다 — 다만 이제부터는 내 방에만 쌓인다.
  */
 function goToSolo(userId: string | null): Promise<void> {
+  unwatchRow()
   if (userId === null) {
     leaveRoom()
     return Promise.resolve()
@@ -190,6 +220,21 @@ export const useBattleStore = create<BattleState>((set, get) => ({
       set({ error: messageOf(cause) })
     } finally {
       set({ busy: false })
+    }
+  },
+
+  setLevel: async (level) => {
+    const battle = get().battle
+    if (!battle) return
+    const before = battle.level
+    // 손끝에서 먼저 바꾼다 — 왕복을 기다리면 고른 것이 늦게 뜬다(구현 결정 22).
+    set({ battle: { ...battle, level }, error: null })
+    try {
+      await setBattleLevel(battle.id, level)
+    } catch (cause) {
+      const now = get().battle
+      if (now && now.id === battle.id) set({ battle: { ...now, level: before } })
+      set({ error: messageOf(cause) })
     }
   },
 

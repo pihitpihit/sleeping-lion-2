@@ -15,13 +15,33 @@
   container-type: size;
 }
 
+/*
+  머리가 곧 단추다 — **누르는 자리를 따로 내지 않는다.** 한 칸짜리로도 놓이는
+  위젯이라 단추 하나를 더 세울 자리가 없고, 수를 보는 자리와 고치는 자리가
+  같으면 눈이 자리를 다시 찾지 않는다(구현 결정 364와 같은 결).
+*/
 .cst__head {
+  width: 100%;
+  font-family: inherit;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 0.2rem;
+  cursor: pointer;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 0.4rem;
-  padding-bottom: 0.25rem;
+  padding: 0 0 0.25rem;
   border-bottom: 1px solid var(--sl-border);
+}
+
+.cst__head:disabled {
+  cursor: default;
+}
+
+.cst__head:hover:not(:disabled) .cst__level {
+  color: var(--sl-gold-bright);
 }
 
 .cst__title {
