@@ -13,22 +13,28 @@ name: Keepalive
 
 on:
   schedule:
-    # 사흘마다.
+    # 하루 두 번.
     #
-    # 잠드는 기준이 이레이므로 **여유가 나흘이다.** 예약이 한 번 통째로 걸러져도
-    # 다음 차례가 제때 오면 버틴다 — GitHub은 예약 실행을 best-effort로 두어
-    # 바쁠 때 늦거나 거른다고 문서에 적어 두었다.
+    # ┌────────────────────────────────────────────────────────────────────┐
+    # │ **한 번 찔러 200이 오는 것과 「살아 있는 프로젝트」는 다르다.**     │
+    # └────────────────────────────────────────────────────────────────────┘
     #
-    # 처음에는 매일(여유 엿새), 그다음 닷새(여유 이틀)를 거쳐 여기로 왔다.
-    # 자주 도는 값이 6초짜리 무료 작업이라 아끼는 뜻은 크지 않고, 잠들어서 판을
-    # 벌이는 순간에 로그인이 막히는 쪽이 훨씬 비싸다. 사흘이 그 사이다.
+    # 2026-09-04에 잠들었다 — 사흘 전(09-01) 예약이 200을 받고 성공했는데도
+    # 그랬다. Supabase 문서가 적는 기준은 「이레 동안 요청이 하나도 없으면」이
+    # 아니라 **"a few user requests to the database each day over the previous
+    # week"** — *날마다 몇 번*이다. 사흘에 한 번, 그것도 한 요청은 그 밑이었다.
     #
-    # `*/3`은 매달 1·4·7·…·28·31일에 돈다. 달이 바뀌는 자리에서도 간격이
-    # 사흘을 넘지 않는다(30일 달의 28→1이 사흘, 31일 달은 28→31→1).
+    # 그래서 **날마다 돌고 한 번에 여러 번 찌른다.** 6초짜리 무료 작업이라
+    # 자주 도는 값이 거의 들지 않고, 잠들어서 판을 벌이는 순간에 로그인이
+    # 막히는 쪽이 훨씬 비싸다.
     #
-    # 03:17 UTC — 정각을 피한다. 전 세계 워크플로가 정각에 몰려 그때가 가장
-    # 잘 밀린다.
-    - cron: '17 3 */3 * *'
+    # 두 번으로 나누는 것은 예약이 걸러지는 것에 대비한 것이다 — GitHub은
+    # 예약 실행을 best-effort로 두어 바쁠 때 늦거나 거른다. 하루 한 번이면
+    # 걸러진 날은 통째로 빈다.
+    #
+    # :17 — 정각을 피한다. 전 세계 워크플로가 정각에 몰려 그때가 가장 잘 밀린다.
+    - cron: '17 3 * * *'
+    - cron: '17 15 * * *'
   # 손으로도 돌릴 수 있게 둔다. 잠든 것 같을 때 기다리지 않고 깨우는 길이다.
   workflow_dispatch:
 
@@ -64,21 +70,34 @@ jobs:
           # 가장 싼 질의로 찌른다. **무엇을 읽으려는 것이 아니다** — RLS에 걸려
           # 빈 배열이 와도 상관없고, 요청이 Postgres까지 닿았다는 사실이 전부다.
           # 그래서 `limit=1`이고 고르는 칸도 하나다.
-          url="$SUPABASE_URL/rest/v1/profiles?select=id&limit=1"
+          #
+          # **여러 번 찌른다.** 문서가 말하는 기준이 「날마다 몇 번」이라 한
+          # 번으로는 모자란다(2026-09-04에 그래서 잠들었다). 표를 갈라 찌르는
+          # 것은 한 표만 유난히 조용한 것으로 세어지는 일이 없게 하려는 것이다.
+          fail=0
+          for path in \
+            'profiles?select=id&limit=1' \
+            'parties?select=id&limit=1' \
+            'shop_items?select=id&limit=1'
+          do
+            code=$(curl -sS -o /tmp/body -w '%{http_code}' --max-time 30 \
+              -H "apikey: $SUPABASE_KEY" \
+              -H "Authorization: Bearer $SUPABASE_KEY" \
+              "$SUPABASE_URL/rest/v1/$path")
 
-          code=$(curl -sS -o /tmp/body -w '%{http_code}' --max-time 30 \
-            -H "apikey: $SUPABASE_KEY" \
-            -H "Authorization: Bearer $SUPABASE_KEY" \
-            "$url")
+            echo "HTTP $code  $path"
+            head -c 200 /tmp/body || true
+            echo
 
-          echo "HTTP $code"
-          head -c 200 /tmp/body || true
-          echo
+            # 200이 아니면 **실패로 남긴다.** 조용히 지나가면 몇 달 뒤 판을
+            # 벌이려는 순간에야 잠든 것을 안다.
+            if [ "$code" != "200" ]; then fail=1; fi
 
-          # 200이 아니면 **실패로 남긴다.** 조용히 지나가면 몇 달 뒤 판을 벌이려는
-          # 순간에야 잠든 것을 안다.
-          if [ "$code" != "200" ]; then
-            echo "::error::Supabase가 200을 주지 않았다 (HTTP $code). 프로젝트가 잠들었거나 키가 바뀌었을 수 있다."
+            sleep 2
+          done
+
+          if [ "$fail" != "0" ]; then
+            echo "::error::Supabase가 200을 주지 않았다. 프로젝트가 잠들었거나 키가 바뀌었을 수 있다 — 대시보드에서 Resume project."
             exit 1
           fi
 
