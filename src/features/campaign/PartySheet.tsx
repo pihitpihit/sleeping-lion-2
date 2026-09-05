@@ -430,53 +430,60 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
           (형님이 찍어 보내 주었다). 담기는 것은 칸 수 하나이고 레벨은 셈해서
           낸다(`rules/prosperity.ts`) — 캐릭터 레벨을 경험치에서 뽑는 것과 같다.
 
-          **떡갈나무와 같은 조건으로 열린다**(형님이 정했다).
+          **떡갈나무에 가두지 않는다**(2026-09-05, 형님이 뒤집었다). 한동안
+          떡갈나무와 같은 조건으로 열었는데(옛 구현 결정 409) 그러면 **떡갈나무가
+          열리기 전에는 번영도를 적을 데가 없다** — 실물에서는 시나리오 보상·도시
+          이벤트로 처음부터 오르고 떡갈나무는 나중에 붙는 한 갈래일 뿐이다.
+          실제로 조건을 안 켠 기록지에 번영도가 1칸씩 들어 있었다: **값은 있는데
+          화면에 없었다.**
+
+          떡갈나무 몫은 **그것대로 따로 선다**(구현 결정 393) — 여기 칸에 저절로
+          더해지지 않는다. 어디서 온 번영도인지 갈려야 되짚을 수 있고, 저절로
+          더하면 손으로 켠 것과 이중으로 세어진다.
           ------------------------------------------------------------------ */}
-        {oakOpen && (
-          <section className="sheet__block">
-            <h2 className="sheet__label">번영도</h2>
+        <section className="sheet__block">
+          <h2 className="sheet__label">번영도</h2>
 
-            <div className="pros__head">
-              <span className="pros__level">
-                레벨 <b className="sl-numeral">{levelForTicks(shown.prosperity)}</b>
-              </span>
-              <span className="pros__cards">
-                아이템 카드{' '}
-                <b className="sl-numeral">
-                  {cardNo(prosperityRow(levelForTicks(shown.prosperity)).from)}–
-                  {cardNo(prosperityRow(levelForTicks(shown.prosperity)).to)}
-                </b>
-              </span>
-            </div>
+          <div className="pros__head">
+            <span className="pros__level">
+              레벨 <b className="sl-numeral">{levelForTicks(shown.prosperity)}</b>
+            </span>
+            <span className="pros__cards">
+              아이템 카드{' '}
+              <b className="sl-numeral">
+                {cardNo(prosperityRow(levelForTicks(shown.prosperity)).from)}–
+                {cardNo(prosperityRow(levelForTicks(shown.prosperity)).to)}
+              </b>
+            </span>
+          </div>
 
-            <ol className="pros__track" aria-label={`번영도 ${shown.prosperity}칸`}>
-              {Array.from({ length: PROSPERITY_TICKS }, (_, i) => i + 1).map((n) => {
-                const mark = markAt(n)
-                return (
-                  <li key={n} className="pros__slot">
-                    {/* 문턱 칸 위에 레벨을 굵게 — 실물 판이 그렇다. */}
-                    <span className="pros__mark sl-numeral">{mark ?? ''}</span>
-                    <button
-                      type="button"
-                      aria-label={`번영도 ${n}칸`}
-                      aria-pressed={n <= shown.prosperity}
-                      className={[
-                        'pros__box',
-                        n <= shown.prosperity ? 'pros__box--on' : '',
-                        mark !== null ? 'pros__box--mark' : '',
-                      ]
-                        .filter(Boolean)
-                        .join(' ')}
-                      disabled={!editing}
-                      /* 앞에서부터 찬다 — 같은 칸을 다시 누르면 그 앞까지만 남는다. */
-                      onClick={() => set('prosperity', shown.prosperity === n ? n - 1 : n)}
-                    />
-                  </li>
-                )
-              })}
-            </ol>
-          </section>
-        )}
+          <ol className="pros__track" aria-label={`번영도 ${shown.prosperity}칸`}>
+            {Array.from({ length: PROSPERITY_TICKS }, (_, i) => i + 1).map((n) => {
+              const mark = markAt(n)
+              return (
+                <li key={n} className="pros__slot">
+                  {/* 문턱 칸 위에 레벨을 굵게 — 실물 판이 그렇다. */}
+                  <span className="pros__mark sl-numeral">{mark ?? ''}</span>
+                  <button
+                    type="button"
+                    aria-label={`번영도 ${n}칸`}
+                    aria-pressed={n <= shown.prosperity}
+                    className={[
+                      'pros__box',
+                      n <= shown.prosperity ? 'pros__box--on' : '',
+                      mark !== null ? 'pros__box--mark' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    disabled={!editing}
+                    /* 앞에서부터 찬다 — 같은 칸을 다시 누르면 그 앞까지만 남는다. */
+                    onClick={() => set('prosperity', shown.prosperity === n ? n - 1 : n)}
+                  />
+                </li>
+              )
+            })}
+          </ol>
+        </section>
 
         {oakOpen && (
           <section className="sheet__block">
