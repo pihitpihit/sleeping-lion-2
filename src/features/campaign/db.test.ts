@@ -64,6 +64,7 @@ describe('sanitizeCampaign', () => {
       achievements: ['첫 걸음'],
       reputation: 12,
       unlocks: { 'cond-1': 3 },
+      treasures: [2, 9, 41],
       oak: 340,
       prosperity: 3,
       globalAchievements: { '드레이크 처치': 2 },
@@ -72,6 +73,25 @@ describe('sanitizeCampaign', () => {
       version: 3,
     }
     expect(sanitizeCampaign(source)).toEqual(source)
+  })
+})
+
+describe('찾은 보물', () => {
+  /*
+    **번호 차례로 세우고 겹친 것을 걷는다.** 서버에서 오는 것도 거울에서 읽은 것도
+    같은 꼴이어야 한다 — 안 그러면 초안과 견줄 때 안 건드린 값이 「고쳤다」로 읽힌다.
+  */
+  it('뒤섞이고 겹친 것을 세워 놓는다', () => {
+    const c = sanitizeCampaign({ id: 'a', treasures: [41, 2, 41, 9] })
+    expect(c.treasures).toEqual([2, 9, 41])
+  })
+
+  it('수가 아닌 것과 0 이하는 걷는다 — 타일 번호는 1부터다', () => {
+    const c = sanitizeCampaign({
+      id: 'a',
+      treasures: [3, 0, -2, '넷'] as unknown as number[],
+    })
+    expect(c.treasures).toEqual([3])
   })
 })
 

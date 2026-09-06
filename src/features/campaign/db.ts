@@ -92,6 +92,17 @@ export function sanitizeCampaign(raw: Partial<Campaign> & { id: string }): Campa
     reputation: clampReputation(typeof raw.reputation === 'number' ? raw.reputation : 0),
     globalAchievements: sanitizeUnlocks(raw.globalAchievements),
     unlocks: sanitizeUnlocks(raw.unlocks),
+    /* **번호 차례로 세우고 겹친 것을 걷는다** — 거울에서 읽은 것도 같은 꼴이어야 한다. */
+    treasures: Array.isArray(raw.treasures)
+      ? [
+          ...new Set(
+            raw.treasures
+              .filter((n): n is number => typeof n === 'number' && Number.isFinite(n))
+              .map((n) => Math.trunc(n))
+              .filter((n) => n >= 1),
+          ),
+        ].sort((a, b) => a - b)
+      : [],
     oak: typeof raw.oak === 'number' && raw.oak > 0 ? Math.trunc(raw.oak) : 0,
     prosperity: typeof raw.prosperity === 'number' ? clampTicks(raw.prosperity) : 0,
     createdAt: typeof raw.createdAt === 'number' ? raw.createdAt : now,

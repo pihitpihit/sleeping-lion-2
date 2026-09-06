@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
+import { TREASURE_COUNT } from '../rules/treasure'
 import { PartySheet } from './PartySheet'
 import type { Campaign } from './types'
 
@@ -25,6 +26,7 @@ function fixture(over: Partial<Campaign> = {}): Campaign {
     location: '광장',
     notes: '',
     unlocks: {},
+    treasures: [],
     oak: 0,
     prosperity: 1,
     globalAchievements: {},
@@ -112,14 +114,14 @@ describe('기록지의 짜임 — 한 장의 종이', () => {
     // 단이 먼저 열리고 띠는 그 뒤에 온다.
     expect(bar).toBeGreaterThan(col)
     /*
-      칸은 여덟 — 이름·머무는 곳·평판 줄·번영도·파티 업적·전역 업적·개봉 조건·메모.
+      칸은 아홉 — 이름·머무는 곳·평판 줄·번영도·파티 업적·전역 업적·개봉 조건·보물·메모.
       **떡갈나무는 B봉투가 열려야 나온다**(`0033`) — 표가 비어 있으면 안 세어진다.
       **개봉 조건은 표가 비어 있어도 선다** — 왜 비었는지 적어 주어야 「UI가 안
       보인다」가 되지 않는다(형님이 짚었다).
     */
-    expect((html.match(/class="sheet__block/g) ?? []).length).toBe(8)
+    expect((html.match(/class="sheet__block/g) ?? []).length).toBe(9)
     // 단이 닫힌 뒤에 띠가 서는지: 띠 앞쪽에 칸이 다 들어 있다.
-    expect((html.slice(col, bar).match(/class="sheet__block/g) ?? []).length).toBe(8)
+    expect((html.slice(col, bar).match(/class="sheet__block/g) ?? []).length).toBe(9)
   })
 
   /*
@@ -139,6 +141,29 @@ describe('기록지의 짜임 — 한 장의 종이', () => {
     expect(html).toContain('번영도')
     expect(html).toContain('pros__track')
     expect(html).not.toContain('위대한 떡갈나무')
+  })
+
+  /*
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │ **책자가 「알지 마십시오」라 적은 글이다 — 찾은 것만 편다.**            │
+    └────────────────────────────────────────────────────────────────────────┘
+
+    막으려는 것은 공격이 아니라 **실수로 읽는 것**이다(레포와 번들이 공개라 화면
+    으로 가리는 것은 아무것도 못 막는다). 스토어가 서버 렌더에 안 비치므로
+    (구현 결정 150) 여기서 볼 수 있는 것은 **표가 비었을 때**의 갈래다 — 그때도
+    칸이 서고 번호를 켤 수 있어야 한다.
+  */
+  it('보물 표가 비어 있어도 칸은 서고 번호를 켤 수 있다', () => {
+    const html = render(fixture())
+    expect(html).toContain('aria-label="보물 1번"')
+    expect(html).toContain(`aria-label="보물 ${TREASURE_COUNT}번"`)
+    expect(html).toContain('주인장 화면')
+  })
+
+  it('찾은 번호만 켜진다 — 나머지는 번호만 늘어선다', () => {
+    const html = render(fixture({ treasures: [3, 41] }))
+    expect((html.match(/tre__box--on/g) ?? []).length).toBe(2)
+    expect(html).toContain('aria-label="찾은 보물 2개"')
   })
 
   it('떡갈나무 몫이 번영도 칸에 저절로 더해지지 않는다', () => {

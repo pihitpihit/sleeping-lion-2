@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   LOG_REASONS,
+  campaignChangesOf,
   changesOf,
   describeChange,
   reasonText,
@@ -201,5 +202,26 @@ describe('전역 업적 기록', () => {
     expect(
       describeChange({ field: 'globalAchievements', from: { 가: 2 }, to: { 가: 1, 나: 1 } }),
     ).toBe('전역 업적 가 −1, 나 +1')
+  })
+})
+
+describe('보물 로그', () => {
+  /*
+    **번호만 적는다.** 글은 책자가 「알지 마십시오」라 적은 것이라 로그에 남기면
+    나중에 로그를 훑다가 안 찾은 것을 읽게 된다(구현 결정 373과 같은 결).
+  */
+  it('찾은 번호와 지운 번호를 적는다', () => {
+    expect(describeChange({ field: 'treasures', from: [3], to: [3, 41] })).toBe('보물 41번 찾음')
+    expect(describeChange({ field: 'treasures', from: [3, 41], to: [3] })).toBe('보물 41번 지움')
+  })
+
+  it('글은 안 적는다 — 번호만 나간다', () => {
+    const line = describeChange({ field: 'treasures', from: [], to: [2] })
+    expect(line).toBe('보물 2번 찾음')
+  })
+
+  it('파티 로그가 보물을 담는다', () => {
+    const changes = campaignChangesOf({ treasures: [1] }, { treasures: [1, 2] })
+    expect(changes).toEqual([{ field: 'treasures', from: [1], to: [1, 2] }])
   })
 })

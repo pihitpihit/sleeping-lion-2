@@ -33,6 +33,8 @@ export interface PartyDraft {
   reputation: number
   /** 개봉 조건을 어디까지 켰는가 — `{ 조건 id: 켠 칸 수 }`. */
   unlocks: Record<string, number>
+  /** 찾은 보물의 번호. 켰다/껐다뿐이라 목록이다(`0041`). */
+  treasures: number[]
 }
 
 /** 지금 레코드를 초안으로 뜬다. 배열은 **사본으로** 뜬다 — 원본을 건드리면 안 된다. */
@@ -46,6 +48,7 @@ export function draftOf(campaign: Campaign): PartyDraft {
     prosperity: campaign.prosperity,
     reputation: campaign.reputation,
     unlocks: { ...campaign.unlocks },
+    treasures: [...campaign.treasures],
   }
 }
 
@@ -60,6 +63,10 @@ function sameCounts(a: Record<string, number>, b: Record<string, number>): boole
 
 function sameStrings(a: readonly string[], b: readonly string[]): boolean {
   return a.length === b.length && a.every((s, i) => s === b[i])
+}
+
+function sameNumbers(a: readonly number[], b: readonly number[]): boolean {
+  return a.length === b.length && a.every((n, i) => n === b[i])
 }
 
 /**
@@ -98,6 +105,14 @@ export function partyDiff(campaign: Campaign, draft: PartyDraft): CampaignEdits 
     if (count > 0) unlocks[id] = count
   }
   if (!sameCounts(unlocks, campaign.unlocks)) edits.unlocks = unlocks
+
+  /*
+    **늘 번호 차례로 세우고 겹친 것을 걷는다.** 켠 차례대로 쌓아 두면 같은 것을
+    껐다 켰을 뿐인데 저장 단추가 살아난다 — 눈에 안 보이는 차이로 살아나면 안
+    된다(구현 결정 168).
+  */
+  const treasures = [...new Set(draft.treasures.filter((n) => n >= 1))].sort((a, b) => a - b)
+  if (!sameNumbers(treasures, campaign.treasures)) edits.treasures = treasures
 
   const globals: Record<string, number> = {}
   for (const [name, count] of Object.entries(draft.globalAchievements)) {

@@ -15,9 +15,11 @@ import { campaignChangesOf } from './characterLog'
 import { writeCampaignLog } from './campaignNet'
 import { LogView } from './LogView'
 import { AchievementPicker } from './AchievementPicker'
+import { useTreasureStore } from './treasureStore'
 import { useUnlockStore } from './unlockStore'
 import { ConditionText } from './ConditionText'
 import { GreatOak } from './GreatOak'
+import { TREASURE_COUNT } from '../rules/treasure'
 import { PROSPERITY_TICKS, cardNo, levelForTicks, markAt, prosperityRow } from '../rules/prosperity'
 import { markClass, moveOf } from './sheetDraft'
 
@@ -81,6 +83,13 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   useEffect(() => {
     void loadConditions()
   }, [loadConditions])
+
+  /* 보물 색인. 같은 등급의 글이고 같은 주기로 필요하다(`0041`). */
+  const treasures = useTreasureStore((s) => s.items)
+  const loadTreasures = useTreasureStore((s) => s.load)
+  useEffect(() => {
+    void loadTreasures()
+  }, [loadTreasures])
   /** 누가 고쳤는지 남기려면 내가 누구인지 알아야 한다. */
   const userId = useAuthStore((s) => s.session?.userId ?? null)
   const nameId = useId()
@@ -109,6 +118,16 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   const shown: PartyDraft = editing ? draft : draftOf(campaign)
   const dirty = editing && isDirty(campaign, draft)
   const modifier = shopPriceModifier(shown.reputation)
+
+  /*
+    보물 색인. **표가 없어도 칸은 선다** — 그때는 책자에 있는 만큼(75)을 늘어놓고
+    글만 없다. 표가 있으면 표에 든 번호까지 늘어놓되 **이미 찾아 둔 번호는 표에
+    없더라도 자리를 준다**: 표를 줄여 넣었다고 찾은 것이 화면에서 사라지면 안 된다.
+  */
+  const treasureText = new Map(treasures.map((t) => [t.no, t.text]))
+  const found = new Set(shown.treasures)
+  const last = Math.max(TREASURE_COUNT, ...treasures.map((t) => t.no), ...found)
+  const numbers = Array.from({ length: last }, (_, i) => i + 1)
 
   /*
     ┌────────────────────────────────────────────────────────────────────────┐
@@ -558,6 +577,79 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
                 })}
               </ul>
             </>
+          )}
+        </section>
+
+        {/* ------------------------------------------------------------------
+          보물 색인
+          ------------------------------------------------------------------
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **글은 찾은 것만 보인다.**                                        │
+          └──────────────────────────────────────────────────────────────────┘
+
+          책자가 그 쪽 머리에 「이 정보를 알지 마십시오」라고 적어 두었다 — 타일을
+          찾아 확인할 때 말고는 읽으면 안 되는 글이다. 그래서 **켠 번호에만 글을
+          붙이고 나머지는 번호만** 늘어놓는다. 막으려는 것은 공격이 아니라 **실수로
+          읽는 것**이다(레포와 번들이 공개라 화면으로 가리는 것은 아무것도 못 막는다,
+          구현 결정 44와 같은 결).
+
+          **표가 없어도 칸은 선다**(구현 결정 371). 번호를 켜는 일은 그대로 되고
+          글이 없을 뿐이다 — 왜 비었는지도 적어 준다.
+          ------------------------------------------------------------------ */}
+        <section className="sheet__block">
+          <h2 className="sheet__label">보물</h2>
+
+          {treasures.length === 0 ? (
+            <p className="sheet__empty">
+              아직 표가 없다. 책자에 인쇄된 글이라 레포에 담지 않으므로{' '}
+              <a href="#/admin">주인장 화면</a>에서 넣는다. 표가 없어도 찾은 번호는 적을 수 있다.
+            </p>
+          ) : (
+            <p className="sheet__empty">찾은 번호를 켠다. 글은 켠 것만 보인다.</p>
+          )}
+
+          <ol className="tre__grid" aria-label={`찾은 보물 ${found.size}개`}>
+            {numbers.map((no) => (
+              <li key={no} className="tre__slot">
+                <button
+                  type="button"
+                  className={`tre__box${found.has(no) ? ' tre__box--on' : ''}`}
+                  aria-label={`보물 ${no}번`}
+                  aria-pressed={found.has(no)}
+                  disabled={!editing}
+                  onClick={() =>
+                    set(
+                      'treasures',
+                      found.has(no)
+                        ? draft.treasures.filter((n) => n !== no)
+                        : [...draft.treasures, no],
+                    )
+                  }
+                >
+                  <span className="sl-numeral">{no}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+
+          {/*
+            찾은 것만 글을 편다. **표가 비어 있으면 아예 안 낸다** — 「표에 없는
+            번호」만 줄줄이 서면 알려 주는 것이 없다. 그때는 격자의 켜진 칸이
+            이미 같은 말을 하고 있다.
+          */}
+          {treasures.length > 0 && found.size > 0 && (
+            <ul className="tre__found">
+              {[...found]
+                .sort((a, b) => a - b)
+                .map((no) => (
+                  <li key={no} className="tre__line">
+                    <b className="tre__no sl-numeral">{no}</b>
+                    <span className="tre__text">
+                      {treasureText.get(no) ?? <i className="tre__unknown">표에 없는 번호</i>}
+                    </span>
+                  </li>
+                ))}
+            </ul>
           )}
         </section>
 

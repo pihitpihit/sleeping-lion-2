@@ -74,6 +74,13 @@ export interface Campaign {
    * — 그때는 이 칸이 안 보인다.
    */
   unlocks: Record<string, number>
+  /**
+   * 찾은 보물의 번호 — **타일에 박힌 그 번호다**(`0041`).
+   *
+   * 개봉 조건이 `{ id: 켠 칸 수 }`인 것과 달리 켰다/껐다뿐이라 셈할 것이 없다 —
+   * 파티 업적이 이름의 목록인 것과 같은 모양이다.
+   */
+  treasures: number[]
 
   createdAt: number
   updatedAt: number
@@ -98,6 +105,7 @@ export type CampaignEdits = Partial<
     | 'prosperity'
     | 'reputation'
     | 'unlocks'
+    | 'treasures'
   >
 >
 

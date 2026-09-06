@@ -116,6 +116,7 @@ const FIELD_NAME: Readonly<Record<string, string>> = {
   reputation: '평판',
   achievements: '업적',
   unlocks: '개봉 조건',
+  treasures: '보물',
   globalAchievements: '전역 업적',
 }
 
@@ -220,6 +221,26 @@ export function describeChange(change: LogChange): string {
     const to = countBoxes(change.to)
     const delta = to - from
     return `${name} ${from} → ${to} (${delta > 0 ? '+' : '−'}${Math.abs(delta)})`
+  }
+
+  /*
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │ **번호만 적는다 — 무엇이었는지는 안 적는다.**                           │
+    └────────────────────────────────────────────────────────────────────────┘
+
+    보물의 글은 책자가 「알지 마십시오」라 적어 둔 것이라 **로그에 남기면 나중에
+    로그를 훑다가 안 찾은 것을 읽게 된다.** 번호는 타일에 박혀 있어 그 자체로는
+    무엇인지 말하지 않는다 — 개봉 조건이 수만 적는 것과 같은 결이다(구현 결정 373).
+  */
+  if (change.field === 'treasures') {
+    const from = asNumbers(change.from)
+    const to = asNumbers(change.to)
+    const added = to.filter((n) => !from.includes(n))
+    const removed = from.filter((n) => !to.includes(n))
+    const parts: string[] = []
+    if (added.length > 0) parts.push(`${added.join(', ')}번 찾음`)
+    if (removed.length > 0) parts.push(`${removed.join(', ')}번 지움`)
+    return `${name} ${parts.join(' / ')}`
   }
 
   if (change.field === 'achievements') {
@@ -332,6 +353,7 @@ export function campaignChangesOf(
     'achievements',
     'globalAchievements',
     'unlocks',
+    'treasures',
     'notes',
   ]) {
     const to = edits[field]

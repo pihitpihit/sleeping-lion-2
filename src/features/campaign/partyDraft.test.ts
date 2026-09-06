@@ -19,6 +19,7 @@ function fixture(over: Partial<Campaign> = {}): Campaign {
     notes: '',
     achievements: ['첫 밤'],
     unlocks: {},
+    treasures: [],
     oak: 0,
     prosperity: 1,
     globalAchievements: {},
@@ -113,5 +114,34 @@ describe('고친 것이 있는가', () => {
     const d = { ...draftOf(c), reputation: 9 }
     expect(isDirty(c, d)).toBe(true)
     expect(isDirty(c, { ...d, reputation: c.reputation })).toBe(false)
+  })
+})
+
+describe('찾은 보물', () => {
+  /*
+    번호의 목록이라 **늘 세워 놓고 겹친 것을 걷는다**(`partyDiff`). 안 그러면
+    같은 것을 껐다 켰을 뿐인데 저장 단추가 살아난다 — 눈에 안 보이는 차이로
+    살아나면 안 된다(구현 결정 168).
+  */
+  const base = fixture({ treasures: [3, 9] })
+
+  it('켜면 고친 것이 된다', () => {
+    const draft = { ...draftOf(base), treasures: [3, 9, 41] }
+    expect(partyDiff(base, draft).treasures).toEqual([3, 9, 41])
+    expect(isDirty(base, draft)).toBe(true)
+  })
+
+  it('끄면 고친 것이 된다', () => {
+    const draft = { ...draftOf(base), treasures: [3] }
+    expect(partyDiff(base, draft).treasures).toEqual([3])
+  })
+
+  it('차례만 다르거나 겹친 것은 고친 것이 아니다', () => {
+    expect(isDirty(base, { ...draftOf(base), treasures: [9, 3, 9] })).toBe(false)
+  })
+
+  it('0 이하는 걷는다 — 타일 번호는 1부터다', () => {
+    const draft = { ...draftOf(base), treasures: [3, 9, 0, -1] }
+    expect(isDirty(base, draft)).toBe(false)
   })
 })

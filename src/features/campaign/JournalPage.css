@@ -2651,3 +2651,89 @@
   font-size: 0.82rem;
   color: var(--sl-text-faint);
 }
+
+/* --------------------------------------------------------------------------
+   보물 색인
+   --------------------------------------------------------------------------
+   번호가 일흔다섯 개 늘어서므로 **격자로 못박는다** — 흘려 넣으면 화면 폭마다
+   줄이 달라져 몇 번째 줄에서 봤는지 기억이 안 남는다(구현 결정 186과 같은 결).
+   -------------------------------------------------------------------------- */
+
+.tre__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(2.1rem, 1fr));
+  gap: 0.25rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tre__slot {
+  display: block;
+}
+
+.tre__box {
+  width: 100%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--sl-text-faint);
+  background: rgb(0 0 0 / 25%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.2rem;
+  cursor: pointer;
+}
+
+.tre__box:hover:not(:disabled) {
+  color: var(--sl-gold);
+  border-color: var(--sl-border-strong);
+}
+
+.tre__box:disabled {
+  cursor: default;
+}
+
+.tre__box--on {
+  color: var(--sl-void);
+  background: var(--sl-gold);
+  border-color: var(--sl-gold-bright);
+}
+
+/* 찾은 것만 글을 편다 — 나머지는 책자가 「알지 마십시오」라 적은 것이다. */
+.tre__found {
+  margin: 0.7rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.tre__line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.tre__no {
+  flex: none;
+  min-width: 1.8rem;
+  text-align: right;
+  color: var(--sl-gold);
+}
+
+.tre__text {
+  color: var(--sl-text);
+}
+
+.tre__unknown {
+  color: var(--sl-text-faint);
+}
+
+/* 빈 칸 안내의 링크. 기본 파랑이 뜨면 종이 위에서 혼자 논다. */
+.sheet__empty a {
+  color: var(--sl-gold);
+}

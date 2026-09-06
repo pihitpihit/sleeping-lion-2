@@ -24,6 +24,7 @@ interface Row {
   notes: string
   achievements: string[] | null
   unlocks: Record<string, number> | null
+  treasures: number[] | null
   global_achievements: Record<string, number> | null
   oak: number | null
   prosperity: number | null
@@ -34,7 +35,7 @@ interface Row {
 }
 
 const COLUMNS =
-  'id, party_id, name, location, notes, achievements, global_achievements, reputation, prosperity, unlocks, oak, created_at, updated_at, version'
+  'id, party_id, name, location, notes, achievements, global_achievements, reputation, prosperity, unlocks, treasures, oak, created_at, updated_at, version'
 
 function toCampaign(row: Row): Campaign {
   return sanitizeCampaign({
@@ -45,6 +46,7 @@ function toCampaign(row: Row): Campaign {
     notes: row.notes,
     achievements: row.achievements ?? [],
     unlocks: row.unlocks ?? {},
+    treasures: Array.isArray(row.treasures) ? row.treasures.map((n) => Math.trunc(n)) : [],
     globalAchievements: row.global_achievements ?? {},
     oak: typeof row.oak === 'number' ? row.oak : 0,
     prosperity: typeof row.prosperity === 'number' ? row.prosperity : 1,
@@ -101,9 +103,9 @@ export async function pushEdits(id: string, edits: CampaignEdits): Promise<Campa
   if (edits.notes !== undefined) patch.notes = edits.notes
   if (edits.achievements !== undefined) patch.achievements = edits.achievements
   if (edits.unlocks !== undefined) patch.unlocks = edits.unlocks
+  if (edits.treasures !== undefined) patch.treasures = edits.treasures
   if (edits.prosperity !== undefined) patch.prosperity = edits.prosperity
-  if (edits.globalAchievements !== undefined)
-    patch.global_achievements = edits.globalAchievements
+  if (edits.globalAchievements !== undefined) patch.global_achievements = edits.globalAchievements
   if (edits.reputation !== undefined) patch.reputation = edits.reputation
 
   const { data, error } = await supabase()
