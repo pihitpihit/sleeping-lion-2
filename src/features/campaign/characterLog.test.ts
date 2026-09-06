@@ -225,3 +225,19 @@ describe('보물 로그', () => {
     expect(changes).toEqual([{ field: 'treasures', from: [1], to: [1, 2] }])
   })
 })
+
+describe('번영도 로그', () => {
+  /*
+    번영도는 상점에 풀리는 아이템 카드를 정하는 값이라(`rules/prosperity.ts`)
+    "언제 몇 칸이 올랐나"를 나중에 되짚게 된다. 담기지 않고 있던 것을 채웠다.
+  */
+  it('몇 칸에서 몇 칸이 되었는지 적는다', () => {
+    expect(describeChange({ field: 'prosperity', from: 4, to: 6 })).toBe('번영도 4 → 6 (+2)')
+  })
+
+  it('파티 로그가 번영도를 담는다', () => {
+    expect(campaignChangesOf({ prosperity: 4 }, { prosperity: 6 })).toEqual([
+      { field: 'prosperity', from: 4, to: 6 },
+    ])
+  })
+})

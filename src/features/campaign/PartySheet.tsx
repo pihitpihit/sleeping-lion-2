@@ -15,6 +15,8 @@ import { campaignChangesOf } from './characterLog'
 import { writeCampaignLog } from './campaignNet'
 import { LogView } from './LogView'
 import { AchievementPicker } from './AchievementPicker'
+import { ListIcon } from './ListIcon'
+import { TreasureView } from './TreasureView'
 import { useTreasureStore } from './treasureStore'
 import { useUnlockStore } from './unlockStore'
 import { ConditionText } from './ConditionText'
@@ -99,6 +101,8 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   const [wantsEdit, setWantsEdit] = useState(false)
   const [draft, setDraft] = useState<PartyDraft>(() => draftOf(campaign))
   const [asking, setAsking] = useState(false)
+  /** 보물 색인 팝업이 떠 있는가. */
+  const [openTreasures, setOpenTreasures] = useState(false)
 
   /**
    * 지금 편집 중인가.
@@ -120,11 +124,13 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   const modifier = shopPriceModifier(shown.reputation)
 
   /*
-    보물 색인. **표가 없어도 칸은 선다** — 그때는 책자에 있는 만큼(75)을 늘어놓고
-    글만 없다. 표가 있으면 표에 든 번호까지 늘어놓되 **이미 찾아 둔 번호는 표에
-    없더라도 자리를 준다**: 표를 줄여 넣었다고 찾은 것이 화면에서 사라지면 안 된다.
+    보물 색인. 시트에는 **번호만** 늘어놓고 내용은 팝업이 보여 준다 — 일흔다섯
+    줄의 글을 여기 다 펴면 시트가 그만큼 길어진다.
+
+    **표가 없어도 칸은 선다** — 그때는 책자에 있는 만큼(75)을 늘어놓는다. 표가
+    있으면 표에 든 번호까지 늘어놓되 **이미 찾아 둔 번호는 표에 없더라도 자리를
+    준다**: 표를 줄여 넣었다고 찾은 것이 화면에서 사라지면 안 된다.
   */
-  const treasureText = new Map(treasures.map((t) => [t.no, t.text]))
   const found = new Set(shown.treasures)
   const last = Math.max(TREASURE_COUNT, ...treasures.map((t) => t.no), ...found)
   const numbers = Array.from({ length: last }, (_, i) => i + 1)
@@ -597,7 +603,21 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
           글이 없을 뿐이다 — 왜 비었는지도 적어 준다.
           ------------------------------------------------------------------ */}
         <section className="sheet__block">
-          <h2 className="sheet__label">보물</h2>
+          <div className="tre__head">
+            <h2 className="sheet__label">보물</h2>
+            {/*
+              **아이콘 버튼이다.** 시트에는 번호만 두고 내용은 팝업에서 본다 —
+              일흔다섯 줄의 글을 시트에 다 펴면 시트가 그만큼 길어진다.
+            */}
+            <button
+              type="button"
+              className="tre__more"
+              aria-label="보물 색인 자세히 보기"
+              onClick={() => setOpenTreasures(true)}
+            >
+              <ListIcon />
+            </button>
+          </div>
 
           {treasures.length === 0 ? (
             <p className="sheet__empty">
@@ -605,7 +625,7 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
               <a href="#/admin">주인장 화면</a>에서 넣는다. 표가 없어도 찾은 번호는 적을 수 있다.
             </p>
           ) : (
-            <p className="sheet__empty">찾은 번호를 켠다. 글은 켠 것만 보인다.</p>
+            <p className="sheet__empty">찾은 번호를 켠다. 내용은 오른쪽 위 단추로 펼쳐 본다.</p>
           )}
 
           <ol className="tre__grid" aria-label={`찾은 보물 ${found.size}개`}>
@@ -632,24 +652,27 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
             ))}
           </ol>
 
-          {/*
-            찾은 것만 글을 편다. **표가 비어 있으면 아예 안 낸다** — 「표에 없는
-            번호」만 줄줄이 서면 알려 주는 것이 없다. 그때는 격자의 켜진 칸이
-            이미 같은 말을 하고 있다.
-          */}
-          {treasures.length > 0 && found.size > 0 && (
-            <ul className="tre__found">
-              {[...found]
-                .sort((a, b) => a - b)
-                .map((no) => (
-                  <li key={no} className="tre__line">
-                    <b className="tre__no sl-numeral">{no}</b>
-                    <span className="tre__text">
-                      {treasureText.get(no) ?? <i className="tre__unknown">표에 없는 번호</i>}
-                    </span>
-                  </li>
-                ))}
-            </ul>
+          {openTreasures && (
+            <TreasureView
+              items={treasures}
+              found={found}
+              count={TREASURE_COUNT}
+              editing={editing}
+              /*
+                **초안을 그대로 고친다.** 팝업이 값을 따로 들고 있다가 닫을 때
+                옮기면 두 곳에 값이 쌓여 어느 쪽이 맞는지 알 수 없다 — 여기서
+                켠 것은 그 자리에서 시트의 격자에도 비친다.
+              */
+              onToggle={(no) =>
+                set(
+                  'treasures',
+                  draft.treasures.includes(no)
+                    ? draft.treasures.filter((n) => n !== no)
+                    : [...draft.treasures, no],
+                )
+              }
+              onClose={() => setOpenTreasures(false)}
+            />
           )}
         </section>
 
