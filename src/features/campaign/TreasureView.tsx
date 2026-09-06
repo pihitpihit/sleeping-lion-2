@@ -64,8 +64,14 @@ export function TreasureView({
 /**
  * 목록 그 자체.
  *
- * **획득한 것만 내용이 보인다.** 책자가 「이 정보를 알지 마십시오」라고 적어 둔
- * 글이라 그렇다 — 나머지는 번호만 서고 「아직 못 찾음」이라고만 적는다.
+ * **내용을 모두 보여 준다**(2026-09-07, 형님이 정했다).
+ *
+ * 한동안 획득한 것만 폈다 — 책자가 「이 정보를 알지 마십시오」라고 적어 두었기
+ * 때문이다. 그러나 **가리는 쪽이 더 불편했다**: 어느 번호가 무엇인지 확인하려면
+ * 먼저 체크해야 했고, 색인이 제대로 들어갔는지 볼 방법도 없었다. 읽을지 말지는
+ * 보는 사람이 정할 일이라 판단을 넘겼다.
+ *
+ * 획득 여부는 왼쪽 체크 표시가 말한다.
  */
 export function TreasurePanel({
   items,
@@ -98,7 +104,7 @@ export function TreasurePanel({
       <p className="tre__lead">
         {editing
           ? `줄을 눌러 획득을 표시한다. 지금 ${found.size}개.`
-          : `획득한 것만 내용이 보인다. 지금 ${found.size}개.`}
+          : `획득한 것에 표시가 붙는다. 지금 ${found.size}개.`}
       </p>
 
       <ol className="tre__rows">
@@ -117,12 +123,9 @@ export function TreasurePanel({
               >
                 <span className={`tre__check${on ? ' tre__check--on' : ''}`} aria-hidden="true" />
                 <b className="tre__no sl-numeral">{no}</b>
-                <span className="tre__text">
-                  {on ? (
-                    (body ?? <i className="tre__unknown">색인에 이 번호가 없다</i>)
-                  ) : (
-                    <i className="tre__hidden">아직 못 찾음</i>
-                  )}
+                {/* 획득 여부와 상관없이 내용을 보여 준다 — 가릴지는 보는 사람이 정한다. */}
+                <span className={`tre__text${on ? '' : ' tre__text--off'}`}>
+                  {body ?? <i className="tre__unknown">색인에 이 번호가 없다</i>}
                 </span>
               </button>
             </li>

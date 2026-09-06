@@ -4,8 +4,8 @@ import { TreasurePanel } from './TreasureView'
 
 /*
   자리 잡기(`createPortal`)는 서버 렌더로 볼 수 없으므로 알맹이만 본다
-  (구현 결정 194). 여기서 지킬 것은 **획득한 것만 내용이 보이는가**다 —
-  책자가 「이 정보를 알지 마십시오」라고 적어 둔 글이다.
+  (구현 결정 194). 여기서 지킬 것은 **모든 줄이 서고 내용이 다 보이는가**,
+  그리고 **획득 여부가 갈려 보이는가**다.
 */
 
 /* 따옴표는 HTML로 나갈 때 이스케이프되므로 시험 글에는 넣지 않는다. */
@@ -28,14 +28,16 @@ function render(found: number[], editing = false) {
 }
 
 describe('보물 색인 자세히 보기', () => {
-  it('획득한 것만 내용이 보인다', () => {
+  it('내용을 모두 보여 준다 — 읽을지는 보는 사람이 정한다', () => {
     const html = render([2])
     expect(html).toContain('대형 방패 획득')
-    expect(html).not.toContain('철편 갑옷 획득')
+    expect(html).toContain('철편 갑옷 획득')
   })
 
-  it('못 찾은 줄은 그렇다고만 적는다 — 빈 줄이면 고장으로 읽힌다', () => {
-    expect(render([2])).toContain('아직 못 찾음')
+  it('획득한 줄과 아닌 줄이 갈려 보인다', () => {
+    const html = render([2])
+    expect((html.match(/tre__check--on/g) ?? []).length).toBe(1)
+    expect((html.match(/tre__text--off/g) ?? []).length).toBe(4)
   })
 
   it('표에 없는 줄도 자리를 지킨다 — 표가 비어도 번호는 켤 수 있어야 한다', () => {

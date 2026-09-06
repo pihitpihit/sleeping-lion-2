@@ -2810,6 +2810,7 @@
   border-color: var(--sl-gold-bright);
 }
 
-.tre__hidden {
-  color: var(--sl-text-faint);
+/* 아직 못 찾은 줄은 한 톤 죽인다 — 내용은 보이되 무엇을 찾았는지 한눈에 든다. */
+.tre__text--off {
+  color: var(--sl-text-muted);
 }

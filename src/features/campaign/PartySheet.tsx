@@ -625,7 +625,9 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
               <a href="#/admin">주인장 화면</a>에서 넣는다. 표가 없어도 찾은 번호는 적을 수 있다.
             </p>
           ) : (
-            <p className="sheet__empty">찾은 번호를 켠다. 내용은 오른쪽 위 단추로 펼쳐 본다.</p>
+            <p className="sheet__empty">
+              찾은 번호를 켠다. 색인 전체는 오른쪽 위 단추로 펼쳐 본다.
+            </p>
           )}
 
           <ol className="tre__grid" aria-label={`찾은 보물 ${found.size}개`}>
