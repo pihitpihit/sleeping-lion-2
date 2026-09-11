@@ -56,8 +56,17 @@ describe('뜨고 되돌리기', () => {
     useElementStore.getState().setState('fire', 'strong')
     expect(isEmptyRuntime(captureRuntime())).toBe(false)
 
+    /*
+      **시계를 건 것만으로도 판이 시작된 것이다**(2026-09-11). 라운드는 시계가
+      돌아야 넘어가므로 시작부터 한다 — 시작만 하고 넘기지 않아도 빈 판이 아니다.
+    */
     clearStores()
-    useRoundStore.getState().advance()
+    useRoundStore.getState().start(1000)
+    expect(isEmptyRuntime(captureRuntime())).toBe(false)
+
+    clearStores()
+    useRoundStore.getState().start(1000)
+    useRoundStore.getState().advance(2000)
     expect(isEmptyRuntime(captureRuntime())).toBe(false)
 
     clearStores()

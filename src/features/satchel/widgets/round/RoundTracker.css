@@ -199,3 +199,53 @@
     transition: none;
   }
 }
+
+/*
+  경과 시간.
+
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ **너무 튀지 않게 — 판의 주인공은 라운드 숫자다**(형님이 정했다).          │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  서체는 판이 통째로 물려준 Pirata One이다(`.sl-numeral`). 색은 이름표(`--sl-text-faint`)
+  보다 밝고 숫자(`--sl-gold-bright`)보다 어두운 자리에 둔다 — 읽히되 먼저 눈에
+  들지는 않는다. 자간을 살짝 주어 `mm:ss`의 콜론이 붙어 보이지 않게 한다.
+*/
+.round__timer {
+  font-size: var(--round-timer);
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: var(--sl-gold-dim);
+}
+
+/*
+  시작 단추 — **판 한가운데를 덮는다.**
+
+  귀퉁이에 두면 시작 전에도 판이 눌려 라운드가 넘어간다. 덮어 두면 시작하기 전에
+  할 수 있는 일이 시작뿐이다. 바탕을 살짝 깔아 밑의 숫자와 겹쳐 읽히지 않게 한다.
+*/
+.round__start {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  /*
+    밑의 숫자가 비쳐 보이되 **세모가 먼저 눈에 들어야 한다.** 옅게 두었더니 한
+    칸짜리에서 `R3`과 세모가 겹쳐 둘 다 안 읽혔다 — 진하게 깔고 세모를 키웠다.
+  */
+  background: rgb(14 12 9 / 74%);
+  color: var(--sl-gold-bright);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.round__start:hover {
+  background: rgb(14 12 9 / 62%);
+}
+
+.round__start:focus-visible {
+  outline: 2px solid var(--sl-gold);
+  outline-offset: -3px;
+}

@@ -6,6 +6,7 @@
    ========================================================================== */
 
 .cst {
+  position: relative;
   width: 100%;
   height: 100%;
   display: flex;
@@ -15,33 +16,13 @@
   container-type: size;
 }
 
-/*
-  머리가 곧 단추다 — **누르는 자리를 따로 내지 않는다.** 한 칸짜리로도 놓이는
-  위젯이라 단추 하나를 더 세울 자리가 없고, 수를 보는 자리와 고치는 자리가
-  같으면 눈이 자리를 다시 찾지 않는다(구현 결정 364와 같은 결).
-*/
 .cst__head {
-  width: 100%;
-  font-family: inherit;
-  text-align: left;
-  background: none;
-  border: none;
-  border-radius: 0.2rem;
-  cursor: pointer;
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 0.4rem;
   padding: 0 0 0.25rem;
   border-bottom: 1px solid var(--sl-border);
-}
-
-.cst__head:disabled {
-  cursor: default;
-}
-
-.cst__head:hover:not(:disabled) .cst__level {
-  color: var(--sl-gold-bright);
 }
 
 .cst__title {
@@ -107,4 +88,31 @@
   text-align: center;
   font-size: 1.8rem;
   color: var(--sl-gold);
+}
+
+/*
+  위젯 전체를 덮는 투명한 단추.
+
+  값을 늘어놓는 `<ul>`을 단추 안에 넣을 수 없어(HTML이 허락하지 않는다) 위에
+  덮는다. 읽기만 하는 위젯이라 밑의 글을 집을 일이 없다.
+*/
+.cst__open {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 0.2rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.cst__open:hover ~ * .cst__level,
+.cst:has(.cst__open:hover) .cst__level {
+  color: var(--sl-gold-bright);
+}
+
+.cst__open:focus-visible {
+  outline: 2px solid var(--sl-gold);
+  outline-offset: -3px;
 }

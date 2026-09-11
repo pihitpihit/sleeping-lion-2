@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { WidgetProps } from '../types'
 import { useBoardSize } from '../../useBoardSize'
 import { useBattleStore } from '../../battle/battleStore'
+import { useRoundStore } from '../round/roundStore'
 import { useSatchelStore } from '../../store/satchelStore'
 import { rowFor } from '../../../rules/scenarioLevel'
 import { ScenarioLevelDialog } from './ScenarioLevelDialog'
@@ -45,6 +46,22 @@ export function CampaignStatus({ instanceId, mode, settings }: WidgetProps) {
   const setWidgetSettings = useSatchelStore((s) => s.setWidgetSettings)
   const [open, setOpen] = useState(false)
 
+  /* 라운드 기록. 팝업이 보여 줄 값이라 여기서 읽어 넘긴다. */
+  const round = useRoundStore((s) => s.round)
+  const startedAt = useRoundStore((s) => s.startedAt)
+  const laps = useRoundStore((s) => s.laps)
+
+  /*
+    지금 시각. **팝업이 떠 있는 동안에만 잰다** — 닫혀 있을 때 1초마다 다시 그리면
+    상 위의 다른 위젯까지 함께 느려진다. 렌더 중에 부르지 않는 까닭은 구현 결정 12다.
+  */
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (!open) return
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [open])
+
   const level = battle?.level ?? fallback
   const row = rowFor(level)
 
@@ -60,16 +77,10 @@ export function CampaignStatus({ instanceId, mode, settings }: WidgetProps) {
 
   return (
     <div className="cst" ref={ref}>
-      <button
-        type="button"
-        className="cst__head"
-        disabled={mode === 'edit'}
-        aria-label={`시나리오 레벨 ${level} — 눌러서 표를 펼친다`}
-        onClick={() => setOpen(true)}
-      >
+      <div className="cst__head">
         <span className="cst__title">{tight ? '난이도' : '시나리오 레벨'}</span>
         <b className="cst__level sl-numeral">{level}</b>
-      </button>
+      </div>
 
       <ul className="cst__facts">
         <li className="cst__fact">
@@ -92,10 +103,34 @@ export function CampaignStatus({ instanceId, mode, settings }: WidgetProps) {
 
       {battle === null && <span className="cst__solo">모험 밖 — 설정의 레벨</span>}
 
+      {/*
+        ┌────────────────────────────────────────────────────────────────────┐
+        │ **위젯 전체가 하나의 단추다**(형님이 정했다).                       │
+        └────────────────────────────────────────────────────────────────────┘
+
+        머리만 눌리게 두었더니 어디를 눌러야 열리는지 알 수 없었다. 값을 늘어놓는
+        `<ul>`을 단추 안에 넣을 수는 없으므로(HTML이 허락하지 않는다) **투명한
+        단추를 위에 덮는다** — 읽기만 하는 위젯이라 밑의 글을 집을 일이 없다.
+
+        편집 중에는 안 낸다 — 자리를 옮기려다 팝업이 뜨면 곤란하다.
+      */}
+      {mode !== 'edit' && (
+        <button
+          type="button"
+          className="cst__open"
+          aria-label={`캠페인 상태 자세히 보기. 지금 시나리오 레벨 ${level}, ${round}라운드.`}
+          onClick={() => setOpen(true)}
+        />
+      )}
+
       {open && (
         <ScenarioLevelDialog
           level={level}
           locked={null}
+          round={round}
+          startedAt={startedAt}
+          laps={laps}
+          now={now}
           onPick={pick}
           onClose={() => setOpen(false)}
         />

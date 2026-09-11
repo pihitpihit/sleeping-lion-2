@@ -52,6 +52,20 @@ export interface RuntimeSnapshot {
   /** 원소 여섯. 꺼진 것은 담지 않는다 — 없는 것을 꺼짐으로 읽는다. */
   elements: Record<string, ElementState>
   round: number
+  /**
+   * 지금 라운드가 시작된 시각(epoch ms). 아직 안 눌렀으면 `null`.
+   *
+   * **옛 저장물에는 없다** — 그때는 `null`로 읽히고 「아직 시작 전」이 된다.
+   * 모양이 하나 늘었을 뿐 반쯤 알아본 판이 되지 않으므로 `RUNTIME_VERSION`은
+   * 올리지 않는다(올리면 도는 판이 통째로 버려진다).
+   *
+   * **기기마다 시계가 다르다.** 전투를 나누면 이 값이 남의 기기에서 오므로
+   * 시계가 어긋난 만큼 경과 시간도 어긋난다 — 몇 초 차이는 판에 지장이 없어
+   * 그대로 둔다(`elapsedMs`가 음수를 0으로 막는다).
+   */
+  roundStartedAt: number | null
+  /** 끝난 라운드들이 각각 얼마나 걸렸는가(ms). 첫 칸이 1라운드다. */
+  roundLaps: number[]
   /** 지금은 위젯 인스턴스가 열쇠다. 전투 공유에서 캐릭터로 옮긴다. */
   hpxp: Record<string, HpXp>
   /** 덱은 **얇게** 싣는다 — `WireCard` 참조. */
@@ -103,6 +117,8 @@ export function emptyRuntime(): RuntimeSnapshot {
     at: 0,
     elements: {},
     round: FIRST_ROUND,
+    roundStartedAt: null,
+    roundLaps: [],
     hpxp: {},
     decks: {},
     gold: {},
@@ -125,6 +141,8 @@ export function captureRuntime(): RuntimeSnapshot {
     at: Date.now(),
     elements: useElementStore.getState().elements,
     round: useRoundStore.getState().round,
+    roundStartedAt: useRoundStore.getState().startedAt,
+    roundLaps: useRoundStore.getState().laps,
     hpxp: useHpXpStore.getState().byInstance,
     decks,
     gold: useGoldStore.getState().bySlot,
@@ -136,6 +154,8 @@ export function isEmptyRuntime(snapshot: RuntimeSnapshot): boolean {
   return (
     Object.keys(snapshot.elements).length === 0 &&
     snapshot.round === FIRST_ROUND &&
+    // 시계를 건 것만으로도 판이 시작된 것이다 — 빈 판으로 보면 남의 것을 못 밀어낸다.
+    snapshot.roundStartedAt === null &&
     Object.keys(snapshot.hpxp).length === 0 &&
     Object.keys(snapshot.decks).length === 0 &&
     Object.keys(snapshot.gold).length === 0
@@ -161,7 +181,7 @@ export function restoreRuntime(snapshot: RuntimeSnapshot): void {
   for (const [slot, deck] of Object.entries(snapshot.decks)) decks[slot] = thickDeck(deck)
   useAttackDeckStore.getState().hydrate(decks)
   useGoldStore.getState().hydrate(snapshot.gold)
-  useRoundStore.getState().hydrate(snapshot.round)
+  useRoundStore.getState().hydrate(snapshot.round, snapshot.roundStartedAt, snapshot.roundLaps)
 }
 
 /* --------------------------------------------------------------------------
@@ -262,7 +282,23 @@ export function sanitizeRuntime(parsed: unknown): RuntimeSnapshot {
 
   const at = typeof raw.at === 'number' && Number.isFinite(raw.at) && raw.at > 0 ? raw.at : 0
 
-  return { v: RUNTIME_VERSION, at, elements, round, hpxp, decks, gold }
+  /*
+    시작 시각과 라운드 기록. **옛 저장물에는 없다** — 그때는 「아직 시작 전」이
+    된다. 0 이하는 시각이 아니므로 `null`로 본다.
+  */
+  const roundStartedAt =
+    typeof raw.roundStartedAt === 'number' &&
+    Number.isFinite(raw.roundStartedAt) &&
+    raw.roundStartedAt > 0
+      ? raw.roundStartedAt
+      : null
+  const roundLaps = Array.isArray(raw.roundLaps)
+    ? raw.roundLaps.filter(
+        (ms): ms is number => typeof ms === 'number' && Number.isFinite(ms) && ms >= 0,
+      )
+    : []
+
+  return { v: RUNTIME_VERSION, at, elements, round, roundStartedAt, roundLaps, hpxp, decks, gold }
 }
 
 /* --------------------------------------------------------------------------

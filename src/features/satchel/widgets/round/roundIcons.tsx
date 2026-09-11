@@ -27,3 +27,24 @@ export function RestartIcon({ size = 24 }: { size?: number }) {
     </svg>
   )
 }
+
+/**
+ * 시작 — 오른쪽을 가리키는 세모.
+ *
+ * 「처음으로」가 왼쪽 세모라 방향만으로 갈린다. 채운 도형이라 작은 크기에서도
+ * 뭉개지지 않는다(`RestartIcon`과 같은 까닭).
+ */
+export function PlayIcon({ size = 24 }: { size?: number }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="currentColor"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M7 4.6v14.8a1 1 0 0 0 1.53.85l11.6-7.4a1 1 0 0 0 0-1.7L8.53 3.75A1 1 0 0 0 7 4.6Z" />
+    </svg>
+  )
+}

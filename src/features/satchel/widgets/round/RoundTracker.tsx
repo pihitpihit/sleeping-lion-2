@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useBoardSize } from '../../useBoardSize'
 import { ConfirmDialog } from '../../board/ConfirmDialog'
 import { NumberReel } from '../reel/NumberReel'
 import type { WidgetProps } from '../types'
-import { computeRoundLayout } from './round'
+import { computeRoundLayout, elapsedMs, formatDuration } from './round'
 import { FIRST_ROUND, MAX_ROUND, useRoundStore } from './roundStore'
-import { RestartIcon } from './roundIcons'
+import { PlayIcon, RestartIcon } from './roundIcons'
 import './RoundTracker.css'
 
 /**
@@ -25,9 +25,34 @@ export function RoundTracker({ mode }: WidgetProps) {
   const { ref, size } = useBoardSize<HTMLDivElement>()
   const layout = computeRoundLayout(size)
   const round = useRoundStore((s) => s.round)
+  const startedAt = useRoundStore((s) => s.startedAt)
   const advance = useRoundStore((s) => s.advance)
   const restart = useRoundStore((s) => s.restart)
+  const start = useRoundStore((s) => s.start)
   const [asking, setAsking] = useState(false)
+
+  /*
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │ **시각은 화면이 1초마다 재어 상태에 담는다.**                           │
+    └────────────────────────────────────────────────────────────────────────┘
+
+    렌더 중에 `Date.now()`를 부르면 같은 입력에 다른 결과가 나와 렌더를 되돌릴 수
+    없다(`react-hooks/purity`, 구현 결정 12). 시작 전에는 아예 안 돈다 — 셈할 것이
+    없는데 1초마다 다시 그릴 까닭이 없다.
+  */
+  const running = startedAt !== null
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    if (!running) return
+    /*
+      **첫 값을 여기서 넣지 않는다.** 효과 안에서 곧바로 `setState`를 부르면
+      렌더가 연달아 돌고 `react-hooks/set-state-in-effect`가 막는다. 넣지 않아도
+      맞는다 — 막 시작한 순간에는 담아 둔 시각이 `startedAt`보다 앞서므로
+      `elapsedMs`가 0으로 막고, 화면에는 `00:00`이 뜬다. 1초 뒤 첫 박이 온다.
+    */
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [running])
 
   return (
     <div
@@ -38,6 +63,7 @@ export function RoundTracker({ mode }: WidgetProps) {
           '--round-number': `${layout.numberSize}px`,
           '--round-label': `${layout.labelSize}px`,
           '--round-cut': `${layout.cutSize}px`,
+          '--round-timer': `${layout.timerSize}px`,
         } as React.CSSProperties
       }
     >
@@ -45,10 +71,15 @@ export function RoundTracker({ mode }: WidgetProps) {
         type="button"
         className="round__plate sl-numeral"
         // 값을 먼저 말한다. 누르면 무슨 일이 일어나는지는 설명으로 붙인다.
-        aria-label={`${round}라운드. 누르면 다음 라운드로 넘어간다. 원소가 한 단계 내려가고, 섞기 표시가 뜬 공격 보정 덱이 섞인다.`}
+        aria-label={
+          running
+            ? `${round}라운드. 누르면 다음 라운드로 넘어간다. 원소가 한 단계 내려가고, 섞기 표시가 뜬 공격 보정 덱이 섞인다.`
+            : `${round}라운드. 아직 시작하지 않았다.`
+        }
         aria-live="polite"
-        disabled={mode !== 'play'}
-        onClick={advance}
+        /* **시작 전에는 안 눌린다.** 그때 눌러야 할 것은 시작 단추다. */
+        disabled={mode !== 'play' || !running}
+        onClick={() => advance(Date.now())}
       >
         {/*
           좁으면 `R3`, 넓으면 숫자 밑에 `ROUND`.
@@ -70,6 +101,17 @@ export function RoundTracker({ mode }: WidgetProps) {
             ROUND
           </span>
         )}
+
+        {/*
+          경과 시간. **시작 전에는 자리만 잡아 두고 `--:--`을 적는다** — 켤 때만
+          그리면 시작하는 순간 판 전체가 다시 배치되어 숫자가 흔들린다(구현 결정
+          308과 같은 결).
+        */}
+        {layout.showTimer && (
+          <span className="round__timer" aria-hidden="true">
+            {running ? formatDuration(elapsedMs(startedAt, now)) : '--:--'}
+          </span>
+        )}
       </button>
 
       {/* 마지막 칸에 닿으면 더 갈 곳이 없다는 것을 알린다. 조용히 안 먹히면
@@ -78,6 +120,26 @@ export function RoundTracker({ mode }: WidgetProps) {
         <span className="round__end" aria-hidden="true">
           끝
         </span>
+      )}
+
+      {/*
+        ┌──────────────────────────────────────────────────────────────────────┐
+        │ **판은 저절로 시작하지 않는다 — 눌러야 시계가 돈다**(형님이 정했다). │
+        └──────────────────────────────────────────────────────────────────────┘
+
+        위젯을 놓자마자 시계가 돌면 상 위에 도구를 늘어놓는 동안에도 시간이 흘러
+        첫 라운드가 실제보다 길게 기록된다. 그래서 시작 단추를 한가운데 얹는다 —
+        **판을 덮으므로** 시작 전에 라운드를 넘길 길이 아예 없다.
+      */}
+      {mode === 'play' && !running && (
+        <button
+          type="button"
+          className="round__start"
+          aria-label="라운드를 시작한다. 경과 시간이 흐르기 시작한다."
+          onClick={() => start(Date.now())}
+        >
+          <PlayIcon size={Math.max(20, layout.numberSize * 0.62)} />
+        </button>
       )}
 
       {/*
@@ -111,9 +173,13 @@ export function RoundTracker({ mode }: WidgetProps) {
         <ConfirmDialog
           title="판을 새로 시작"
           description={
+            /*
+              **시계와 라운드 기록도 함께 간다.** 무엇을 잃는지 적지 않으면 5초를
+              세어도 소용이 없다(구현 결정 425와 같은 결).
+            */
             round === FIRST_ROUND
-              ? '이미 첫 라운드다. 원소를 모두 끄고 공격 보정 덱을 처음으로 되돌린다. 되돌릴 수 없다.'
-              : `지금 ${round}라운드다. 1라운드로 되돌리고, 원소를 모두 끄고, 공격 보정 덱을 처음으로 되돌린다. 되돌릴 수 없다.`
+              ? '이미 첫 라운드다. 원소를 모두 끄고, 공격 보정 덱을 처음으로 되돌리고, 시계를 내린다. 되돌릴 수 없다.'
+              : `지금 ${round}라운드다. 1라운드로 되돌리고, 원소를 모두 끄고, 공격 보정 덱을 처음으로 되돌리고, 시계와 라운드별 기록을 지운다. 되돌릴 수 없다.`
           }
           confirmLabel="새로 시작"
           onCancel={() => setAsking(false)}

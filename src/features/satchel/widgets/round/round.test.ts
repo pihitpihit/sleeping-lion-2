@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { computeRoundLayout } from './round'
+import { averageLap, computeRoundLayout, elapsedMs, formatDuration } from './round'
 import { FIRST_ROUND, MAX_ROUND, useRoundStore } from './roundStore'
 import { useElementStore } from '../elements/elementStore'
 import { decayElementState, ELEMENTS } from '../elements/elements'
@@ -25,6 +25,11 @@ describe('원소 하강', () => {
 describe('라운드를 넘기면 원소가 함께 내려간다', () => {
   beforeEach(() => {
     useRoundStore.getState().restart()
+    /*
+      **시계를 걸어야 라운드가 넘어간다**(2026-09-11). 시계가 안 도는데 라운드만
+      올라가면 그 라운드의 기록이 통째로 비고, 무엇이 빠졌는지 나중에 알 수 없다.
+    */
+    useRoundStore.getState().start(0)
     useElementStore.getState().resetAll()
   })
 
@@ -204,5 +209,104 @@ describe('잘린 귀퉁이', () => {
     const l = computeRoundLayout({ width: 0, height: 100 })
     expect(l.cutSize).toBe(0)
     expect(l.cutIconSize).toBe(0)
+  })
+})
+
+describe('라운드에 걸린 시간', () => {
+  describe('formatDuration', () => {
+    it('밀리초를 mm:ss로 적는다', () => {
+      expect(formatDuration(0)).toBe('00:00')
+      expect(formatDuration(1000)).toBe('00:01')
+      expect(formatDuration(61_000)).toBe('01:01')
+      expect(formatDuration(10 * 60_000 + 7_000)).toBe('10:07')
+    })
+
+    it('내림이다 — 아직 안 지난 분이 지난 것으로 읽히면 안 된다', () => {
+      expect(formatDuration(59_900)).toBe('00:59')
+      expect(formatDuration(119_999)).toBe('01:59')
+    })
+
+    it('모양이 아닌 값과 음수는 00:00으로 본다', () => {
+      expect(formatDuration(-5)).toBe('00:00')
+      expect(formatDuration(Number.NaN)).toBe('00:00')
+    })
+
+    it('한 시간을 넘으면 분이 60을 넘는다 — 막지 않는다', () => {
+      expect(formatDuration(65 * 60_000)).toBe('65:00')
+    })
+  })
+
+  describe('elapsedMs', () => {
+    it('시작 전에는 0이다', () => {
+      expect(elapsedMs(null, 1000)).toBe(0)
+    })
+
+    it('시작한 뒤로 흐른 만큼이다', () => {
+      expect(elapsedMs(1000, 4000)).toBe(3000)
+    })
+
+    it('거꾸로 가는 것은 0으로 본다 — 남의 기기 시계가 어긋날 수 있다', () => {
+      expect(elapsedMs(9000, 1000)).toBe(0)
+    })
+  })
+
+  describe('averageLap', () => {
+    it('기록이 없으면 모른다고 한다', () => {
+      expect(averageLap([])).toBeNull()
+    })
+
+    it('기록된 것들의 평균이다', () => {
+      expect(averageLap([1000, 3000])).toBe(2000)
+    })
+
+    it('모양이 아닌 값은 셈에서 뺀다', () => {
+      expect(averageLap([1000, Number.NaN, -5, 3000])).toBe(2000)
+    })
+  })
+})
+
+describe('시계는 눌러야 돈다', () => {
+  beforeEach(() => {
+    useRoundStore.getState().restart()
+  })
+
+  it('새 판은 시작 전이다 — 위젯을 놓자마자 시간이 흐르면 안 된다', () => {
+    expect(useRoundStore.getState().startedAt).toBeNull()
+    expect(useRoundStore.getState().laps).toEqual([])
+  })
+
+  it('시작 전에는 라운드가 안 넘어간다 — 기록이 빈 라운드가 생기면 안 된다', () => {
+    useRoundStore.getState().advance(1000)
+    expect(useRoundStore.getState().round).toBe(FIRST_ROUND)
+  })
+
+  it('두 번 눌러도 처음으로 돌아가지 않는다', () => {
+    useRoundStore.getState().start(1000)
+    useRoundStore.getState().start(9000)
+    expect(useRoundStore.getState().startedAt).toBe(1000)
+  })
+
+  it('넘길 때마다 걸린 시간이 한 칸씩 쌓이고 시계가 다시 걸린다', () => {
+    useRoundStore.getState().start(1000)
+    useRoundStore.getState().advance(4000)
+    expect(useRoundStore.getState().laps).toEqual([3000])
+    expect(useRoundStore.getState().startedAt).toBe(4000)
+
+    useRoundStore.getState().advance(10_000)
+    expect(useRoundStore.getState().laps).toEqual([3000, 6000])
+  })
+
+  it('처음으로 되돌리면 시계와 기록도 함께 내려간다', () => {
+    useRoundStore.getState().start(1000)
+    useRoundStore.getState().advance(4000)
+    useRoundStore.getState().restart()
+    expect(useRoundStore.getState().startedAt).toBeNull()
+    expect(useRoundStore.getState().laps).toEqual([])
+  })
+
+  it('앉힐 때 모양이 아닌 것은 버린다 — 남의 기기에서 온 값이다', () => {
+    useRoundStore.getState().hydrate(3, 0, [1000, Number.NaN, -5] as number[])
+    expect(useRoundStore.getState().startedAt).toBeNull()
+    expect(useRoundStore.getState().laps).toEqual([1000])
   })
 })
