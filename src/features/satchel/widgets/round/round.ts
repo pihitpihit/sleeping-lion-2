@@ -24,8 +24,16 @@ export interface RoundLayout {
   /**
    * 경과 시간을 낼 자리가 있는가.
    *
-   * **좁으면 숫자가 먼저다.** 한 칸짜리에 `R3`과 `12:04`를 함께 밀어 넣으면 둘 다
-   * 점처럼 남는다 — 이름표를 빼는 것과 같은 판단이다.
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ **한 칸짜리에도 낸다**(2026-09-11, 형님이 정했다).                      │
+   * └────────────────────────────────────────────────────────────────────────┘
+   *
+   * 처음에는 문턱(104px)을 두어 작은 위젯에서 뺐다 — 자리가 모자라 둘 다 점처럼
+   * 남을까 봐서였다. 재 보니 아니었다: `mm:ss`는 다섯 글자지만 **Pirata의 숫자는
+   * 진폭이 좁아**(0.24~0.43em) 한 칸 폭(85px)에서도 넉넉히 들어간다. 대신 줄이
+   * 늘어난 만큼 **세로 몫을 다시 나눈다.**
+   *
+   * 자리가 정말 없는 때(셀 하한보다도 작은 상자)만 뺀다.
    */
   showTimer: boolean
   /** 경과 시간 글자 크기(px). */
@@ -54,14 +62,19 @@ export function computeRoundLayout(box: { width: number; height: number }): Roun
 
   const showLabel = Math.min(width, height) >= LABEL_THRESHOLD
   /*
-    시계는 이름표보다 먼저 빠진다. `mm:ss`는 다섯 글자라 `ROUND`보다 자리를 더
-    먹는데, 없어도 판을 굴리는 데는 지장이 없다 — 없으면 캠페인 상태 위젯에서 본다.
+    **이름표보다 시계가 먼저다.** 이름표는 없어도 `R`이 대신 말해 주지만, 시계는
+    빠지면 그 자리에서 알 길이 없다. 셀 하한(72px)보다 작은 상자에서만 뺀다.
   */
-  const showTimer = height >= TIMER_THRESHOLD && width >= TIMER_THRESHOLD
+  const showTimer = height >= TIMER_FLOOR && width >= TIMER_FLOOR
 
   // 이름표와 시계가 있으면 그만큼 세로를 내준다. 띠 창은 글자 크기와 같다.
   const rows = 1 + (showLabel ? 1 : 0) + (showTimer ? 1 : 0)
-  const forNumber = height * (rows === 3 ? 0.5 : rows === 2 ? 0.62 : 0.96)
+  /*
+    줄이 늘수록 숫자 몫이 준다. 값은 재서 잡았다 — 세 줄(숫자·이름표·시계)이
+    한 칸 반(162px)에 들어가야 하고, 두 줄이 한 칸(77px)에 들어가야 한다.
+    사이(`gap`)가 숫자 크기에 비례하므로 넉넉히 잡지 않으면 아래가 잘린다.
+  */
+  const forNumber = height * (rows === 3 ? 0.46 : rows === 2 ? 0.58 : 0.96)
   /*
     이름표가 빠진 자리에는 `R`이 숫자 앞에 붙으므로 **가로를 그만큼 더 나눠 준다.**
     `R`은 숫자의 0.85배이고 사이가 조금 뜨므로 숫자 몫은 절반이 조금 넘는다.
@@ -91,12 +104,16 @@ export function computeRoundLayout(box: { width: number; height: number }): Roun
       `mm:ss`는 다섯 글자다. 가로로 넘치지 않게 폭에서도 한 번 잡는다 — Pirata의
       숫자는 좁지만 콜론까지 다섯 자리면 넉넉히 두어야 한다.
     */
-    timerSize: Math.max(9, Math.min(numberSize * 0.34, width * 0.17)),
+    /*
+      `mm:ss`는 다섯 글자다. 가로에서도 한 번 잡되 **인색하게 잡지 않는다** —
+      한 칸짜리에서 점처럼 남으면 낸 뜻이 없다(구현 결정 378과 같은 자리).
+    */
+    timerSize: Math.max(10, Math.min(numberSize * 0.36, width * 0.18)),
   }
 }
 
-/** 이보다 작으면 시계를 뺀다. 이름표 문턱보다 높다 — 시계가 먼저 빠진다. */
-const TIMER_THRESHOLD = 104
+/** 이보다 작은 상자에서만 시계를 뺀다. 셀 하한(72px)보다 낮아 사실상 늘 낸다. */
+const TIMER_FLOOR = 56
 
 /**
  * 삼각형 안에서 아이콘이 차지하는 비율.

@@ -310,3 +310,49 @@ describe('시계는 눌러야 돈다', () => {
     expect(useRoundStore.getState().laps).toEqual([1000])
   })
 })
+
+describe('시계 자리', () => {
+  /*
+    **한 칸짜리에도 낸다**(2026-09-11, 형님이 정했다). 문턱을 두었더니 큰 위젯
+    에서만 시간이 보였다 — `mm:ss`는 다섯 글자지만 Pirata의 숫자는 진폭이 좁아
+    한 칸 폭에서도 들어간다.
+  */
+  const CELL = { w: 85, h: 77 }
+
+  it('한 칸짜리에도 시계가 선다', () => {
+    expect(computeRoundLayout({ width: CELL.w, height: CELL.h }).showTimer).toBe(true)
+  })
+
+  it('가로가 한 칸이어도, 세로가 한 칸이어도 선다', () => {
+    expect(computeRoundLayout({ width: CELL.w, height: CELL.h * 2 }).showTimer).toBe(true)
+    expect(computeRoundLayout({ width: CELL.w * 2, height: CELL.h }).showTimer).toBe(true)
+  })
+
+  it('점처럼 남지 않는다 — 한 칸에서도 10px은 넘는다', () => {
+    expect(computeRoundLayout({ width: CELL.w, height: CELL.h }).timerSize).toBeGreaterThan(10)
+  })
+
+  /*
+    **줄이 늘어난 만큼 세로를 다시 나눈다.** 다 더한 높이가 상자를 넘으면 아래가
+    잘린다 — 사이(`gap`)가 숫자 크기에 비례하므로 그것까지 세어야 한다.
+  */
+  it.each([
+    ['한 칸', 85, 77],
+    ['가로 두 칸', 178, 77],
+    ['세로 두 칸', 85, 162],
+    ['두 칸', 178, 162],
+    ['세 칸 폭', 271, 162],
+  ])('%s에서 안 넘친다', (_label, width, height) => {
+    const L = computeRoundLayout({ width, height })
+    const rows = 1 + (L.showLabel ? 1 : 0) + (L.showTimer ? 1 : 0)
+    const gap = L.numberSize * 0.15 * (rows - 1)
+    const padding = height * 0.04
+    const used =
+      L.numberSize +
+      (L.showLabel ? L.labelSize : 0) +
+      (L.showTimer ? L.timerSize : 0) +
+      gap +
+      padding
+    expect(used).toBeLessThanOrEqual(height)
+  })
+})
