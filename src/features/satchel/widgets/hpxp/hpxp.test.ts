@@ -236,3 +236,32 @@ describe('인스턴스마다 값을 따로 갖는다', () => {
     expect(written).toEqual([])
   })
 })
+
+describe('값을 곧바로 앉힌다', () => {
+  /*
+    「최대 체력으로 되돌리기」가 쓴다. `adjust`로는 못 한다 — 지금 값이 얼마인지
+    알아야 델타를 셈할 수 있는데 **부르는 쪽이 그것을 알 까닭이 없다.**
+  */
+  beforeEach(() => {
+    useHpXpStore.setState({ byInstance: {} })
+  })
+
+  it('지금 값과 무관하게 그 수가 된다', () => {
+    useHpXpStore.getState().adjust('w1', 'hp', 7)
+    useHpXpStore.getState().setTrack('w1', 'hp', 18)
+    expect(useHpXpStore.getState().valuesOf('w1').hp).toBe(18)
+  })
+
+  it('다른 칸은 안 건드린다 — 체력을 채워도 경험은 그대로다', () => {
+    useHpXpStore.getState().adjust('w1', 'xp', 4)
+    useHpXpStore.getState().setTrack('w1', 'hp', 18)
+    expect(useHpXpStore.getState().valuesOf('w1').xp).toBe(4)
+  })
+
+  it('울타리 안으로 들어온다 — 서버에서 온 값일 수 있다', () => {
+    useHpXpStore.getState().setTrack('w1', 'hp', 999)
+    expect(useHpXpStore.getState().valuesOf('w1').hp).toBe(MAX_VALUE)
+    useHpXpStore.getState().setTrack('w1', 'hp', -5)
+    expect(useHpXpStore.getState().valuesOf('w1').hp).toBe(MIN_VALUE)
+  })
+})

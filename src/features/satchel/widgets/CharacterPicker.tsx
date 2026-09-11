@@ -6,6 +6,26 @@ import './CharacterPicker.css'
 interface Props {
   value: string | null
   onChange: (characterId: string | null) => void
+  /**
+   * 줄 오른쪽에 곁들일 값. 위젯마다 다르므로 **부르는 쪽이 정한다.**
+   *
+   * HP/XP 트래커는 최대 체력을 적고, 덱과 골드는 아무것도 안 적는다 — 여기다
+   * 다 그리면 쓰지도 않는 위젯에 글자만 는다.
+   */
+  detailOf?: (characterId: string) => React.ReactNode
+  /**
+   * **고른 줄에만** 붙는 단추.
+   *
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ **고르지 않은 줄에는 안 낸다**(형님이 정했다).                          │
+   * └────────────────────────────────────────────────────────────────────────┘
+   *
+   * 줄마다 단추를 달면 스무 명이 늘어섰을 때 누를 것이 마흔 개가 된다 — 탭해서
+   * 고른 다음 그 줄에서만 낸다. 고르는 것과 값을 앉히는 것은 다른 일이므로
+   * 두 번 눌러야 하는 것이 맞다: **누르자마자 체력이 갈리면 잘못 눌렀을 때
+   * 되돌릴 수가 없다.**
+   */
+  actionOf?: (characterId: string) => React.ReactNode
 }
 
 /**
@@ -21,7 +41,7 @@ interface Props {
  * **이름 대신 아이콘도 함께 보인다.** 클래스 이름은 담지 않으므로(구현 결정 40)
  * 그림으로 알아본다. 이름은 사람이 지은 것이라 그대로 쓴다.
  */
-export function CharacterPicker({ value, onChange }: Props) {
+export function CharacterPicker({ value, onChange, detailOf, actionOf }: Props) {
   const entries = useRosterStore((s) => s.entries)
   const loaded = useRosterStore((s) => s.loaded)
   const load = useRosterStore((s) => s.load)
@@ -45,10 +65,10 @@ export function CharacterPicker({ value, onChange }: Props) {
 
       {entries.length > 0 && (
         <ul className="charpick__list">
-          <li>
+          <li className={`charpick__item${value === null ? ' charpick__item--on' : ''}`}>
             <button
               type="button"
-              className={`charpick__row${value === null ? ' charpick__row--on' : ''}`}
+              className="charpick__row"
               aria-pressed={value === null}
               onClick={() => onChange(null)}
             >
@@ -62,11 +82,18 @@ export function CharacterPicker({ value, onChange }: Props) {
           {entries.map((entry) => {
             const on = entry.id === value
             const iconUrl = classIconUrl(entry.classIcon)
+            const detail = detailOf?.(entry.id)
+            /*
+              **단추를 단추 안에 넣을 수 없다**(HTML이 허락하지 않는다). 줄을
+              `<li>`가 감싸고 그 안에 고르는 단추와 곁단추가 나란히 선다 —
+              테두리는 `<li>`가 두르므로 여전히 한 줄로 읽힌다.
+            */
+            const action = on ? actionOf?.(entry.id) : null
             return (
-              <li key={entry.id}>
+              <li key={entry.id} className={`charpick__item${on ? ' charpick__item--on' : ''}`}>
                 <button
                   type="button"
-                  className={`charpick__row${on ? ' charpick__row--on' : ''}`}
+                  className="charpick__row"
                   aria-pressed={on}
                   onClick={() => onChange(on ? null : entry.id)}
                 >
@@ -78,8 +105,12 @@ export function CharacterPicker({ value, onChange }: Props) {
                     )}
                   </span>
                   <span className="charpick__name">{entry.name || '이름 없음'}</span>
+                  {detail !== undefined && detail !== null && (
+                    <span className="charpick__detail">{detail}</span>
+                  )}
                   <span className="charpick__owner">{entry.ownerName}</span>
                 </button>
+                {action}
               </li>
             )
           })}

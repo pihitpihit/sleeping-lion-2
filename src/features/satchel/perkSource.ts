@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { classIconUrl } from '../campaign/character'
-import { classInfoOf, useClassStore } from '../campaign/classStore'
+import { levelForXp } from '../campaign/character'
+import { classInfoOf, maxHpFor, useClassStore } from '../campaign/classStore'
 import { perkDeckChanges } from '../campaign/perks'
 import type { CardOwner } from './widgets/deck/CardFace'
 import type { PerkDeckChange } from './widgets/deck/perks'
@@ -53,6 +54,40 @@ export function usePerkChanges(characterId: string | null): PerkDeckChange[] | n
   if (!perks || perks.length === 0) return null
 
   return perkDeckChanges(perks, entry.perks)
+}
+
+/**
+ * 캐릭터마다의 최대 체력 — **레벨은 경험치에서 뽑는다**(구현 결정 225).
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **모르면 `null`이다. 짐작해서 숫자를 내지 않는다.**                       │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 클래스를 안 골랐거나 그 클래스의 체력표가 아직 안 들어왔으면 모르는 것이다
+ * (구현 결정 115) — **틀린 최대 체력은 판을 어긋나게 한다.**
+ *
+ * 축 ①에 닿는 자리를 여기 하나로 모아 둔다(구현 결정 142). 위젯이 스토어 둘을
+ * 직접 부르면 어디서 닿는지 흩어져 보이지 않는다.
+ */
+export function useMaxHpByCharacter(): Map<string, number> {
+  const entries = useRosterStore((s) => s.entries)
+  const loadRoster = useRosterStore((s) => s.load)
+  const classes = useClassStore((s) => s.list)
+  const loadClasses = useClassStore((s) => s.load)
+
+  useEffect(() => {
+    void loadRoster()
+    void loadClasses()
+  }, [loadRoster, loadClasses])
+
+  const out = new Map<string, number>()
+  for (const entry of entries) {
+    const info = classInfoOf(classes, entry.classId, entry.classIcon)
+    const hp = maxHpFor(info, levelForXp(entry.xp))
+    // 모르는 것은 담지 않는다 — 없는 열쇠가 곧 「모른다」다.
+    if (hp !== null) out.set(entry.id, hp)
+  }
+  return out
 }
 
 /**

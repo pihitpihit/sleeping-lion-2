@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { INITIAL, step, type HpXp, type HpXpTrack } from './hpxp'
+import { INITIAL, clampValue, step, type HpXp, type HpXpTrack } from './hpxp'
 
 /**
  * HP/XP 값 — **도구 런타임이다.**
@@ -23,6 +23,13 @@ interface HpXpState {
   byInstance: Record<string, HpXp>
   valuesOf: (instanceId: string) => HpXp
   adjust: (instanceId: string, track: HpXpTrack, delta: number) => void
+  /**
+   * 값을 곧바로 앉힌다 — 「최대 체력으로 되돌리기」가 쓴다.
+   *
+   * `adjust`로는 못 한다. 지금 값이 얼마인지 알아야 델타를 셈할 수 있는데,
+   * **부르는 쪽이 그것을 알 까닭이 없다.**
+   */
+  setTrack: (instanceId: string, track: HpXpTrack, value: number) => void
   reset: (instanceId: string) => void
   /** 뜬 판을 통째로 앉힌다. */
   hydrate: (byInstance: Record<string, HpXp>) => void
@@ -40,6 +47,17 @@ export const useHpXpStore = create<HpXpState>((set, get) => ({
         byInstance: {
           ...s.byInstance,
           [instanceId]: { ...current, [track]: step(current[track], delta) },
+        },
+      }
+    }),
+
+  setTrack: (instanceId, track, value) =>
+    set((s) => {
+      const current = s.byInstance[instanceId] ?? INITIAL
+      return {
+        byInstance: {
+          ...s.byInstance,
+          [instanceId]: { ...current, [track]: clampValue(value) },
         },
       }
     }),
