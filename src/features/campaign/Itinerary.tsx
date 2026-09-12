@@ -47,19 +47,46 @@ export function Itinerary({
           아직 적은 곳이 없다. {editing ? '아래에서 한 줄 적는다.' : '편집으로 들어가 적는다.'}
         </p>
       ) : (
-        <ol className="itin__rows">
+        <ol className={`itin__rows${editing ? ' itin__rows--editing' : ''}`}>
           {stops.map((stop, i) => {
             const label = stopLabel(stop)
             const open = editing && openId === stop.id
+            /*
+              ┌────────────────────────────────────────────────────────────┐
+              │ **줄을 격자로 못박는다 — 흘려 넣지 않는다.**                │
+              └────────────────────────────────────────────────────────────┘
+
+              흘려 넣었더니 첫 줄만 「지금」 배지 폭만큼 밀려 날짜 열이 어긋나고,
+              같은 줄에서 손잡이가 다음 줄로 넘어가 높이가 두 배가 되었다
+              (형님이 짚었다). 열을 고정하면 어떤 폭에서도 날짜가 한 줄에 선다
+              (구현 결정 186과 같은 손질).
+
+              **고치기는 줄 자체를 누르는 것이다.** 단추를 셋 두면 좁은 화면에서
+              라벨 자리가 죽는다 — 누르는 자리와 읽는 자리를 겹친다.
+            */
+            const cells = (
+              <>
+                <span className="itin__mark">
+                  {i === 0 && <span className="itin__now">지금</span>}
+                </span>
+                <span className="itin__at sl-numeral">{stop.at ?? '—'}</span>
+                <span className="itin__label">{label === '' ? '적은 것 없음' : label}</span>
+              </>
+            )
+
             return (
               <li key={stop.id} className={`itin__row${i === 0 ? ' itin__row--now' : ''}`}>
-                <div className="itin__line">
-                  {/* 맨 위 줄만 「지금」이라고 적는다 — 차례만으로는 말해 주지 않는다. */}
-                  {i === 0 && <span className="itin__now">지금</span>}
-                  <span className="itin__at sl-numeral">{stop.at ?? '—'}</span>
-                  <span className="itin__label">{label === '' ? '적은 것 없음' : label}</span>
-
-                  {editing && (
+                {editing ? (
+                  <div className="itin__line">
+                    <button
+                      type="button"
+                      className="itin__pick"
+                      aria-expanded={open}
+                      aria-label={`${label || '이 줄'} 고치기`}
+                      onClick={() => setOpenId(open ? null : stop.id)}
+                    >
+                      {cells}
+                    </button>
                     <span className="itin__tools">
                       <button
                         type="button"
@@ -79,18 +106,11 @@ export function Itinerary({
                       >
                         ↓
                       </button>
-                      <button
-                        type="button"
-                        className="itin__tool"
-                        aria-label={`${label || '이 줄'} 고치기`}
-                        aria-expanded={open}
-                        onClick={() => setOpenId(open ? null : stop.id)}
-                      >
-                        고치기
-                      </button>
                     </span>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="itin__line">{cells}</div>
+                )}
 
                 {open && (
                   <StopForm
@@ -187,11 +207,11 @@ function StopForm({
   return (
     <div className="itin__form">
       <div className="itin__fields">
-        <label className="itin__field itin__field--at">
+        <label className="itin__field itin__field--wide">
           <span>날짜</span>
           <input type="date" value={at} onChange={(e) => setAt(e.target.value)} />
         </label>
-        <label className="itin__field itin__field--no">
+        <label className="itin__field">
           <span>시나리오</span>
           <input
             type="text"
@@ -202,7 +222,7 @@ function StopForm({
             onChange={(e) => setScenario(e.target.value)}
           />
         </label>
-        <label className="itin__field itin__field--code">
+        <label className="itin__field">
           <span>위치 코드</span>
           <input
             type="text"
@@ -212,7 +232,7 @@ function StopForm({
             onChange={(e) => setCode(e.target.value)}
           />
         </label>
-        <label className="itin__field itin__field--place">
+        <label className="itin__field itin__field--wide">
           <span>장소 이름</span>
           <input
             type="text"

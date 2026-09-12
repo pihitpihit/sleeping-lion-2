@@ -2818,7 +2818,16 @@
 /* --------------------------------------------------------------------------
    행적 — 「머무는 곳」 한 칸을 대신한다(`0042`)
    --------------------------------------------------------------------------
-   맨 위가 지금 머무는 곳이다. 줄마다 날짜·시나리오·코드·이름이 한 마디로 선다.
+   ┌──────────────────────────────────────────────────────────────────────────┐
+   │ **줄을 격자로 못박는다 — 흘려 넣지 않는다.**                              │
+   └──────────────────────────────────────────────────────────────────────────┘
+
+   흘려 넣었더니 첫 줄만 「지금」 배지 폭만큼 밀려 **날짜 열이 어긋나고**, 같은
+   줄에서 손잡이가 다음 줄로 넘어가 **높이가 두 배**가 되었다(형님이 짚었다).
+   열을 고정하면 어떤 폭에서도 날짜가 제자리에 선다(구현 결정 186과 같은 손질).
+
+   열 셋은 **표식·날짜·라벨**이다. 표식 열은 맨 위 줄에만 차지만 **늘 자리를
+   잡아 둔다** — 켤 때만 그리면 그 줄만 라벨 시작이 달라진다(구현 결정 308).
    -------------------------------------------------------------------------- */
 
 .itin {
@@ -2831,69 +2840,109 @@
   margin: 0;
   padding: 0;
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.itin__row {
-  padding: 0.35rem 0.1rem;
 }
 
 .itin__row:not(:last-child) {
   border-bottom: 1px solid rgb(255 255 255 / 5%);
 }
 
+/*
+  줄 하나. 편집 중에는 오른쪽에 손잡이 열이 하나 더 붙는다 — 그 열을 늘 잡아 두면
+  열람 중에 오른쪽이 비어 보인다.
+*/
 .itin__line {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  font-size: 0.9rem;
+  display: grid;
+  grid-template-columns: 2.2rem 5.2rem minmax(0, 1fr);
+  gap: 0.4rem;
+  /* **가운데 맞춤이다.** 배지는 바탕이 있어 밑선으로 맞추면 살짝 떠 보인다. */
+  align-items: center;
+  /* 줄마다 높이가 들쭉날쭉하지 않게 바닥을 깐다. 손끝으로 짚는 자리이기도 하다. */
+  min-height: 2.6rem;
+  padding: 0.15rem 0.1rem;
 }
 
-/* 맨 위 줄만 「지금」이라고 적는다 — 차례만으로는 말해 주지 않는다. */
+.itin__rows--editing .itin__line {
+  grid-template-columns: 2.2rem 5.2rem minmax(0, 1fr) auto;
+  padding: 0;
+}
+
+/*
+  편집 중에는 줄 자체가 단추다 — **누르는 자리와 읽는 자리를 겹친다.** 단추를
+  셋(↑↓고치기) 두면 좁은 화면에서 라벨 자리가 죽는다.
+*/
+.itin__pick {
+  display: grid;
+  grid-column: 1 / 4;
+  grid-template-columns: subgrid;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.6rem;
+  padding: 0.15rem 0.1rem;
+  font-family: inherit;
+  font-size: inherit;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.itin__pick:hover {
+  background: rgb(255 255 255 / 4%);
+}
+
+.itin__pick:focus-visible {
+  outline: 2px solid var(--sl-gold);
+  outline-offset: -2px;
+}
+
+/* 표식 열. 맨 위 줄에만 「지금」이 차고 나머지는 비어 있다 — 자리는 늘 잡는다. */
+.itin__mark {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .itin__now {
-  flex: none;
-  padding: 0.05rem 0.35rem;
-  font-size: 0.68rem;
+  padding: 0.05rem 0.3rem;
+  font-size: 0.66rem;
+  line-height: 1.5;
   color: var(--sl-void);
   background: var(--sl-gold);
   border-radius: 0.2rem;
 }
 
 .itin__at {
-  flex: none;
-  min-width: 5.4rem;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--sl-text-faint);
 }
 
 .itin__label {
-  flex: 1 1 auto;
   min-width: 0;
+  font-size: 0.9rem;
   color: var(--sl-text);
+  /* 장소 이름은 잘라 내지 않는다 — 길면 이 칸 안에서만 두 줄이 된다. */
+  overflow-wrap: anywhere;
 }
 
 .itin__row--now .itin__label {
   color: var(--sl-gold-bright);
 }
 
-/*
-  손잡이 셋. **이름이 길면 다음 줄로 넘어간다** — 장소 이름을 잘라 내지 않는다.
-  그때도 오른쪽에 붙어 있어야 우연히 넘어간 것으로 안 보인다.
-*/
 .itin__tools {
-  flex: none;
-  margin-left: auto;
   display: inline-flex;
+  align-self: center;
   gap: 0.2rem;
+  padding-right: 0.1rem;
 }
 
 .itin__tool {
-  padding: 0.15rem 0.4rem;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
   font-family: inherit;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1;
   color: var(--sl-text-muted);
   background: rgb(0 0 0 / 25%);
   border: 1px solid var(--sl-border);
@@ -2907,7 +2956,7 @@
 }
 
 .itin__tool:disabled {
-  opacity: 0.4;
+  opacity: 0.35;
   cursor: default;
 }
 
@@ -2922,8 +2971,15 @@
 }
 
 /*
-  칸 넷. 좁으면 한 줄에 둘, 넓으면 넷이 나란히 선다 — 장소 이름은 늘 한 줄을
-  통째로 쓴다(가장 긴 값이다).
+  칸 넷의 자리를 **못박는다.** 흘려 넣으면 화면 폭마다 줄이 달라지고 빈 칸이
+  생겨 어긋나 보인다(줄 쪽과 같은 손질).
+
+    [ 날짜              ]
+    [ 시나리오 ][ 코드   ]
+    [ 장소 이름          ]
+
+  날짜 칸은 브라우저가 그리는 것이라 좁히면 글자가 잘리고, 장소 이름은 가장 긴
+  값이다 — 둘은 한 줄을 통째로 쓴다.
 */
 .itin__fields {
   display: grid;
@@ -2931,7 +2987,7 @@
   gap: 0.4rem;
 }
 
-.itin__field--place {
+.itin__field--wide {
   grid-column: 1 / -1;
 }
 
@@ -3028,12 +3084,6 @@
   background: var(--sl-gold);
 }
 
-@media (min-width: 30rem) {
-  .itin__fields {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
 /* 칸 안에서 나는 오류 — 왜 안 되는지 그 자리에 적는다(구현 결정 172). */
 .sheet__error {
   margin: 0.5rem 0 0;
@@ -3123,10 +3173,15 @@
   object-fit: contain;
 }
 
+/*
+  손잡이는 **늘 제 줄에 선다.** 줄에 끼워 두면 칸 다섯이 흘러가는 대로 어떤
+  줄에서는 끝에 붙고 어떤 줄에서는 다음 줄로 넘어가 **줄마다 모양이 달라진다**
+  (행적에서 고친 것과 같은 자리).
+*/
 .retire__tools {
-  flex: none;
-  margin-left: auto;
-  display: inline-flex;
+  flex: 0 0 100%;
+  display: flex;
+  justify-content: flex-end;
   gap: 0.2rem;
 }
 
