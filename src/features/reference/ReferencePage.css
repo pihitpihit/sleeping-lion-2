@@ -155,3 +155,42 @@
   color: var(--sl-text-faint);
   font-size: 0.76rem;
 }
+
+/* --------------------------------------------------------------------------
+   보물 색인
+   --------------------------------------------------------------------------
+   번호와 글 한 줄씩. 기록지의 팝업과 달리 **「찾았는가」가 없다** — 참조는 어느
+   파티의 것도 아니다.
+   -------------------------------------------------------------------------- */
+
+.tref__rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.tref__row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.3rem 0.1rem;
+  font-size: 0.9rem;
+}
+
+.tref__row:not(:last-child) {
+  border-bottom: 1px solid rgb(255 255 255 / 4%);
+}
+
+.tref__no {
+  flex: none;
+  min-width: 1.8rem;
+  text-align: right;
+  color: var(--sl-gold);
+}
+
+.tref__text {
+  color: var(--sl-text);
+}

@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { MARKS } from '../satchel/widgets/deck/cardSpec'
 import { InlineMark } from '../campaign/InlineMark'
 import { useScrolled } from '../campaign/useScrolled'
+import { TreasureReference } from './TreasureReference'
 import {
   DifficultyTable,
   EnhanceExtraTable,
@@ -35,8 +36,12 @@ import './ReferencePage.css'
  * 있다 — 표식이 무엇인지, 눈금이 어디부터인지. 지금까지는 그런 것이 화면 여기저기
  * 곁다리로 붙어 있어 볼 때마다 어딘가로 들어가야 했다.
  *
- * **게임 원문은 담지 않는다**(절대 원칙 1). 여기 늘어서는 것은 우리가 그린 표식과
- * 우리가 정한 이름뿐이고, 규칙 문장·카드 원문·시나리오 서사는 오지 않는다.
+ * **레포와 배포물에는 게임 원문이 없다**(절대 원칙 1). 여기 늘어서는 것은 대부분
+ * 우리가 그린 표식과 수치의 표다 — 규칙 문장·카드 원문·시나리오 서사는 담지 않는다.
+ *
+ * **2026-09-11에 보물 색인이 들어왔다.** 그 글은 책자에 인쇄된 것이지만 `0041`의
+ * 표에만 있고 화면이 읽어 올 뿐이라, 막으려던 선(레포·배포물)은 그대로다.
+ * 기록지가 이미 같은 것을 읽고 있다.
  *
  * 섹션은 **접힌다.** 찾아보는 자리라 늘어날 일만 남았고, 다 펴 두면 원하는 것에
  * 닿기까지 남의 것을 한참 지나야 한다. 여닫는 것은 `<details>`가 한다 — 직접
@@ -170,6 +175,25 @@ export function ReferencePage() {
             </li>
             <li className="ref__src">캠페인 시트의 향상 가격표</li>
           </ul>
+        </details>
+
+        {/*
+          보물 색인 — **글은 DB에서 온다**(`0041`). 접어 둔 채로 둔다: 책자가
+          「이 정보를 알지 마십시오」라 적어 둔 글이라, 펼치는 것은 사람이 정할
+          일이다(팝업에서 다 보여 주기로 한 것과 같은 결, 구현 결정 475).
+        */}
+        <details className="ref__block">
+          <summary className="ref__summary">
+            <span className="ref__title">보물 색인</span>
+          </summary>
+
+          <p className="ref__hint">
+            보물 타일의 번호마다 무엇이 나오는지.{' '}
+            <strong>책자가 미리 읽지 말라고 적어 둔 것이다</strong> — 찾은 것만 보려면 파티 기록지의
+            보물 칸을 쓴다.
+          </p>
+
+          <TreasureReference />
         </details>
 
         {SECTIONS.map((section) => {
