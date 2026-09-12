@@ -18,6 +18,8 @@ import { AchievementPicker } from './AchievementPicker'
 import { ListIcon } from './ListIcon'
 import { TreasureView } from './TreasureView'
 import { Itinerary } from './Itinerary'
+import { Retirements } from './Retirements'
+import { useRetirementStore } from './retirementStore'
 import { useItineraryStore } from './itineraryStore'
 import { useTreasureStore } from './treasureStore'
 import { useUnlockStore } from './unlockStore'
@@ -107,6 +109,22 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   useEffect(() => {
     void loadStops(campaign.id)
   }, [campaign.id, loadStops])
+
+  /*
+    은퇴한 캐릭터(`0043`). 실물 책자의 그 표이며 **대부분의 줄은 서버가 베껴 둔다** —
+    시트에서 은퇴를 켜고 저장하면 그 갱신 하나로 기록까지 남는다.
+  */
+  const retired = useRetirementStore((s) => s.rows)
+  const retireBusy = useRetirementStore((s) => s.busy)
+  const retireError = useRetirementStore((s) => s.error)
+  const loadRetired = useRetirementStore((s) => s.load)
+  const addRetired = useRetirementStore((s) => s.add)
+  const editRetired = useRetirementStore((s) => s.edit)
+  const removeRetired = useRetirementStore((s) => s.remove)
+  const shiftRetired = useRetirementStore((s) => s.shift)
+  useEffect(() => {
+    void loadRetired(campaign.id)
+  }, [campaign.id, loadRetired])
 
   /* 보물 색인. 같은 등급의 글이고 같은 주기로 필요하다(`0041`). */
   const treasures = useTreasureStore((s) => s.items)
@@ -715,6 +733,40 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
               }
               onClose={() => setOpenTreasures(false)}
             />
+          )}
+        </section>
+
+        {/* --------------------------------------------------------------------
+          은퇴한 캐릭터 — 실물 캠페인 책자의 그 표(`0043`)
+          --------------------------------------------------------------------
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **은퇴한 그때의 값이라야 기록이 된다.**                           │
+          └──────────────────────────────────────────────────────────────────┘
+
+          다섯 값은 `characters`에 이미 다 있지만 거기서 뽑아 보여 주면 기록이
+          아니다 — 은퇴한 뒤에 경험치를 고치면 레벨이 바뀌고, 파티를 나가면
+          사라지고, 유예가 끝나 지워지면 함께 간다. 실물 표는 **한 번 적으면
+          남는 종이**다.
+
+          그래서 **서버가 은퇴하는 순간의 값을 베껴 둔다**(`0043`의 트리거).
+          여기서 하는 일은 그것을 보여 주고, 종이에만 있던 줄을 손으로 더하고,
+          틀린 값을 바로잡는 것이다.
+          -------------------------------------------------------------------- */}
+        <section className="sheet__block">
+          <h2 className="sheet__label">은퇴한 캐릭터</h2>
+          <Retirements
+            rows={retired}
+            editing={editing}
+            busy={retireBusy}
+            onAdd={(edits) => void addRetired(edits)}
+            onEdit={(id, edits) => void editRetired(id, edits)}
+            onRemove={(id) => void removeRetired(id)}
+            onShift={(id, delta) => void shiftRetired(id, delta)}
+          />
+          {retireError !== null && (
+            <p className="sheet__error" role="alert">
+              {retireError}
+            </p>
           )}
         </section>
 

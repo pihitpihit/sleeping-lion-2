@@ -113,14 +113,15 @@ describe('기록지의 짜임 — 한 장의 종이', () => {
     // 단이 먼저 열리고 띠는 그 뒤에 온다.
     expect(bar).toBeGreaterThan(col)
     /*
-      칸은 아홉 — 이름·머무는 곳·평판 줄·번영도·파티 업적·전역 업적·개봉 조건·보물·메모.
+      칸은 열 — 이름·행적·평판 줄·번영도·파티 업적·전역 업적·개봉 조건·보물·
+      은퇴한 캐릭터·메모.
       **떡갈나무는 B봉투가 열려야 나온다**(`0033`) — 표가 비어 있으면 안 세어진다.
       **개봉 조건은 표가 비어 있어도 선다** — 왜 비었는지 적어 주어야 「UI가 안
       보인다」가 되지 않는다(형님이 짚었다).
     */
-    expect((html.match(/class="sheet__block/g) ?? []).length).toBe(9)
+    expect((html.match(/class="sheet__block/g) ?? []).length).toBe(10)
     // 단이 닫힌 뒤에 띠가 서는지: 띠 앞쪽에 칸이 다 들어 있다.
-    expect((html.slice(col, bar).match(/class="sheet__block/g) ?? []).length).toBe(9)
+    expect((html.slice(col, bar).match(/class="sheet__block/g) ?? []).length).toBe(10)
   })
 
   /*

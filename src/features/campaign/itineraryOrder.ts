@@ -72,8 +72,15 @@ export function placeByDate(order: readonly Stop[], id: string): Stop[] {
  * 날짜 없는 줄을 끼워 넣는 길이다. **날짜가 있는 줄도 막지 않는다** — 책자의
  * 차례가 날짜와 어긋나는 판이 있을 수 있고, 규칙을 판정하지 않는다는 선이 여기도
  * 그대로다.
+ *
+ * **`id`만 있으면 무엇이든 옮긴다.** 은퇴한 캐릭터 표도 같은 규칙으로 차례를
+ * 바꾸므로(`retirementStore`) 두 벌로 두면 언젠가 어긋난다.
  */
-export function move(order: readonly Stop[], id: string, delta: number): Stop[] {
+export function move<T extends { readonly id: string }>(
+  order: readonly T[],
+  id: string,
+  delta: number,
+): T[] {
   const at = order.findIndex((s) => s.id === id)
   if (at < 0) return [...order]
   const to = at + delta
