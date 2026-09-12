@@ -20,7 +20,6 @@ interface Row {
   id: string
   party_id: string
   name: string
-  location: string
   notes: string
   achievements: string[] | null
   unlocks: Record<string, number> | null
@@ -35,14 +34,13 @@ interface Row {
 }
 
 const COLUMNS =
-  'id, party_id, name, location, notes, achievements, global_achievements, reputation, prosperity, unlocks, treasures, oak, created_at, updated_at, version'
+  'id, party_id, name, notes, achievements, global_achievements, reputation, prosperity, unlocks, treasures, oak, created_at, updated_at, version'
 
 function toCampaign(row: Row): Campaign {
   return sanitizeCampaign({
     id: row.id,
     partyId: row.party_id,
     name: row.name,
-    location: row.location,
     notes: row.notes,
     achievements: row.achievements ?? [],
     unlocks: row.unlocks ?? {},
@@ -99,7 +97,6 @@ export async function fetchOrCreateFor(partyId: string, name: string): Promise<C
 export async function pushEdits(id: string, edits: CampaignEdits): Promise<Campaign> {
   const patch: Record<string, unknown> = {}
   if (edits.name !== undefined) patch.name = edits.name
-  if (edits.location !== undefined) patch.location = edits.location
   if (edits.notes !== undefined) patch.notes = edits.notes
   if (edits.achievements !== undefined) patch.achievements = edits.achievements
   if (edits.unlocks !== undefined) patch.unlocks = edits.unlocks

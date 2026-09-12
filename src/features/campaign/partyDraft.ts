@@ -23,7 +23,6 @@ import type { Campaign, CampaignEdits } from './types'
 /** 기록지에서 사람이 고치는 칸 전부. */
 export interface PartyDraft {
   name: string
-  location: string
   notes: string
   achievements: string[]
   /** 전역 업적 — `{ 이름: 횟수 }`. 되풀이해 이룬다. */
@@ -41,7 +40,6 @@ export interface PartyDraft {
 export function draftOf(campaign: Campaign): PartyDraft {
   return {
     name: campaign.name,
-    location: campaign.location,
     notes: campaign.notes,
     achievements: [...campaign.achievements],
     globalAchievements: { ...campaign.globalAchievements },
@@ -83,9 +81,6 @@ export function partyDiff(campaign: Campaign, draft: PartyDraft): CampaignEdits 
   // 앞뒤 공백은 턴다. 눈에 안 보이는 차이로 저장 단추가 살아나면 안 된다.
   const name = draft.name.trim()
   if (name !== campaign.name) edits.name = name
-
-  const location = draft.location.trim()
-  if (location !== campaign.location) edits.location = location
 
   if (draft.notes !== campaign.notes) edits.notes = draft.notes
 

@@ -15,7 +15,6 @@ function fixture(over: Partial<Campaign> = {}): Campaign {
     id: 'g1',
     partyId: 'p1',
     name: '잠자는 사자',
-    location: '광장',
     notes: '',
     achievements: ['첫 밤'],
     unlocks: {},
@@ -49,7 +48,9 @@ describe('초안 뜨기', () => {
 describe('바뀐 칸만 낸다', () => {
   it('건드린 칸만 온다', () => {
     const c = fixture()
-    expect(partyDiff(c, { ...draftOf(c), location: '숲' })).toEqual({ location: '숲' })
+    expect(partyDiff(c, { ...draftOf(c), notes: '숲에서 만나기로' })).toEqual({
+      notes: '숲에서 만나기로',
+    })
   })
 
   /**
@@ -77,9 +78,9 @@ describe('바뀐 칸만 낸다', () => {
 
 describe('울타리와 다듬기', () => {
   /** 눈에 안 보이는 차이로 저장 단추가 살아나면 안 된다. */
-  it('이름과 장소의 앞뒤 공백은 턴다', () => {
+  it('이름의 앞뒤 공백은 턴다', () => {
     const c = fixture()
-    expect(partyDiff(c, { ...draftOf(c), name: '  잠자는 사자  ', location: ' 광장 ' })).toEqual({})
+    expect(partyDiff(c, { ...draftOf(c), name: '  잠자는 사자  ' })).toEqual({})
   })
 
   it('빈 업적 줄은 걷는다', () => {

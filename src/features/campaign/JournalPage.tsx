@@ -7,6 +7,8 @@ import { classIconUrl } from './character'
 import { LevelBadge } from './LevelBadge'
 import { graceShort } from './grace'
 import { Crew } from './Crew'
+import { currentStop } from './itineraryOrder'
+import { useItineraryStore } from './itineraryStore'
 import type { MyCharacter } from './mineNet'
 import { useMineStore } from './mineStore'
 import { PartySheet } from './PartySheet'
@@ -91,12 +93,19 @@ export function JournalPage() {
     void loadMine(userId)
   }, [userId, partyId, loadMine])
 
+  /* 배너 부제가 행적의 맨 위 줄을 쓴다. 기록지가 이미 읽어 둔 것을 그대로 본다. */
+  const stops = useItineraryStore((s) => s.stops)
+
   if (session === null) return null
   const me: Identity = { userId: session.userId, displayName: session.displayName }
 
   const partyTitle = current ? current.campaign?.name || current.party.name : ''
   const title = partyId ? partyTitle : '일지'
-  const place = partyId ? (current?.campaign?.location ?? '') : ''
+  /*
+    배너 부제 — **행적의 맨 위 줄이 지금 머무는 곳이다**(`0042`). 자유 입력 한
+    칸을 걷었으므로 여기서도 행적을 본다(구현 결정 275의 자리는 그대로다).
+  */
+  const place = partyId ? (currentStop(stops)?.place ?? '') : ''
 
   return (
     <div className="journal">

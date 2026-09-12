@@ -112,6 +112,11 @@ const FIELD_NAME: Readonly<Record<string, string>> = {
   retired: '은퇴',
   // 파티
   name: '이름',
+  /*
+    **옛 기록이 이 칸을 들고 있다.** `campaigns.location`은 `0042`에서 걷혔지만
+    그 전에 남긴 로그 줄은 `field: 'location'`을 그대로 들고 있으므로, 라벨을
+    지우면 **지난 기록이 읽히지 않는다**(구현 결정 370과 같은 결).
+  */
   location: '머무는 곳',
   reputation: '평판',
   achievements: '업적',
@@ -349,7 +354,6 @@ export function campaignChangesOf(
   const out: LogChange[] = []
   for (const field of [
     'name',
-    'location',
     'reputation',
     'prosperity',
     'achievements',

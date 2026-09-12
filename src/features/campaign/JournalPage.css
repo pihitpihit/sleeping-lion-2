@@ -2814,3 +2814,229 @@
 .tre__text--off {
   color: var(--sl-text-muted);
 }
+
+/* --------------------------------------------------------------------------
+   행적 — 「머무는 곳」 한 칸을 대신한다(`0042`)
+   --------------------------------------------------------------------------
+   맨 위가 지금 머무는 곳이다. 줄마다 날짜·시나리오·코드·이름이 한 마디로 선다.
+   -------------------------------------------------------------------------- */
+
+.itin {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.itin__rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.itin__row {
+  padding: 0.35rem 0.1rem;
+}
+
+.itin__row:not(:last-child) {
+  border-bottom: 1px solid rgb(255 255 255 / 5%);
+}
+
+.itin__line {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  font-size: 0.9rem;
+}
+
+/* 맨 위 줄만 「지금」이라고 적는다 — 차례만으로는 말해 주지 않는다. */
+.itin__now {
+  flex: none;
+  padding: 0.05rem 0.35rem;
+  font-size: 0.68rem;
+  color: var(--sl-void);
+  background: var(--sl-gold);
+  border-radius: 0.2rem;
+}
+
+.itin__at {
+  flex: none;
+  min-width: 5.4rem;
+  font-size: 0.85rem;
+  color: var(--sl-text-faint);
+}
+
+.itin__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--sl-text);
+}
+
+.itin__row--now .itin__label {
+  color: var(--sl-gold-bright);
+}
+
+/*
+  손잡이 셋. **이름이 길면 다음 줄로 넘어간다** — 장소 이름을 잘라 내지 않는다.
+  그때도 오른쪽에 붙어 있어야 우연히 넘어간 것으로 안 보인다.
+*/
+.itin__tools {
+  flex: none;
+  margin-left: auto;
+  display: inline-flex;
+  gap: 0.2rem;
+}
+
+.itin__tool {
+  padding: 0.15rem 0.4rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  color: var(--sl-text-muted);
+  background: rgb(0 0 0 / 25%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.2rem;
+  cursor: pointer;
+}
+
+.itin__tool:hover:not(:disabled) {
+  color: var(--sl-gold);
+  border-color: var(--sl-border-strong);
+}
+
+.itin__tool:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* --- 한 줄 적는 칸 ------------------------------------------------------- */
+
+.itin__form {
+  margin-top: 0.4rem;
+  padding: 0.6rem;
+  background: rgb(0 0 0 / 22%);
+  border: 1px solid var(--sl-border-strong);
+  border-radius: 0.3rem;
+}
+
+/*
+  칸 넷. 좁으면 한 줄에 둘, 넓으면 넷이 나란히 선다 — 장소 이름은 늘 한 줄을
+  통째로 쓴다(가장 긴 값이다).
+*/
+.itin__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.itin__field--place {
+  grid-column: 1 / -1;
+}
+
+.itin__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  font-size: 0.72rem;
+  color: var(--sl-text-faint);
+}
+
+.itin__field input {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--sl-text);
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+}
+
+.itin__field input:focus {
+  border-color: var(--sl-gold);
+  outline: none;
+}
+
+.itin__hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: var(--sl-text-faint);
+}
+
+.itin__formfoot {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.itin__cancel,
+.itin__remove,
+.itin__save {
+  padding: 0.4rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.itin__cancel {
+  color: var(--sl-text-muted);
+  background: none;
+  border: 1px solid var(--sl-border);
+}
+
+/* 지우기는 잉걸빛이다 — 없애는 일에 이미 쓰는 색이다. */
+.itin__remove {
+  color: var(--sl-ember);
+  background: none;
+  border: 1px solid var(--sl-ember);
+}
+
+.itin__save {
+  margin-left: auto;
+  color: var(--sl-void);
+  background: var(--sl-gold);
+  border: 1px solid var(--sl-gold-bright);
+}
+
+.itin__save:disabled {
+  color: var(--sl-text-faint);
+  background: none;
+  border-color: var(--sl-border);
+  cursor: default;
+}
+
+.itin__add {
+  align-self: flex-start;
+  padding: 0.4rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  color: var(--sl-gold);
+  background: rgb(0 0 0 / 25%);
+  border: 1px solid var(--sl-border-strong);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.itin__add:hover:not(:disabled) {
+  color: var(--sl-void);
+  background: var(--sl-gold);
+}
+
+@media (min-width: 30rem) {
+  .itin__fields {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* 칸 안에서 나는 오류 — 왜 안 되는지 그 자리에 적는다(구현 결정 172). */
+.sheet__error {
+  margin: 0.5rem 0 0;
+  font-size: 0.82rem;
+  color: var(--sl-ember);
+}

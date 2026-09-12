@@ -23,7 +23,6 @@ function fixture(over: Partial<Campaign> = {}): Campaign {
     id: 'g1',
     partyId: 'p1',
     name: '잠자는 사자',
-    location: '광장',
     notes: '',
     unlocks: {},
     treasures: [],

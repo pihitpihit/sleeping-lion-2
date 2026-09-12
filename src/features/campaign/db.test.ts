@@ -59,7 +59,6 @@ describe('sanitizeCampaign', () => {
       id: 'id-1',
       partyId: 'party-1',
       name: '잠자는 사자',
-      location: '글룸헤이븐',
       notes: '문 앞에서 만나기로',
       achievements: ['첫 걸음'],
       reputation: 12,

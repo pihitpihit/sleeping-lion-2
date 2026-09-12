@@ -17,6 +17,8 @@ import { LogView } from './LogView'
 import { AchievementPicker } from './AchievementPicker'
 import { ListIcon } from './ListIcon'
 import { TreasureView } from './TreasureView'
+import { Itinerary } from './Itinerary'
+import { useItineraryStore } from './itineraryStore'
 import { useTreasureStore } from './treasureStore'
 import { useUnlockStore } from './unlockStore'
 import { ConditionText } from './ConditionText'
@@ -86,6 +88,26 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
     void loadConditions()
   }, [loadConditions])
 
+  /*
+    행적(`0042`). 기록지마다 다른 값이라 기록지 id로 읽는다.
+
+    **새 줄에 넣을 날짜는 한 번만 잰다.** 렌더 중에 `Date.now()`를 부르면 같은
+    입력에 다른 결과가 나와 렌더를 되돌릴 수 없다(구현 결정 12). 기록지를 펼쳐
+    둔 동안 날짜가 넘어가는 일은 드물고, 넘어가도 사람이 칸에서 고친다.
+  */
+  const stops = useItineraryStore((s) => s.stops)
+  const itinBusy = useItineraryStore((s) => s.busy)
+  const itinError = useItineraryStore((s) => s.error)
+  const loadStops = useItineraryStore((s) => s.load)
+  const addStop = useItineraryStore((s) => s.add)
+  const editStop = useItineraryStore((s) => s.edit)
+  const removeStop = useItineraryStore((s) => s.remove)
+  const shiftStop = useItineraryStore((s) => s.shift)
+  const [today] = useState(() => new Date().toISOString().slice(0, 10))
+  useEffect(() => {
+    void loadStops(campaign.id)
+  }, [campaign.id, loadStops])
+
   /* 보물 색인. 같은 등급의 글이고 같은 주기로 필요하다(`0041`). */
   const treasures = useTreasureStore((s) => s.items)
   const loadTreasures = useTreasureStore((s) => s.load)
@@ -95,7 +117,6 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   /** 누가 고쳤는지 남기려면 내가 누구인지 알아야 한다. */
   const userId = useAuthStore((s) => s.session?.userId ?? null)
   const nameId = useId()
-  const placeId = useId()
   const noteId = useId()
 
   const [wantsEdit, setWantsEdit] = useState(false)
@@ -206,18 +227,37 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
           />
         </section>
 
+        {/* --------------------------------------------------------------------
+          행적 — **「머무는 곳」 한 칸을 대신한다**(2026-09-13, 형님이 정했다)
+          --------------------------------------------------------------------
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **맨 위가 지금 머무는 곳이다.**                                   │
+          └──────────────────────────────────────────────────────────────────┘
+
+          자유 입력 한 칸이었을 때는 다음 곳으로 옮기면 앞의 것이 지워졌다 —
+          **지나온 자리가 남지 않았다.** 한 줄씩 쌓아 두면 그것이 행적이다.
+
+          **초안에 담지 않고 곧바로 쓴다**(`itineraryStore`) — 한 줄을 적거나
+          고치는 일이라 평판 다이얼처럼 수십 번이 나갈 자리가 아니고, 여럿이
+          함께 쓰는 목록이라 늦게 올릴 까닭도 없다(구현 결정 330·344와 같은 결).
+          -------------------------------------------------------------------- */}
         <section className="sheet__block">
-          <label className="sheet__label" htmlFor={placeId}>
-            머무는 곳
-          </label>
-          <input
-            id={placeId}
-            className="sheet__input"
-            value={shown.location}
-            placeholder={editing ? '어디에 있는가' : ''}
-            disabled={!editing}
-            onChange={(e) => set('location', e.target.value)}
+          <h2 className="sheet__label">행적</h2>
+          <Itinerary
+            stops={stops}
+            editing={editing}
+            busy={itinBusy}
+            today={today}
+            onAdd={(stop) => void addStop(stop)}
+            onEdit={(stop) => void editStop(stop)}
+            onRemove={(id) => void removeStop(id)}
+            onShift={(id, delta) => void shiftStop(id, delta)}
           />
+          {itinError !== null && (
+            <p className="sheet__error" role="alert">
+              {itinError}
+            </p>
+          )}
         </section>
 
         {/* --------------------------------------------------------------------

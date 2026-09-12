@@ -84,7 +84,6 @@ export function sanitizeCampaign(raw: Partial<Campaign> & { id: string }): Campa
     id: raw.id,
     partyId: typeof raw.partyId === 'string' ? raw.partyId : '',
     name: typeof raw.name === 'string' ? raw.name : '',
-    location: typeof raw.location === 'string' ? raw.location : '',
     notes: typeof raw.notes === 'string' ? raw.notes : '',
     achievements: Array.isArray(raw.achievements)
       ? raw.achievements.filter((item): item is string => typeof item === 'string')

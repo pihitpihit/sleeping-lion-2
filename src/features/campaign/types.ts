@@ -25,8 +25,6 @@ export interface Campaign {
   partyId: string
   /** 파티 이름과는 따로다 — 같은 파티가 다음 판을 새로 펼 수 있다. */
   name: string
-  /** 지금 머무는 곳. 자유 입력이다 — 우리가 지명 목록을 갖고 있지 않다. */
-  location: string
   /** 파티 메모. 여러 줄. */
   notes: string
   /**
@@ -98,7 +96,6 @@ export type CampaignEdits = Partial<
   Pick<
     Campaign,
     | 'name'
-    | 'location'
     | 'notes'
     | 'achievements'
     | 'globalAchievements'
