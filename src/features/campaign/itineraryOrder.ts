@@ -30,6 +30,14 @@ export interface Stop {
   readonly scenario: string
   readonly code: string
   readonly place: string
+  /**
+   * 목록에서 고른 시나리오의 번호(`0044`). 손으로 적었거나 시나리오가 아닌 곳
+   * (도시·길)이면 `null`.
+   *
+   * **셋(번호·코드·이름)은 그대로 둔다.** 목록이 나중에 고쳐져도 그때 적은 것이
+   * 남아야 하고, 목록을 못 읽는 자리에서도 줄이 그대로 읽혀야 한다.
+   */
+  readonly scenarioNo: number | null
 }
 
 /** 날짜가 `YYYY-MM-DD` 꼴인가. 아니면 없는 것으로 본다 — 짐작해서 고치지 않는다. */

@@ -3223,3 +3223,192 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* --------------------------------------------------------------------------
+   시나리오 고르기 — 행적을 손으로 치지 않게 한다(`0044`)
+   -------------------------------------------------------------------------- */
+
+.scpick {
+  margin-bottom: 0.6rem;
+}
+
+.scpick__search {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--sl-text);
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+}
+
+.scpick__search:focus {
+  border-color: var(--sl-gold);
+  outline: none;
+}
+
+.scpick__list {
+  margin: 0.35rem 0 0;
+  padding: 0;
+  list-style: none;
+  max-height: 12rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+/* 줄을 격자로 못박는다 — 흘려 넣으면 번호·좌표 열이 줄마다 어긋난다(행적과 같은 손질). */
+.scpick__row,
+.scpick__line {
+  display: grid;
+  grid-template-columns: 2.6rem 3.4rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  min-height: 2.3rem;
+  padding: 0.2rem 0.4rem;
+  font-family: inherit;
+  font-size: 0.88rem;
+  text-align: left;
+  color: var(--sl-text);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+}
+
+.scpick__row {
+  cursor: pointer;
+}
+
+.scpick__row:hover {
+  border-color: var(--sl-border);
+  background: rgb(255 255 255 / 4%);
+}
+
+.scpick__no {
+  font-size: 0.82rem;
+  color: var(--sl-gold);
+}
+
+.scpick__grid {
+  font-size: 0.78rem;
+  color: var(--sl-text-faint);
+}
+
+.scpick__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- 상태 --------------------------------------------------------------- */
+
+/*
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ **닫힘과 막힘은 글자가 닮았다 — 색으로 가른다.**                          │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  넷을 두 글자로 맞추면 훑기는 좋지만 `닫힘`·`막힘`이 한눈에 안 갈린다. 흐림과
+  잉걸빛으로 갈라 두면 말을 읽기 전에 색이 먼저 말한다.
+*/
+.scpick__tag {
+  font-size: 0.72rem;
+  padding: 0.05rem 0.3rem;
+  border-radius: 0.2rem;
+  border: 1px solid transparent;
+}
+
+.scpick__tag--closed {
+  color: var(--sl-text-faint);
+}
+
+.scpick__tag--open {
+  color: var(--sl-text-muted);
+  border-color: var(--sl-border);
+}
+
+.scpick__tag--blocked {
+  color: var(--sl-ember);
+  border-color: var(--sl-ember);
+}
+
+.scpick__tag--done {
+  color: var(--sl-void);
+  background: var(--sl-gold);
+}
+
+/*
+  고른 것을 무르는 단추. **`itin__tool`을 쓰지 않는다** — 그쪽은 ↑↓용이라 폭이
+  1.9rem으로 못박혀 있어 글자가 줄바꿈된다.
+*/
+.scpick__clear {
+  padding: 0.25rem 0.5rem;
+  font-family: inherit;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  color: var(--sl-text-muted);
+  background: rgb(0 0 0 / 25%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.2rem;
+  cursor: pointer;
+}
+
+.scpick__clear:hover {
+  color: var(--sl-gold);
+  border-color: var(--sl-border-strong);
+}
+
+.scpick--chosen {
+  padding: 0.3rem;
+  background: rgb(0 0 0 / 22%);
+  border: 1px solid var(--sl-border-strong);
+  border-radius: 0.3rem;
+}
+
+.scpick__states {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.25rem;
+  margin-top: 0.4rem;
+}
+
+.scpick__state {
+  padding: 0.35rem 0;
+  font-family: inherit;
+  font-size: 0.8rem;
+  color: var(--sl-text-faint);
+  background: rgb(0 0 0 / 25%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.scpick__state:hover {
+  border-color: var(--sl-border-strong);
+}
+
+/* 켜진 것만 제 색을 입는다 — 넷이 다 물들면 어느 것이 지금인지 안 보인다. */
+.scpick__state--on.scpick__state--closed {
+  color: var(--sl-text-muted);
+  border-color: var(--sl-text-faint);
+}
+
+.scpick__state--on.scpick__state--open {
+  color: var(--sl-gold);
+  border-color: var(--sl-gold);
+}
+
+.scpick__state--on.scpick__state--blocked {
+  color: var(--sl-ember);
+  border-color: var(--sl-ember);
+}
+
+.scpick__state--on.scpick__state--done {
+  color: var(--sl-void);
+  background: var(--sl-gold);
+  border-color: var(--sl-gold-bright);
+}

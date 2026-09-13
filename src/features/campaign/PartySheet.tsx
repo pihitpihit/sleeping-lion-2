@@ -21,6 +21,7 @@ import { Itinerary } from './Itinerary'
 import { Retirements } from './Retirements'
 import { useRetirementStore } from './retirementStore'
 import { useItineraryStore } from './itineraryStore'
+import { useScenarioStore } from './scenarioStore'
 import { useTreasureStore } from './treasureStore'
 import { useUnlockStore } from './unlockStore'
 import { ConditionText } from './ConditionText'
@@ -98,6 +99,14 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
     둔 동안 날짜가 넘어가는 일은 드물고, 넘어가도 사람이 칸에서 고친다.
   */
   const stops = useItineraryStore((s) => s.stops)
+  /* 고를 시나리오 목록과 이 기록지의 상태(`0044`·`0045`). */
+  const scenarios = useScenarioStore((s) => s.list)
+  const scenarioStates = useScenarioStore((s) => s.states)
+  const loadScenarios = useScenarioStore((s) => s.load)
+  const setScenarioState = useScenarioStore((s) => s.set)
+  useEffect(() => {
+    void loadScenarios(campaign.id)
+  }, [campaign.id, loadScenarios])
   const itinBusy = useItineraryStore((s) => s.busy)
   const itinError = useItineraryStore((s) => s.error)
   const loadStops = useItineraryStore((s) => s.load)
@@ -265,6 +274,9 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
             stops={stops}
             editing={editing}
             busy={itinBusy}
+            scenarios={scenarios}
+            states={scenarioStates}
+            onState={(no, state) => void setScenarioState(no, state)}
             today={today}
             onAdd={(stop) => void addStop(stop)}
             onEdit={(stop) => void editStop(stop)}

@@ -9,8 +9,8 @@ import type { Stop } from './itineraryOrder'
 */
 
 const stops: Stop[] = [
-  { id: 'a', at: '2026-09-12', scenario: '7', code: 'G-12', place: '버려진 사원' },
-  { id: 'b', at: null, scenario: '', code: '', place: '광장' },
+  { id: 'a', at: '2026-09-12', scenario: '7', code: 'G-12', place: '버려진 사원', scenarioNo: 7 },
+  { id: 'b', at: null, scenario: '', code: '', place: '광장', scenarioNo: null },
 ]
 
 function render(over: Partial<Parameters<typeof Itinerary>[0]> = {}) {
@@ -19,6 +19,9 @@ function render(over: Partial<Parameters<typeof Itinerary>[0]> = {}) {
       stops={stops}
       editing={false}
       busy={false}
+      scenarios={[]}
+      states={{}}
+      onState={() => {}}
       today="2026-09-13"
       onAdd={() => {}}
       onEdit={() => {}}

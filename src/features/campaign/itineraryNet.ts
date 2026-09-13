@@ -22,9 +22,10 @@ interface Row {
   scenario: string | null
   code: string | null
   place: string | null
+  scenario_no: number | null
 }
 
-const COLUMNS = 'id, at, sort, scenario, code, place'
+const COLUMNS = 'id, at, sort, scenario, code, place, scenario_no'
 
 function toStop(row: Row): Stop {
   return {
@@ -34,6 +35,7 @@ function toStop(row: Row): Stop {
     scenario: typeof row.scenario === 'string' ? row.scenario : '',
     code: typeof row.code === 'string' ? row.code : '',
     place: typeof row.place === 'string' ? row.place : '',
+    scenarioNo: typeof row.scenario_no === 'number' ? Math.trunc(row.scenario_no) : null,
   }
 }
 
@@ -64,6 +66,7 @@ export async function addStop(
       scenario: stop.scenario,
       code: stop.code,
       place: stop.place,
+      scenario_no: stop.scenarioNo,
     })
     .select(COLUMNS)
     .single()
@@ -80,6 +83,7 @@ export async function editStop(stop: Stop): Promise<void> {
       scenario: stop.scenario,
       code: stop.code,
       place: stop.place,
+      scenario_no: stop.scenarioNo,
     })
     .eq('id', stop.id)
   if (error) throw error
@@ -109,6 +113,7 @@ export async function saveOrder(campaignId: string, order: readonly Stop[]): Pro
         scenario: stop.scenario,
         code: stop.code,
         place: stop.place,
+        scenario_no: stop.scenarioNo,
       })),
     )
   if (error) throw error

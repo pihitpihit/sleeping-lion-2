@@ -7,7 +7,7 @@ import { currentStop, isDate, move, placeByDate, stopLabel, type Stop } from './
 */
 
 function stop(id: string, at: string | null = null): Stop {
-  return { id, at, scenario: '', code: '', place: id }
+  return { id, at, scenario: '', code: '', place: id, scenarioNo: null }
 }
 
 describe('isDate', () => {
@@ -101,13 +101,26 @@ describe('currentStop', () => {
 describe('stopLabel', () => {
   it('시나리오·코드·이름을 이어 붙인다', () => {
     expect(
-      stopLabel({ id: '1', at: null, scenario: '7', code: 'G-12', place: '버려진 사원' }),
+      stopLabel({
+        id: '1',
+        at: null,
+        scenario: '7',
+        code: 'G-12',
+        place: '버려진 사원',
+        scenarioNo: null,
+      }),
     ).toBe('#7 G-12 버려진 사원')
   })
 
   it('있는 것만 이어 붙인다 — 빈 괄호나 # 하나가 남으면 고장으로 읽힌다', () => {
-    expect(stopLabel({ id: '1', at: null, scenario: '', code: '', place: '광장' })).toBe('광장')
-    expect(stopLabel({ id: '1', at: null, scenario: '7', code: '', place: '' })).toBe('#7')
-    expect(stopLabel({ id: '1', at: null, scenario: ' ', code: ' ', place: ' ' })).toBe('')
+    expect(
+      stopLabel({ id: '1', at: null, scenario: '', code: '', place: '광장', scenarioNo: null }),
+    ).toBe('광장')
+    expect(
+      stopLabel({ id: '1', at: null, scenario: '7', code: '', place: '', scenarioNo: null }),
+    ).toBe('#7')
+    expect(
+      stopLabel({ id: '1', at: null, scenario: ' ', code: ' ', place: ' ', scenarioNo: null }),
+    ).toBe('')
   })
 })

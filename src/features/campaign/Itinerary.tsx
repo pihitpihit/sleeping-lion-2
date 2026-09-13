@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { ConfirmDialog } from '../satchel/board/ConfirmDialog'
 import { isDate, stopLabel, type Stop } from './itineraryOrder'
+import { ScenarioPicker } from './ScenarioPicker'
+import type { Scenario } from './scenarioNet'
+import type { ScenarioState, StoredState } from './scenarioState'
 
 /**
  * 파티의 행적 — **「머무는 곳」 한 칸을 대신한다**(형님이 정했다).
@@ -19,6 +22,9 @@ export function Itinerary({
   stops,
   editing,
   busy,
+  scenarios,
+  states,
+  onState,
   today,
   onAdd,
   onEdit,
@@ -28,6 +34,11 @@ export function Itinerary({
   stops: readonly Stop[]
   editing: boolean
   busy: boolean
+  /** 고를 수 있는 시나리오. 목록을 못 읽었으면 비어 있고 그때는 손으로 적는다. */
+  scenarios: readonly Scenario[]
+  /** 이 기록지가 시나리오를 어떻게 보고 있는가. 없는 번호는 닫힘이다. */
+  states: Record<number, StoredState>
+  onState: (no: number, state: ScenarioState) => void
   /** 새 줄에 미리 넣을 날짜(`YYYY-MM-DD`). **렌더 중에 시각을 읽지 않는다**(구현 결정 12). */
   today: string
   onAdd: (stop: Omit<Stop, 'id'>) => void
@@ -116,6 +127,9 @@ export function Itinerary({
                   <StopForm
                     value={stop}
                     busy={busy}
+                    scenarios={scenarios}
+                    states={states}
+                    onState={onState}
                     submitLabel="고친 것 저장"
                     onSubmit={(next) => {
                       onEdit({ ...next, id: stop.id })
@@ -134,8 +148,11 @@ export function Itinerary({
       {editing &&
         (adding ? (
           <StopForm
-            value={{ id: '', at: today, scenario: '', code: '', place: '' }}
+            value={{ id: '', at: today, scenario: '', code: '', place: '', scenarioNo: null }}
             busy={busy}
+            scenarios={scenarios}
+            states={states}
+            onState={onState}
             submitLabel="행적에 더하기"
             onSubmit={(next) => {
               onAdd(next)
@@ -182,6 +199,9 @@ export function Itinerary({
 function StopForm({
   value,
   busy,
+  scenarios,
+  states,
+  onState,
   submitLabel,
   onSubmit,
   onCancel,
@@ -189,6 +209,9 @@ function StopForm({
 }: {
   value: Stop
   busy: boolean
+  scenarios: readonly Scenario[]
+  states: Record<number, StoredState>
+  onState: (no: number, state: ScenarioState) => void
   submitLabel: string
   onSubmit: (stop: Omit<Stop, 'id'>) => void
   onCancel: () => void
@@ -198,6 +221,7 @@ function StopForm({
   const [scenario, setScenario] = useState(value.scenario)
   const [code, setCode] = useState(value.code)
   const [place, setPlace] = useState(value.place)
+  const [scenarioNo, setScenarioNo] = useState<number | null>(value.scenarioNo)
 
   /** 셋 다 비면 적을 것이 없다. 날짜만으로는 어디인지 말해 주지 않는다. */
   const empty = scenario.trim() === '' && code.trim() === '' && place.trim() === ''
@@ -206,6 +230,27 @@ function StopForm({
 
   return (
     <div className="itin__form">
+      {/*
+        **고르면 세 칸이 한 번에 채워진다.** 목록이 없거나 시나리오가 아닌 곳
+        (도시·길)이면 아래 칸에 손으로 적는다 — 고르는 것이 대신하지 않고 얹힌다.
+      */}
+      <ScenarioPicker
+        list={scenarios}
+        states={states}
+        picked={scenarioNo}
+        onPick={(s) => {
+          if (s === null) {
+            setScenarioNo(null)
+            return
+          }
+          setScenarioNo(s.no)
+          setScenario(String(s.no))
+          setCode(s.grid)
+          setPlace(s.name)
+        }}
+        onState={onState}
+      />
+
       <div className="itin__fields">
         <label className="itin__field itin__field--wide">
           <span>날짜</span>
@@ -272,6 +317,7 @@ function StopForm({
               scenario: scenario.trim(),
               code: code.trim(),
               place: place.trim(),
+              scenarioNo,
             })
           }
         >
