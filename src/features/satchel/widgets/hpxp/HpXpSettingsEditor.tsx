@@ -56,7 +56,7 @@ export function HpXpSettingsEditor({ value, onChange, instanceId }: WidgetSettin
               물방울이라야 「이것이 체력이다」가 한눈에 든다 — 「최대 26」이라고
               글자로 적으면 옆의 레벨과 같은 결로 읽힌다.
             */}
-            {stat.maxHp !== null && <TrackMark track="hp" value={stat.maxHp} size={34} />}
+            {stat.maxHp !== null && <TrackMark track="hp" value={stat.maxHp} size={38} />}
           </>
         )
       }}

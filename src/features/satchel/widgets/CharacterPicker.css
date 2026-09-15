@@ -103,17 +103,33 @@
   background: none;
 }
 
-.charpick__name {
+/* 이름과 계정명을 위아래로. 한 줄에 다 늘어놓으면 서로 밀어내 이름이 잘린다. */
+.charpick__who {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.charpick__name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/*
+  계정명은 라틴 글자뿐이라 글룸헤이븐 서체로 적는다(`sl-numeral`, 구현 결정 378).
+  **한 톤 죽인다** — 고를 때 먼저 보는 것은 캐릭터 이름이다.
+*/
 .charpick__owner {
-  flex: none;
-  font-size: 0.75rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  line-height: 1.2;
   color: var(--sl-text-faint);
 }
 
@@ -133,17 +149,29 @@
   먼저 자리를 내준다.
 */
 .charpick__row {
-  min-height: 52px;
+  min-height: 60px;
 }
 
 /*
   레벨 왕관. 줄 글자에 맞춰 작게 세운다 — 고를 때 먼저 보는 것은 이름이다.
   크기는 부모의 글자 크기 하나가 정한다(`LevelBadge`).
+
+  **살짝 내린다**(형님이 짚었다). 왕관은 위가 뾰족하고 아래가 평평해 다른 것과
+  가운데를 맞추면 떠 보인다 — 물방울을 올리는 것과 짝이다.
 */
 .charpick__lv {
   display: inline-flex;
   align-items: center;
   font-size: 0.72rem;
+  transform: translateY(12%);
+}
+
+/*
+  체력 물방울. **조금 키우고 살짝 올린다**(형님이 짚었다) — 왕관이 가로로 퍼진
+  모양이라 나란히 두면 물방울이 작고 처져 보인다.
+*/
+.charpick__detail .tmark {
+  transform: translateY(-8%);
 }
 
 /* 고른 줄에만 붙는 단추. 줄 높이를 그대로 따라간다. */

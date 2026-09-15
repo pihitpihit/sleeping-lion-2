@@ -104,11 +104,18 @@ export function CharacterPicker({ value, onChange, detailOf, actionOf }: Props) 
                       <span aria-hidden="true">?</span>
                     )}
                   </span>
-                  <span className="charpick__name">{entry.name || '이름 없음'}</span>
+                  {/*
+                    **계정명을 이름 밑에 둔다**(형님이 정했다). 한 줄에 넷(표식·
+                    이름·곁값·계정명)이 늘어서면 서로 밀어내 이름이 잘린다 —
+                    이름이 먼저고 계정명은 그것을 받치는 말이다.
+                  */}
+                  <span className="charpick__who">
+                    <span className="charpick__name">{entry.name || '이름 없음'}</span>
+                    <span className="charpick__owner sl-numeral">{entry.ownerName}</span>
+                  </span>
                   {detail !== undefined && detail !== null && (
                     <span className="charpick__detail">{detail}</span>
                   )}
-                  <span className="charpick__owner">{entry.ownerName}</span>
                 </button>
                 {action}
               </li>
