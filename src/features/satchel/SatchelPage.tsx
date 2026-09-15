@@ -190,6 +190,7 @@ export function SatchelPage() {
           onCommit={moveOrResize}
           onRemove={removeWidgetInstance}
           onOpenSettings={setSettingsTarget}
+          onSettingsChange={setWidgetSettings}
           onRotate={rotateWidget}
         />
 

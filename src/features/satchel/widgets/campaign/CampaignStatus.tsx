@@ -3,7 +3,6 @@ import type { WidgetProps } from '../types'
 import { useBoardSize } from '../../useBoardSize'
 import { useBattleStore } from '../../battle/battleStore'
 import { useRoundStore } from '../round/roundStore'
-import { useSatchelStore } from '../../store/satchelStore'
 import { rowFor } from '../../../rules/scenarioLevel'
 import { ScenarioLevelDialog } from './ScenarioLevelDialog'
 import { sanitizeCampaignSettings } from './settings'
@@ -39,11 +38,10 @@ import './CampaignStatus.css'
  *
  * **편집 중에는 안 열린다.** 자리를 옮기려다 팝업이 뜨면 곤란하다.
  */
-export function CampaignStatus({ instanceId, mode, settings }: WidgetProps) {
+export function CampaignStatus({ mode, settings, onSettingsChange }: WidgetProps) {
   const { level: fallback } = sanitizeCampaignSettings(settings)
   const battle = useBattleStore((s) => s.battle)
   const setBattleLevel = useBattleStore((s) => s.setLevel)
-  const setWidgetSettings = useSatchelStore((s) => s.setWidgetSettings)
   const [open, setOpen] = useState(false)
 
   /* 라운드 기록. 팝업이 보여 줄 값이라 여기서 읽어 넘긴다. */
@@ -67,7 +65,7 @@ export function CampaignStatus({ instanceId, mode, settings }: WidgetProps) {
 
   function pick(next: number) {
     if (battle !== null) void setBattleLevel(next)
-    else setWidgetSettings(instanceId, { level: next })
+    else onSettingsChange({ level: next })
     setOpen(false)
   }
 

@@ -26,6 +26,8 @@ interface Props {
   onCommit: (next: Placement) => boolean
   onRemove: () => void
   onOpenSettings: () => void
+  /** 위젯이 제 설정을 고칠 때. 스토어를 직접 부르지 않게 하려고 내려보낸다. */
+  onSettingsChange: (next: unknown) => void
   onRotate: () => void
 }
 
@@ -66,6 +68,7 @@ export function WidgetFrame({
   onCommit,
   onRemove,
   onOpenSettings,
+  onSettingsChange,
   onRotate,
 }: Props) {
   const gesture = useRef<Gesture | null>(null)
@@ -249,6 +252,7 @@ export function WidgetFrame({
             mode={mode}
             rotation={rotation}
             settings={settings}
+            onSettingsChange={onSettingsChange}
           />
         </div>
       </div>

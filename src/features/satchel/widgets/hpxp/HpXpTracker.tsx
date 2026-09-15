@@ -17,7 +17,6 @@ import { sanitizeHpXpSettings } from './settings'
 import { slotKeyFor } from '../../roster'
 import { NumberReel } from '../reel/NumberReel'
 import { useRosterStore } from '../../roster'
-import { useSatchelStore } from '../../store/satchelStore'
 import { classIconUrl } from '../../../campaign/character'
 import { GearIcon, ListIcon } from './hpxpIcons'
 import { HpXpLogView } from './HpXpLogView'
@@ -43,7 +42,13 @@ import './HpXpTracker.css'
  *
  * **룰을 돌리지 않는다.** 최대 체력이 얼마인지, 레벨업에 몇이 필요한지 모른다.
  */
-export function HpXpTracker({ instanceId, mode, rotation, settings }: WidgetProps) {
+export function HpXpTracker({
+  instanceId,
+  mode,
+  rotation,
+  settings,
+  onSettingsChange,
+}: WidgetProps) {
   /**
    * 값이 담기는 열쇠.
    *
@@ -58,8 +63,6 @@ export function HpXpTracker({ instanceId, mode, rotation, settings }: WidgetProp
   const values = useHpXpStore((s) => s.valuesOf(slot))
   const adjust = useHpXpStore((s) => s.adjust)
   const marks = useHpXpStore((s) => s.marksOf(slot))
-
-  const setWidgetSettings = useSatchelStore((s) => s.setWidgetSettings)
 
   /*
     고른 캐릭터의 이름표. **이름과 표식만 읽는다**(구현 결정 77) — 축 ②가 축 ①에
@@ -160,7 +163,7 @@ export function HpXpTracker({ instanceId, mode, rotation, settings }: WidgetProp
         <HpXpSettingsView
           instanceId={instanceId}
           value={settings}
-          onChange={(next) => setWidgetSettings(instanceId, next)}
+          onChange={onSettingsChange}
           onClose={() => setOpen(null)}
         />
       )}

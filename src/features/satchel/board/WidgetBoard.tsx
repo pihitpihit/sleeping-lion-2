@@ -14,6 +14,7 @@ interface Props {
   onCommit: (instanceId: string, next: Placement) => boolean
   onRemove: (instanceId: string) => void
   onOpenSettings: (instanceId: string) => void
+  onSettingsChange: (instanceId: string, next: unknown) => void
   onRotate: (instanceId: string) => void
 }
 
@@ -32,6 +33,7 @@ export function WidgetBoard({
   onCommit,
   onRemove,
   onOpenSettings,
+  onSettingsChange,
   onRotate,
 }: Props) {
   if (metrics.columns <= 0 || metrics.rows <= 0) return null
@@ -107,6 +109,7 @@ export function WidgetBoard({
             onCommit={(next) => onCommit(widget.instanceId, next)}
             onRemove={() => onRemove(widget.instanceId)}
             onOpenSettings={() => onOpenSettings(widget.instanceId)}
+            onSettingsChange={(next) => onSettingsChange(widget.instanceId, next)}
             onRotate={() => onRotate(widget.instanceId)}
           />
         )
