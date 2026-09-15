@@ -261,7 +261,7 @@ export function WidgetFrame({
           <button
             type="button"
             className={
-              definition.settings
+              definition.settings?.Editor
                 ? 'widget-frame__rotate'
                 : 'widget-frame__rotate widget-frame__rotate--alone'
             }
@@ -271,8 +271,11 @@ export function WidgetFrame({
           >
             <RotateIcon />
           </button>
-          {/* 설정을 지원하는 위젯에만 낸다. 제거 버튼 바로 왼쪽. */}
-          {definition.settings && (
+          {/*
+            **여는 화면이 있는 위젯에만 낸다.** 설정을 담되 톱니로 열지 않는
+            위젯이 있다 — HP/XP는 제 모퉁이에 단추를 두고 플레이 중에 연다.
+          */}
+          {definition.settings?.Editor && (
             <button
               type="button"
               className="widget-frame__gear"

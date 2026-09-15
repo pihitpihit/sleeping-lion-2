@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { useElementStore } from '../elements/elementStore'
 import { useAttackDeckStore } from '../deck/deckStore'
+import { useHpXpStore } from '../hpxp/hpxpStore'
 
 /**
  * 라운드 — **도구 런타임이다.**
@@ -119,6 +120,12 @@ export const useRoundStore = create<RoundState>((set, get) => ({
     useElementStore.getState().resetAll()
     // 새 시나리오를 펴면 보정 덱도 처음으로 돌아간다 — 원소를 끄는 것과 같은 이유다.
     useAttackDeckStore.getState().resetAll()
+    /*
+      **체력·경험 기록도 함께 내린다**(형님이 정했다). 지난 판의 「3라운드에 5
+      깎였다」가 새 판에 남아 있으면 이번 판의 기록으로 읽힌다 — 값(체력·경험)은
+      건드리지 않는다: 그것은 사람의 것이고 판이 바뀐다고 0이 되지 않는다.
+    */
+    useHpXpStore.getState().clearLog()
   },
 
   hydrate: (round, startedAt, laps) =>

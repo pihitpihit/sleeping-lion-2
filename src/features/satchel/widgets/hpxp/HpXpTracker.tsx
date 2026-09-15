@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
+import { useState, useRef, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import { useBoardSize } from '../../useBoardSize'
 import type { WidgetProps } from '../types'
 import {
@@ -15,6 +15,13 @@ import { useHpXpStore } from './hpxpStore'
 import { sanitizeHpXpSettings } from './settings'
 import { slotKeyFor } from '../../roster'
 import { NumberReel } from '../reel/NumberReel'
+import { useRosterStore } from '../../roster'
+import { useRoundStore } from '../round/roundStore'
+import { useSatchelStore } from '../../store/satchelStore'
+import { classIconUrl } from '../../../campaign/character'
+import { GearIcon, ListIcon } from './hpxpIcons'
+import { HpXpLogView } from './HpXpLogView'
+import { HpXpSettingsView } from './HpXpSettingsView'
 import './HpXpTracker.css'
 
 /**
@@ -44,11 +51,27 @@ export function HpXpTracker({ instanceId, mode, rotation, settings }: WidgetProp
    * 체력이 한 자리에 모인다. 안 골랐으면 종전대로 인스턴스 id이며, 그때는 이
    * 기기 안에서만 센다(절대 원칙 3).
    */
-  const slot = slotKeyFor(sanitizeHpXpSettings(settings).characterId, instanceId)
+  const characterId = sanitizeHpXpSettings(settings).characterId
+  const slot = slotKeyFor(characterId, instanceId)
   const { ref, size } = useBoardSize<HTMLDivElement>()
   const layout = computeHpXpLayout(size)
   const values = useHpXpStore((s) => s.valuesOf(slot))
   const adjust = useHpXpStore((s) => s.adjust)
+  const log = useHpXpStore((s) => s.logOf(slot))
+
+  /** 기록이 몇 라운드의 것인지 알아야 한다 — 스토어가 라운드를 모른다. */
+  const round = useRoundStore((s) => s.round)
+  const setWidgetSettings = useSatchelStore((s) => s.setWidgetSettings)
+
+  /*
+    고른 캐릭터의 이름표. **이름과 표식만 읽는다**(구현 결정 77) — 축 ②가 축 ①에
+    닿는 자리는 좁게 연다.
+  */
+  const entry = useRosterStore((s) => s.entries.find((e) => e.id === characterId) ?? null)
+  const iconUrl = entry === null ? null : classIconUrl(entry.classIcon)
+
+  /** 지금 열려 있는 팝업. 둘이 겹쳐 뜨지 않는다. */
+  const [open, setOpen] = useState<'settings' | 'log' | null>(null)
 
   return (
     /*
@@ -72,6 +95,24 @@ export function HpXpTracker({ instanceId, mode, rotation, settings }: WidgetProp
         {/* 테두리 문양. 내용 위에 얹히므로 포인터를 받지 않는다. */}
         <span className="hpxp__frame" aria-hidden="true" />
 
+        {/*
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **고른 캐릭터의 표식을 두 다이얼 사이 위쪽에 둔다**(형님이 정했다).│
+          └──────────────────────────────────────────────────────────────────┘
+
+          넷이 앉으면 다이얼도 넷인데 **어느 것이 누구 것인지 판 위에서 알 수가
+          없었다.** 가로 한가운데에 두되 맨 위에 붙이지 않는다 — 붙이면 테와
+          맞물려 답답하다.
+
+          클래스 표식은 거의 검정이라 **양피지 원반을 깐다**(구현 결정 41) —
+          아이콘 색은 건드리지 않는다.
+        */}
+        {iconUrl !== null && (
+          <span className="hpxp__who" title={entry?.name ?? ''}>
+            <img src={iconUrl} alt={entry?.name ?? ''} draggable={false} />
+          </span>
+        )}
+
         {(['hp', 'xp'] as const).map((track) => (
           <Dial
             key={track}
@@ -79,10 +120,53 @@ export function HpXpTracker({ instanceId, mode, rotation, settings }: WidgetProp
             value={values[track]}
             rotation={rotation}
             disabled={mode !== 'play'}
-            onAdjust={(delta) => adjust(slot, track, delta)}
+            onAdjust={(delta) => adjust(slot, track, delta, round)}
           />
         ))}
       </div>
+
+      {/*
+        모퉁이의 두 단추 — **라운드 트래커가 제 귀퉁이에 「처음으로」를 둔 것과
+        같은 자리다.** 알약은 끝이 둥글어 네 모퉁이가 비어 있으므로 다이얼을
+        가리지 않는다.
+
+        **편집 중에는 안 낸다** — 자리를 옮기려다 팝업이 뜨면 곤란하다.
+      */}
+      {mode === 'play' && (
+        <>
+          <button
+            type="button"
+            className="hpxp__corner hpxp__corner--settings"
+            aria-label={
+              entry === null ? '누구의 다이얼인지 고른다' : `${entry.name}의 다이얼 — 다시 고른다`
+            }
+            onClick={() => setOpen('settings')}
+          >
+            <GearIcon />
+          </button>
+          <button
+            type="button"
+            className="hpxp__corner hpxp__corner--log"
+            aria-label="체력·경험 기록 보기"
+            onClick={() => setOpen('log')}
+          >
+            <ListIcon />
+          </button>
+        </>
+      )}
+
+      {open === 'settings' && (
+        <HpXpSettingsView
+          instanceId={instanceId}
+          value={settings}
+          onChange={(next) => setWidgetSettings(instanceId, next)}
+          onClose={() => setOpen(null)}
+        />
+      )}
+
+      {open === 'log' && (
+        <HpXpLogView who={entry?.name ?? ''} entries={log} onClose={() => setOpen(null)} />
+      )}
     </div>
   )
 }

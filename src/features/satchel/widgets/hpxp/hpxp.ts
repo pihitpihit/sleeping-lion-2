@@ -124,3 +124,57 @@ export function isHpXpSizeAllowed(size: { w: number; h: number }): boolean {
   // 1×1은 막는다 — 반쪽 둘에 숫자와 단추를 담을 수 없다.
   return long >= 2 && long <= 4 && short >= 1 && short <= 2
 }
+
+/* --------------------------------------------------------------------------
+   무엇이 언제 얼마나 움직였나
+   --------------------------------------------------------------------------
+   ┌──────────────────────────────────────────────────────────────────────────┐
+   │ **한 라운드에 한 줄이다 — 손가락 수만큼 쌓지 않는다.**                    │
+   └──────────────────────────────────────────────────────────────────────────┘
+
+   끌어서 다섯 칸을 내리면 `adjust`가 다섯 번 불린다. 그대로 쌓으면 「−1」이 다섯
+   줄 서고, 정작 알고 싶은 「3라운드에 5 깎였다」는 안 보인다. 같은 라운드·같은
+   칸이면 **한 줄에 합친다.**
+
+   **합쳐서 0이 되면 줄을 걷는다.** 내렸다가 도로 올린 것은 움직인 것이 아니다 —
+   잘못 눌러 되돌린 자리가 기록에 남으면 읽는 눈이 그만큼 흐려진다.
+   -------------------------------------------------------------------------- */
+
+export interface HpXpLogEntry {
+  /** 몇 라운드에. */
+  readonly round: number
+  readonly track: HpXpTrack
+  /** 그 라운드에 이 칸이 움직인 만큼. 음수면 깎인 것이다. */
+  readonly delta: number
+}
+
+/** 한 줄에 합칠 수 있는 만큼. 이보다 길어지면 앞에서부터 잊는다. */
+export const LOG_LIMIT = 60
+
+/**
+ * 움직인 만큼을 기록에 얹는다.
+ *
+ * 마지막 줄과 **같은 라운드·같은 칸**이면 합치고, 아니면 새 줄을 놓는다. 합쳐서
+ * 0이 되면 그 줄을 걷는다.
+ *
+ * 순수 함수라 표로 못박는다 — 합치는 규칙이 틀리면 **기록이 거짓말을 한다.**
+ */
+export function mergeLog(
+  entries: readonly HpXpLogEntry[],
+  round: number,
+  track: HpXpTrack,
+  delta: number,
+): HpXpLogEntry[] {
+  if (!Number.isFinite(delta) || delta === 0) return [...entries]
+
+  const last = entries[entries.length - 1]
+  if (last !== undefined && last.round === round && last.track === track) {
+    const merged = last.delta + delta
+    const head = entries.slice(0, -1)
+    // 도로 돌아온 것은 움직인 것이 아니다.
+    return merged === 0 ? head : [...head, { round, track, delta: merged }]
+  }
+
+  const next = [...entries, { round, track, delta }]
+  return next.length > LOG_LIMIT ? next.slice(next.length - LOG_LIMIT) : next
+}

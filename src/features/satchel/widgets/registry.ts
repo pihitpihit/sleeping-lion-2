@@ -5,7 +5,6 @@ import { CampaignSettingsEditor } from './campaign/CampaignSettingsEditor'
 import { sanitizeCampaignSettings } from './campaign/settings'
 import { RoundTracker } from './round/RoundTracker'
 import { isHpXpSizeAllowed } from './hpxp/hpxp'
-import { HpXpSettingsEditor } from './hpxp/HpXpSettingsEditor'
 import { sanitizeHpXpSettings } from './hpxp/settings'
 import { ElementTracker } from './elements/ElementTracker'
 import { isElementTrackerSizeAllowed } from './elements/layout'
@@ -70,7 +69,12 @@ const DEFINITIONS: WidgetDefinition[] = [
     // 인스턴스 제한 없음 — 사람마다 하나씩 놓는다. 값은 서로 섞이지 않는다.
     isSizeAllowed: isHpXpSizeAllowed,
     // 누구의 다이얼인지 고른다. 골라야 전투에서 파티원과 값이 이어진다.
-    settings: { sanitize: sanitizeHpXpSettings, Editor: HpXpSettingsEditor },
+    /*
+      **톱니를 안 낸다**(형님이 정했다). 누구의 다이얼인지 고르는 일은 판을
+      굴리다가 하는 것이라 편집 모드에 가둘 것이 아니다 — 위젯이 제 왼쪽 위
+      모퉁이에 단추를 두고 플레이 중에 연다.
+    */
+    settings: { sanitize: sanitizeHpXpSettings },
     Component: HpXpTracker,
   },
   {

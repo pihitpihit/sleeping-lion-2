@@ -51,7 +51,19 @@ export interface WidgetSettingsEditorProps {
 export interface WidgetSettingsSpec {
   /** 없거나 망가진 값에서도 반드시 쓸 수 있는 값을 낸다. */
   sanitize: (raw: unknown) => unknown
-  Editor: ComponentType<WidgetSettingsEditorProps>
+  /**
+   * 편집 모드의 톱니가 여는 화면. **없어도 된다.**
+   *
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ **설정을 담되 톱니로 열지 않는 위젯이 있다.**                           │
+   * └────────────────────────────────────────────────────────────────────────┘
+   *
+   * HP/XP 트래커가 그렇다 — 누구의 다이얼인지 고르는 일은 **판을 굴리다가**
+   * 하는 것이라 편집 모드에 가둘 것이 아니다(형님이 정했다). 위젯이 제 모퉁이에
+   * 단추를 두고 플레이 중에 연다. 그래도 `sanitize`는 있어야 한다 — 저장된
+   * 값은 어느 경로로 들어왔든 거쳐야 한다.
+   */
+  Editor?: ComponentType<WidgetSettingsEditorProps>
 }
 
 export interface WidgetDefinition {

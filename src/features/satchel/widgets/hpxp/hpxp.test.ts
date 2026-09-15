@@ -4,6 +4,9 @@ import {
   computeHpXpLayout,
   DRAG_STEP_PX,
   isHpXpSizeAllowed,
+  LOG_LIMIT,
+  mergeLog,
+  type HpXpLogEntry,
   MAX_VALUE,
   MIN_VALUE,
   step,
@@ -263,5 +266,54 @@ describe('값을 곧바로 앉힌다', () => {
     expect(useHpXpStore.getState().valuesOf('w1').hp).toBe(MAX_VALUE)
     useHpXpStore.getState().setTrack('w1', 'hp', -5)
     expect(useHpXpStore.getState().valuesOf('w1').hp).toBe(MIN_VALUE)
+  })
+})
+
+describe('무엇이 언제 얼마나 움직였나', () => {
+  /*
+    끌어서 다섯 칸을 내리면 `adjust`가 다섯 번 불린다 — 그대로 쌓으면 「−1」이
+    다섯 줄 서고 **정작 알고 싶은 것이 안 보인다.**
+  */
+  it('같은 라운드·같은 칸이면 한 줄에 합친다', () => {
+    let log = mergeLog([], 3, 'hp', -1)
+    log = mergeLog(log, 3, 'hp', -1)
+    log = mergeLog(log, 3, 'hp', -3)
+    expect(log).toEqual([{ round: 3, track: 'hp', delta: -5 }])
+  })
+
+  it('라운드가 넘어가면 줄이 갈린다', () => {
+    let log = mergeLog([], 3, 'hp', -2)
+    log = mergeLog(log, 4, 'hp', -1)
+    expect(log).toEqual([
+      { round: 3, track: 'hp', delta: -2 },
+      { round: 4, track: 'hp', delta: -1 },
+    ])
+  })
+
+  it('칸이 다르면 줄이 갈린다', () => {
+    let log = mergeLog([], 3, 'hp', -2)
+    log = mergeLog(log, 3, 'xp', 1)
+    expect(log).toHaveLength(2)
+  })
+
+  it('합쳐서 0이면 줄을 걷는다 — 되돌린 자리는 움직인 것이 아니다', () => {
+    let log = mergeLog([], 3, 'hp', -2)
+    log = mergeLog(log, 3, 'hp', 2)
+    expect(log).toEqual([])
+  })
+
+  it('0은 아무것도 안 남긴다', () => {
+    expect(mergeLog([], 3, 'hp', 0)).toEqual([])
+  })
+
+  it('모양이 아닌 값은 버린다', () => {
+    expect(mergeLog([], 3, 'hp', Number.NaN)).toEqual([])
+  })
+
+  it('너무 길어지면 앞에서부터 잊는다 — 판이 길어도 끝이 있어야 한다', () => {
+    let log: HpXpLogEntry[] = []
+    for (let i = 1; i <= LOG_LIMIT + 10; i += 1) log = mergeLog(log, i, 'hp', -1)
+    expect(log).toHaveLength(LOG_LIMIT)
+    expect(log[0].round).toBe(11)
   })
 })
