@@ -25,7 +25,8 @@ interface Props {
    * 두 번 눌러야 하는 것이 맞다: **누르자마자 체력이 갈리면 잘못 눌렀을 때
    * 되돌릴 수가 없다.**
    */
-  actionOf?: (characterId: string) => React.ReactNode
+  /** 줄 끝의 곁단추. **고른 줄인지도 함께 넘긴다** — 잠글지 말지는 부르는 쪽이 정한다. */
+  actionOf?: (characterId: string, on: boolean) => React.ReactNode
 }
 
 /**
@@ -88,7 +89,11 @@ export function CharacterPicker({ value, onChange, detailOf, actionOf }: Props) 
               `<li>`가 감싸고 그 안에 고르는 단추와 곁단추가 나란히 선다 —
               테두리는 `<li>`가 두르므로 여전히 한 줄로 읽힌다.
             */
-            const action = on ? actionOf?.(entry.id) : null
+            /*
+              **줄마다 늘 낸다.** 고른 줄에만 내면 단추가 떴다 사라지며 줄의
+              모양이 바뀐다 — 잠글지 말지는 부르는 쪽이 `on`을 보고 정한다.
+            */
+            const action = actionOf?.(entry.id, on)
             return (
               <li key={entry.id} className={`charpick__item${on ? ' charpick__item--on' : ''}`}>
                 <button

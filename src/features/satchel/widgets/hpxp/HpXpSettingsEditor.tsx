@@ -1,6 +1,7 @@
 import { CharacterPicker } from '../CharacterPicker'
 import { LevelBadge } from '../../../campaign/LevelBadge'
 import { TrackMark } from './TrackMark'
+import { FillIcon } from './hpxpIcons'
 import { useCharacterStats } from '../../perkSource'
 import { slotKeyFor } from '../../roster'
 import type { WidgetSettingsEditorProps } from '../types'
@@ -60,29 +61,43 @@ export function HpXpSettingsEditor({ value, onChange, instanceId }: WidgetSettin
           </>
         )
       }}
-      actionOf={(id) => {
+      actionOf={(id, on) => {
         /*
           **아직 놓이지 않은 위젯에는 담을 자리가 없다**(`instanceId`가 `null`).
           놓기 전에 묻는 팝업이 그렇다 — 그때는 되돌릴 판도 없다.
         */
         if (instanceId === null) return null
         const hp = stats.get(id)?.maxHp ?? null
+        /*
+          ┌──────────────────────────────────────────────────────────────────┐
+          │ **줄마다 늘 서 있고, 안 고른 줄은 잠긴다**(형님이 정했다).        │
+          └──────────────────────────────────────────────────────────────────┘
+
+          고른 줄에만 냈더니 **단추가 떴다 사라지며 줄의 모양이 바뀌었다.** 늘
+          세워 두면 자리가 흔들리지 않고, 잠긴 채로 서 있는 것이 「먼저 고르라」고
+          말해 준다 — 체크표가 꺼진 칸에서도 자리를 지키는 것과 같은 결이다
+          (구현 결정 308).
+
+          누를 수 없는 까닭이 둘이라 읽어주는 쪽에는 갈라 말한다.
+        */
+        const why = !on
+          ? '먼저 이 캐릭터를 골라야 한다'
+          : hp === null
+            ? '최대 체력을 모른다. 클래스와 체력표가 있어야 한다.'
+            : `체력을 최대 ${hp}으로 되돌린다`
         return (
           <button
             type="button"
-            className="charpick__action"
-            disabled={hp === null}
-            aria-label={
-              hp === null
-                ? '최대 체력을 모른다. 클래스와 체력표가 있어야 한다.'
-                : `체력을 최대 ${hp}으로 되돌린다`
-            }
+            className="charpick__action charpick__action--icon"
+            disabled={!on || hp === null}
+            aria-label={why}
+            title={why}
             onClick={() => {
               if (hp === null) return
               setTrack(slotKeyFor(id, instanceId), 'hp', hp)
             }}
           >
-            {hp === null ? '체력 모름' : '체력 채우기'}
+            <FillIcon size={19} />
           </button>
         )
       }}

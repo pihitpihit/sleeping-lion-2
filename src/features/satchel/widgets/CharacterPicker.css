@@ -180,7 +180,13 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  margin: 0.25rem 0.25rem 0.25rem 0;
+  /*
+    **줄 키를 따라 늘지 않고 가운데 선다.** `stretch`로 두면 줄이 높아질수록
+    단추도 함께 길어져 줄 하나를 통째로 차지하는 띠가 된다.
+  */
+  align-self: center;
+  height: 2rem;
+  margin: 0 0.3rem 0 0;
   padding: 0 0.6rem;
   font-family: inherit;
   font-size: 0.8rem;
@@ -190,6 +196,11 @@
   border: 1px solid var(--sl-border-strong);
   border-radius: 0.25rem;
   cursor: pointer;
+}
+
+/* 아이콘만 든 단추는 글자가 없으므로 좌우를 좁힌다. */
+.charpick__action--icon {
+  padding: 0 0.55rem;
 }
 
 .charpick__action:hover:not(:disabled) {

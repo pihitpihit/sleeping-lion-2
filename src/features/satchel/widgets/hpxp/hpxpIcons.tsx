@@ -45,3 +45,29 @@ export function ListIcon({ size = 16 }: { size?: number }) {
     </svg>
   )
 }
+
+/**
+ * 체력 채우기 — **천장까지 올린다.**
+ *
+ * 줄에 이미 물방울이 서 있으므로(최대 체력) **무엇을 올리는지는 문맥이 말한다** —
+ * 아이콘 안에까지 물방울을 넣으면 19px에서 획이 뭉갠다. 후보 여섯을 실제 크기로
+ * 그려 형님이 골랐다(구현 결정 213-2).
+ */
+export function FillIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M5 4.4h14M12 20V8.2m0 0-4 4m4-4 4 4" />
+    </svg>
+  )
+}
