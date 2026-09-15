@@ -63,10 +63,21 @@ export function CampaignStatus({ mode, settings, onSettingsChange }: WidgetProps
   const level = battle?.level ?? fallback
   const row = rowFor(level)
 
+  /*
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │ **고른다고 창이 닫히지 않는다**(형님이 정했다).                         │
+    └────────────────────────────────────────────────────────────────────────┘
+
+    상 위에서 「한 칸 올리면 얼마가 되는가」를 보려고 펼친 표다(구현 결정 443) —
+    고르자마자 닫히면 **바뀐 값이 표의 어디에 앉는지 못 본다.** 한 칸 더 올릴지도
+    거기서 정한다. 나가는 길은 ×·Escape·배경 누르기다.
+
+    서버가 거절하면 옛 값으로 되돌아가는데(구현 결정 445) 그것도 표 위에서
+    그대로 보인다 — 닫아 버리면 되돌아간 줄 모른다.
+  */
   function pick(next: number) {
     if (battle !== null) void setBattleLevel(next)
     else onSettingsChange({ level: next })
-    setOpen(false)
   }
 
   const { ref, size } = useBoardSize<HTMLDivElement>()
