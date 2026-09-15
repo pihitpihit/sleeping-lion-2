@@ -91,6 +91,12 @@ export const useRoundStore = create<RoundState>((set, get) => ({
   start: (now) => {
     if (get().startedAt !== null) return
     set({ startedAt: now })
+    /*
+      **판이 열리는 순간의 값을 찍어 둔다**(형님이 정했다). 시작 전에 다이얼을
+      맞추는 것은 준비이지 판의 일이 아니라 기록하지 않는데(위젯이 라운드를 안
+      넘긴다), 그 맞춰 놓은 값이 곧 **이번 판의 출발점**이다.
+    */
+    useHpXpStore.getState().markRound(get().round)
   },
 
   advance: (now) => {
@@ -109,6 +115,8 @@ export const useRoundStore = create<RoundState>((set, get) => ({
       laps: [...laps, Math.max(0, at - startedAt)],
       startedAt: at,
     })
+    // 새 라운드가 열렸다 — 그때의 값을 찍는다.
+    useHpXpStore.getState().markRound(get().round)
     useElementStore.getState().decayAll()
     // 섞기 표시가 뜬 보정 덱만 섞인다. 표시가 없는 덱은 건드리지 않는다.
     useAttackDeckStore.getState().shuffleMarked()

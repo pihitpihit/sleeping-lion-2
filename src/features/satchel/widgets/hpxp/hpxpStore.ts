@@ -2,10 +2,12 @@ import { create } from 'zustand'
 import {
   INITIAL,
   clampValue,
+  markRoundValues,
   mergeLog,
   step,
   type HpXp,
   type HpXpLogEntry,
+  type HpXpRoundMark,
   type HpXpTrack,
 } from './hpxp'
 
@@ -41,8 +43,18 @@ interface HpXpState {
    * 무거워지는데 정작 나누어야 할 값은 아니다. 새로고침하면 사라진다.
    */
   logBySlot: Record<string, HpXpLogEntry[]>
+  /** 라운드가 열릴 때의 값. 열쇠는 위와 같다. */
+  marksBySlot: Record<string, HpXpRoundMark[]>
   valuesOf: (instanceId: string) => HpXp
   logOf: (instanceId: string) => HpXpLogEntry[]
+  marksOf: (instanceId: string) => HpXpRoundMark[]
+  /**
+   * 라운드가 열렸다 — **지금 값을 그대로 찍어 둔다.**
+   *
+   * 판을 시작할 때와 라운드를 넘길 때 `roundStore`가 부른다(형님이 정했다).
+   * **값이 있는 자리만** 찍는다: 손댄 적 없는 다이얼은 찍을 것이 없다.
+   */
+  markRound: (round: number) => void
   /** 판을 새로 시작하면 기록도 함께 내린다(`roundStore.restart`가 부른다). */
   clearLog: () => void
   /** `round`를 받는 까닭은 **기록이 몇 라운드의 것인지** 알아야 해서다. */
@@ -61,10 +73,12 @@ interface HpXpState {
 
 /** 빈 기록. **한 벌만 두고 돌려 쓴다** — 위의 까닭이다. */
 const NO_LOG: HpXpLogEntry[] = []
+const NO_MARKS: HpXpRoundMark[] = []
 
 export const useHpXpStore = create<HpXpState>((set, get) => ({
   byInstance: {},
   logBySlot: {},
+  marksBySlot: {},
 
   valuesOf: (instanceId) => get().byInstance[instanceId] ?? INITIAL,
   /*
@@ -78,8 +92,18 @@ export const useHpXpStore = create<HpXpState>((set, get) => ({
     모듈 상수였기 때문이다 — 빈 기록도 같은 상수를 쓴다.
   */
   logOf: (instanceId) => get().logBySlot[instanceId] ?? NO_LOG,
+  marksOf: (instanceId) => get().marksBySlot[instanceId] ?? NO_MARKS,
 
-  clearLog: () => set({ logBySlot: {} }),
+  markRound: (round) =>
+    set((s) => {
+      const next = { ...s.marksBySlot }
+      for (const [slot, values] of Object.entries(s.byInstance)) {
+        next[slot] = markRoundValues(next[slot] ?? [], { round, hp: values.hp, xp: values.xp })
+      }
+      return { marksBySlot: next }
+    }),
+
+  clearLog: () => set({ logBySlot: {}, marksBySlot: {} }),
 
   adjust: (instanceId, track, delta, round) =>
     set((s) => {

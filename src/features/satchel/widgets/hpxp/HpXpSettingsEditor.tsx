@@ -1,5 +1,5 @@
 import { CharacterPicker } from '../CharacterPicker'
-import { useMaxHpByCharacter } from '../../perkSource'
+import { useCharacterStats } from '../../perkSource'
 import { slotKeyFor } from '../../roster'
 import type { WidgetSettingsEditorProps } from '../types'
 import { useHpXpStore } from './hpxpStore'
@@ -24,7 +24,7 @@ import { sanitizeHpXpSettings } from './settings'
  */
 export function HpXpSettingsEditor({ value, onChange, instanceId }: WidgetSettingsEditorProps) {
   const settings = sanitizeHpXpSettings(value)
-  const maxHp = useMaxHpByCharacter()
+  const stats = useCharacterStats()
   const setTrack = useHpXpStore((s) => s.setTrack)
 
   return (
@@ -32,10 +32,23 @@ export function HpXpSettingsEditor({ value, onChange, instanceId }: WidgetSettin
       value={settings.characterId}
       onChange={(characterId) => onChange({ ...settings, characterId })}
       detailOf={(id) => {
-        const hp = maxHp.get(id)
-        return hp === undefined ? null : (
+        const stat = stats.get(id)
+        if (stat === undefined) return null
+        /*
+          **레벨을 함께 적는다**(형님이 정했다). 같은 이름이 둘 있을 수 있고
+          (구현 결정 326) 무엇보다 **최대 체력이 레벨에서 나온 값**이라, 레벨이
+          없으면 그 수가 어디서 왔는지 알 수 없다.
+        */
+        return (
           <>
-            최대 <b className="sl-numeral">{hp}</b>
+            <span className="charpick__lv">
+              Lv <b className="sl-numeral">{stat.level}</b>
+            </span>
+            {stat.maxHp !== null && (
+              <span>
+                최대 <b className="sl-numeral">{stat.maxHp}</b>
+              </span>
+            )}
           </>
         )
       }}
@@ -45,23 +58,23 @@ export function HpXpSettingsEditor({ value, onChange, instanceId }: WidgetSettin
           놓기 전에 묻는 팝업이 그렇다 — 그때는 되돌릴 판도 없다.
         */
         if (instanceId === null) return null
-        const hp = maxHp.get(id)
+        const hp = stats.get(id)?.maxHp ?? null
         return (
           <button
             type="button"
             className="charpick__action"
-            disabled={hp === undefined}
+            disabled={hp === null}
             aria-label={
-              hp === undefined
+              hp === null
                 ? '최대 체력을 모른다. 클래스와 체력표가 있어야 한다.'
                 : `체력을 최대 ${hp}으로 되돌린다`
             }
             onClick={() => {
-              if (hp === undefined) return
+              if (hp === null) return
               setTrack(slotKeyFor(id, instanceId), 'hp', hp)
             }}
           >
-            {hp === undefined ? '체력 모름' : '체력 채우기'}
+            {hp === null ? '체력 모름' : '체력 채우기'}
           </button>
         )
       }}

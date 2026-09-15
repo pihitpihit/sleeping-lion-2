@@ -149,6 +149,32 @@ export function isHpXpSizeAllowed(size: { w: number; h: number }): boolean {
    잘못 눌러 되돌린 자리가 기록에 남으면 읽는 눈이 그만큼 흐려진다.
    -------------------------------------------------------------------------- */
 
+/**
+ * 라운드가 열릴 때의 값.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **움직인 만큼만으로는 「그때 몇이었나」를 알 수 없다**(형님이 정했다).     │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 「3라운드에 5 깎였다」는 얼마에서 얼마가 됐는지 말해 주지 않는다. 라운드가
+ * 열릴 때의 값을 함께 찍어 두면 그 줄만 보고도 판이 읽힌다.
+ */
+export interface HpXpRoundMark {
+  readonly round: number
+  readonly hp: number
+  readonly xp: number
+}
+
+/** 같은 라운드를 두 번 찍지 않는다 — 나중 것이 이긴다(되돌아온 경우). */
+export function markRoundValues(
+  marks: readonly HpXpRoundMark[],
+  mark: HpXpRoundMark,
+): HpXpRoundMark[] {
+  const rest = marks.filter((m) => m.round !== mark.round)
+  const next = [...rest, mark].sort((a, b) => a.round - b.round)
+  return next.length > LOG_LIMIT ? next.slice(next.length - LOG_LIMIT) : next
+}
+
 export interface HpXpLogEntry {
   /** 몇 라운드에. */
   readonly round: number

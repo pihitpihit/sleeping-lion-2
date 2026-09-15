@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useScrollLock } from '../../../campaign/useScrollLock'
 import { CloseIcon } from '../../board/frameIcons'
-import { TRACK_LABEL, type HpXpLogEntry } from './hpxp'
+import { TRACK_LABEL, type HpXpLogEntry, type HpXpRoundMark } from './hpxp'
 
 // **껍데기 스타일을 스스로 들여온다**(구현 결정 189·356). 행낭에서는 일지의
 // 스타일시트가 안 실리므로, 안 들여오면 팝업이 스타일 없이 떠 안 보인다.
@@ -25,11 +25,13 @@ import '../../../campaign/logview.css'
 export function HpXpLogView({
   who,
   entries,
+  marks,
   onClose,
 }: {
   /** 누구의 것인가. 캐릭터를 안 골랐으면 빈 글자다. */
   who: string
   entries: readonly HpXpLogEntry[]
+  marks: readonly HpXpRoundMark[]
   onClose: () => void
 }) {
   useScrollLock()
@@ -47,7 +49,7 @@ export function HpXpLogView({
 
   return createPortal(
     <div className="logview">
-      <HpXpLogPanel who={who} entries={entries} onClose={onClose} />
+      <HpXpLogPanel who={who} entries={entries} marks={marks} onClose={onClose} />
     </div>,
     document.body,
   )
@@ -63,14 +65,18 @@ export function HpXpLogView({
 export function HpXpLogPanel({
   who,
   entries,
+  marks,
   onClose,
 }: {
   who: string
   entries: readonly HpXpLogEntry[]
+  marks: readonly HpXpRoundMark[]
   onClose: () => void
 }) {
   /* 늦은 라운드가 위로. 방금 있었던 일을 가장 자주 묻는다(행적과 같은 결). */
-  const rounds = [...new Set(entries.map((e) => e.round))].sort((a, b) => b - a)
+  const rounds = [...new Set([...marks.map((m) => m.round), ...entries.map((e) => e.round)])].sort(
+    (a, b) => b - a,
+  )
 
   return (
     <section className="logview__panel" role="dialog" aria-modal="true" aria-label="체력·경험 기록">
@@ -81,25 +87,45 @@ export function HpXpLogPanel({
         </button>
       </header>
 
-      {entries.length === 0 ? (
-        <p className="logview__empty">아직 움직인 것이 없다.</p>
+      {rounds.length === 0 ? (
+        <p className="logview__empty">아직 판이 열리지 않았다.</p>
       ) : (
         <ol className="hplog__rounds">
           {rounds.map((round) => (
             <li key={round} className="hplog__round">
               <span className="hplog__no sl-numeral">R{round}</span>
-              <span className="hplog__deltas">
-                {entries
-                  .filter((e) => e.round === round)
-                  .map((e, i) => (
-                    <span key={i} className={`hplog__delta hplog__delta--${e.track}`}>
-                      {TRACK_LABEL[e.track]}{' '}
-                      <b className="sl-numeral">
-                        {/* U+2212(빼기표). 하이픈보다 획이 굵고 더하기표와 길이가 맞는다. */}
-                        {e.delta > 0 ? `+${e.delta}` : `−${Math.abs(e.delta)}`}
-                      </b>
+              <span className="hplog__body">
+                {/*
+                  **라운드가 열릴 때의 값.** 움직인 만큼만으로는 「그때 몇이었나」를
+                  알 수 없다 — 이 줄만 보고도 판이 읽혀야 한다.
+                */}
+                {(() => {
+                  const mark = marks.find((m) => m.round === round)
+                  if (mark === undefined) return null
+                  return (
+                    <span className="hplog__mark">
+                      {TRACK_LABEL.hp} <b className="sl-numeral">{mark.hp}</b>
+                      <span className="hplog__dot" aria-hidden="true">
+                        ·
+                      </span>
+                      {TRACK_LABEL.xp} <b className="sl-numeral">{mark.xp}</b>
                     </span>
-                  ))}
+                  )
+                })()}
+
+                <span className="hplog__deltas">
+                  {entries
+                    .filter((e) => e.round === round)
+                    .map((e, i) => (
+                      <span key={i} className={`hplog__delta hplog__delta--${e.track}`}>
+                        {TRACK_LABEL[e.track]}{' '}
+                        <b className="sl-numeral">
+                          {/* U+2212(빼기표). 하이픈보다 획이 굵고 더하기표와 길이가 맞는다. */}
+                          {e.delta > 0 ? `+${e.delta}` : `−${Math.abs(e.delta)}`}
+                        </b>
+                      </span>
+                    ))}
+                </span>
               </span>
             </li>
           ))}

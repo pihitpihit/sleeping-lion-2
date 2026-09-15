@@ -433,6 +433,29 @@
   color: var(--sl-gold);
 }
 
+/* 한 줄 안에서 위가 「열릴 때의 값」, 아래가 「움직인 것」이다. */
+.hplog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.hplog__mark {
+  font-size: 0.82rem;
+  color: var(--sl-text-muted);
+}
+
+.hplog__mark b {
+  margin-left: 0.15rem;
+  color: var(--sl-text);
+}
+
+.hplog__dot {
+  margin: 0 0.4rem;
+  color: var(--sl-text-faint);
+}
+
 .hplog__deltas {
   display: flex;
   flex-wrap: wrap;

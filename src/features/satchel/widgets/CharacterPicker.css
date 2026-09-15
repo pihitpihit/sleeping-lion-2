@@ -117,11 +117,19 @@
   color: var(--sl-text-faint);
 }
 
-/* 줄에 곁들이는 값 — HP/XP 트래커의 최대 체력이 여기 앉는다. */
+/* 줄에 곁들이는 값 — HP/XP 트래커의 레벨과 최대 체력이 여기 앉는다. */
 .charpick__detail {
   flex: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.45rem;
   font-size: 0.8rem;
   color: var(--sl-gold-dim);
+}
+
+/* 레벨은 한 톤 죽인다 — 고를 때 먼저 보는 것은 이름이다. */
+.charpick__lv {
+  color: var(--sl-text-faint);
 }
 
 /* 고른 줄에만 붙는 단추. 줄 높이를 그대로 따라간다. */

@@ -56,8 +56,16 @@ export function usePerkChanges(characterId: string | null): PerkDeckChange[] | n
   return perkDeckChanges(perks, entry.perks)
 }
 
+/** 한 캐릭터에 대해 축 ②가 읽는 수 둘. */
+export interface CharacterStats {
+  /** 경험치에서 뽑은 레벨(구현 결정 225) — 표에 적힌 것은 안 믿는다. */
+  readonly level: number
+  /** 그 레벨의 최대 체력. **모르면 `null`** — 클래스나 체력표가 없을 때다. */
+  readonly maxHp: number | null
+}
+
 /**
- * 캐릭터마다의 최대 체력 — **레벨은 경험치에서 뽑는다**(구현 결정 225).
+ * 캐릭터마다의 레벨과 최대 체력 — **레벨은 경험치에서 뽑는다**(구현 결정 225).
  *
  * ┌──────────────────────────────────────────────────────────────────────────┐
  * │ **모르면 `null`이다. 짐작해서 숫자를 내지 않는다.**                       │
@@ -69,7 +77,7 @@ export function usePerkChanges(characterId: string | null): PerkDeckChange[] | n
  * 축 ①에 닿는 자리를 여기 하나로 모아 둔다(구현 결정 142). 위젯이 스토어 둘을
  * 직접 부르면 어디서 닿는지 흩어져 보이지 않는다.
  */
-export function useMaxHpByCharacter(): Map<string, number> {
+export function useCharacterStats(): Map<string, CharacterStats> {
   const entries = useRosterStore((s) => s.entries)
   const loadRoster = useRosterStore((s) => s.load)
   const classes = useClassStore((s) => s.list)
@@ -80,12 +88,15 @@ export function useMaxHpByCharacter(): Map<string, number> {
     void loadClasses()
   }, [loadRoster, loadClasses])
 
-  const out = new Map<string, number>()
+  const out = new Map<string, CharacterStats>()
   for (const entry of entries) {
+    const level = levelForXp(entry.xp)
     const info = classInfoOf(classes, entry.classId, entry.classIcon)
-    const hp = maxHpFor(info, levelForXp(entry.xp))
-    // 모르는 것은 담지 않는다 — 없는 열쇠가 곧 「모른다」다.
-    if (hp !== null) out.set(entry.id, hp)
+    /*
+      **레벨은 늘 안다**(경험치에서 나온다). 최대 체력만 모를 수 있다 — 클래스를
+      안 골랐거나 그 클래스의 체력표가 아직 안 들어왔을 때다(구현 결정 115).
+    */
+    out.set(entry.id, { level, maxHp: maxHpFor(info, level) })
   }
   return out
 }
