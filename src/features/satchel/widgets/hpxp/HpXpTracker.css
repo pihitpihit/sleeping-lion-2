@@ -266,39 +266,99 @@
   position: relative;
 }
 
+/*
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ **모퉁이를 반듯하게 자른 직각이등변삼각형이다**(형님이 정했다).            │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  처음에는 동그란 단추를 얹었는데 **얹은 것처럼 보였다.** 라운드 트래커의
+  「처음으로」처럼 모퉁이를 잘라 내면 판의 일부로 읽힌다 — 그쪽과 같은 짜임이다
+  (`clip-path`로 삼각형을 오리고 빗변에 선을 긋는다).
+
+  **빗변 바깥은 포인터를 아예 안 받는다.** 알약 위에 네모로 얹히면 그만큼
+  다이얼을 못 끌게 된다 — 삼각형으로 잘라 두면 잘린 자리만 받는다.
+*/
 .hpxp__corner {
   position: absolute;
   top: 0;
-  display: grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
+  width: var(--hpxp-cut, 30px);
+  height: var(--hpxp-cut, 30px);
   padding: 0;
+  border: 0;
+  border-radius: 0;
   color: var(--sl-text-muted);
-  background: rgb(14 12 9 / 62%);
-  border: 1px solid rgb(255 255 255 / 12%);
-  border-radius: 999px;
   cursor: pointer;
   /* 눌렀을 때 화면이 함께 움직이면 다이얼을 끈 것으로 읽힌다. */
   touch-action: manipulation;
+  transition: color 0.15s ease;
 }
 
-.hpxp__corner:hover {
+.hpxp__corner:hover,
+.hpxp__corner:focus-visible {
   color: var(--sl-gold-bright);
-  border-color: var(--sl-gold);
 }
 
 .hpxp__corner:focus-visible {
-  outline: 2px solid var(--sl-gold);
-  outline-offset: 1px;
+  /* 삼각형으로 잘려 바깥 윤곽선은 안 보인다. 안쪽 그림자로 대신한다. */
+  outline: none;
 }
 
+/*
+  빗변에 선을 긋는다. 없으면 잘린 것이 아니라 색이 다른 조각을 얹은 것처럼 보인다.
+
+  135도 그라디언트의 등고선이 곧 빗변이다 — 그 방향의 진행도는 `x + y`에만 달렸고
+  빗변이 바로 `x + y = L`이기 때문이다. 정사각형에서 그 대각선 길이는 `L√2`이므로
+  **빗변은 100%가 아니라 50% 자리**에 있다(라운드 트래커와 같은 셈).
+*/
 .hpxp__corner--settings {
   left: 0;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  background: linear-gradient(
+    135deg,
+    var(--sl-raised) 0%,
+    var(--sl-panel) 43%,
+    rgba(232, 205, 114, 0.42) 50%
+  );
 }
 
+.hpxp__corner--settings:focus-visible {
+  box-shadow: inset 2px 2px 0 var(--sl-gold);
+}
+
+/* 오른쪽은 거울이다 — 자르는 자리도 그라디언트 방향도 뒤집는다. */
 .hpxp__corner--log {
   right: 0;
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  background: linear-gradient(
+    -135deg,
+    var(--sl-raised) 0%,
+    var(--sl-panel) 43%,
+    rgba(232, 205, 114, 0.42) 50%
+  );
+}
+
+.hpxp__corner--log:focus-visible {
+  box-shadow: inset -2px 2px 0 var(--sl-gold);
+}
+
+/*
+  아이콘은 삼각형의 **무게중심 쪽**에 앉힌다. 가운데에 두면 빗변 밖으로 반이
+  나간다 — 두 변이 `L`이면 빗변은 `x + y = L`이므로 30%에 두어야 안쪽에 남는다
+  (라운드 트래커의 `ICON_IN_CUT`과 같은 셈).
+*/
+.hpxp__corner svg {
+  position: absolute;
+  top: 30%;
+  transform: translate(-50%, -50%);
+  display: block;
+}
+
+.hpxp__corner--settings svg {
+  left: 30%;
+}
+
+.hpxp__corner--log svg {
+  left: 70%;
 }
 
 /*

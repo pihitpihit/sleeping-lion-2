@@ -46,6 +46,13 @@ export interface HpXpLayout {
   markSize: number
   /** 숫자 글자 크기(px). */
   numberSize: number
+  /**
+   * 모퉁이를 사선으로 자른 길이(px). 그 삼각형이 곧 설정·기록 단추다.
+   *
+   * **손끝으로 짚을 만해야 하므로 아래로는 26px에서 멈추고**, 위로는 알약을
+   * 잡아먹지 않게 40px에서 멈춘다(라운드 트래커와 같은 결).
+   */
+  cutSize: number
 }
 
 /** 표식 안에서 숫자가 차지하는 비율. 물방울의 불룩한 아래쪽에 들어갈 만큼. */
@@ -63,7 +70,7 @@ export function computeHpXpLayout(box: { width: number; height: number }): HpXpL
   const width = Number.isFinite(box.width) ? box.width : 0
   const height = Number.isFinite(box.height) ? box.height : 0
   if (width <= 0 || height <= 0) {
-    return { orientation: 'side-by-side', markSize: 0, numberSize: 0 }
+    return { orientation: 'side-by-side', markSize: 0, numberSize: 0, cutSize: 0 }
   }
 
   // 사진처럼 붉은 쪽이 왼쪽, 푸른 쪽이 오른쪽인 것이 기본이다.
@@ -76,7 +83,9 @@ export function computeHpXpLayout(box: { width: number; height: number }): HpXpL
   const markSize = Math.max(0, Math.min(MAX_MARK, Math.min(halfWidth, halfHeight) * 0.82))
   const numberSize = markSize > 0 ? Math.max(MIN_NUMBER, markSize * NUMBER_IN_MARK) : 0
 
-  return { orientation, markSize, numberSize }
+  const cutSize = Math.max(26, Math.min(40, Math.min(width, height) * 0.34))
+
+  return { orientation, markSize, numberSize, cutSize }
 }
 
 /* --------------------------------------------------------------------------

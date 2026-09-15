@@ -81,7 +81,10 @@ export function HpXpTracker({ instanceId, mode, rotation, settings }: WidgetProp
 
       재는 자리(`ref`)는 안쪽 알약이므로 배치는 좁아진 만큼 알아서 따라온다.
     */
-    <div className="hpxp__pad">
+    <div
+      className="hpxp__pad"
+      style={{ '--hpxp-cut': `${layout.cutSize}px` } as React.CSSProperties}
+    >
       <div
         ref={ref}
         className={`hpxp hpxp--${layout.orientation}`}
@@ -142,7 +145,7 @@ export function HpXpTracker({ instanceId, mode, rotation, settings }: WidgetProp
             }
             onClick={() => setOpen('settings')}
           >
-            <GearIcon />
+            <GearIcon size={layout.cutSize * 0.4} />
           </button>
           <button
             type="button"
@@ -150,7 +153,7 @@ export function HpXpTracker({ instanceId, mode, rotation, settings }: WidgetProp
             aria-label="체력·경험 기록 보기"
             onClick={() => setOpen('log')}
           >
-            <ListIcon />
+            <ListIcon size={layout.cutSize * 0.4} />
           </button>
         </>
       )}

@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useScrollLock } from './useScrollLock'
 import type { Treasure } from './treasureNet'
+import './logview.css'
 
 /**
  * 보물 색인 자세히 보기 — **화면을 통째로 덮는 팝업.**

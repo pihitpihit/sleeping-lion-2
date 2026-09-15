@@ -1,0 +1,152 @@
+/* ==========================================================================
+   화면을 통째로 덮는 팝업의 껍데기
+
+   ┌──────────────────────────────────────────────────────────────────────────┐
+   │ **나눠 쓰는 조각은 제 스타일을 스스로 들여온다**(구현 결정 189·356).      │
+   └──────────────────────────────────────────────────────────────────────────┘
+
+   `JournalPage.css` 안에 있었다. 일지 화면만 쓸 때는 문제가 없었는데 **행낭의
+   HP/XP 트래커가 같은 껍데기를 쓰면서 터졌다** — 화면 갈래가 `lazy`로 나뉘어
+   있어 행낭에서는 그 파일이 안 실리고, 팝업이 스타일 없이 떠서 **눌러도 아무
+   일도 안 일어나는 것처럼 보였다**(형님이 짚었다).
+
+   **선택자가 전부 `.logview`인 규칙만 떼어 왔다.** 처음에 정규식으로 걷다가
+   `.logview…, .sheet__input, .sheet__notes` 한 줄을 통째로 끌어와 시트의 입력
+   칸을 함께 데려갔다 — 여섯 번째다(구현 결정 383). 중괄호를 세어 규칙을 하나씩
+   훑고 **이름을 전부 본다.**
+   ========================================================================== */
+
+/* 뒤쪽 화면이 살짝 비친다 — 덮은 것이지 딴 화면으로 넘어온 것이 아니다. */
+
+.logview {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgb(14 12 9 / 92%);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.logview__panel {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 0 calc(var(--sl-safe-right) + 1rem) calc(var(--sl-safe-bottom) + 2rem)
+    calc(var(--sl-safe-left) + 1rem);
+}
+
+/*
+  머리는 안 구르고 목록만 구른다 — 한참 내린 뒤 닫으려고 도로 올라오게 하지
+  않는다(구현 결정 192). 제 바탕을 깔아야 글이 밑을 지나가도 겹쳐 읽히지 않는다.
+*/
+
+.logview__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: calc(var(--sl-safe-top) + 0.8rem) 0 0.6rem;
+  background: rgb(14 12 9 / 96%);
+}
+
+.logview__title {
+  margin: 0;
+  font-family: var(--sl-font-ko-display);
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--sl-gold-bright);
+}
+
+.logview__close {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--sl-text-muted);
+  background: rgb(0 0 0 / 30%);
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.logview__close:hover {
+  color: var(--sl-gold);
+  border-color: var(--sl-border-strong);
+}
+
+.logview__empty {
+  margin: 2rem 0;
+  text-align: center;
+  color: var(--sl-text-faint);
+}
+
+.logview__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 한 번의 저장이 한 덩어리다 — 여러 칸을 함께 고치므로 줄이 여럿일 수 있다. */
+
+.logview__entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid rgb(69 55 38 / 55%);
+}
+
+.logview__when {
+  font-size: 0.78rem;
+  color: var(--sl-text-faint);
+}
+
+.logview__changes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.92rem;
+  color: var(--sl-text);
+}
+
+/* 기록 한 덩어리의 머리 — 언제와 왜가 나란히 선다. */
+
+.logview__meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.logview__why {
+  padding: 0.05rem 0.4rem;
+  font-size: 0.7rem;
+  border: 1px solid var(--sl-border);
+  border-radius: 999px;
+  color: var(--sl-text-faint);
+}
+
+/* 전투에서 받은 것은 눈에 띄어야 한다 — 되짚을 때 찾는 것이 대개 이것이다. */
+
+.logview__why--scenario {
+  color: var(--sl-gold);
+  border-color: var(--sl-gold-dim);
+}
+
+/* 생성은 맨 아래 한 줄뿐이다. 이끼색으로 두어 정산과 갈린다. */
+
+.logview__why--created {
+  color: var(--sl-moss);
+  border-color: var(--sl-moss);
+}

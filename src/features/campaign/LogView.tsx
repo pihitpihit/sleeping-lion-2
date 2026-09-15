@@ -4,6 +4,7 @@ import { useScrollLock } from './useScrollLock'
 import { describeChange, reasonText, whenText, type LogEntry } from './characterLog'
 import { fetchLog } from './characterNet'
 import { fetchCampaignLog } from './campaignNet'
+import './logview.css'
 
 /**
  * 로그 보기 — **화면을 통째로 덮는 팝업.**

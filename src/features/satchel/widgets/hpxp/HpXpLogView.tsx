@@ -4,6 +4,10 @@ import { useScrollLock } from '../../../campaign/useScrollLock'
 import { CloseIcon } from '../../board/frameIcons'
 import { TRACK_LABEL, type HpXpLogEntry } from './hpxp'
 
+// **껍데기 스타일을 스스로 들여온다**(구현 결정 189·356). 행낭에서는 일지의
+// 스타일시트가 안 실리므로, 안 들여오면 팝업이 스타일 없이 떠 안 보인다.
+import '../../../campaign/logview.css'
+
 /**
  * 체력·경험이 언제 얼마나 움직였나 — **화면을 통째로 덮는 팝업.**
  *
