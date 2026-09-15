@@ -165,6 +165,9 @@ export interface HpXpRoundMark {
   readonly xp: number
 }
 
+/** 찍어 둘 수 있는 라운드 수. 판이 길어도 끝이 있어야 한다. */
+export const MARK_LIMIT = 60
+
 /** 같은 라운드를 두 번 찍지 않는다 — 나중 것이 이긴다(되돌아온 경우). */
 export function markRoundValues(
   marks: readonly HpXpRoundMark[],
@@ -172,44 +175,48 @@ export function markRoundValues(
 ): HpXpRoundMark[] {
   const rest = marks.filter((m) => m.round !== mark.round)
   const next = [...rest, mark].sort((a, b) => a.round - b.round)
-  return next.length > LOG_LIMIT ? next.slice(next.length - LOG_LIMIT) : next
+  return next.length > MARK_LIMIT ? next.slice(next.length - MARK_LIMIT) : next
 }
-
-export interface HpXpLogEntry {
-  /** 몇 라운드에. */
-  readonly round: number
-  readonly track: HpXpTrack
-  /** 그 라운드에 이 칸이 움직인 만큼. 음수면 깎인 것이다. */
-  readonly delta: number
-}
-
-/** 한 줄에 합칠 수 있는 만큼. 이보다 길어지면 앞에서부터 잊는다. */
-export const LOG_LIMIT = 60
 
 /**
- * 움직인 만큼을 기록에 얹는다.
+ * 화면에 서는 한 줄.
  *
- * 마지막 줄과 **같은 라운드·같은 칸**이면 합치고, 아니면 새 줄을 놓는다. 합쳐서
- * 0이 되면 그 줄을 걷는다.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **증감을 따로 들고 있지 않는다 — 앞뒤 값의 차이가 곧 증감이다.**          │
+ * └──────────────────────────────────────────────────────────────────────────┘
  *
- * 순수 함수라 표로 못박는다 — 합치는 규칙이 틀리면 **기록이 거짓말을 한다.**
+ * 한동안 「움직인 만큼」을 따로 쌓았다(`mergeLog`). 라운드마다 값을 찍기 시작하면서
+ * **같은 것을 두 번 말하게 되었고**, 화면도 라운드마다 두 줄이 되었다(형님이 짚었다).
+ * 찍어 둔 값이 연달아 있으면 그 차이가 증감이므로 쌓을 것이 없다.
  */
-export function mergeLog(
-  entries: readonly HpXpLogEntry[],
-  round: number,
-  track: HpXpTrack,
-  delta: number,
-): HpXpLogEntry[] {
-  if (!Number.isFinite(delta) || delta === 0) return [...entries]
+export interface HpXpLogRow {
+  readonly round: number
+  /** 라운드가 열렸을 때의 값. */
+  readonly hp: number
+  readonly xp: number
+  /** 그 라운드에 움직인 만큼. 0이면 안 움직였다. */
+  readonly hpDelta: number
+  readonly xpDelta: number
+}
 
-  const last = entries[entries.length - 1]
-  if (last !== undefined && last.round === round && last.track === track) {
-    const merged = last.delta + delta
-    const head = entries.slice(0, -1)
-    // 도로 돌아온 것은 움직인 것이 아니다.
-    return merged === 0 ? head : [...head, { round, track, delta: merged }]
+/**
+ * 찍어 둔 값에서 화면에 설 줄을 뽑는다 — **늦은 라운드가 위로.**
+ *
+ * 마지막 줄의 증감은 **지금 값**과 견준다: 그 라운드는 아직 돌고 있으므로 다음
+ * 찍은 값이 없다.
+ */
+export function logRows(marks: readonly HpXpRoundMark[], current: HpXp): HpXpLogRow[] {
+  const rows: HpXpLogRow[] = []
+  for (let i = 0; i < marks.length; i += 1) {
+    const mark = marks[i]
+    const next = marks[i + 1] ?? current
+    rows.push({
+      round: mark.round,
+      hp: mark.hp,
+      xp: mark.xp,
+      hpDelta: next.hp - mark.hp,
+      xpDelta: next.xp - mark.xp,
+    })
   }
-
-  const next = [...entries, { round, track, delta }]
-  return next.length > LOG_LIMIT ? next.slice(next.length - LOG_LIMIT) : next
+  return rows.reverse()
 }

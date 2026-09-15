@@ -3,6 +3,7 @@ import { useBoardSize } from '../../useBoardSize'
 import type { WidgetProps } from '../types'
 import {
   computeHpXpLayout,
+  logRows,
   MAX_VALUE,
   MIN_VALUE,
   stepsFromDrag,
@@ -16,7 +17,6 @@ import { sanitizeHpXpSettings } from './settings'
 import { slotKeyFor } from '../../roster'
 import { NumberReel } from '../reel/NumberReel'
 import { useRosterStore } from '../../roster'
-import { useRoundStore } from '../round/roundStore'
 import { useSatchelStore } from '../../store/satchelStore'
 import { classIconUrl } from '../../../campaign/character'
 import { GearIcon, ListIcon } from './hpxpIcons'
@@ -57,21 +57,8 @@ export function HpXpTracker({ instanceId, mode, rotation, settings }: WidgetProp
   const layout = computeHpXpLayout(size)
   const values = useHpXpStore((s) => s.valuesOf(slot))
   const adjust = useHpXpStore((s) => s.adjust)
-  const log = useHpXpStore((s) => s.logOf(slot))
   const marks = useHpXpStore((s) => s.marksOf(slot))
 
-  /*
-    기록이 몇 라운드의 것인지 알아야 한다 — 스토어가 라운드를 모른다.
-
-    ┌────────────────────────────────────────────────────────────────────────┐
-    │ **판이 열리기 전에 맞춘 것은 기록하지 않는다**(형님이 정했다).          │
-    └────────────────────────────────────────────────────────────────────────┘
-
-    시작 단추를 누르기 전에 다이얼을 맞추는 것은 **준비이지 판의 일이 아니다** —
-    그것까지 「1라운드에 18 올랐다」로 남으면 정작 판에서 무슨 일이 있었는지가
-    묻힌다. 맞춰 놓은 값은 판이 열릴 때 **출발점으로 한 번 찍힌다**(`markRound`).
-  */
-  const round = useRoundStore((s) => (s.startedAt === null ? undefined : s.round))
   const setWidgetSettings = useSatchelStore((s) => s.setWidgetSettings)
 
   /*
@@ -134,7 +121,7 @@ export function HpXpTracker({ instanceId, mode, rotation, settings }: WidgetProp
             value={values[track]}
             rotation={rotation}
             disabled={mode !== 'play'}
-            onAdjust={(delta) => adjust(slot, track, delta, round)}
+            onAdjust={(delta) => adjust(slot, track, delta)}
           />
         ))}
       </div>
@@ -181,8 +168,7 @@ export function HpXpTracker({ instanceId, mode, rotation, settings }: WidgetProp
       {open === 'log' && (
         <HpXpLogView
           who={entry?.name ?? ''}
-          entries={log}
-          marks={marks}
+          rows={logRows(marks, values)}
           onClose={() => setOpen(null)}
         />
       )}

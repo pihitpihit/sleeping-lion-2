@@ -433,49 +433,38 @@
   color: var(--sl-gold);
 }
 
-/* 한 줄 안에서 위가 「열릴 때의 값」, 아래가 「움직인 것」이다. */
-.hplog__body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-  min-width: 0;
-}
-
-.hplog__mark {
-  font-size: 0.82rem;
-  color: var(--sl-text-muted);
-}
-
-.hplog__mark b {
-  margin-left: 0.15rem;
-  color: var(--sl-text);
-}
-
-.hplog__dot {
-  margin: 0 0.4rem;
-  color: var(--sl-text-faint);
-}
-
-.hplog__deltas {
+/* 한 줄에 칸 둘 — 생명과 경험. 값 뒤에 증감이 괄호로 붙는다. */
+.hplog__cells {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.2rem 0.8rem;
+  gap: 0.2rem 1.1rem;
+  min-width: 0;
   font-size: 0.88rem;
 }
 
-/* 붉은 쪽이 생명, 푸른 쪽이 경험 — 다이얼과 같은 색이라야 같은 것으로 읽힌다. */
-.hplog__delta {
+.hplog__cell {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.hplog__name {
   color: var(--sl-text-faint);
 }
 
-.hplog__delta b {
-  margin-left: 0.15rem;
+.hplog__cell b {
+  color: var(--sl-text);
 }
 
-.hplog__delta--hp b {
+/* 증감은 붉은 쪽·푸른 쪽 색을 그대로 쓴다 — 다이얼과 같아야 같은 것으로 읽힌다. */
+.hplog__delta {
+  font-size: 0.82rem;
+}
+
+.hplog__cell--hp .hplog__delta {
   color: #e08a7a;
 }
 
-.hplog__delta--xp b {
+.hplog__cell--xp .hplog__delta {
   color: #9dc2ff;
 }

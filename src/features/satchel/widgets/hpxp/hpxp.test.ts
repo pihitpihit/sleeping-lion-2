@@ -4,9 +4,10 @@ import {
   computeHpXpLayout,
   DRAG_STEP_PX,
   isHpXpSizeAllowed,
-  LOG_LIMIT,
-  mergeLog,
-  type HpXpLogEntry,
+  MARK_LIMIT,
+  logRows,
+  markRoundValues,
+  type HpXpRoundMark,
   MAX_VALUE,
   MIN_VALUE,
   step,
@@ -269,52 +270,68 @@ describe('값을 곧바로 앉힌다', () => {
   })
 })
 
-describe('무엇이 언제 얼마나 움직였나', () => {
-  /*
-    끌어서 다섯 칸을 내리면 `adjust`가 다섯 번 불린다 — 그대로 쌓으면 「−1」이
-    다섯 줄 서고 **정작 알고 싶은 것이 안 보인다.**
-  */
-  it('같은 라운드·같은 칸이면 한 줄에 합친다', () => {
-    let log = mergeLog([], 3, 'hp', -1)
-    log = mergeLog(log, 3, 'hp', -1)
-    log = mergeLog(log, 3, 'hp', -3)
-    expect(log).toEqual([{ round: 3, track: 'hp', delta: -5 }])
+describe('라운드마다 찍어 둔 값', () => {
+  const mark = (round: number, hp: number, xp: number): HpXpRoundMark => ({ round, hp, xp })
+
+  it('라운드 차례로 세운다', () => {
+    let marks = markRoundValues([], mark(2, 21, 0))
+    marks = markRoundValues(marks, mark(1, 26, 0))
+    expect(marks.map((m) => m.round)).toEqual([1, 2])
   })
 
-  it('라운드가 넘어가면 줄이 갈린다', () => {
-    let log = mergeLog([], 3, 'hp', -2)
-    log = mergeLog(log, 4, 'hp', -1)
-    expect(log).toEqual([
-      { round: 3, track: 'hp', delta: -2 },
-      { round: 4, track: 'hp', delta: -1 },
-    ])
-  })
-
-  it('칸이 다르면 줄이 갈린다', () => {
-    let log = mergeLog([], 3, 'hp', -2)
-    log = mergeLog(log, 3, 'xp', 1)
-    expect(log).toHaveLength(2)
-  })
-
-  it('합쳐서 0이면 줄을 걷는다 — 되돌린 자리는 움직인 것이 아니다', () => {
-    let log = mergeLog([], 3, 'hp', -2)
-    log = mergeLog(log, 3, 'hp', 2)
-    expect(log).toEqual([])
-  })
-
-  it('0은 아무것도 안 남긴다', () => {
-    expect(mergeLog([], 3, 'hp', 0)).toEqual([])
-  })
-
-  it('모양이 아닌 값은 버린다', () => {
-    expect(mergeLog([], 3, 'hp', Number.NaN)).toEqual([])
+  it('같은 라운드를 두 번 찍으면 나중 것이 이긴다', () => {
+    let marks = markRoundValues([], mark(1, 26, 0))
+    marks = markRoundValues(marks, mark(1, 20, 0))
+    expect(marks).toEqual([mark(1, 20, 0)])
   })
 
   it('너무 길어지면 앞에서부터 잊는다 — 판이 길어도 끝이 있어야 한다', () => {
-    let log: HpXpLogEntry[] = []
-    for (let i = 1; i <= LOG_LIMIT + 10; i += 1) log = mergeLog(log, i, 'hp', -1)
-    expect(log).toHaveLength(LOG_LIMIT)
-    expect(log[0].round).toBe(11)
+    let marks: HpXpRoundMark[] = []
+    for (let i = 1; i <= MARK_LIMIT + 10; i += 1) marks = markRoundValues(marks, mark(i, i, 0))
+    expect(marks).toHaveLength(MARK_LIMIT)
+    expect(marks[0].round).toBe(11)
+  })
+})
+
+describe('찍어 둔 값에서 줄을 뽑는다', () => {
+  /*
+    ┌──────────────────────────────────────────────────────────────────────────┐
+    │ **증감을 따로 들고 있지 않는다 — 앞뒤 값의 차이가 곧 증감이다.**          │
+    └──────────────────────────────────────────────────────────────────────────┘
+  */
+  const marks: HpXpRoundMark[] = [
+    { round: 1, hp: 26, xp: 0 },
+    { round: 2, hp: 21, xp: 0 },
+    { round: 3, hp: 18, xp: 2 },
+  ]
+
+  it('늦은 라운드가 위로', () => {
+    expect(logRows(marks, { hp: 18, xp: 2 }).map((r) => r.round)).toEqual([3, 2, 1])
+  })
+
+  it('증감은 다음에 찍은 값과의 차이다', () => {
+    const rows = logRows(marks, { hp: 18, xp: 2 })
+    const r1 = rows.find((r) => r.round === 1)
+    expect(r1).toMatchObject({ hp: 26, xp: 0, hpDelta: -5, xpDelta: 0 })
+    const r2 = rows.find((r) => r.round === 2)
+    expect(r2).toMatchObject({ hp: 21, hpDelta: -3, xpDelta: 2 })
+  })
+
+  /* 지금 도는 라운드는 다음에 찍은 값이 없다 — 그때는 지금 값과 견준다. */
+  it('마지막 줄은 지금 값과 견준다', () => {
+    const rows = logRows(marks, { hp: 22, xp: 5 })
+    expect(rows[0]).toMatchObject({ round: 3, hp: 18, hpDelta: 4, xpDelta: 3 })
+  })
+
+  it('안 움직였으면 0이다', () => {
+    expect(logRows([{ round: 1, hp: 26, xp: 0 }], { hp: 26, xp: 0 })[0]).toMatchObject({
+      hpDelta: 0,
+      xpDelta: 0,
+    })
+  })
+
+  it('찍은 것이 없으면 줄도 없다 — 판이 아직 안 열렸다', () => {
+    expect(logRows([], { hp: 26, xp: 0 })).toEqual([])
   })
 })
 
@@ -329,28 +346,28 @@ describe('빈 값을 매번 새로 만들지 않는다', () => {
     행낭에 들어가자마자 터졌던 자리다(형님이 짚었다).
   */
   beforeEach(() => {
-    useHpXpStore.setState({ byInstance: {}, logBySlot: {} })
+    useHpXpStore.setState({ byInstance: {}, marksBySlot: {} })
   })
 
   it('기록이 없으면 늘 같은 것을 돌려준다', () => {
-    expect(useHpXpStore.getState().logOf('w1')).toBe(useHpXpStore.getState().logOf('w1'))
+    expect(useHpXpStore.getState().marksOf('w1')).toBe(useHpXpStore.getState().marksOf('w1'))
   })
 
   it('값도 마찬가지다', () => {
     expect(useHpXpStore.getState().valuesOf('w1')).toBe(useHpXpStore.getState().valuesOf('w1'))
   })
 
-  /* 0에서 더 내리면 울타리에 걸려 제자리다 — 그때는 적을 것이 없다. 올려서 본다. */
-  it('기록이 생기면 그것을 돌려준다', () => {
-    useHpXpStore.getState().adjust('w1', 'hp', 2, 3)
-    const a = useHpXpStore.getState().logOf('w1')
-    expect(a).toEqual([{ round: 3, track: 'hp', delta: 2 }])
-    expect(useHpXpStore.getState().logOf('w1')).toBe(a)
+  it('찍으면 그것을 돌려준다', () => {
+    useHpXpStore.getState().adjust('w1', 'hp', 2)
+    useHpXpStore.getState().markRound(1)
+    const a = useHpXpStore.getState().marksOf('w1')
+    expect(a).toEqual([{ round: 1, hp: 2, xp: 0 }])
+    expect(useHpXpStore.getState().marksOf('w1')).toBe(a)
   })
 
-  it('울타리에 걸려 제자리면 기록도 그대로다', () => {
-    useHpXpStore.getState().adjust('w1', 'hp', -2, 3)
-    expect(useHpXpStore.getState().logOf('w1')).toBe(useHpXpStore.getState().logOf('w1'))
-    expect(useHpXpStore.getState().logOf('w1')).toEqual([])
+  /* 손댄 적 없는 다이얼은 찍을 것이 없다 — 0/0을 줄줄이 남기지 않는다. */
+  it('값이 없는 자리는 안 찍는다', () => {
+    useHpXpStore.getState().markRound(1)
+    expect(useHpXpStore.getState().marksOf('w1')).toEqual([])
   })
 })
