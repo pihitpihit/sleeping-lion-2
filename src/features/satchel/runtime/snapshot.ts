@@ -2,7 +2,7 @@ import { makeCard, type Card, type DeckState } from '../widgets/deck/deck'
 import { useAttackDeckStore } from '../widgets/deck/deckStore'
 import type { ElementState } from '../widgets/elements/elements'
 import { useElementStore } from '../widgets/elements/elementStore'
-import { clampValue, type HpXp } from '../widgets/hpxp/hpxp'
+import { clampValue, type HpXp, type HpXpRoundMark } from '../widgets/hpxp/hpxp'
 import { useHpXpStore } from '../widgets/hpxp/hpxpStore'
 import { clampGold } from '../widgets/gold/gold'
 import { useGoldStore } from '../widgets/gold/goldStore'
@@ -66,6 +66,21 @@ export interface RuntimeSnapshot {
   roundStartedAt: number | null
   /** 끝난 라운드들이 각각 얼마나 걸렸는가(ms). 첫 칸이 1라운드다. */
   roundLaps: number[]
+  /**
+   * 라운드가 열릴 때마다 찍어 둔 체력·경험(`hpxpStore.marksBySlot`).
+   *
+   * ┌────────────────────────────────────────────────────────────────────────┐
+   * │ **라운드가 새로고침을 견디는데 기록만 사라지면 안 된다**(형님이 짚었다).│
+   * └────────────────────────────────────────────────────────────────────────┘
+   *
+   * 「들여다보는 자리일 뿐」이라며 메모리에만 두었는데, 브라우저를 닫았다 열면
+   * **라운드는 이어지고 기록만 비었다** — 그 판의 기록인데 그 판이 이어지는
+   * 동안 사라지는 것은 어긋난다.
+   *
+   * 줄 수가 `MARK_LIMIT`으로 막혀 있고 **라운드가 넘어갈 때만 는다** — 원소를
+   * 켤 때마다 커지는 값이 아니라 실을 만하다.
+   */
+  hpxpMarks: Record<string, HpXpRoundMark[]>
   /** 지금은 위젯 인스턴스가 열쇠다. 전투 공유에서 캐릭터로 옮긴다. */
   hpxp: Record<string, HpXp>
   /** 덱은 **얇게** 싣는다 — `WireCard` 참조. */
@@ -119,6 +134,7 @@ export function emptyRuntime(): RuntimeSnapshot {
     round: FIRST_ROUND,
     roundStartedAt: null,
     roundLaps: [],
+    hpxpMarks: {},
     hpxp: {},
     decks: {},
     gold: {},
@@ -143,6 +159,7 @@ export function captureRuntime(): RuntimeSnapshot {
     round: useRoundStore.getState().round,
     roundStartedAt: useRoundStore.getState().startedAt,
     roundLaps: useRoundStore.getState().laps,
+    hpxpMarks: useHpXpStore.getState().marksBySlot,
     hpxp: useHpXpStore.getState().byInstance,
     decks,
     gold: useGoldStore.getState().bySlot,
@@ -176,7 +193,7 @@ export function isEmptyRuntime(snapshot: RuntimeSnapshot): boolean {
  */
 export function restoreRuntime(snapshot: RuntimeSnapshot): void {
   useElementStore.getState().hydrate(snapshot.elements)
-  useHpXpStore.getState().hydrate(snapshot.hpxp)
+  useHpXpStore.getState().hydrate(snapshot.hpxp, snapshot.hpxpMarks)
   const decks: Record<string, DeckState> = {}
   for (const [slot, deck] of Object.entries(snapshot.decks)) decks[slot] = thickDeck(deck)
   useAttackDeckStore.getState().hydrate(decks)
@@ -187,6 +204,19 @@ export function restoreRuntime(snapshot: RuntimeSnapshot): void {
 /* --------------------------------------------------------------------------
    거르기 — 저장소에서도 서버에서도 이걸 통과해야 들어온다
    -------------------------------------------------------------------------- */
+
+function isRoundMark(value: unknown): value is HpXpRoundMark {
+  if (typeof value !== 'object' || value === null) return false
+  const m = value as Record<string, unknown>
+  return (
+    typeof m.round === 'number' &&
+    Number.isFinite(m.round) &&
+    typeof m.hp === 'number' &&
+    Number.isFinite(m.hp) &&
+    typeof m.xp === 'number' &&
+    Number.isFinite(m.xp)
+  )
+}
 
 function isElementState(value: unknown): value is ElementState {
   return value === 'strong' || value === 'waning' || value === 'inert'
@@ -298,7 +328,28 @@ export function sanitizeRuntime(parsed: unknown): RuntimeSnapshot {
       )
     : []
 
-  return { v: RUNTIME_VERSION, at, elements, round, roundStartedAt, roundLaps, hpxp, decks, gold }
+  /* 찍어 둔 값. 모양이 아닌 것은 버린다 — 남의 기기에서 온 것이다. */
+  const hpxpMarks: Record<string, HpXpRoundMark[]> = {}
+  if (typeof raw.hpxpMarks === 'object' && raw.hpxpMarks !== null) {
+    for (const [slot, list] of Object.entries(raw.hpxpMarks as Record<string, unknown>)) {
+      if (!Array.isArray(list)) continue
+      const rows = list.filter(isRoundMark)
+      if (rows.length > 0) hpxpMarks[slot] = rows
+    }
+  }
+
+  return {
+    v: RUNTIME_VERSION,
+    at,
+    elements,
+    round,
+    roundStartedAt,
+    roundLaps,
+    hpxpMarks,
+    hpxp,
+    decks,
+    gold,
+  }
 }
 
 /* --------------------------------------------------------------------------

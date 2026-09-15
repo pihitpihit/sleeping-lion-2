@@ -2,7 +2,8 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useScrollLock } from '../../../campaign/useScrollLock'
 import { CloseIcon } from '../../board/frameIcons'
-import { TRACK_LABEL, type HpXpLogRow, type HpXpTrack } from './hpxp'
+import { type HpXpLogRow, type HpXpTrack } from './hpxp'
+import { TrackMark } from './TrackMark'
 
 // **껍데기 스타일을 스스로 들여온다**(구현 결정 189·356). 행낭에서는 일지의
 // 스타일시트가 안 실리므로, 안 들여오면 팝업이 스타일 없이 떠 안 보인다.
@@ -117,7 +118,11 @@ export function HpXpLogPanel({
 function Cell({ track, value, delta }: { track: HpXpTrack; value: number; delta: number }) {
   return (
     <span className={`hplog__cell hplog__cell--${track}`}>
-      <span className="hplog__name">{TRACK_LABEL[track]}</span>
+      {/*
+        **글자 대신 그림이다**(형님이 정했다). 여기서는 수를 안 얹는다 — 값과
+        증감이 옆에 서므로 그림 안에까지 넣으면 어느 것이 무엇인지 흐려진다.
+      */}
+      <TrackMark track={track} size={20} />
       <b className="sl-numeral">{value}</b>
       {delta !== 0 && (
         <span

@@ -51,8 +51,8 @@ interface HpXpState {
    */
   setTrack: (instanceId: string, track: HpXpTrack, value: number) => void
   reset: (instanceId: string) => void
-  /** 뜬 판을 통째로 앉힌다. */
-  hydrate: (byInstance: Record<string, HpXp>) => void
+  /** 뜬 판을 통째로 앉힌다. **찍어 둔 값도 함께** — 라운드와 같이 살아야 한다. */
+  hydrate: (byInstance: Record<string, HpXp>, marksBySlot?: Record<string, HpXpRoundMark[]>) => void
 }
 
 /** 빈 기록. **한 벌만 두고 돌려 쓴다** — 위의 까닭이다. */
@@ -107,5 +107,5 @@ export const useHpXpStore = create<HpXpState>((set, get) => ({
       return { byInstance: next }
     }),
 
-  hydrate: (byInstance) => set({ byInstance }),
+  hydrate: (byInstance, marksBySlot) => set({ byInstance, marksBySlot: marksBySlot ?? {} }),
 }))

@@ -30,18 +30,27 @@ describe('체력·경험 기록', () => {
     expect(html.indexOf('R3')).toBeLessThan(html.indexOf('R1'))
   })
 
+  /* 「생명」·「경험」은 글자가 아니라 그림이다 — 판 위에서 보는 그것과 같아야 한다. */
+  it('칸 이름을 그림으로 낸다', () => {
+    const html = render()
+    expect(html).toContain('hp-drop-lit')
+    expect(html).toContain('xp-star-lit')
+  })
+
   it('라운드가 열렸을 때의 값을 적는다', () => {
     const html = render()
     expect(html).toContain('>26<')
     expect(html).toContain('>21<')
   })
 
-  /* **괄호는 안 두른다** — 색과 부호가 이미 「움직인 만큼」이라고 말한다. */
+  /*
+    **괄호는 안 두른다** — 색과 부호가 이미 「움직인 만큼」이라고 말한다.
+    `not.toContain('(')`로는 못 본다: 표식 그림이 `url(...)`을 싣고 있다.
+  */
   it('움직인 만큼을 값 옆에 곁들인다', () => {
     const html = render()
-    expect(html).toContain('−5')
-    expect(html).toContain('+2')
-    expect(html).not.toContain('(')
+    expect(html).toContain('>−5</span>')
+    expect(html).toContain('>+2</span>')
   })
 
   /* `+0`이 붙으면 무언가 있었던 것처럼 읽힌다. */

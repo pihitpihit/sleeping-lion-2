@@ -1,5 +1,6 @@
 import { CharacterPicker } from '../CharacterPicker'
 import { LevelBadge } from '../../../campaign/LevelBadge'
+import { TrackMark } from './TrackMark'
 import { useCharacterStats } from '../../perkSource'
 import { slotKeyFor } from '../../roster'
 import type { WidgetSettingsEditorProps } from '../types'
@@ -50,11 +51,12 @@ export function HpXpSettingsEditor({ value, onChange, instanceId }: WidgetSettin
             <span className="charpick__lv">
               <LevelBadge level={stat.level} />
             </span>
-            {stat.maxHp !== null && (
-              <span>
-                최대 <b className="sl-numeral">{stat.maxHp}</b>
-              </span>
-            )}
+            {/*
+              **최대 체력도 그림으로 적는다**(형님이 정했다). 다이얼이 쓰는 그
+              물방울이라야 「이것이 체력이다」가 한눈에 든다 — 「최대 26」이라고
+              글자로 적으면 옆의 레벨과 같은 결로 읽힌다.
+            */}
+            {stat.maxHp !== null && <TrackMark track="hp" value={stat.maxHp} size={34} />}
           </>
         )
       }}

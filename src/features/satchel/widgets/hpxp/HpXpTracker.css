@@ -444,12 +444,8 @@
 
 .hplog__cell {
   display: inline-flex;
-  align-items: baseline;
-  gap: 0.25rem;
-}
-
-.hplog__name {
-  color: var(--sl-text-faint);
+  align-items: center;
+  gap: 0.3rem;
 }
 
 .hplog__cell b {

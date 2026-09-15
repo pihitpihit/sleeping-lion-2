@@ -308,3 +308,42 @@ describe('방에 들어갈 때 맞추기', () => {
     expect(isEmptyRuntime({ ...emptyRuntime(), at: 12_345 })).toBe(true)
   })
 })
+
+describe('찍어 둔 체력·경험이 새로고침을 견딘다', () => {
+  /*
+    ┌──────────────────────────────────────────────────────────────────────────┐
+    │ **라운드가 이어지는데 기록만 사라지면 안 된다**(형님이 짚었다).           │
+    └──────────────────────────────────────────────────────────────────────────┘
+
+    「들여다보는 자리일 뿐」이라며 메모리에만 두었더니 브라우저를 닫았다 열면
+    라운드는 이어지고 기록만 비었다 — 그 판의 기록인데 그 판이 도는 동안 사라진다.
+  */
+  beforeEach(() => {
+    clearStores()
+  })
+
+  it('떴다가 도로 앉으면 그대로 있다', () => {
+    useHpXpStore.getState().adjust('갑', 'hp', 18)
+    useRoundStore.getState().start(1000)
+    useRoundStore.getState().advance(5000)
+
+    const snapshot = captureRuntime()
+    expect(snapshot.hpxpMarks['갑']).toHaveLength(2)
+
+    clearStores()
+    restoreRuntime(snapshot)
+    expect(useHpXpStore.getState().marksOf('갑')).toEqual(snapshot.hpxpMarks['갑'])
+  })
+
+  it('모양이 아닌 것은 버린다 — 남의 기기에서 온 값이다', () => {
+    const dirty = sanitizeRuntime({
+      ...emptyRuntime(),
+      hpxpMarks: { 갑: [{ round: 1, hp: 3, xp: 0 }, { round: '둘' }, null], 을: '아님' },
+    })
+    expect(dirty.hpxpMarks).toEqual({ 갑: [{ round: 1, hp: 3, xp: 0 }] })
+  })
+
+  it('옛 저장물에는 없다 — 그때는 비어 있는 것으로 읽는다', () => {
+    expect(sanitizeRuntime({ v: 1, round: 3 }).hpxpMarks).toEqual({})
+  })
+})
