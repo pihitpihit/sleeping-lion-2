@@ -251,6 +251,32 @@
   transform: translateY(10%);
 }
 
+/*
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ **최대 체력에 닿으면 숫자가 물든다 — 막지는 않는다**(형님이 정했다).      │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  축 ②는 룰을 돌리지 않으므로(SPEC 1장) 최대를 넘겨 세는 것은 그대로 둔다. 다만
+  **딱 찼는지 넘었는지는 눈에 보여야** 판 위에서 헷갈리지 않는다 — 딱 맞으면
+  이끼빛, 넘었으면 금빛이다.
+
+  **숫자에만 건다.** 물방울까지 물들이면 그것이 체력 표식인 줄 모르게 된다.
+  글자에 어두운 테를 둘러야 붉은 바탕에서 뜬다.
+*/
+.hpxp__half--full .reel {
+  color: var(--sl-moss-bright);
+  text-shadow:
+    0 0 3px rgb(0 0 0 / 80%),
+    0 1px 2px rgb(0 0 0 / 70%);
+}
+
+.hpxp__half--over .reel {
+  color: var(--sl-gold-bright);
+  text-shadow:
+    0 0 3px rgb(0 0 0 / 80%),
+    0 1px 2px rgb(0 0 0 / 70%);
+}
+
 /* --------------------------------------------------------------------------
    모퉁이의 두 단추 · 누구 것인가 표식
    --------------------------------------------------------------------------
@@ -419,17 +445,22 @@
   gap: 0.2rem;
 }
 
+/*
+  **글자와 그림을 함께 키웠다**(형님이 정했다). 판을 돌아보며 읽는 자리라 손에 든
+  기기에서 한눈에 들어와야 한다 — 그림이 커진 만큼 줄도 함께 높아진다.
+*/
 .hplog__round {
   display: flex;
-  align-items: baseline;
-  gap: 0.7rem;
-  padding: 0.4rem 0.1rem;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.5rem 0.1rem;
   border-bottom: 1px solid rgb(255 255 255 / 5%);
 }
 
 .hplog__no {
   flex: none;
-  min-width: 2.4rem;
+  min-width: 2.7rem;
+  font-size: 1.15rem;
   color: var(--sl-gold);
 }
 
@@ -437,24 +468,36 @@
 .hplog__cells {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.2rem 1.1rem;
+  gap: 0.25rem 1.3rem;
   min-width: 0;
-  font-size: 0.88rem;
+  font-size: 1.12rem;
 }
 
 .hplog__cell {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
+  gap: 0.36rem;
 }
 
 .hplog__cell b {
   color: var(--sl-text);
 }
 
+/*
+  **다이얼과 같은 눈으로 물든다.** 그 라운드가 열렸을 때 최대에 닿아 있었으면
+  이끼빛, 넘어 있었으면 금빛이다 — 판 위에서 본 색이 기록에서도 같아야 한다.
+*/
+.hplog__cell--full b {
+  color: var(--sl-moss-bright);
+}
+
+.hplog__cell--over b {
+  color: var(--sl-gold-bright);
+}
+
 /* 증감은 붉은 쪽·푸른 쪽 색을 그대로 쓴다 — 다이얼과 같아야 같은 것으로 읽힌다. */
 .hplog__delta {
-  font-size: 0.82rem;
+  font-size: 0.95rem;
 }
 
 .hplog__cell--hp .hplog__delta {

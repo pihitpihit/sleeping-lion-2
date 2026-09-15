@@ -3,6 +3,7 @@ import {
   clampValue,
   computeHpXpLayout,
   DRAG_STEP_PX,
+  hpFillOf,
   isHpXpSizeAllowed,
   MARK_LIMIT,
   logRows,
@@ -369,5 +370,22 @@ describe('빈 값을 매번 새로 만들지 않는다', () => {
   it('값이 없는 자리는 안 찍는다', () => {
     useHpXpStore.getState().markRound(1)
     expect(useHpXpStore.getState().marksOf('w1')).toEqual([])
+  })
+})
+
+describe('hpFillOf', () => {
+  it('최대에 딱 맞으면 full, 넘으면 over다', () => {
+    expect(hpFillOf(26, 26)).toBe('full')
+    expect(hpFillOf(27, 26)).toBe('over')
+    expect(hpFillOf(25, 26)).toBe('none')
+  })
+
+  it('모르면 아무것도 안 한다 — 짐작해서 물들이지 않는다', () => {
+    expect(hpFillOf(26, null)).toBe('none')
+    expect(hpFillOf(0, null)).toBe('none')
+  })
+
+  it('최대가 0이면 없는 것으로 본다 — 0에서 시작한 다이얼이 full로 뜨면 안 된다', () => {
+    expect(hpFillOf(0, 0)).toBe('none')
   })
 })

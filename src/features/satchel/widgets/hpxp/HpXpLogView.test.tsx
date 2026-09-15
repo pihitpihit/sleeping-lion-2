@@ -16,7 +16,7 @@ const rows: HpXpLogRow[] = [
 
 function render(over: Partial<Parameters<typeof HpXpLogPanel>[0]> = {}) {
   return renderToStaticMarkup(
-    <HpXpLogPanel who="바위심장" rows={rows} onClose={() => {}} {...over} />,
+    <HpXpLogPanel who="바위심장" rows={rows} maxHp={null} onClose={() => {}} {...over} />,
   )
 }
 
@@ -65,5 +65,30 @@ describe('체력·경험 기록', () => {
 
   it('캐릭터를 안 골랐으면 이름 대신 무엇의 기록인지 적는다', () => {
     expect(render({ who: '' })).toContain('체력·경험')
+  })
+})
+
+/*
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ **다이얼과 같은 눈으로 본다** — 판 위에서 녹색이던 것이 기록에서 아무      │
+  │ 색도 아니면 같은 사실인 줄 모른다.                                        │
+  └──────────────────────────────────────────────────────────────────────────┘
+*/
+describe('최대 체력 표시', () => {
+  it('그 라운드가 최대에서 열렸으면 그 칸만 물든다', () => {
+    const html = render({ maxHp: 26 })
+    expect((html.match(/hplog__cell--full/g) ?? []).length).toBe(1)
+    expect(html).not.toContain('hplog__cell--over')
+  })
+
+  it('넘었으면 다른 색이다', () => {
+    const html = render({ maxHp: 18 })
+    expect(html).toContain('hplog__cell--over')
+  })
+
+  it('모르면 아무것도 안 물든다', () => {
+    const html = render({ maxHp: null })
+    expect(html).not.toContain('hplog__cell--full')
+    expect(html).not.toContain('hplog__cell--over')
   })
 })

@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useScrollLock } from '../../../campaign/useScrollLock'
 import { CloseIcon } from '../../board/frameIcons'
-import { type HpXpLogRow, type HpXpTrack } from './hpxp'
+import { hpFillOf, type HpFill, type HpXpLogRow, type HpXpTrack } from './hpxp'
 import { TrackMark } from './TrackMark'
 
 // **껍데기 스타일을 스스로 들여온다**(구현 결정 189·356). 행낭에서는 일지의
@@ -26,11 +26,14 @@ import '../../../campaign/logview.css'
 export function HpXpLogView({
   who,
   rows,
+  maxHp,
   onClose,
 }: {
   /** 누구의 것인가. 캐릭터를 안 골랐으면 빈 글자다. */
   who: string
   rows: readonly HpXpLogRow[]
+  /** 고른 캐릭터의 최대 체력. 모르면 `null`이며 그때는 아무것도 물들이지 않는다. */
+  maxHp: number | null
   onClose: () => void
 }) {
   useScrollLock()
@@ -48,7 +51,7 @@ export function HpXpLogView({
 
   return createPortal(
     <div className="logview">
-      <HpXpLogPanel who={who} rows={rows} onClose={onClose} />
+      <HpXpLogPanel who={who} rows={rows} maxHp={maxHp} onClose={onClose} />
     </div>,
     document.body,
   )
@@ -64,10 +67,12 @@ export function HpXpLogView({
 export function HpXpLogPanel({
   who,
   rows,
+  maxHp,
   onClose,
 }: {
   who: string
   rows: readonly HpXpLogRow[]
+  maxHp: number | null
   onClose: () => void
 }) {
   return (
@@ -95,8 +100,13 @@ export function HpXpLogPanel({
                 그 차이가 곧 증감이라 **같은 것을 두 번 말하고 있었다.**
               */}
               <span className="hplog__cells">
-                <Cell track="hp" value={row.hp} delta={row.hpDelta} />
-                <Cell track="xp" value={row.xp} delta={row.xpDelta} />
+                <Cell
+                  track="hp"
+                  value={row.hp}
+                  delta={row.hpDelta}
+                  fill={hpFillOf(row.hp, maxHp)}
+                />
+                <Cell track="xp" value={row.xp} delta={row.xpDelta} fill="none" />
               </span>
             </li>
           ))}
@@ -115,14 +125,32 @@ export function HpXpLogPanel({
  * **안 움직였으면 아예 안 적는다** — `+0`이 붙으면 무언가 있었던 것처럼 읽힌다
  * (`priceModifierLabel`이 0을 「그대로」라 적는 것과 같은 결).
  */
-function Cell({ track, value, delta }: { track: HpXpTrack; value: number; delta: number }) {
+function Cell({
+  track,
+  value,
+  delta,
+  fill,
+}: {
+  track: HpXpTrack
+  value: number
+  delta: number
+  /**
+   * 그 라운드가 열렸을 때 최대 체력에 닿아 있었는가.
+   *
+   * **다이얼과 같은 눈으로 본다** — 판 위에서 녹색이던 것이 기록에서는 아무 색도
+   * 아니면 같은 사실인 줄 모른다(구현 결정 255·319).
+   */
+  fill: HpFill
+}) {
   return (
-    <span className={`hplog__cell hplog__cell--${track}`}>
+    <span
+      className={`hplog__cell hplog__cell--${track}${fill === 'none' ? '' : ` hplog__cell--${fill}`}`}
+    >
       {/*
         **글자 대신 그림이다**(형님이 정했다). 여기서는 수를 안 얹는다 — 값과
         증감이 옆에 서므로 그림 안에까지 넣으면 어느 것이 무엇인지 흐려진다.
       */}
-      <TrackMark track={track} size={20} />
+      <TrackMark track={track} size={26} />
       <b className="sl-numeral">{value}</b>
       {delta !== 0 && (
         <span

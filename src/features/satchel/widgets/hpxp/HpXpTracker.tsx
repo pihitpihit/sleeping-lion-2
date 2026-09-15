@@ -3,6 +3,7 @@ import { useBoardSize } from '../../useBoardSize'
 import type { WidgetProps } from '../types'
 import {
   computeHpXpLayout,
+  hpFillOf,
   logRows,
   MAX_VALUE,
   MIN_VALUE,
@@ -10,6 +11,7 @@ import {
   TAP_SLOP_PX,
   toLocalDelta,
   TRACK_LABEL,
+  type HpFill,
   type HpXpTrack,
 } from './hpxp'
 import { useHpXpStore } from './hpxpStore'
@@ -19,6 +21,7 @@ import { NumberReel } from '../reel/NumberReel'
 import { useRosterStore } from '../../roster'
 import { classIconUrl } from '../../../campaign/character'
 import { GearIcon, ListIcon } from './hpxpIcons'
+import { useCharacterStats } from '../../perkSource'
 import { HpXpLogView } from './HpXpLogView'
 import { HpXpSettingsView } from './HpXpSettingsView'
 import './HpXpTracker.css'
@@ -70,6 +73,18 @@ export function HpXpTracker({
   */
   const entry = useRosterStore((s) => s.entries.find((e) => e.id === characterId) ?? null)
   const iconUrl = entry === null ? null : classIconUrl(entry.classIcon)
+
+  /*
+    ┌──────────────────────────────────────────────────────────────────────────┐
+    │ **최대 체력에 닿았는지만 본다 — 막지는 않는다**(형님이 정했다).           │
+    └──────────────────────────────────────────────────────────────────────────┘
+
+    최대를 넘기는 효과가 게임에 있는지 우리는 모르므로 넘겨 세는 것은 그대로 두고
+    **눈에만 갈라 준다**(구현 결정 115·SPEC 1장). 닿는 자리는 `perkSource` 하나다
+    (구현 결정 142·495).
+  */
+  const stats = useCharacterStats()
+  const maxHp = characterId === null ? null : (stats.get(characterId)?.maxHp ?? null)
 
   /** 지금 열려 있는 팝업. 둘이 겹쳐 뜨지 않는다. */
   const [open, setOpen] = useState<'settings' | 'log' | null>(null)
@@ -124,6 +139,7 @@ export function HpXpTracker({
             value={values[track]}
             rotation={rotation}
             disabled={mode !== 'play'}
+            fill={track === 'hp' ? hpFillOf(values.hp, maxHp) : 'none'}
             onAdjust={(delta) => adjust(slot, track, delta)}
           />
         ))}
@@ -172,6 +188,7 @@ export function HpXpTracker({
         <HpXpLogView
           who={entry?.name ?? ''}
           rows={logRows(marks, values)}
+          maxHp={maxHp}
           onClose={() => setOpen(null)}
         />
       )}
@@ -194,10 +211,12 @@ interface DialProps {
   value: number
   rotation: number
   disabled: boolean
+  /** 최대 체력에 닿았는가. 경험 쪽은 늘 `none`이다 — 눈금이 있을 뿐 상한이 없다. */
+  fill: HpFill
   onAdjust: (delta: number) => void
 }
 
-function Dial({ track, value, rotation, disabled, onAdjust }: DialProps) {
+function Dial({ track, value, rotation, disabled, fill, onAdjust }: DialProps) {
   const label = TRACK_LABEL[track]
 
   /**
@@ -287,7 +306,9 @@ function Dial({ track, value, rotation, disabled, onAdjust }: DialProps) {
   }
 
   return (
-    <div className={`hpxp__half hpxp__half--${track}`}>
+    <div
+      className={`hpxp__half hpxp__half--${track}${fill === 'none' ? '' : ` hpxp__half--${fill}`}`}
+    >
       <button
         type="button"
         className="hpxp__dial sl-numeral"

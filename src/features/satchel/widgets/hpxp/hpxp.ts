@@ -220,3 +220,26 @@ export function logRows(marks: readonly HpXpRoundMark[], current: HpXp): HpXpLog
   }
   return rows.reverse()
 }
+
+/**
+ * 체력이 최대에 닿았는가.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **판정이 아니라 표시다 — 넘는 것을 막지 않는다.**                         │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 축 ②는 룰을 돌리지 않는다(SPEC 1장). 최대를 넘기는 효과가 게임에 있는지 우리는
+ * 모르므로 **넘겨 세는 것은 그대로 둔다** — 다만 눈에 보이게 갈라 준다: 딱 맞으면
+ * 녹색, 넘었으면 노란빛.
+ *
+ * **모르면 아무것도 안 한다**(`null`). 캐릭터를 안 골랐거나 그 클래스의 체력표가
+ * 아직 안 들어왔을 때다(구현 결정 115) — 짐작해서 물들이면 사람이 그것을 믿는다.
+ */
+export type HpFill = 'none' | 'full' | 'over'
+
+export function hpFillOf(hp: number, maxHp: number | null): HpFill {
+  if (maxHp === null || maxHp <= 0) return 'none'
+  if (hp > maxHp) return 'over'
+  if (hp === maxHp) return 'full'
+  return 'none'
+}
