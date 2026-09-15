@@ -317,3 +317,40 @@ describe('무엇이 언제 얼마나 움직였나', () => {
     expect(log[0].round).toBe(11)
   })
 })
+
+describe('빈 값을 매번 새로 만들지 않는다', () => {
+  /*
+    ┌──────────────────────────────────────────────────────────────────────────┐
+    │ **selector가 새 값을 내면 렌더가 끝없이 돈다**(React #185).               │
+    └──────────────────────────────────────────────────────────────────────────┘
+
+    화면이 `useHpXpStore((s) => s.logOf(slot))`로 부른다. zustand는 결과를
+    `Object.is`로 견주므로 `?? []`가 매번 새 배열을 내면 「바뀌었다」로 읽힌다 —
+    행낭에 들어가자마자 터졌던 자리다(형님이 짚었다).
+  */
+  beforeEach(() => {
+    useHpXpStore.setState({ byInstance: {}, logBySlot: {} })
+  })
+
+  it('기록이 없으면 늘 같은 것을 돌려준다', () => {
+    expect(useHpXpStore.getState().logOf('w1')).toBe(useHpXpStore.getState().logOf('w1'))
+  })
+
+  it('값도 마찬가지다', () => {
+    expect(useHpXpStore.getState().valuesOf('w1')).toBe(useHpXpStore.getState().valuesOf('w1'))
+  })
+
+  /* 0에서 더 내리면 울타리에 걸려 제자리다 — 그때는 적을 것이 없다. 올려서 본다. */
+  it('기록이 생기면 그것을 돌려준다', () => {
+    useHpXpStore.getState().adjust('w1', 'hp', 2, 3)
+    const a = useHpXpStore.getState().logOf('w1')
+    expect(a).toEqual([{ round: 3, track: 'hp', delta: 2 }])
+    expect(useHpXpStore.getState().logOf('w1')).toBe(a)
+  })
+
+  it('울타리에 걸려 제자리면 기록도 그대로다', () => {
+    useHpXpStore.getState().adjust('w1', 'hp', -2, 3)
+    expect(useHpXpStore.getState().logOf('w1')).toBe(useHpXpStore.getState().logOf('w1'))
+    expect(useHpXpStore.getState().logOf('w1')).toEqual([])
+  })
+})

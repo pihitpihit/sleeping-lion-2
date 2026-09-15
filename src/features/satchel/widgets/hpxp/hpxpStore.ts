@@ -59,12 +59,25 @@ interface HpXpState {
   hydrate: (byInstance: Record<string, HpXp>) => void
 }
 
+/** 빈 기록. **한 벌만 두고 돌려 쓴다** — 위의 까닭이다. */
+const NO_LOG: HpXpLogEntry[] = []
+
 export const useHpXpStore = create<HpXpState>((set, get) => ({
   byInstance: {},
   logBySlot: {},
 
   valuesOf: (instanceId) => get().byInstance[instanceId] ?? INITIAL,
-  logOf: (instanceId) => get().logBySlot[instanceId] ?? [],
+  /*
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │ **빈 값을 매번 새로 만들지 않는다.**                                    │
+    └────────────────────────────────────────────────────────────────────────┘
+
+    화면이 이것을 selector로 부른다(`useHpXpStore((s) => s.logOf(slot))`). zustand는
+    결과를 `Object.is`로 견주므로 **`?? []`가 매번 새 배열을 내면 「바뀌었다」로
+    읽혀 렌더가 끝없이 돈다**(React #185). 값 쪽이 멀쩡했던 것은 `INITIAL`이
+    모듈 상수였기 때문이다 — 빈 기록도 같은 상수를 쓴다.
+  */
+  logOf: (instanceId) => get().logBySlot[instanceId] ?? NO_LOG,
 
   clearLog: () => set({ logBySlot: {} }),
 
