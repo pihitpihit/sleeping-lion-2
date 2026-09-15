@@ -4,6 +4,7 @@ import {
   MIN_REPUTATION,
   REPUTATION_BANDS,
   clampReputation,
+  discountedCost,
   priceModifierLabel,
   priceModifierSpeech,
   shopPriceModifier,
@@ -119,5 +120,23 @@ describe('화면 문구', () => {
   it('읽어주는 쪽에는 우리말이 간다', () => {
     expect(priceModifierSpeech(3)).toBe('물건값 3 비싸짐')
     expect(priceModifierSpeech(-2)).toBe('물건값 2 싸짐')
+  })
+})
+
+describe('평판 할인', () => {
+  it('보정을 값에 그대로 더한다 — 비율이 아니다', () => {
+    expect(discountedCost(30, -2)).toBe(28)
+    expect(discountedCost(30, 3)).toBe(33)
+    expect(discountedCost(30, 0)).toBe(30)
+  })
+
+  it('0 아래로는 안 내려간다 — 값이 음수가 되는 자리는 뜻이 없다', () => {
+    expect(discountedCost(2, -5)).toBe(0)
+  })
+
+  it('모양이 아닌 값은 버린다 — 서버에서 온 값일 수 있다', () => {
+    expect(discountedCost(Number.NaN, -2)).toBe(0)
+    expect(discountedCost(30, Number.NaN)).toBe(30)
+    expect(discountedCost(-5, 0)).toBe(0)
   })
 })

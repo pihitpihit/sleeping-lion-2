@@ -27,6 +27,7 @@ import { Price } from './Price'
 import { costOf, useShopStore } from './shopStore'
 import { fold } from './searchFold'
 import type { ShopItem } from './shopNet'
+import type { OwnedItem } from './types'
 import { useHiddenAbove } from './useHiddenAbove'
 import { graceText } from './grace'
 import { PerkText } from './PerkText'
@@ -46,6 +47,14 @@ import {
 import type { Character, CharacterEdits } from './types'
 
 interface Props {
+  /**
+   * 파티의 평판. **상점의 값을 정한다**(`shopPriceModifier`).
+   *
+   * 캐릭터가 파티에 안 들었으면 볼 기록지가 없으므로 0이다 — 그때는 깎이지도
+   * 얹히지도 않는다.
+   */
+  reputation?: number
+
   character: Character
   /** 내 것인가. 남의 것은 읽기 전용이다(SPEC 6장). */
   mine: boolean
@@ -134,6 +143,7 @@ export function CharacterSheet({
   mine,
   offline = false,
   standalone = false,
+  reputation = 0,
   onEdit,
   onRemove,
   onRestore,
@@ -782,19 +792,22 @@ export function CharacterSheet({
           {shown.items.length > 0 && (
             <ul className="sheet__achievements">
               {shown.items.map((item, index) => {
-                /* 목록에 없는 이름이면 값을 모른다 — 그때는 안 적는다(구현 결정 115). */
-                const cost = costOf(shopItems, item)
+                /*
+                  **산 그때의 값을 적는다**(`0046`). 목록에서 되찾으면 평판이
+                  바뀔 때 이미 산 것의 값까지 따라 바뀐다. 옛 줄은 값을 모르므로
+                  아무것도 안 적는다(구현 결정 115).
+                */
                 return (
-                  <li key={`${index}-${item}`}>
-                    <span>{item}</span>
-                    {cost !== null && <Price cost={cost} />}
+                  <li key={`${index}-${item.name}`}>
+                    <span>{item.name}</span>
+                    {item.paid !== null && <Price cost={item.paid} was={item.base} />}
                     {/* 지우는 단추는 편집 중에만 낸다. 열람 화면에 ×가 늘어서 있으면
                       누를 수 있는 줄 알고 손이 간다. */}
                     {editing && (
                       <button
                         type="button"
                         className="sheet__remove"
-                        aria-label={`아이템 '${item}' 빼기`}
+                        aria-label={`아이템 '${item.name}' 빼기`}
                         onClick={() => setDropping(index)}
                       >
                         ×
@@ -904,8 +917,14 @@ export function CharacterSheet({
       */}
       {dropping !== null &&
         (() => {
-          const name = draft.items[dropping] ?? ''
-          const cost = costOf(shopItems, name)
+          const owned = draft.items[dropping] ?? null
+          const name = owned?.name ?? ''
+          /*
+            **되돌려 받는 것은 낸 값이다.** 목록의 값으로 돌려주면 평판이 바뀐
+            뒤에 산 값보다 더(또는 덜) 받는다. 옛 줄은 낸 값을 모르므로 그때만
+            목록에서 되찾는다.
+          */
+          const cost = owned?.paid ?? costOf(shopItems, name)
           const cut = () =>
             set(
               'items',
@@ -924,7 +943,7 @@ export function CharacterSheet({
                 if (cost !== null) {
                   set('gold', draft.gold + cost)
                   setBought((b) => {
-                    const at = b.findIndex((x) => fold(x.name) === fold(name))
+                    const at = b.findIndex((x) => fold(x.item.name) === fold(name))
                     return at === -1 ? b : b.filter((_, i) => i !== at)
                   })
                 }
@@ -938,12 +957,15 @@ export function CharacterSheet({
       {shopOpen && (
         <Shop
           gold={shown.gold}
-          owned={shown.items}
+          owned={shown.items.map((i) => i.name)}
+          /* 평판이 물건값을 정한다 — 상점이 깎인 값을 적고, 낸 값이 그대로 남는다. */
+          reputation={reputation}
           userId={character.ownerId}
-          onBuy={(item: ShopItem) => {
-            set('items', [...draft.items, item.name])
-            set('gold', Math.max(0, draft.gold - item.cost))
-            setBought((b) => [...b, { name: item.name, cost: item.cost }])
+          onBuy={(item: ShopItem, paid: number) => {
+            const owned: OwnedItem = { name: item.name, paid, base: item.cost }
+            set('items', [...draft.items, owned])
+            set('gold', Math.max(0, draft.gold - paid))
+            setBought((b) => [...b, { item: owned, cost: paid }])
           }}
           onClose={() => setShopOpen(false)}
         />

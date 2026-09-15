@@ -1,5 +1,5 @@
 import { clampCheckmarks, clampGold, clampXp, levelForXp, normalizePerks } from './character'
-import type { Character, CharacterEdits } from './types'
+import type { Character, CharacterEdits, OwnedItem } from './types'
 
 /**
  * 캐릭터 시트의 초안 — **편집 모드에서 손대는 사본.**
@@ -36,7 +36,7 @@ export interface SheetDraft {
   gold: number
   checkmarks: number
   perks: number[]
-  items: string[]
+  items: OwnedItem[]
   retired: boolean
 }
 
@@ -68,8 +68,17 @@ function sameNumbers(a: readonly number[], b: readonly number[]): boolean {
   return a.length === b.length && a.every((n, i) => n === b[i])
 }
 
-function sameStrings(a: readonly string[], b: readonly string[]): boolean {
-  return a.length === b.length && a.every((s, i) => s === b[i])
+/**
+ * 아이템 목록이 같은가 — **이름과 값 셋을 다 견준다**(`0046`).
+ *
+ * 이름만 견주면 값을 고쳤을 때 저장 단추가 안 살아난다. 눈에 안 보이는 차이로
+ * 살아나면 안 되는 것과 반대 방향의 같은 원칙이다(구현 결정 168).
+ */
+function sameItems(a: readonly OwnedItem[], b: readonly OwnedItem[]): boolean {
+  return (
+    a.length === b.length &&
+    a.every((x, i) => x.name === b[i].name && x.paid === b[i].paid && x.base === b[i].base)
+  )
 }
 
 /**
@@ -112,8 +121,9 @@ export function sheetDiff(character: Character, draft: SheetDraft): CharacterEdi
   if (!sameNumbers(perks, character.perks)) edits.perks = perks
 
   // 빈 줄은 아이템이 아니다. 걸러 내되 차례는 지킨다.
-  const items = draft.items.map((s) => s.trim()).filter((s) => s !== '')
-  if (!sameStrings(items, character.items)) edits.items = items
+  /* 빈 이름은 아이템이 아니다. 차례는 지킨다. */
+  const items = draft.items.filter((i) => i.name.trim() !== '')
+  if (!sameItems(items, character.items)) edits.items = items
 
   if (draft.retired !== character.retired) edits.retired = draft.retired
 

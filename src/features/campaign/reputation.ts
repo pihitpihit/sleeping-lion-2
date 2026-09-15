@@ -78,3 +78,23 @@ export function priceModifierSpeech(modifier: number): string {
   if (modifier === 0) return '물건값 그대로'
   return modifier > 0 ? `물건값 ${modifier} 비싸짐` : `물건값 ${Math.abs(modifier)} 싸짐`
 }
+
+/**
+ * 이 평판에서 실제로 내는 값.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **보정은 물건마다 붙는 수이지 비율이 아니다.**                            │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 시트에 적힌 대로 값에 그대로 더한다 — 평판이 좋으면 음수라 깎이고 나쁘면 얹힌다.
+ *
+ * **0 아래로는 안 내려간다.** 규칙을 판정하는 것이 아니라 셈이다 — 값이 음수가 되는
+ * 자리는 뜻이 없다(구현 결정 332와 같은 결). 실물에서 가장 싼 물건이 열 골드라
+ * 닿을 일은 없지만, 목록에 아주 싼 것을 적어 두면 닿는다.
+ */
+export function discountedCost(cost: number, modifier: number): number {
+  if (!Number.isFinite(cost)) return 0
+  const base = Math.max(0, Math.trunc(cost))
+  if (!Number.isFinite(modifier)) return base
+  return Math.max(0, base + Math.trunc(modifier))
+}

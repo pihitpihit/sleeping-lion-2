@@ -244,6 +244,11 @@ export function CharacterPage() {
             standalone
             chipSlot={chipSlot}
             mine={mine}
+            /*
+              **평판이 물건값을 정한다**(`shopPriceModifier`). 기록지를 이미 읽어
+              둔 것에서 가져온다 — 파티에 안 들었으면 볼 기록지가 없어 0이다.
+            */
+            reputation={party?.campaign?.reputation ?? 0}
             onEdit={(edits) => void edit(edits)}
             /*
               **지운 뒤에도 이 화면에 남는다.** 표시만 된 것이라 들여다볼 수 있고

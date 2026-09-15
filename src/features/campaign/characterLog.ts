@@ -1,4 +1,4 @@
-import type { Character, CharacterEdits } from './types'
+import type { Character, OwnedItem, CharacterEdits } from './types'
 
 /**
  * 캐릭터 기록 — 무엇을 언제 고쳤는가.
@@ -152,6 +152,25 @@ function countBoxes(v: unknown): number {
   )
 }
 
+/**
+ * 아이템 목록에서 **이름만** 뽑는다(`0046`).
+ *
+ * 옛 꼴(글자)도 받는다 — 지난 로그 줄은 이름의 배열을 들고 있다. 라벨을 지우면
+ * 지난 기록이 안 읽히는 것과 같은 자리다(구현 결정 507).
+ */
+function itemNames(v: unknown): string[] {
+  if (!Array.isArray(v)) return []
+  const out: string[] = []
+  for (const e of v) {
+    if (typeof e === 'string') out.push(e)
+    else if (typeof e === 'object' && e !== null) {
+      const name = (e as { name?: unknown }).name
+      if (typeof name === 'string') out.push(name)
+    }
+  }
+  return out
+}
+
 function asStrings(v: unknown): string[] {
   return Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string') : []
 }
@@ -261,8 +280,10 @@ export function describeChange(change: LogChange): string {
   }
 
   if (change.field === 'items') {
-    const from = asStrings(change.from)
-    const to = asStrings(change.to)
+    /* **이름으로 견준다.** 값이 달라졌다고 「들고 난 것」이 되면 안 된다 — 같은
+       물건을 더 싸게 산 것이지 새로 든 것이 아니다. */
+    const from = itemNames(change.from)
+    const to = itemNames(change.to)
     const added = to.filter((s) => !from.includes(s))
     const removed = from.filter((s) => !to.includes(s))
     const parts: string[] = []
@@ -375,7 +396,9 @@ export function campaignChangesOf(
 
 /** 이번 편집 동안 상점에서 산 것 하나. */
 export interface Purchase {
-  readonly name: string
+  /** 무엇을 샀나 — **낸 값과 할인 전 값을 함께 든다**(`0046`). */
+  readonly item: OwnedItem
+  /** 실제로 낸 값. `item.paid`와 같지만 셈하는 자리에서 자주 쓴다. */
   readonly cost: number
 }
 
@@ -406,7 +429,7 @@ export function splitByShop(
   const spent = bought.reduce((sum, b) => sum + b.cost, 0)
   // 시트가 0에서 멎게 하므로(음수 골드는 뜻이 없다) 여기서도 같이 멎는다.
   const midGold = Math.max(0, before.gold - spent)
-  const midItems = [...before.items, ...bought.map((b) => b.name)]
+  const midItems = [...before.items, ...bought.map((b) => b.item)]
 
   const shop: LogChange[] = []
   if (spent > 0) shop.push({ field: 'gold', from: before.gold, to: midGold })

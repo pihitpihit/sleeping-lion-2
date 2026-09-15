@@ -8,7 +8,7 @@ import {
   normalizePerks,
 } from './character'
 import type { LogChange, LogEntry, LogReason } from './characterLog'
-import type { Character, CharacterEdits } from './types'
+import type { Character, CharacterEdits, OwnedItem } from './types'
 
 /**
  * 캐릭터의 서버 쪽.
@@ -33,7 +33,7 @@ interface Row {
   gold: number
   checkmarks: number
   perks: number[] | null
-  items: string[] | null
+  items: unknown
   notes: string
   retired: boolean
   deleted_at: string | null
@@ -53,7 +53,33 @@ const COLUMNS =
  * 서버가 준 것도 거른다 — 스키마를 올린 뒤이거나 남이 다른 판으로 쓴 값일 수
  * 있다. 화면이 `undefined`를 만나 터지는 자리를 여기서 막는다.
  */
-export function sanitizeCharacter(row: Row): Character {
+export /**
+ * 들고 있는 아이템을 다듬는다(`0046`).
+ *
+ * **옛 꼴(이름만 있는 글자)도 받는다** — 거울이나 옛 저장물에서 올 수 있다.
+ * 값이 모양이 아니면 `null`이다: 짐작해서 채우지 않는다(구현 결정 115).
+ */
+function sanitizeItems(raw: unknown): OwnedItem[] {
+  if (!Array.isArray(raw)) return []
+  const out: OwnedItem[] = []
+  for (const entry of raw) {
+    if (typeof entry === 'string') {
+      if (entry !== '') out.push({ name: entry, paid: null, base: null })
+      continue
+    }
+    if (typeof entry !== 'object' || entry === null) continue
+    const row = entry as { name?: unknown; paid?: unknown; base?: unknown }
+    if (typeof row.name !== 'string' || row.name === '') continue
+    out.push({
+      name: row.name,
+      paid: typeof row.paid === 'number' && Number.isFinite(row.paid) ? Math.trunc(row.paid) : null,
+      base: typeof row.base === 'number' && Number.isFinite(row.base) ? Math.trunc(row.base) : null,
+    })
+  }
+  return out
+}
+
+function sanitizeCharacter(row: Row): Character {
   const now = Date.now()
   return {
     id: row.id,
@@ -68,7 +94,7 @@ export function sanitizeCharacter(row: Row): Character {
     gold: clampGold(row.gold),
     checkmarks: clampCheckmarks(row.checkmarks),
     perks: normalizePerks(Array.isArray(row.perks) ? row.perks : []),
-    items: Array.isArray(row.items) ? row.items.filter((i) => typeof i === 'string') : [],
+    items: sanitizeItems(row.items),
     notes: typeof row.notes === 'string' ? row.notes : '',
     retired: row.retired === true,
     deletedAt: typeof row.deleted_at === 'string' ? Date.parse(row.deleted_at) || null : null,

@@ -17,3 +17,16 @@
   font-weight: 400;
   color: var(--sl-gold);
 }
+
+/* 할인 전 값 — 줄을 긋는다. 깎인 만큼이 보여야 깎였다는 것을 안다. */
+.price__was {
+  margin-right: 0.15rem;
+  font-size: 0.82em;
+  color: var(--sl-text-faint);
+  text-decoration-thickness: 1px;
+}
+
+/* 깎인 값은 이끼색이다 — 금빛은 값 자체가 이미 쓰고 있다. */
+.price__n--cut {
+  color: var(--sl-moss-bright);
+}

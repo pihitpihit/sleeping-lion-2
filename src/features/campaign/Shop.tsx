@@ -4,6 +4,12 @@ import { Coin } from '../satchel/widgets/gold/Coin'
 import { MiniDialog } from './MiniDialog'
 import { Price } from './Price'
 import { cardNo } from '../rules/prosperity'
+import {
+  discountedCost,
+  priceModifierLabel,
+  priceModifierSpeech,
+  shopPriceModifier,
+} from './reputation'
 import { useShopStore } from './shopStore'
 import type { ShopItem } from './shopNet'
 import './Shop.css'
@@ -31,6 +37,7 @@ import './Shop.css'
 export function Shop({
   gold,
   owned,
+  reputation,
   userId,
   onBuy,
   onClose,
@@ -39,8 +46,11 @@ export function Shop({
   gold: number
   /** 지금 들고 있는 것들. **초안의 값이다** — 방금 산 것이 곧바로 표시된다. */
   owned: readonly string[]
+  /** 파티의 평판. **물건값을 정한다**(형님이 정했다). */
+  reputation: number
   userId: string | null
-  onBuy: (item: ShopItem) => void
+  /** 산다. `paid`는 **깎인 뒤 실제로 내는 값**이다. */
+  onBuy: (item: ShopItem, paid: number) => void
   onClose: () => void
 }) {
   const items = useShopStore((s) => s.items)
@@ -50,6 +60,9 @@ export function Shop({
   const drop = useShopStore((s) => s.drop)
 
   /** 값을 물어보는 중인 이름. 새로 적는 것은 값을 받아야 하므로 한 번 더 묻는다. */
+  /** 평판이 정하는 값 보정. 양수면 비싸지고 음수면 깎인다. */
+  const modifier = shopPriceModifier(reputation)
+
   const [asking, setAsking] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -76,13 +89,27 @@ export function Shop({
         owned={owned}
         canDefine={userId !== null}
         head={
-          /* 가진 금화. 시트가 쓰는 것과 같은 금화라 같은 값으로 읽힌다. */
-          <span className="shop__purse" role="img" aria-label={`가진 골드 ${gold}`}>
-            <Coin />
-            <b className="sl-numeral" aria-hidden="true">
-              {gold}
-            </b>
-          </span>
+          <>
+            {/* 가진 금화. 시트가 쓰는 것과 같은 금화라 같은 값으로 읽힌다. */}
+            <span className="shop__purse" role="img" aria-label={`가진 골드 ${gold}`}>
+              <Coin />
+              <b className="sl-numeral" aria-hidden="true">
+                {gold}
+              </b>
+            </span>
+            {/*
+              **왜 값이 달라 보이는지 적어 둔다.** 적어 두지 않으면 목록의 값이
+              틀린 것으로 읽힌다(구현 결정 172와 같은 결).
+            */}
+            {modifier !== 0 && (
+              <span className="shop__mod" aria-label={priceModifierSpeech(modifier)}>
+                평판{' '}
+                <b className="sl-numeral" aria-hidden="true">
+                  {priceModifierLabel(modifier)}
+                </b>
+              </span>
+            )}
+          </>
         }
         lead={(entry) => {
           const item = byId.get(entry.id)
@@ -97,10 +124,15 @@ export function Shop({
         tail={(entry) => {
           const item = byId.get(entry.id)
           if (item === undefined) return null
-          const short = item.cost > gold
+          /*
+            **적힌 값은 할인 전 값이고, 내는 값은 평판이 정한다**(형님이 정했다).
+            깎인 만큼이 보여야 깎였다는 것을 안다 — `Price`가 원래 값에 줄을 긋는다.
+          */
+          const paid = discountedCost(item.cost, modifier)
+          const short = paid > gold
           return (
             <>
-              <Price cost={item.cost} />
+              <Price cost={paid} was={item.cost} />
               {/*
                 **모자라면 못 산다.** 규칙을 판정하는 것이 아니라 셈이다 — 골드가
                 음수가 되는 자리는 뜻이 없다. 까닭을 글자로도 적는다.
@@ -109,7 +141,7 @@ export function Shop({
                 type="button"
                 className="shop__buy"
                 disabled={short}
-                onClick={() => onBuy(item)}
+                onClick={() => onBuy(item, paid)}
               >
                 {short ? '골드 부족' : '구매'}
               </button>
@@ -200,6 +232,13 @@ function PriceDialog({
         </>
       }
     >
+      {/*
+        **할인 전 값을 받는다**(형님이 정했다). 목록은 모두가 함께 쓰는 것이라
+        어느 파티의 평판도 섞이면 안 된다 — 깎는 것은 사는 자리에서 한다.
+      */}
+      <p className="shop__asknote">
+        <strong>평판 할인 전 값</strong>을 적는다. 살 때는 평판만큼 깎인 값이 보인다.
+      </p>
       <form
         className="shop__ask"
         onSubmit={(e) => {

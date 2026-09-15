@@ -101,3 +101,32 @@
   width: 14px;
   height: 14px;
 }
+
+/* 평판이 값을 얼마나 움직이는가. 왜 값이 달라 보이는지 적어 두는 자리다. */
+.shop__mod {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.78rem;
+  color: var(--sl-text-muted);
+  background: rgb(0 0 0 / 25%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.2rem;
+}
+
+.shop__mod b {
+  color: var(--sl-moss-bright);
+}
+
+/* 값을 새로 적을 때 — 할인 전 값이라는 것을 알린다. */
+.shop__asknote {
+  margin: 0 0 0.6rem;
+  font-size: 0.8rem;
+  color: var(--sl-text-faint);
+}
+
+.shop__asknote strong {
+  font-weight: 400;
+  color: var(--sl-text-muted);
+}

@@ -24,7 +24,7 @@ function fixture(over: Partial<Character> = {}): Character {
     gold: 120,
     checkmarks: 4,
     perks: [1, 3],
-    items: ['가죽 장화'],
+    items: [{ name: '가죽 장화', paid: null, base: null }],
     notes: '',
     retired: false,
     deletedAt: null,
@@ -151,7 +151,10 @@ describe('고친 까닭', () => {
 })
 
 describe('splitByShop', () => {
-  const base = fixture({ gold: 200, items: ['낡은 검'] })
+  const 검 = { name: '낡은 검', paid: 30, base: 30 }
+  const 장화 = { name: '가죽 장화', paid: 38, base: 40 }
+  const 표식 = { name: '표식', paid: 0, base: 0 }
+  const base = fixture({ gold: 200, items: [검] })
 
   it('산 것이 없으면 통째로 직접 수정이다', () => {
     const { shop, manual } = splitByShop(base, { gold: 250 }, [])
@@ -159,31 +162,35 @@ describe('splitByShop', () => {
     expect(manual).toEqual([{ field: 'gold', from: 200, to: 250 }])
   })
 
+  /*
+    **갈라 나가는 값은 낸 값이다**(`0046`). 장화는 40짜리를 평판으로 38에 샀으므로
+    골드는 38만 준다 — 목록의 값으로 세면 그 차이가 직접 수정으로 새어 나간다.
+  */
   it('산 만큼은 상점 거래로 갈라 나간다', () => {
-    const edits = { gold: 160, items: ['낡은 검', '가죽 장화'] }
-    const { shop, manual } = splitByShop(base, edits, [{ name: '가죽 장화', cost: 40 }])
+    const edits = { gold: 162, items: [검, 장화] }
+    const { shop, manual } = splitByShop(base, edits, [{ item: 장화, cost: 38 }])
     expect(shop).toEqual([
-      { field: 'gold', from: 200, to: 160 },
-      { field: 'items', from: ['낡은 검'], to: ['낡은 검', '가죽 장화'] },
+      { field: 'gold', from: 200, to: 162 },
+      { field: 'items', from: [검], to: [검, 장화] },
     ])
     // 상점이 이미 말한 만큼이면 직접 수정 줄은 안 남는다.
     expect(manual).toEqual([])
   })
 
   it('사고 나서 손으로도 고쳤으면 그 나머지만 직접 수정이다', () => {
-    // 40을 쓰고(200→160) 손으로 30을 더 올려 190으로 저장한다.
-    const edits = { gold: 190, items: ['낡은 검', '가죽 장화'], xp: 95 }
-    const { shop, manual } = splitByShop(base, edits, [{ name: '가죽 장화', cost: 40 }])
-    expect(shop[0]).toEqual({ field: 'gold', from: 200, to: 160 })
+    // 38을 쓰고(200→162) 손으로 28을 더 올려 190으로 저장한다.
+    const edits = { gold: 190, items: [검, 장화], xp: 95 }
+    const { shop, manual } = splitByShop(base, edits, [{ item: 장화, cost: 38 }])
+    expect(shop[0]).toEqual({ field: 'gold', from: 200, to: 162 })
     expect(manual).toEqual([
       { field: 'xp', from: 60, to: 95 },
-      { field: 'gold', from: 160, to: 190 },
+      { field: 'gold', from: 162, to: 190 },
     ])
   })
 
   it('공짜로 받은 것은 골드 줄을 안 남긴다 — 안 움직인 값을 적지 않는다', () => {
-    const { shop } = splitByShop(base, { items: ['낡은 검', '표식'] }, [{ name: '표식', cost: 0 }])
-    expect(shop).toEqual([{ field: 'items', from: ['낡은 검'], to: ['낡은 검', '표식'] }])
+    const { shop } = splitByShop(base, { items: [검, 표식] }, [{ item: 표식, cost: 0 }])
+    expect(shop).toEqual([{ field: 'items', from: [검], to: [검, 표식] }])
   })
 })
 

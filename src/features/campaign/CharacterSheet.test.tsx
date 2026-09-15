@@ -28,7 +28,7 @@ function fixture(over: Partial<Character> = {}): Character {
     gold: 120,
     checkmarks: 4,
     perks: [1, 3],
-    items: ['가죽 장화'],
+    items: [{ name: '가죽 장화', paid: null, base: null }],
     notes: '',
     retired: false,
     deletedAt: null,
