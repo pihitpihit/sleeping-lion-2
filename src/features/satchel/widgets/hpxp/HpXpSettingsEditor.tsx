@@ -1,4 +1,5 @@
 import { CharacterPicker } from '../CharacterPicker'
+import { LevelBadge } from '../../../campaign/LevelBadge'
 import { useCharacterStats } from '../../perkSource'
 import { slotKeyFor } from '../../roster'
 import type { WidgetSettingsEditorProps } from '../types'
@@ -41,8 +42,13 @@ export function HpXpSettingsEditor({ value, onChange, instanceId }: WidgetSettin
         */
         return (
           <>
+            {/*
+              **왕관으로 적는다**(형님이 정했다). 수만 서 있으면 그것이 레벨인지
+              최대 체력인지 알 길이 없다 — 시트·무리 목록이 쓰는 그 표식을 그대로
+              쓴다(구현 결정 397). 조각이 제 스타일을 스스로 들여온다.
+            */}
             <span className="charpick__lv">
-              Lv <b className="sl-numeral">{stat.level}</b>
+              <LevelBadge level={stat.level} />
             </span>
             {stat.maxHp !== null && (
               <span>

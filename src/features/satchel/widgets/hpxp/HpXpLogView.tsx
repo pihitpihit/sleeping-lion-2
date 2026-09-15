@@ -108,8 +108,11 @@ export function HpXpLogPanel({
 /**
  * 한 칸 — 라운드가 열렸을 때의 값과, 그 라운드에 움직인 만큼.
  *
- * **안 움직였으면 괄호를 안 붙인다** — `(+0)`이 붙으면 무언가 있었던 것처럼 읽힌다
- * (구현 결정 `priceModifierLabel`과 같은 결).
+ * **괄호는 안 두른다**(형님이 정했다) — 색과 부호가 이미 「이것은 움직인 만큼」이라고
+ * 말한다. 괄호까지 두르면 같은 말을 두 번 한다.
+ *
+ * **안 움직였으면 아예 안 적는다** — `+0`이 붙으면 무언가 있었던 것처럼 읽힌다
+ * (`priceModifierLabel`이 0을 「그대로」라 적는 것과 같은 결).
  */
 function Cell({ track, value, delta }: { track: HpXpTrack; value: number; delta: number }) {
   return (
@@ -121,8 +124,8 @@ function Cell({ track, value, delta }: { track: HpXpTrack; value: number; delta:
           className="hplog__delta sl-numeral"
           aria-label={`${Math.abs(delta)} ${delta > 0 ? '오름' : '깎임'}`}
         >
-          {/* U+2212(빼기표). 하이픈보다 획이 굵고 더하기표와 길이가 맞는다. */}(
-          {delta > 0 ? `+${delta}` : `−${Math.abs(delta)}`})
+          {/* U+2212(빼기표). 하이픈보다 획이 굵고 더하기표와 길이가 맞는다. */}
+          {delta > 0 ? `+${delta}` : `−${Math.abs(delta)}`}
         </span>
       )}
     </span>

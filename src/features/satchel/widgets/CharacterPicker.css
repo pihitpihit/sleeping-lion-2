@@ -127,9 +127,14 @@
   color: var(--sl-gold-dim);
 }
 
-/* 레벨은 한 톤 죽인다 — 고를 때 먼저 보는 것은 이름이다. */
+/*
+  레벨 왕관. 줄 글자에 맞춰 작게 세운다 — 고를 때 먼저 보는 것은 이름이다.
+  크기는 부모의 글자 크기 하나가 정한다(`LevelBadge`).
+*/
 .charpick__lv {
-  color: var(--sl-text-faint);
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
 }
 
 /* 고른 줄에만 붙는 단추. 줄 높이를 그대로 따라간다. */

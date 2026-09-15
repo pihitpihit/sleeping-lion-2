@@ -36,13 +36,15 @@ describe('체력·경험 기록', () => {
     expect(html).toContain('>21<')
   })
 
-  it('움직인 만큼을 괄호로 곁들인다', () => {
+  /* **괄호는 안 두른다** — 색과 부호가 이미 「움직인 만큼」이라고 말한다. */
+  it('움직인 만큼을 값 옆에 곁들인다', () => {
     const html = render()
     expect(html).toContain('−5')
     expect(html).toContain('+2')
+    expect(html).not.toContain('(')
   })
 
-  /* `(+0)`이 붙으면 무언가 있었던 것처럼 읽힌다. */
+  /* `+0`이 붙으면 무언가 있었던 것처럼 읽힌다. */
   it('안 움직였으면 괄호를 안 붙인다', () => {
     const html = render({ rows: [{ round: 1, hp: 26, xp: 0, hpDelta: 0, xpDelta: 0 }] })
     expect(html).not.toContain('hplog__delta')
