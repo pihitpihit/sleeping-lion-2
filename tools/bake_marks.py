@@ -56,6 +56,21 @@ MARKS = {
         # 꼬리 전체가 비탈이 되어 접힌 종이처럼 보인다. 좁게 깎는다.
         bevel=13,
     ),
+    # ────────────────────────────────────────────────────────────────────────
+    # **같은 물방울을 어두운 바탕용으로 한 벌 더 굽는다.**
+    #
+    # 위의 것은 붉은 알약 위에 얹히려고 거의 흰빛(mid #f7cdc4)이다. 그 그림이
+    # 설정 목록·로그처럼 **어두운 바탕**에 서면 희멀겋게 뜬다 — 형님이 짚었다.
+    # 필터로는 못 고친다: 밝은 자리는 채도가 0에 가까워 `saturate`가 안 먹는다.
+    #
+    # 바탕에 따라 색을 갈라 두는 것은 원소 빛무리와 같은 결이다(구현 결정 14-2)
+    # — **모양은 한 벌이고 갈리는 것은 톤뿐이다.**
+    'hp-drop-deep': dict(
+        src='hp-drop',
+        dark=(0x3d, 0x07, 0x03), mid=(0xa8, 0x1d, 0x16), light=(0xd1, 0x48, 0x3d),
+        edge=(0x1a, 0x03, 0x01),
+        bevel=13,
+    ),
 }
 
 
@@ -68,7 +83,7 @@ def bake(name, color):
     bevel = color.get('bevel', BEVEL)
     n = N*SS
     subprocess.run(['rsvg-convert', '-w', str(n), '-h', str(n),
-                    '-o', f'{TMP}/m.png', f'{GEN}/{name}.svg'], check=True)
+                    '-o', f'{TMP}/m.png', f'{GEN}/{color.get("src", name)}.svg'], check=True)
     m = (rgba_of(f'{TMP}/m.png', n)[..., 3]/255.0)
     solid = (m > 0.5).astype(np.float32)
 

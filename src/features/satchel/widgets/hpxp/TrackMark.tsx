@@ -8,7 +8,7 @@ import './TrackMark.css'
  * │ **판 위에서 보는 그림과 같아야 같은 것으로 읽힌다.**                      │
  * └──────────────────────────────────────────────────────────────────────────┘
  *
- * 다이얼이 쓰는 바로 그 파일이다(`hp-drop-lit`·`xp-star-lit`, 두께감까지 구워
+ * 다이얼이 쓰는 바로 그 그림이다(두께감까지 구워
  * 담은 그림). 설정 화면과 기록에서 「생명」·「경험」이라 글자로 적혀 있었는데,
  * 같은 값이 화면마다 다르게 서면 같은 것인 줄 모른다(구현 결정 319·334와 같은 결).
  *
@@ -20,7 +20,14 @@ import './TrackMark.css'
  * 파일은 `public/`에 두고 마스크로 오려 색만 여기서 정한다.
  */
 
-const MARK_FILE: Record<HpXpTrack, string> = { hp: 'hp-drop-lit', xp: 'xp-star-lit' }
+/**
+ * **물방울만 어두운 바탕용을 쓴다**(`hp-drop-deep-lit`).
+ *
+ * 다이얼의 것은 붉은 알약 위에 얹히려고 거의 흰빛이다(구현 결정 272) — 그 그림이
+ * 어두운 목록에 서면 희멀겋게 뜬다. 모양은 같은 한 벌이고 갈리는 것은 톤뿐이다.
+ * 별은 푸른빛이라 어두운 바탕에서도 그대로 산다.
+ */
+const MARK_FILE: Record<HpXpTrack, string> = { hp: 'hp-drop-deep-lit', xp: 'xp-star-lit' }
 
 export function TrackMark({
   track,

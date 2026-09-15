@@ -33,7 +33,7 @@ describe('체력·경험 기록', () => {
   /* 「생명」·「경험」은 글자가 아니라 그림이다 — 판 위에서 보는 그것과 같아야 한다. */
   it('칸 이름을 그림으로 낸다', () => {
     const html = render()
-    expect(html).toContain('hp-drop-lit')
+    expect(html).toContain('hp-drop-deep-lit')
     expect(html).toContain('xp-star-lit')
   })
 
