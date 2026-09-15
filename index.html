@@ -49,7 +49,84 @@
     <title>잠자는 사자 2호점 · Sleeping Lion II</title>
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      ┌──────────────────────────────────────────────────────────────────────┐
+      │ **낡은 껍데기가 없어진 조각을 부르면 아무것도 안 돈다.**              │
+      └──────────────────────────────────────────────────────────────────────┘
+
+      배포할 때마다 조각 이름에 내용 해시가 붙고 옛 파일은 사라진다. 홈화면
+      아이콘으로 앱을 켜 둔 채 배포가 몇 번 나가면, 손에 든 `index.html`이
+      **이미 없는 이름을 부른다** — 진입 조각이 404면 React가 아예 안 뜨므로
+      `RouteBoundary`도 `lazyPage`의 재시도도 닿지 못한다. 남는 것은 **까만
+      화면뿐**이고, 그것은 고장이 아니라 고장을 숨긴 것이다(구현 결정 258).
+
+      그래서 그물을 여기, 껍데기 안에 친다. 여기 있는 것은 조각이 하나도 안
+      실려도 도는 것이라야 하므로 **스타일을 인라인으로 적는다** — 스타일시트도
+      함께 404이기 때문이다.
+    -->
+    <div id="root">
+      <div id="boot" style="display: none">
+        <div
+          style="
+            position: fixed;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            padding: 1.5rem;
+            font-family: system-ui, sans-serif;
+            line-height: 1.7;
+            color: #cbbfa8;
+            background: #12100d;
+            text-align: center;
+          "
+        >
+          <div>
+            <p style="margin: 0 0 0.6rem; color: #e8cd72">앱을 불러오지 못했다</p>
+            <p style="margin: 0; font-size: 0.9rem">
+              화면을 아래로 당겨 새로고침하거나, 앱을 닫았다 다시 연다.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      /*
+        **앱이 떴는지 지켜본다.** `main.tsx`가 뜨면서 표를 남기므로, 몇 초가 지나
+        표가 없으면 껍데기가 낡은 것이다.
+
+        한 번만 스스로 새로 부른다 — 새로 부르면 브라우저가 `index.html`을 다시
+        받아 오므로 대개 그것으로 풀린다. **두 번 잇달아 하지 않는다**: 조각이
+        진짜로 없어진 것이라면 새로 불러도 같은 자리에서 터지고, 무한 되불러오기가
+        가장 나쁘다(`staleChunk.ts`와 같은 판단).
+      */
+      ;(function () {
+        var KEY = 'sl2:boot-reload'
+        var GAP = 20000
+        var WAIT = 6000
+        window.__sl2Booted = false
+        setTimeout(function () {
+          if (window.__sl2Booted) return
+          var last = 0
+          try {
+            last = Number(sessionStorage.getItem(KEY) || 0)
+          } catch (e) {
+            last = 0
+          }
+          var now = Date.now()
+          if (now - last > GAP) {
+            try {
+              sessionStorage.setItem(KEY, String(now))
+            } catch (e) {
+              /* 사생활 보호 모드 — 그래도 한 번은 해 본다. */
+            }
+            location.reload()
+            return
+          }
+          var boot = document.getElementById('boot')
+          if (boot) boot.style.display = 'block'
+        }, WAIT)
+      })()
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
