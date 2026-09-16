@@ -19,9 +19,8 @@ import { sanitizeHpXpSettings } from './settings'
 import { slotKeyFor } from '../../roster'
 import { NumberReel } from '../reel/NumberReel'
 import { useRosterStore } from '../../roster'
-import { classIconUrl } from '../../../campaign/character'
 import { GearIcon, ListIcon } from './hpxpIcons'
-import { useCharacterStats } from '../../perkSource'
+import { isLatinLetter, useCardOwner, useCharacterStats } from '../../perkSource'
 import { HpXpLogView } from './HpXpLogView'
 import { HpXpSettingsView } from './HpXpSettingsView'
 import './HpXpTracker.css'
@@ -72,7 +71,20 @@ export function HpXpTracker({
     닿는 자리는 좁게 연다.
   */
   const entry = useRosterStore((s) => s.entries.find((e) => e.id === characterId) ?? null)
-  const iconUrl = entry === null ? null : classIconUrl(entry.classIcon)
+  /*
+    ┌──────────────────────────────────────────────────────────────────────────┐
+    │ **그림이 없는 클래스는 첫 글자로 대신한다**(형님이 정했다).               │
+    └──────────────────────────────────────────────────────────────────────────┘
+
+    사자의 턱 넷처럼 팩에 그림이 없는 클래스가 있다(구현 결정 119) — 그대로 두면
+    캐릭터를 골라 놓고도 **누구의 다이얼인지 판 위에서 알 수가 없다.** 카드 홈이
+    이미 하던 일이라 그 함수를 그대로 쓴다(`ownerBadge`, 구현 결정 211·212).
+
+    **첫 글자는 클래스 이름에서 딴다** — 사람이 지은 이름이 아니라 클래스다:
+    넷이 앉으면 서로를 클래스로 부른다. 클래스 표가 아직 안 들어왔으면 그때만
+    캐릭터 이름으로 물러선다(`ownerBadge`).
+  */
+  const owner = useCardOwner(characterId)
 
   /*
     ┌──────────────────────────────────────────────────────────────────────────┐
@@ -126,9 +138,18 @@ export function HpXpTracker({
           클래스 표식은 거의 검정이라 **양피지 원반을 깐다**(구현 결정 41) —
           아이콘 색은 건드리지 않는다.
         */}
-        {iconUrl !== null && (
-          <span className="hpxp__who" title={entry?.name ?? ''}>
-            <img src={iconUrl} alt={entry?.name ?? ''} draggable={false} />
+        {owner !== null && (owner.iconUrl !== null || owner.letter !== '') && (
+          <span className="hpxp__who" title={owner.name}>
+            {owner.iconUrl !== null ? (
+              <img src={owner.iconUrl} alt={owner.name} draggable={false} />
+            ) : (
+              <span
+                className={`hpxp__who-letter${isLatinLetter(owner.letter) ? ' sl-numeral' : ''}`}
+                aria-label={owner.name}
+              >
+                {owner.letter}
+              </span>
+            )}
           </span>
         )}
 

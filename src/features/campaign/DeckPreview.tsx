@@ -9,7 +9,7 @@ import {
   specSpeech,
 } from '../satchel/widgets/deck/deck'
 import { resolveComposition } from '../satchel/widgets/deck/perks'
-import type { CardOwner } from '../satchel/widgets/deck/CardFace'
+import type { CardOwner } from '../satchel/perkSource'
 import { DeckGallery } from './DeckGallery'
 import { InlineMark } from './InlineMark'
 import type { ClassPerk } from './perkNet'

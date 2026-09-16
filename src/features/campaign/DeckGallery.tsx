@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useScrollLock } from './useScrollLock'
-import { CardFace, type CardOwner } from '../satchel/widgets/deck/CardFace'
+import { CardFace } from '../satchel/widgets/deck/CardFace'
+import type { CardOwner } from '../satchel/perkSource'
 import {
   CARD_FACE_URL,
   buildDeckMarked,

@@ -3,7 +3,6 @@ import { classIconUrl } from '../campaign/character'
 import { levelForXp } from '../campaign/character'
 import { classInfoOf, maxHpFor, useClassStore } from '../campaign/classStore'
 import { perkDeckChanges } from '../campaign/perks'
-import type { CardOwner } from './widgets/deck/CardFace'
 import type { PerkDeckChange } from './widgets/deck/perks'
 import { useRosterStore } from './roster'
 
@@ -120,6 +119,42 @@ export function useCardOwner(characterId: string | null): CardOwner | null {
 
   const info = classInfoOf(classes, entry.classId, entry.classIcon)
   return ownerBadge(info?.icon ?? entry.classIcon, info?.name ?? '', entry.name)
+}
+
+/**
+ * 카드가 누구 덱의 것인가 — **왼쪽 아래 홈에 앉는 것.**
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **카드는 스스로 알아내지 않고 받아서 그린다.**                            │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 실물에서는 1·2·3·4·M이나 **그 카드를 넣어 준 클래스의 표식**이 들어간다 — 판이
+ * 끝나고 덱을 도로 가를 때 쓰는 자리다. 우리는 클래스 표식을 쓴다.
+ *
+ * 그림과 글자를 여기서 찾지 않고 **부르는 쪽이 건네준다.** 카드가 캐릭터·클래스
+ * 스토어를 직접 부르면 축 ②가 축 ①에 닿는 자리가 흩어진다 — 그 자리는
+ * `perkSource.ts` 하나여야 한다(구현 결정 142).
+ */
+export interface CardOwner {
+  /** 클래스 표식 그림. 팩에 없는 클래스면 `null`. */
+  iconUrl: string | null
+  /** 그림이 없을 때 홈에 적을 한 글자. 비면 홈을 비워 둔다. */
+  letter: string
+  /** 읽어주는 쪽에 갈 이름. */
+  name: string
+}
+
+/**
+ * 라틴 한 글자인가 — **글룸헤이븐 서체를 붙일지 가른다.**
+ *
+ * 몬스터 덱의 `M`이 그것이며 실물 카드에도 그 서체로 박혀 있다. 한글에는 안
+ * 붙인다 — Pirata One은 라틴 전용이라 대체 서체로 떨어진다(구현 결정 39·360).
+ *
+ * **표식을 짓는 자리에 함께 둔다**(구현 결정 212) — 카드와 HP/XP 트래커가 같은
+ * 눈으로 갈라야 한 글자가 화면마다 다른 서체로 서지 않는다.
+ */
+export function isLatinLetter(letter: string): boolean {
+  return /^[A-Za-z0-9]$/.test(letter)
 }
 
 /**

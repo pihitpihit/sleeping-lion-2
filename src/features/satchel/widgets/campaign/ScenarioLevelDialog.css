@@ -119,9 +119,23 @@
   cursor: pointer;
 }
 
-.lvl__pick:hover:not(:disabled) {
-  color: var(--sl-gold);
-  border-color: var(--sl-border-strong);
+/*
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ **손 대는 화면에서는 hover가 손가락 밑에 남는다**(형님이 짚었다).         │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  고른 뒤에도 그 자리에 hover가 얹혀 있어 **금빛 바탕에 금빛 글자**가 되었다 —
+  글자가 통째로 사라진 것처럼 보이고, 다른 데를 눌러야 돌아온다. 구현 결정 430과
+  같은 병이다.
+
+  `@media (hover: hover)`로 **손 대는 기기에서는 이 규칙이 아예 안 생기게** 한다.
+  그것만으로는 마우스에서 같은 일이 나므로 아래에서 고른 줄을 한 번 더 못박는다.
+*/
+@media (hover: hover) {
+  .lvl__pick:hover:not(:disabled) {
+    color: var(--sl-gold);
+    border-color: var(--sl-border-strong);
+  }
 }
 
 .lvl__pick:disabled {
@@ -129,7 +143,9 @@
   opacity: 0.65;
 }
 
-.lvl__row--on .lvl__pick {
+/* **고른 줄은 hover가 와도 색이 안 바뀐다** — 금빛 바탕에 어두운 글자를 지킨다. */
+.lvl__row--on .lvl__pick,
+.lvl__row--on .lvl__pick:hover:not(:disabled) {
   color: var(--sl-void);
   background: var(--sl-gold);
   border-color: var(--sl-gold-bright);

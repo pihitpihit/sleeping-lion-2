@@ -16,33 +16,6 @@ import {
  * 바탕을 깔 것이 없다. 여기 오는 것은 상태이상과 수치뿐이고, 색은 표식 자신이
  * 들고 있다(`MARKS`).
  */
-/**
- * 카드가 누구 덱의 것인가 — **왼쪽 아래 홈에 앉는 것.**
- *
- * ┌──────────────────────────────────────────────────────────────────────────┐
- * │ **카드는 스스로 알아내지 않고 받아서 그린다.**                            │
- * └──────────────────────────────────────────────────────────────────────────┘
- *
- * 실물에서는 1·2·3·4·M이나 **그 카드를 넣어 준 클래스의 표식**이 들어간다 — 판이
- * 끝나고 덱을 도로 가를 때 쓰는 자리다. 우리는 클래스 표식을 쓴다.
- *
- * 그림과 글자를 여기서 찾지 않고 **부르는 쪽이 건네준다.** 카드가 캐릭터·클래스
- * 스토어를 직접 부르면 축 ②가 축 ①에 닿는 자리가 흩어진다 — 그 자리는
- * `perkSource.ts` 하나여야 한다(구현 결정 142).
- */
-export interface CardOwner {
-  /** 클래스 표식 그림. 팩에 없는 클래스면 `null`. */
-  iconUrl: string | null
-  /** 그림이 없을 때 홈에 적을 한 글자. 비면 홈을 비워 둔다. */
-  letter: string
-  /** 읽어주는 쪽에 갈 이름. */
-  name: string
-}
-
-/** 라틴 글자·숫자 한 자인가. 글룸헤이븐 서체를 붙일지 정한다. */
-function isLatin(letter: string): boolean {
-  return /^[A-Za-z0-9]$/.test(letter)
-}
 
 function markBadgeColor(mark: CardMark): string {
   return mark.def.color ?? '#5A4830'
@@ -52,6 +25,7 @@ function markBadgeColor(mark: CardMark): string {
   펼쳐 보기(`campaign/DeckGallery`)처럼 위젯 바깥에서 쓰이는 자리가 생겼고,
   그쪽이 스타일을 따로 챙겨야 하면 언젠가 빠뜨린다.
 */
+import { isLatinLetter, type CardOwner } from '../../perkSource'
 import './AttackDeck.css'
 
 /**
@@ -158,7 +132,9 @@ export function CardFace({ card, owner }: { card: Card; owner?: CardOwner | null
               붙인다 — Pirata One은 라틴 전용이라 대체 서체로 떨어진다
               (구현 결정 39).
             */
-            <span className={`deck__owner-letter${isLatin(owner.letter) ? ' sl-numeral' : ''}`}>
+            <span
+              className={`deck__owner-letter${isLatinLetter(owner.letter) ? ' sl-numeral' : ''}`}
+            >
               {owner.letter}
             </span>
           )}
