@@ -307,6 +307,34 @@ describe('computeDeckLayout', () => {
     expect(computeDeckLayout({ width: 60, height: 80 }).markSize).toBeGreaterThan(0)
   })
 
+  /*
+    ┌──────────────────────────────────────────────────────────────────────────┐
+    │ **겹쳐 놓는 까닭이 카드를 키우는 것이다** — 그것이 실제로 되는지 본다.    │
+    └──────────────────────────────────────────────────────────────────────────┘
+  */
+  it('겹쳐 놓으면 나란히 놓을 때보다 카드가 크다', () => {
+    const box = { width: 270, height: 135 }
+    const layout = computeDeckLayout(box)
+    expect(layout.arrangement).toBe('side-by-side')
+    // 나란히 놓았다면 카드 두 장이 폭을 꼭 나눠 가진다.
+    expect(layout.cardWidth).toBeGreaterThan((box.width / 2) * 0.9)
+    // 그래도 두 장이 칸을 넘지는 않는다.
+    expect(layout.cardWidth * 2 - layout.overlap).toBeLessThanOrEqual(box.width)
+  })
+
+  it('겹치는 폭은 겹치는 축의 한 변에서 나온다', () => {
+    const wide = computeDeckLayout({ width: 400, height: 160 })
+    expect(wide.overlap).toBeCloseTo(wide.cardWidth * 0.3, 3)
+    const tall = computeDeckLayout({ width: 160, height: 400 })
+    expect(tall.overlap).toBeCloseTo(tall.cardHeight * 0.3, 3)
+  })
+
+  it('더미가 하나뿐이면 겹칠 것이 없다', () => {
+    const layout = computeDeckLayout({ width: 70, height: 90 })
+    expect(layout.arrangement).toBe('single')
+    expect(layout.overlap).toBe(0)
+  })
+
   it('카드가 가로로 길다 — 실물이 437×296이다', () => {
     const layout = computeDeckLayout({ width: 400, height: 400 })
     expect(layout.cardWidth).toBeGreaterThan(layout.cardHeight)

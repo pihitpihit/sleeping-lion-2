@@ -663,7 +663,6 @@ export interface DeckLayout {
   showDiscard: boolean
   cardWidth: number
   cardHeight: number
-  gap: number
   /** 카드 면의 숫자 크기(px). */
   faceSize: number
   /** 장수 표기 글자 크기(px). */
@@ -675,6 +674,12 @@ export interface DeckLayout {
    * 카드가 화면에 나와 있으므로 같은 것이 두 번 보였다. 하나면 된다.
    */
   markSize: number
+  /**
+   * 두 더미가 겹치는 폭(px). `single`이면 0이다.
+   *
+   * CSS가 음수 여백으로 쓴다 — flex의 `gap`은 음수를 못 받는다.
+   */
+  overlap: number
 }
 
 /**
@@ -698,9 +703,22 @@ const CARD_FILL = 0.9
  * 앉기는 하지만 메달이 26px이라 읽을 수가 없다.
  */
 const MIN_SPLIT_CARD_WIDTH = 64
+/**
+ * 두 더미가 겹치는 폭 — **카드 한 변의 이만큼**(형님이 골랐다).
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **나란히 놓으면 카드가 칸의 절반에 갇힌다.**                              │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 가로로 긴 카드라 3×2 같은 자리에서는 **가로가 병목이고 세로는 한참 남았다** —
+ * 형님이 짚었다. 겹쳐 놓으면 같은 칸에서 카드가 22% 커지고 남는 세로도 그만큼
+ * 준다. 실물에서도 상 위의 두 더미는 딱 붙어 놓인다.
+ *
+ * 후보 넷을 실제 크기로 그려 골랐다(구현 결정 213-2) — **달려드는 더미의 검
+ * 문양이 온전히 보이는 마지막 값**이다.
+ */
+const OVERLAP = 0.3
 const MAX_CARD_WIDTH = 240
-const GAP_RATIO = 0.08
-const MIN_GAP = 4
 /**
  * 카드 너비 대비 숫자 크기.
  *
@@ -730,10 +748,10 @@ const EMPTY_LAYOUT: DeckLayout = {
   showDiscard: false,
   cardWidth: 0,
   cardHeight: 0,
-  gap: 0,
   faceSize: 0,
   countSize: 0,
   markSize: 0,
+  overlap: 0,
 }
 
 interface CardFit {
@@ -751,6 +769,17 @@ function fitCard(boxWidth: number, boxHeight: number): CardFit {
 }
 
 /**
+ * 겹쳐 놓은 두 더미가 이 칸에 들어가면 얼마가 되는가.
+ *
+ * 겹치는 축으로는 `2 - OVERLAP`장만큼만 필요하고 **다른 축은 한 장 그대로**다 —
+ * 두 더미가 그 축에서는 나란히 서지 않기 때문이다.
+ */
+function fitPair(boxWidth: number, boxHeight: number, axis: 'row' | 'column'): CardFit {
+  const span = 2 - OVERLAP
+  return axis === 'row' ? fitCard(boxWidth / span, boxHeight) : fitCard(boxWidth, boxHeight / span)
+}
+
+/**
  * 위젯이 차지한 픽셀 크기를 받아 안쪽 배치를 낸다.
  *
  * **버린 덱을 낼지는 카드가 얼마나 작아지는가로 정한다.** 위젯의 가로세로 비만
@@ -763,11 +792,9 @@ export function computeDeckLayout(box: { width: number; height: number }): DeckL
   const height = Number.isFinite(box.height) ? box.height : 0
   if (width <= 0 || height <= 0) return EMPTY_LAYOUT
 
-  const gap = Math.max(MIN_GAP, Math.min(width, height) * GAP_RATIO)
-
   const single = fitCard(width, height)
-  const sideBySide = fitCard((width - gap) / 2, height)
-  const stacked = fitCard(width, (height - gap) / 2)
+  const sideBySide = fitPair(width, height, 'row')
+  const stacked = fitPair(width, height, 'column')
 
   // 두 자리로 가르는 두 갈래 중 카드가 큰 쪽.
   const split =
@@ -784,10 +811,13 @@ export function computeDeckLayout(box: { width: number; height: number }): DeckL
     showDiscard,
     cardWidth,
     cardHeight,
-    gap,
     faceSize: cardWidth > 0 ? Math.max(MIN_FACE, cardWidth * FACE_RATIO) : 0,
     countSize: cardWidth > 0 ? Math.max(MIN_COUNT, cardWidth * COUNT_RATIO) : 0,
     markSize: cardWidth > 0 ? Math.max(MIN_MARK, cardWidth * MARK_RATIO) : 0,
+    overlap:
+      chosen.arrangement === 'single'
+        ? 0
+        : (chosen.arrangement === 'side-by-side' ? cardWidth : cardWidth * CARD_RATIO) * OVERLAP,
   }
 }
 

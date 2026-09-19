@@ -13,17 +13,63 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--deck-gap);
+  /*
+    **틈이 아니라 겹침이다.** 두 더미는 `--deck-overlap`만큼 물려 놓으므로 여기서
+    벌리지 않는다 — flex의 `gap`은 음수를 못 받아 겹치는 쪽에서 여백으로 민다.
+  */
   width: 100%;
   height: 100%;
 }
 
+/*
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ **두 더미를 겹쳐 놓고 서로 반대쪽 끝에 붙인다**(형님이 정했다).           │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  나란히 놓으면 카드가 칸의 절반에 갇힌다 — 가로로 긴 카드라 3×2 같은 자리에서는
+  **가로가 병목이고 세로는 한참 남았다.** 겹치면 같은 칸에서 카드가 22% 커진다.
+
+  겹치는 축의 **반대쪽 축으로 서로 어긋나게** 붙인다: 남은 더미가 위(또는 왼쪽),
+  뽑은 더미가 아래(또는 오른쪽)다. 남는 자리를 그렇게 쓰면 두 더미가 겹쳐 있어도
+  **어느 것이 어느 것인지 한눈에 갈린다.**
+
+  **뽑은 더미가 위로 올라온다.** 방금 공개한 카드가 가려지면 안 된다.
+*/
 .deck--side-by-side {
   flex-direction: row;
 }
 
+.deck--side-by-side .deck__discard {
+  margin-left: calc(var(--deck-overlap) * -1);
+}
+
+.deck--side-by-side .deck__pile {
+  align-self: flex-start;
+}
+
+.deck--side-by-side .deck__discard {
+  align-self: flex-end;
+}
+
 .deck--stacked {
   flex-direction: column;
+}
+
+.deck--stacked .deck__discard {
+  margin-top: calc(var(--deck-overlap) * -1);
+}
+
+.deck--stacked .deck__pile {
+  align-self: flex-start;
+}
+
+.deck--stacked .deck__discard {
+  align-self: flex-end;
+}
+
+/* 방금 공개한 카드가 가려지면 안 된다. */
+.deck__discard {
+  z-index: 1;
 }
 
 /* 좁아서 버린 덱을 접었을 때. 더미 하나가 가운데를 차지한다. */
@@ -465,6 +511,22 @@
 /* --------------------------------------------------------------------------
    장수 표기
    -------------------------------------------------------------------------- */
+
+/*
+  **겹치는 쪽으로는 장수 표기를 두지 않는다.** 남은 더미의 표기가 오른쪽 아래에
+  있었는데 뽑은 더미가 그 위로 올라오면서 가렸다 — 겹치는 축에 따라 반대쪽으로
+  옮긴다.
+*/
+.deck--side-by-side .deck__pile .deck__count {
+  right: auto;
+  left: 4%;
+}
+
+.deck--stacked .deck__pile .deck__count {
+  bottom: auto;
+  top: 0;
+  transform: translateY(-38%);
+}
 
 .deck__count {
   position: absolute;

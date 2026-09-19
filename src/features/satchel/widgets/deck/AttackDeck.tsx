@@ -166,7 +166,7 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
         {
           '--deck-card-w': `${layout.cardWidth}px`,
           '--deck-card-h': `${layout.cardHeight}px`,
-          '--deck-gap': `${layout.gap}px`,
+          '--deck-overlap': `${layout.overlap}px`,
           '--deck-face': `${layout.faceSize}px`,
           '--deck-count': `${layout.countSize}px`,
           '--deck-back': `url("${CARD_BACK_URL}")`,
@@ -223,8 +223,13 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
         ) : (
           <span className="deck__back" aria-hidden="true" />
         )}
+        {/*
+          **분모는 안 적는다**(형님이 정했다). 판을 돌리며 궁금한 것은 「몇 장
+          남았나」이고 전체 장수는 설정에서 본다 — 겹쳐 놓으면서 자리도 좁아졌다.
+          읽어주는 쪽에는 `pileSpeech`가 둘 다 전한다.
+        */}
         <span className="deck__count sl-numeral" aria-hidden="true">
-          {remaining} / {total}
+          {remaining}
         </span>
       </button>
 
