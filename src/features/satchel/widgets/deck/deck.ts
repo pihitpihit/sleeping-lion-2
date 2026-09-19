@@ -675,11 +675,19 @@ export interface DeckLayout {
    */
   markSize: number
   /**
-   * 두 더미가 겹치는 폭(px). `single`이면 0이다.
+   * 두 더미 사이를 얼마나 벌리는가(px). **음수면 겹친다.**
    *
-   * CSS가 음수 여백으로 쓴다 — flex의 `gap`은 음수를 못 받는다.
+   * CSS가 여백 하나로 받는다 — flex의 `gap`은 음수를 못 받으므로 겹침도 틈도
+   * 한 값으로 다룬다. `single`이면 0이다.
    */
-  overlap: number
+  offset: number
+  /**
+   * 겹쳤을 때 두 더미를 **반대쪽 축으로 어긋나게** 벌리는 거리(px).
+   *
+   * 남은 더미가 이만큼의 절반만큼 한쪽으로, 뽑은 더미가 반대쪽으로 간다. 겹치지
+   * 않으면 0이다 — 그때는 둘이 가운데 나란히 선다.
+   */
+  stagger: number
 }
 
 /**
@@ -714,10 +722,32 @@ const MIN_SPLIT_CARD_WIDTH = 64
  * 형님이 짚었다. 겹쳐 놓으면 같은 칸에서 카드가 22% 커지고 남는 세로도 그만큼
  * 준다. 실물에서도 상 위의 두 더미는 딱 붙어 놓인다.
  *
- * 후보 넷을 실제 크기로 그려 골랐다(구현 결정 213-2) — **달려드는 더미의 검
- * 문양이 온전히 보이는 마지막 값**이다.
+ * 후보 넷을 실제 크기로 그려 형님이 골랐다(구현 결정 213-2). 처음에 3할로 두었다가
+ * **어긋나게 벌리는 손질이 붙고 나서 4할 반으로 올렸다** — 위아래로 어긋나 있으면
+ * 많이 물려도 두 더미가 갈려 보인다.
  */
-const OVERLAP = 0.3
+const OVERLAP = 0.45
+/**
+ * 겹쳐서 이만큼은 커져야 겹친다.
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **겹치는 까닭이 카드를 키우는 것이므로, 안 커지면 겹치지 않는다.**        │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 3×1처럼 납작한 자리에서는 **세로가 병목이라 겹쳐도 카드가 하나도 안 커진다** —
+ * 남은 더미만 가리고 얻는 것이 없다(형님이 짚었다). 겹침에는 대가가 있으므로
+ * 그만한 이득이 있을 때만 치른다.
+ */
+const OVERLAP_GAIN = 1.1
+/**
+ * 어긋나게 붙일 때 **남는 자리를 얼마나 쓰는가.**
+ *
+ * 남는 것을 끝까지 쓰면 두 더미가 위젯 테에 딱 붙는다(형님이 짚었다) — 절반만
+ * 쓰면 위아래(또는 좌우)에 같은 만큼씩 남아 **떠 있는 것처럼 보인다.**
+ */
+const STAGGER_FILL = 0.5
+const GAP_RATIO = 0.08
+const MIN_GAP = 4
 const MAX_CARD_WIDTH = 240
 /**
  * 카드 너비 대비 숫자 크기.
@@ -751,12 +781,20 @@ const EMPTY_LAYOUT: DeckLayout = {
   faceSize: 0,
   countSize: 0,
   markSize: 0,
-  overlap: 0,
+  offset: 0,
+  stagger: 0,
 }
 
 interface CardFit {
   cardWidth: number
   cardHeight: number
+}
+
+/** 두 더미를 어떻게 놓는가 — 카드 크기와, 사이를 얼마나 벌리거나 물릴 것인가. */
+interface PairFit {
+  fit: CardFit
+  /** 양수면 틈, **음수면 겹침.** CSS가 여백 하나로 받는다. */
+  offset: number
 }
 
 /** 이 크기의 칸에 카드 한 장을 넣으면 얼마가 되는가. */
@@ -769,14 +807,26 @@ function fitCard(boxWidth: number, boxHeight: number): CardFit {
 }
 
 /**
- * 겹쳐 놓은 두 더미가 이 칸에 들어가면 얼마가 되는가.
+ * 두 더미를 이 칸에 넣으면 얼마가 되는가 — **겹쳐 놓을지도 여기서 정한다.**
  *
  * 겹치는 축으로는 `2 - OVERLAP`장만큼만 필요하고 **다른 축은 한 장 그대로**다 —
  * 두 더미가 그 축에서는 나란히 서지 않기 때문이다.
+ *
+ * **겹쳐서 `OVERLAP_GAIN`만큼 커지지 않으면 나란히 놓고 틈을 준다.**
  */
-function fitPair(boxWidth: number, boxHeight: number, axis: 'row' | 'column'): CardFit {
+function fitPair(boxWidth: number, boxHeight: number, axis: 'row' | 'column'): PairFit {
+  const gap = Math.max(MIN_GAP, Math.min(boxWidth, boxHeight) * GAP_RATIO)
   const span = 2 - OVERLAP
-  return axis === 'row' ? fitCard(boxWidth / span, boxHeight) : fitCard(boxWidth, boxHeight / span)
+  const plain =
+    axis === 'row'
+      ? fitCard((boxWidth - gap) / 2, boxHeight)
+      : fitCard(boxWidth, (boxHeight - gap) / 2)
+  const tight =
+    axis === 'row' ? fitCard(boxWidth / span, boxHeight) : fitCard(boxWidth, boxHeight / span)
+
+  if (tight.cardWidth < plain.cardWidth * OVERLAP_GAIN) return { fit: plain, offset: gap }
+  const side = axis === 'row' ? tight.cardWidth : tight.cardHeight
+  return { fit: tight, offset: -side * OVERLAP }
 }
 
 /**
@@ -798,12 +848,12 @@ export function computeDeckLayout(box: { width: number; height: number }): DeckL
 
   // 두 자리로 가르는 두 갈래 중 카드가 큰 쪽.
   const split =
-    sideBySide.cardWidth >= stacked.cardWidth
-      ? { fit: sideBySide, arrangement: 'side-by-side' as const }
-      : { fit: stacked, arrangement: 'stacked' as const }
+    sideBySide.fit.cardWidth >= stacked.fit.cardWidth
+      ? { ...sideBySide, arrangement: 'side-by-side' as const }
+      : { ...stacked, arrangement: 'stacked' as const }
 
   const showDiscard = split.fit.cardWidth >= MIN_SPLIT_CARD_WIDTH
-  const chosen = showDiscard ? split : { fit: single, arrangement: 'single' as const }
+  const chosen = showDiscard ? split : { fit: single, offset: 0, arrangement: 'single' as const }
   const { cardWidth, cardHeight } = chosen.fit
 
   return {
@@ -814,10 +864,19 @@ export function computeDeckLayout(box: { width: number; height: number }): DeckL
     faceSize: cardWidth > 0 ? Math.max(MIN_FACE, cardWidth * FACE_RATIO) : 0,
     countSize: cardWidth > 0 ? Math.max(MIN_COUNT, cardWidth * COUNT_RATIO) : 0,
     markSize: cardWidth > 0 ? Math.max(MIN_MARK, cardWidth * MARK_RATIO) : 0,
-    overlap:
-      chosen.arrangement === 'single'
-        ? 0
-        : (chosen.arrangement === 'side-by-side' ? cardWidth : cardWidth * CARD_RATIO) * OVERLAP,
+    offset: chosen.offset,
+    /*
+      겹칠 때만 어긋나게 벌린다. 벌리는 축은 **겹치는 축의 반대쪽**이고, 그 축에
+      남은 자리의 절반만 쓴다 — 끝까지 쓰면 위젯 테에 딱 붙는다.
+    */
+    stagger:
+      chosen.offset < 0
+        ? Math.max(
+            0,
+            (chosen.arrangement === 'side-by-side' ? height - cardHeight : width - cardWidth) *
+              STAGGER_FILL,
+          )
+        : 0,
   }
 }
 

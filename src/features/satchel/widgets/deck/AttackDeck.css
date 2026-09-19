@@ -34,21 +34,20 @@
   **어느 것이 어느 것인지 한눈에 갈린다.**
 
   **뽑은 더미가 위로 올라온다.** 방금 공개한 카드가 가려지면 안 된다.
+
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ **안 커지면 겹치지 않는다** — 그때는 `--deck-offset`이 양수(틈)다.        │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  3×1처럼 납작한 자리는 세로가 병목이라 겹쳐도 카드가 그대로다 — 남은 더미만
+  가리고 얻는 것이 없다. 겹치고 어긋나게 붙이는 것은 `--overlap`일 때만 한다.
 */
 .deck--side-by-side {
   flex-direction: row;
 }
 
 .deck--side-by-side .deck__discard {
-  margin-left: calc(var(--deck-overlap) * -1);
-}
-
-.deck--side-by-side .deck__pile {
-  align-self: flex-start;
-}
-
-.deck--side-by-side .deck__discard {
-  align-self: flex-end;
+  margin-left: var(--deck-offset);
 }
 
 .deck--stacked {
@@ -56,15 +55,34 @@
 }
 
 .deck--stacked .deck__discard {
-  margin-top: calc(var(--deck-overlap) * -1);
+  margin-top: var(--deck-offset);
 }
 
-.deck--stacked .deck__pile {
-  align-self: flex-start;
+/*
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ **어긋나게 벌리는 거리는 계산이 내려보낸다**(`--deck-stagger`).           │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  `flex-start`·`flex-end`로 끝에 붙였더니 두 더미가 **위젯 테에 딱 붙었다**
+  (형님이 짚었다). 남은 자리의 절반만 쓰면 바깥에 같은 만큼씩 남는다.
+
+  자리는 그대로 두고 `transform`으로만 옮긴다 — 레이아웃을 건드리지 않으므로
+  겹치는 폭 계산이 흔들리지 않는다.
+*/
+.deck--overlap.deck--side-by-side .deck__pile {
+  transform: translateY(calc(var(--deck-stagger) / -2));
 }
 
-.deck--stacked .deck__discard {
-  align-self: flex-end;
+.deck--overlap.deck--side-by-side .deck__discard {
+  transform: translateY(calc(var(--deck-stagger) / 2));
+}
+
+.deck--overlap.deck--stacked .deck__pile {
+  transform: translateX(calc(var(--deck-stagger) / -2));
+}
+
+.deck--overlap.deck--stacked .deck__discard {
+  transform: translateX(calc(var(--deck-stagger) / 2));
 }
 
 /* 방금 공개한 카드가 가려지면 안 된다. */
@@ -517,12 +535,12 @@
   있었는데 뽑은 더미가 그 위로 올라오면서 가렸다 — 겹치는 축에 따라 반대쪽으로
   옮긴다.
 */
-.deck--side-by-side .deck__pile .deck__count {
+.deck--overlap.deck--side-by-side .deck__pile .deck__count {
   right: auto;
   left: 4%;
 }
 
-.deck--stacked .deck__pile .deck__count {
+.deck--overlap.deck--stacked .deck__pile .deck__count {
   bottom: auto;
   top: 0;
   transform: translateY(-38%);

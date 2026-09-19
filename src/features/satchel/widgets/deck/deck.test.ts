@@ -319,20 +319,44 @@ describe('computeDeckLayout', () => {
     // 나란히 놓았다면 카드 두 장이 폭을 꼭 나눠 가진다.
     expect(layout.cardWidth).toBeGreaterThan((box.width / 2) * 0.9)
     // 그래도 두 장이 칸을 넘지는 않는다.
-    expect(layout.cardWidth * 2 - layout.overlap).toBeLessThanOrEqual(box.width)
+    expect(layout.cardWidth * 2 + layout.offset).toBeLessThanOrEqual(box.width)
   })
 
+  /* 실제로 겹치는 두 자리 — 3×2(좌우로 겹침)와 2×2(위아래로 겹침)다. */
   it('겹치는 폭은 겹치는 축의 한 변에서 나온다', () => {
-    const wide = computeDeckLayout({ width: 400, height: 160 })
-    expect(wide.overlap).toBeCloseTo(wide.cardWidth * 0.3, 3)
-    const tall = computeDeckLayout({ width: 160, height: 400 })
-    expect(tall.overlap).toBeCloseTo(tall.cardHeight * 0.3, 3)
+    const wide = computeDeckLayout({ width: 270, height: 135 })
+    expect(wide.arrangement).toBe('side-by-side')
+    expect(wide.offset).toBeCloseTo(-wide.cardWidth * 0.45, 3)
+
+    const tall = computeDeckLayout({ width: 172, height: 135 })
+    expect(tall.arrangement).toBe('stacked')
+    expect(tall.offset).toBeCloseTo(-tall.cardHeight * 0.45, 3)
   })
 
-  it('더미가 하나뿐이면 겹칠 것이 없다', () => {
+  /* 가로가 병목이면 위아래로 겹쳐도 카드가 안 커진다 — 납작한 자리의 짝이다. */
+  it('좁고 높은 자리에서도 겹치지 않는다', () => {
+    const layout = computeDeckLayout({ width: 160, height: 400 })
+    expect(layout.arrangement).toBe('stacked')
+    expect(layout.offset).toBeGreaterThan(0)
+  })
+
+  /*
+    ┌──────────────────────────────────────────────────────────────────────────┐
+    │ **안 커지면 겹치지 않는다** — 겹침에는 대가가 있다(형님이 짚었다).        │
+    └──────────────────────────────────────────────────────────────────────────┘
+
+    3×1처럼 납작한 자리는 세로가 병목이라 겹쳐도 카드가 그대로다.
+  */
+  it('납작한 자리에서는 겹치지 않고 틈을 준다', () => {
+    const layout = computeDeckLayout({ width: 270, height: 58 })
+    expect(layout.arrangement).toBe('side-by-side')
+    expect(layout.offset).toBeGreaterThan(0)
+  })
+
+  it('더미가 하나뿐이면 벌릴 것도 물릴 것도 없다', () => {
     const layout = computeDeckLayout({ width: 70, height: 90 })
     expect(layout.arrangement).toBe('single')
-    expect(layout.overlap).toBe(0)
+    expect(layout.offset).toBe(0)
   })
 
   it('카드가 가로로 길다 — 실물이 437×296이다', () => {

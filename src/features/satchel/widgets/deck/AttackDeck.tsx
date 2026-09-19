@@ -161,12 +161,13 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
   return (
     <div
       ref={ref}
-      className={`deck deck--${layout.arrangement}`}
+      className={`deck deck--${layout.arrangement}${layout.offset < 0 ? ' deck--overlap' : ''}`}
       style={
         {
           '--deck-card-w': `${layout.cardWidth}px`,
           '--deck-card-h': `${layout.cardHeight}px`,
-          '--deck-overlap': `${layout.overlap}px`,
+          '--deck-offset': `${layout.offset}px`,
+          '--deck-stagger': `${layout.stagger}px`,
           '--deck-face': `${layout.faceSize}px`,
           '--deck-count': `${layout.countSize}px`,
           '--deck-back': `url("${CARD_BACK_URL}")`,
