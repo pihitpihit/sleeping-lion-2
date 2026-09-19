@@ -20,6 +20,13 @@ interface Props {
   landOn: () => DOMRect | null
   /** 다 끝나 지워도 될 때. */
   onDone: () => void
+  /**
+   * 몇 장을 나란히 띄우는가. 굴림이 이어지면 둘 이상이다.
+   *
+   * **칸을 그만큼 넓히고 카드 한 장은 그만큼 줄인다** — 화면을 넘지 않으면서
+   * 다 보이게 하려면 둘을 함께 움직여야 한다.
+   */
+  count?: number
   /** 시험에서만 줄인다. */
   holdMs?: number
 }
@@ -50,6 +57,7 @@ export function RevealFlash({
   rotation,
   landOn,
   onDone,
+  count = 1,
   holdMs = REVEAL_HOLD_MS,
 }: Props) {
   const cardRef = useRef<HTMLDivElement | null>(null)
@@ -146,6 +154,7 @@ export function RevealFlash({
         style={
           {
             '--reveal-rot': `${rotation}deg`,
+            '--reveal-n': Math.max(1, count),
             '--deck-front': `url("${CARD_FACE_URL}")`,
             '--deck-face-ratio': FACE_RATIO,
           } as React.CSSProperties

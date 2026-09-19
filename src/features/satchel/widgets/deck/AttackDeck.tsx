@@ -270,9 +270,11 @@ export function AttackDeck({ instanceId, mode, rotation, settings }: WidgetProps
           key={flash.nonce}
           rotation={rotation}
           landOn={landOn}
+          count={flash.chain.length}
           onDone={() => setFlash(null)}
         >
-          <CardStack chain={flash.chain} owner={owner} />
+          {/* 크게 띄울 때는 겹치지 않고 **다 보이게 펼친다**(형님이 정했다). */}
+          <CardStack chain={flash.chain} owner={owner} spread />
         </RevealFlash>
       )}
     </div>

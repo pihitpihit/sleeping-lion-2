@@ -226,6 +226,27 @@ describe('굴림으로 이어진 뽑기', () => {
     expect(renderToStaticMarkup(<CardStack chain={[]} />)).toBe('')
   })
 
+  /*
+    ┌──────────────────────────────────────────────────────────────────────────┐
+    │ **크게 띄울 때는 겹치지 않고 다 보이게 편다**(형님이 정했다).             │
+    └──────────────────────────────────────────────────────────────────────────┘
+
+    위젯 안의 버린 덱은 카드 한 장 넓이뿐이라 겹쳐 쌓지만, 팝업은 자리가 넉넉하다.
+  */
+  it('펼쳐 놓으라면 그 표를 단다', () => {
+    const chain = [card('r.p0.fire'), card('p2')]
+    expect(renderToStaticMarkup(<CardStack chain={chain} spread />)).toContain(
+      'deck__stack--spread',
+    )
+    expect(renderToStaticMarkup(<CardStack chain={chain} />)).not.toContain('--spread')
+  })
+
+  it('한 장뿐이면 펼치라고 해도 겹칠 것이 없다', () => {
+    expect(renderToStaticMarkup(<CardStack chain={[card('p1')]} spread />)).not.toContain(
+      'deck__stack',
+    )
+  })
+
   it('여러 장이면 겹쳐 늘어놓는다', () => {
     const html = renderToStaticMarkup(
       <CardStack chain={[card('r.p0.fire'), card('r.p1'), card('p2')]} />,

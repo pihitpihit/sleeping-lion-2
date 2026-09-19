@@ -37,14 +37,29 @@ import './AttackDeck.css'
  *
  * 한 장뿐이면 겹칠 것이 없어 그냥 그 카드다.
  */
-export function CardStack({ chain, owner }: { chain: readonly Card[]; owner?: CardOwner | null }) {
+export function CardStack({
+  chain,
+  owner,
+  spread = false,
+}: {
+  chain: readonly Card[]
+  owner?: CardOwner | null
+  /**
+   * 겹치지 않고 **나란히 펼친다.**
+   *
+   * 위젯 안의 버린 덱 자리는 카드 한 장 넓이뿐이라 겹쳐 쌓을 수밖에 없지만,
+   * 크게 띄우는 팝업은 자리가 넉넉하다 — 굴림이 이어져 여러 장이 나왔으면
+   * **거기서는 다 보여야 한다**(형님이 정했다).
+   */
+  spread?: boolean
+}) {
   if (chain.length <= 1) {
     const only = chain[0]
     return only ? <CardFace card={only} owner={owner} /> : null
   }
 
   return (
-    <span className="deck__stack" aria-hidden="true">
+    <span className={`deck__stack${spread ? ' deck__stack--spread' : ''}`} aria-hidden="true">
       {chain.map((card, index) => (
         <span
           key={card.id}

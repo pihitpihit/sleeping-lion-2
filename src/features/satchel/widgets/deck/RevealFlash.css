@@ -25,7 +25,13 @@
     가로가 긴 카드다. `vmin`으로 재면 세로로 세운 폰에서도 가로로 눕힌
     태블릿에서도 화면을 넘지 않고, 위젯이 90도 돌아 카드가 세로로 서도 마찬가지다.
   */
-  --deck-card-w: min(78vmin, 460px);
+  /*
+    **굴림이 이어지면 여러 장을 나란히 띄운다**(형님이 정했다) — 칸을 그만큼
+    넓히고 카드 한 장은 그만큼 줄인다. 화면을 넘지 않으면서 다 보이게 하려면
+    둘을 함께 움직여야 한다.
+  */
+  --reveal-span: min(78vmin, 460px);
+  --deck-card-w: calc(var(--reveal-span) / var(--reveal-n, 1));
 
   /*
     그림 없는 종류(+3·+4)의 숫자 크기.
@@ -43,8 +49,12 @@
   */
   display: flex;
 
-  width: var(--deck-card-w);
-  aspect-ratio: 437 / 296;
+  width: var(--reveal-span);
+  /*
+    `aspect-ratio`로는 못 적는다 — 장수에 따라 비가 달라지므로 **한 장의 폭에서
+    높이를 셈한다.** 실물이 437×296이다.
+  */
+  height: calc(var(--deck-card-w) * 296 / 437);
   /* 각도는 `RevealFlash`가 변수로 넘긴다. 여기 한 군데서만 transform을 만진다. */
   transform: rotate(var(--reveal-rot, 0deg));
   border-radius: calc(var(--deck-card-w) * 0.045);

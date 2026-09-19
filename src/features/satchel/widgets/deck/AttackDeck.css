@@ -507,8 +507,14 @@
    안쪽 배치가 흔들린다.
    -------------------------------------------------------------------------- */
 
+/*
+  **`display: block`을 적어 둔다.** `<span>`이라 안 적으면 인라인이고, flex가
+  아닌 부모 밑에 놓이면 상자가 통째로 접힌다 — `.deck__back`·`.deck__face`에서
+  이미 겪은 자리다(구현 결정 196). flex 항목에게는 어차피 블록이다.
+*/
 .deck__stack {
   position: relative;
+  display: block;
   width: 100%;
   height: 100%;
 }
@@ -521,9 +527,31 @@
 .deck__stack-item {
   position: absolute;
   inset: 0;
-  transform: translate(calc(var(--deck-stack-back) * -7%), calc(var(--deck-stack-back) * -7%))
-    scale(calc(1 - var(--deck-stack-back) * 0.05));
+  transform: translate(calc(var(--deck-stack-back) * -16%), calc(var(--deck-stack-back) * -16%))
+    scale(calc(1 - var(--deck-stack-back) * 0.04));
   z-index: var(--deck-stack-i);
+}
+
+/*
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ **크게 띄울 때는 겹치지 않고 나란히 편다**(형님이 정했다).                │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  위젯 안의 버린 덱은 카드 한 장 넓이뿐이라 겹쳐 쌓을 수밖에 없지만, 팝업은
+  자리가 넉넉하다 — 굴림이 이어져 여러 장이 나왔으면 **거기서는 다 보여야 한다.**
+
+  차례는 **먼저 뽑힌 것이 왼쪽**이다. 위젯 안에서 뒤로 물러나는 차례와 같다.
+*/
+.deck__stack--spread {
+  display: flex;
+  gap: 0;
+}
+
+.deck__stack--spread .deck__stack-item {
+  position: static;
+  flex: 1 1 0;
+  min-width: 0;
+  transform: none;
 }
 
 /* --------------------------------------------------------------------------
