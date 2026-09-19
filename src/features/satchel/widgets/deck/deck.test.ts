@@ -333,6 +333,32 @@ describe('computeDeckLayout', () => {
     expect(tall.offset).toBeCloseTo(-tall.cardHeight * 0.45, 3)
   })
 
+  /*
+    ┌──────────────────────────────────────────────────────────────────────────┐
+    │ **양옆과 위아래 여백이 같아야 안정돼 보인다**(형님이 정했다).             │
+    └──────────────────────────────────────────────────────────────────────────┘
+
+    한때 가로는 `CARD_FILL`이, 세로는 「남는 자리의 절반」이 따로 정해 3×2에서
+    좌우 13px에 위아래 7px이 되었다 — 두 더미가 위로 떠 보였다.
+  */
+  it('겹칠 때 사방 여백이 같다', () => {
+    for (const box of [
+      { width: 270, height: 135 },
+      { width: 172, height: 135 },
+    ]) {
+      const l = computeDeckLayout(box)
+      expect(l.offset).toBeLessThan(0)
+      const row = l.arrangement === 'side-by-side'
+      // 겹치는 축은 두 장에서 물린 만큼을 뺀 폭, 반대 축은 한 장에 어긋남을 더한 것.
+      const alongOverlap = row ? l.cardWidth * 2 + l.offset : l.cardHeight * 2 + l.offset
+      const acrossOverlap = (row ? l.cardHeight : l.cardWidth) + l.stagger
+      const padAlong = ((row ? box.width : box.height) - alongOverlap) / 2
+      const padAcross = ((row ? box.height : box.width) - acrossOverlap) / 2
+      expect(padAlong).toBeCloseTo(padAcross, 3)
+      expect(padAlong).toBeGreaterThan(0)
+    }
+  })
+
   /* 가로가 병목이면 위아래로 겹쳐도 카드가 안 커진다 — 납작한 자리의 짝이다. */
   it('좁고 높은 자리에서도 겹치지 않는다', () => {
     const layout = computeDeckLayout({ width: 160, height: 400 })

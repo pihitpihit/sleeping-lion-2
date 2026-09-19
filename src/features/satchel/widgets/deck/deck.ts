@@ -740,12 +740,19 @@ const OVERLAP = 0.45
  */
 const OVERLAP_GAIN = 1.1
 /**
- * 어긋나게 붙일 때 **남는 자리를 얼마나 쓰는가.**
+ * 겹쳐 놓을 때 사방에 남기는 여백 — **짧은 변의 이만큼**.
  *
- * 남는 것을 끝까지 쓰면 두 더미가 위젯 테에 딱 붙는다(형님이 짚었다) — 절반만
- * 쓰면 위아래(또는 좌우)에 같은 만큼씩 남아 **떠 있는 것처럼 보인다.**
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **양옆과 위아래 여백이 같아야 안정돼 보인다**(형님이 정했다).             │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 한때 가로는 `CARD_FILL`이, 세로는 「남는 자리의 절반」이 따로 정했다 — 3×2에서
+ * 좌우 13px에 위아래 7px이 되어 **두 더미가 위로 떠 보였다.** 여백을 먼저 정하고
+ * 카드와 어긋남을 그 안에서 맞추면 사방이 같아진다.
+ *
+ * 값은 `CARD_FILL`이 남기던 것과 같다(양쪽 5%씩).
  */
-const STAGGER_FILL = 0.5
+const PAD_RATIO = (1 - CARD_FILL) / 2
 const GAP_RATIO = 0.08
 const MIN_GAP = 4
 const MAX_CARD_WIDTH = 240
@@ -795,6 +802,8 @@ interface PairFit {
   fit: CardFit
   /** 양수면 틈, **음수면 겹침.** CSS가 여백 하나로 받는다. */
   offset: number
+  /** 겹쳤을 때 반대쪽 축으로 어긋나게 벌리는 거리. 안 겹치면 0이다. */
+  stagger: number
 }
 
 /** 이 크기의 칸에 카드 한 장을 넣으면 얼마가 되는가. */
@@ -804,6 +813,36 @@ function fitCard(boxWidth: number, boxHeight: number): CardFit {
   const byHeight = (boxHeight * CARD_FILL) / CARD_RATIO
   const cardWidth = Math.min(MAX_CARD_WIDTH, Math.min(byWidth, byHeight))
   return { cardWidth, cardHeight: cardWidth * CARD_RATIO }
+}
+
+/** 겹쳐 놓은 두 더미. 카드 크기와 어긋나게 벌릴 거리를 함께 낸다. */
+interface TightFit extends CardFit {
+  stagger: number
+}
+
+/**
+ * 겹쳐 놓으면 카드가 얼마가 되고 얼마나 어긋나는가 — **사방 여백을 같게 둔다.**
+ *
+ * 여백을 먼저 떼어 놓고 남은 자리로 카드를 잡는다. 겹치는 축으로는
+ * `2 - OVERLAP`장만큼 들어가고, **반대 축에 남는 것이 곧 어긋남**이다 — 그래서
+ * 두 축의 여백이 저절로 같아진다.
+ *
+ * 반대 축이 더 빡빡하면 카드가 그쪽에 갇히고 어긋남은 0이 된다.
+ */
+function fitTight(boxWidth: number, boxHeight: number, axis: 'row' | 'column'): TightFit {
+  if (!(boxWidth > 0) || !(boxHeight > 0)) return { cardWidth: 0, cardHeight: 0, stagger: 0 }
+  const pad = Math.min(boxWidth, boxHeight) * PAD_RATIO
+  const innerWidth = boxWidth - 2 * pad
+  const innerHeight = boxHeight - 2 * pad
+  const span = 2 - OVERLAP
+
+  const byOverlapAxis = axis === 'row' ? innerWidth / span : innerHeight / span / CARD_RATIO
+  const byOtherAxis = axis === 'row' ? innerHeight / CARD_RATIO : innerWidth
+  const cardWidth = Math.max(0, Math.min(MAX_CARD_WIDTH, byOverlapAxis, byOtherAxis))
+  const cardHeight = cardWidth * CARD_RATIO
+
+  const stagger = Math.max(0, axis === 'row' ? innerHeight - cardHeight : innerWidth - cardWidth)
+  return { cardWidth, cardHeight, stagger }
 }
 
 /**
@@ -816,17 +855,16 @@ function fitCard(boxWidth: number, boxHeight: number): CardFit {
  */
 function fitPair(boxWidth: number, boxHeight: number, axis: 'row' | 'column'): PairFit {
   const gap = Math.max(MIN_GAP, Math.min(boxWidth, boxHeight) * GAP_RATIO)
-  const span = 2 - OVERLAP
   const plain =
     axis === 'row'
       ? fitCard((boxWidth - gap) / 2, boxHeight)
       : fitCard(boxWidth, (boxHeight - gap) / 2)
-  const tight =
-    axis === 'row' ? fitCard(boxWidth / span, boxHeight) : fitCard(boxWidth, boxHeight / span)
+  const tight = fitTight(boxWidth, boxHeight, axis)
 
-  if (tight.cardWidth < plain.cardWidth * OVERLAP_GAIN) return { fit: plain, offset: gap }
+  if (tight.cardWidth < plain.cardWidth * OVERLAP_GAIN)
+    return { fit: plain, offset: gap, stagger: 0 }
   const side = axis === 'row' ? tight.cardWidth : tight.cardHeight
-  return { fit: tight, offset: -side * OVERLAP }
+  return { fit: tight, offset: -side * OVERLAP, stagger: tight.stagger }
 }
 
 /**
@@ -853,7 +891,9 @@ export function computeDeckLayout(box: { width: number; height: number }): DeckL
       : { ...stacked, arrangement: 'stacked' as const }
 
   const showDiscard = split.fit.cardWidth >= MIN_SPLIT_CARD_WIDTH
-  const chosen = showDiscard ? split : { fit: single, offset: 0, arrangement: 'single' as const }
+  const chosen = showDiscard
+    ? split
+    : { fit: single, offset: 0, stagger: 0, arrangement: 'single' as const }
   const { cardWidth, cardHeight } = chosen.fit
 
   return {
@@ -865,18 +905,7 @@ export function computeDeckLayout(box: { width: number; height: number }): DeckL
     countSize: cardWidth > 0 ? Math.max(MIN_COUNT, cardWidth * COUNT_RATIO) : 0,
     markSize: cardWidth > 0 ? Math.max(MIN_MARK, cardWidth * MARK_RATIO) : 0,
     offset: chosen.offset,
-    /*
-      겹칠 때만 어긋나게 벌린다. 벌리는 축은 **겹치는 축의 반대쪽**이고, 그 축에
-      남은 자리의 절반만 쓴다 — 끝까지 쓰면 위젯 테에 딱 붙는다.
-    */
-    stagger:
-      chosen.offset < 0
-        ? Math.max(
-            0,
-            (chosen.arrangement === 'side-by-side' ? height - cardHeight : width - cardWidth) *
-              STAGGER_FILL,
-          )
-        : 0,
+    stagger: chosen.stagger,
   }
 }
 
