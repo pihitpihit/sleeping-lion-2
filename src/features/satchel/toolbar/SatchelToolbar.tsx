@@ -3,7 +3,7 @@ import type { ToolbarPosition, ToolbarPreference } from '../layout'
 import { nextToolbarPreference, TOOLBAR_PREFERENCE_LABEL } from './position'
 import { widgetDefinitions } from '../widgets/registry'
 import type { SatchelMode } from '../widgets/types'
-import { EditIcon, MenuIcon, PlusIcon, SaveIcon, SeatedIcon, UndoIcon } from './icons'
+import { ChestIcon, EditIcon, MenuIcon, PlusIcon, SaveIcon, SeatedIcon, UndoIcon } from './icons'
 
 interface Props {
   position: ToolbarPosition
@@ -27,6 +27,8 @@ interface Props {
   onUndo: () => void
   /** 전투 팝업을 연다. */
   onOpenBattle: () => void
+  /** 보물 색인을 띄운다. 편집 모드와 무관하다 — 판 도중에 찾아보는 것이다. */
+  onOpenTreasures: () => void
   /** 지금 판에 앉아 있는가 — 띠에 표를 낸다. */
   inBattle: boolean
   /**
@@ -62,6 +64,7 @@ export function SatchelToolbar({
   onUndo,
   onOpenBattle,
   inBattle,
+  onOpenTreasures,
   gridInfo,
 }: Props) {
   /**
@@ -119,6 +122,21 @@ export function SatchelToolbar({
           onClick={onToggleMode}
         >
           {editing ? <SaveIcon /> : <EditIcon />}
+        </button>
+
+        {/*
+          **보물상자 — 고쳐 놓기 바로 옆이다**(형님이 정했다). 타일을 열면 그 자리에서
+          번호를 찾아보는 것이라 판 도중에 손이 닿아야 한다 — 일지까지 나갔다 오면
+          판이 멎는다. 편집 모드와 무관하게 늘 선다.
+        */}
+        <button
+          type="button"
+          className="satchel-bar__control"
+          aria-label="보물 색인"
+          title="보물 색인"
+          onClick={onOpenTreasures}
+        >
+          <ChestIcon />
         </button>
 
         {/*

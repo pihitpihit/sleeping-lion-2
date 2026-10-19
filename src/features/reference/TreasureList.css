@@ -1,0 +1,48 @@
+/* --------------------------------------------------------------------------
+   보물 색인
+   --------------------------------------------------------------------------
+   번호와 글 한 줄씩. 기록지의 팝업과 달리 **「찾았는가」가 없다** — 참조는 어느
+   파티의 것도 아니다.
+
+   **조각이 제 스타일을 스스로 들여온다**(구현 결정 189·356). 참조 화면과 행낭의
+   보물상자 팝업이 함께 쓰는데, 행낭에서는 참조 화면의 스타일시트가 안 실린다.
+   -------------------------------------------------------------------------- */
+
+.tref__rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.tref__row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.3rem 0.1rem;
+  font-size: 0.9rem;
+}
+
+.tref__row:not(:last-child) {
+  border-bottom: 1px solid rgb(255 255 255 / 4%);
+}
+
+.tref__no {
+  flex: none;
+  min-width: 1.8rem;
+  text-align: right;
+  color: var(--sl-gold);
+}
+
+.tref__text {
+  color: var(--sl-text);
+}
+
+/* 표가 비었을 때의 안내. */
+.tref__hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--sl-text-faint);
+}

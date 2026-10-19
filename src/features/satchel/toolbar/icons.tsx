@@ -37,6 +37,18 @@ export function EditIcon() {
   )
 }
 
+/** 보물상자 — 보물 색인 */
+export function ChestIcon() {
+  return (
+    <svg {...BASE} width="22" height="22">
+      <path d="M4 10.5V9a5 3.5 0 0 1 16 0v1.5" />
+      <path d="M3.5 10.5h17v8.5h-17z" />
+      <path d="M3.5 13.5h17" />
+      <path d="M10.5 12.5h3v3h-3z" />
+    </svg>
+  )
+}
+
 /** 디스켓 — 다 됐다(저장) */
 export function SaveIcon() {
   return (

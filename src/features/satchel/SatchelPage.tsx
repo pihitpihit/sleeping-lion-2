@@ -13,6 +13,7 @@ import { useClassStore } from '../campaign/classStore'
 import { useRosterStore } from './roster'
 import { CloseIcon } from './board/frameIcons'
 import { getWidgetDefinition } from './widgets/registry'
+import { TreasurePopup } from './ui/TreasurePopup'
 import './SatchelPage.css'
 
 /**
@@ -63,6 +64,8 @@ export function SatchelPage() {
    * 시작하는 일이다 — 플레이 중에 열려야 한다.
    */
   const [battleOpen, setBattleOpen] = useState(false)
+  /** 보물 색인 팝업. 전투 팝업처럼 편집 모드와 무관하다. */
+  const [treasureOpen, setTreasureOpen] = useState(false)
   const inBattle = useBattleStore((s) => s.battle !== null)
   const resumeBattle = useBattleStore((s) => s.resume)
   const enterSolo = useBattleStore((s) => s.enterSolo)
@@ -191,6 +194,7 @@ export function SatchelPage() {
         onUndo={undo}
         onOpenBattle={() => setBattleOpen(true)}
         inBattle={inBattle}
+        onOpenTreasures={() => setTreasureOpen(true)}
         /* 기기에서 실제로 잡힌 값. 손으로 셈해 맞히려다 두 번 빗나갔다. */
         gridInfo={`격자 ${metrics.columns}×${metrics.rows} · 칸 ${metrics.cellWidth}×${metrics.cellHeight} · 보드 ${Math.round(size.width)}×${Math.round(size.height)}`}
       />
@@ -254,6 +258,8 @@ export function SatchelPage() {
       )}
 
       {battleOpen && <BattlePanel onClose={() => setBattleOpen(false)} />}
+
+      {treasureOpen && <TreasurePopup onClose={() => setTreasureOpen(false)} />}
 
       {notice && (
         <div className="satchel__notice" role="status">

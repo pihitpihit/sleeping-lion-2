@@ -2,6 +2,9 @@ import { useEffect } from 'react'
 import { useTreasureStore } from '../campaign/treasureStore'
 import type { Treasure } from '../campaign/treasureNet'
 
+// 행낭의 보물상자 팝업도 이 조각을 쓴다 — 거기서는 참조 화면의 스타일이 안 실린다.
+import './TreasureList.css'
+
 /**
  * 참조 화면의 보물 색인.
  *
@@ -37,7 +40,7 @@ export function TreasureReference() {
 export function TreasureList({ items }: { items: readonly Treasure[] }) {
   if (items.length === 0) {
     return (
-      <p className="ref__hint">
+      <p className="tref__hint">
         아직 표가 없다. 책자에 인쇄된 글이라 레포에 담지 않으므로 <a href="#/admin">주인장 화면</a>
         에서 넣는다.
       </p>
