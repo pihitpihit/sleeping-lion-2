@@ -7,7 +7,7 @@ import {
   previewResize,
   type Delta,
 } from '../interaction/gestureMath'
-import type { WidgetDefinition, SatchelMode } from '../widgets/types'
+import type { WidgetDefinition, SatchelMode, ScenarioLevelSource } from '../widgets/types'
 import { CloseIcon, GearIcon, RotateIcon } from './frameIcons'
 
 interface Props {
@@ -28,6 +28,7 @@ interface Props {
   onOpenSettings: () => void
   /** 위젯이 제 설정을 고칠 때. 스토어를 직접 부르지 않게 하려고 내려보낸다. */
   onSettingsChange: (next: unknown) => void
+  scenario: ScenarioLevelSource
   onRotate: () => void
 }
 
@@ -69,6 +70,7 @@ export function WidgetFrame({
   onRemove,
   onOpenSettings,
   onSettingsChange,
+  scenario,
   onRotate,
 }: Props) {
   const gesture = useRef<Gesture | null>(null)
@@ -253,6 +255,7 @@ export function WidgetFrame({
             rotation={rotation}
             settings={settings}
             onSettingsChange={onSettingsChange}
+            scenario={scenario}
           />
         </div>
       </div>

@@ -1,8 +1,6 @@
 import { HpXpTracker } from './hpxp/HpXpTracker'
 import { BlessWidget, CurseWidget } from './boon/BoonWidget'
 import { CampaignStatus } from './campaign/CampaignStatus'
-import { CampaignSettingsEditor } from './campaign/CampaignSettingsEditor'
-import { sanitizeCampaignSettings } from './campaign/settings'
 import { RoundTracker } from './round/RoundTracker'
 import { isHpXpSizeAllowed } from './hpxp/hpxp'
 import { sanitizeHpXpSettings } from './hpxp/settings'
@@ -124,7 +122,11 @@ const DEFINITIONS: WidgetDefinition[] = [
     name: '캠페인 상태',
     defaultSize: { w: 2, h: 2 },
     minSize: { w: 1, h: 1 },
-    settings: { sanitize: sanitizeCampaignSettings, Editor: CampaignSettingsEditor },
+    /*
+      설정이 없다. 모험 밖의 레벨은 한때 여기 들고 있었는데 **골드 카운터가 볼 길이
+      없어** 행낭 전체로 옮겼다(`SatchelSettings.scenarioLevel`). 고르는 것은 위젯을
+      눌러 연 표에서 한다.
+    */
     Component: CampaignStatus,
   },
   {

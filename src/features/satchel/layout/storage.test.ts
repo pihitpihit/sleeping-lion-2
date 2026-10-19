@@ -6,7 +6,7 @@ import {
   storageKeyFor,
   type StorageLike,
 } from './storage'
-import { emptySettings, SETTINGS_VERSION } from './types'
+import { emptySettings, isEmptySettings, SETTINGS_VERSION } from './types'
 
 function fakeStorage(initial: Record<string, string> = {}): StorageLike & { data: typeof initial } {
   const data = { ...initial }
@@ -177,5 +177,53 @@ describe('계정마다 따로 둔다', () => {
     expect(loadSettings(null, store).showWidgetTitles).toBe(true)
     // 누군가 로그인할 때를 위해 남겨 둔다.
     expect(store.data[LEGACY_STORAGE_KEY]).toBeDefined()
+  })
+})
+
+/*
+  ┌──────────────────────────────────────────────────────────────────────────┐
+  │ **모험 밖의 레벨은 행낭 전체에 하나다 — 옛 위젯 설정에서 물려받는다.**    │
+  └──────────────────────────────────────────────────────────────────────────┘
+
+  한때 캠페인 상태 위젯이 제 설정에 레벨을 들고 있었다. 그것을 안 물려받으면
+  손대지 않았는데 레벨이 1로 돌아간 것처럼 보인다.
+*/
+describe('시나리오 레벨', () => {
+  const withCampaign = (widgetSettings: Record<string, unknown>, extra = {}) =>
+    fakeStorage({
+      [storageKeyFor(null)]: JSON.stringify({
+        version: SETTINGS_VERSION,
+        layouts: {
+          4: {
+            columns: 4,
+            widgets: [{ instanceId: 'c1', definitionId: 'campaign', x: 0, y: 0, w: 2, h: 2 }],
+          },
+        },
+        widgetSettings,
+        ...extra,
+      }),
+    })
+
+  it('적힌 것이 없으면 1이다', () => {
+    expect(loadSettings(null, fakeStorage()).scenarioLevel).toBe(1)
+  })
+
+  it('옛 캠페인 상태 위젯의 레벨을 물려받는다', () => {
+    expect(loadSettings(null, withCampaign({ c1: { level: 4 } })).scenarioLevel).toBe(4)
+  })
+
+  it('행낭에 적힌 것이 있으면 그것이 이긴다', () => {
+    const storage = withCampaign({ c1: { level: 4 } }, { scenarioLevel: 2 })
+    expect(loadSettings(null, storage).scenarioLevel).toBe(2)
+  })
+
+  it('표 밖의 수는 표 안으로 붙든다', () => {
+    const storage = withCampaign({}, { scenarioLevel: 99 })
+    expect(loadSettings(null, storage).scenarioLevel).toBe(7)
+  })
+
+  /* 빈 설정이 아니어야 서버에 올라간다(구현 결정 58) — 레벨만 고친 것도 고친 것이다. */
+  it('레벨만 고쳐도 빈 설정이 아니다', () => {
+    expect(isEmptySettings({ ...emptySettings(), scenarioLevel: 3 })).toBe(false)
   })
 })

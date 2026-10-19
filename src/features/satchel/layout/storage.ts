@@ -6,6 +6,7 @@ import {
   type Rotation,
   type SatchelSettings,
 } from './types'
+import { clampLevel } from '../../rules/scenarioLevel'
 
 /**
  * `localStorage` 읽고 쓰기.
@@ -132,6 +133,8 @@ export function sanitizeSettings(parsed: unknown): SatchelSettings {
     }
   }
 
+  const scenarioLevel = scenarioLevelOf(raw, layouts, widgetSettings)
+
   // 옛 저장물에는 없다. 0이면 "언제 고쳤는지 모른다"는 뜻이고, 빈 설정은
   // 어차피 올라가지 않으므로 알맹이 있는 것을 밀어내지 못한다.
   const updatedAt = typeof raw.updatedAt === 'number' && raw.updatedAt > 0 ? raw.updatedAt : 0
@@ -144,7 +147,33 @@ export function sanitizeSettings(parsed: unknown): SatchelSettings {
     showWidgetTitles,
     widgetSettings,
     widgetRotations,
+    scenarioLevel,
   }
+}
+
+/**
+ * 모험 밖의 시나리오 레벨.
+ *
+ * **옛 저장물은 캠페인 상태 위젯의 설정에 레벨을 들고 있다** — 그것을 물려받는다.
+ * 안 그러면 손대지 않았는데 레벨이 1로 돌아간 것처럼 보인다. 위젯이 여럿이면
+ * 처음 찾은 것을 쓴다(대개 하나다).
+ */
+function scenarioLevelOf(
+  raw: Partial<SatchelSettings>,
+  layouts: Record<number, Layout>,
+  widgetSettings: Record<string, unknown>,
+): number {
+  if (typeof raw.scenarioLevel === 'number' && Number.isFinite(raw.scenarioLevel)) {
+    return clampLevel(raw.scenarioLevel)
+  }
+  for (const layout of Object.values(layouts)) {
+    for (const widget of layout.widgets) {
+      if (widget.definitionId !== 'campaign') continue
+      const level = (widgetSettings[widget.instanceId] as { level?: unknown } | undefined)?.level
+      if (typeof level === 'number' && Number.isFinite(level)) return clampLevel(level)
+    }
+  }
+  return 1
 }
 
 export function loadSettings(

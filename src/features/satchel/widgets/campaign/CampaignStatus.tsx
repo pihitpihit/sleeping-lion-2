@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { WidgetProps } from '../types'
 import { useBoardSize } from '../../useBoardSize'
-import { useBattleStore } from '../../battle/battleStore'
 import { useRoundStore } from '../round/roundStore'
 import { rowFor } from '../../../rules/scenarioLevel'
 import { ScenarioLevelDialog } from './ScenarioLevelDialog'
-import { sanitizeCampaignSettings } from './settings'
 import './CampaignStatus.css'
 
 /**
@@ -34,14 +32,14 @@ import './CampaignStatus.css'
  *
  * 고른 것이 어디에 남는지는 지금 어디에 있느냐가 정한다:
  *   · 모험에 앉았으면 **판에 얹는다** — 상 위의 모두에게 간다(`0040`).
- *   · 안 앉았으면 **이 위젯의 설정에 남는다** — 혼자 굴려 볼 때 쓰는 값이다.
+ *   · 안 앉았으면 **행낭 전체의 레벨에 남는다** — 골드 카운터도 그 값으로 셈한다.
+ *
+ * 그 판단은 위젯이 하지 않고 화면이 한 곳에서 해서 넘긴다(`scenario`) — 한때 이
+ * 위젯이 제 설정에 레벨을 들고 있어 **다른 위젯이 그 값을 볼 길이 없었다.**
  *
  * **편집 중에는 안 열린다.** 자리를 옮기려다 팝업이 뜨면 곤란하다.
  */
-export function CampaignStatus({ mode, settings, onSettingsChange }: WidgetProps) {
-  const { level: fallback } = sanitizeCampaignSettings(settings)
-  const battle = useBattleStore((s) => s.battle)
-  const setBattleLevel = useBattleStore((s) => s.setLevel)
+export function CampaignStatus({ mode, scenario }: WidgetProps) {
   const [open, setOpen] = useState(false)
 
   /* 라운드 기록. 팝업이 보여 줄 값이라 여기서 읽어 넘긴다. */
@@ -60,7 +58,7 @@ export function CampaignStatus({ mode, settings, onSettingsChange }: WidgetProps
     return () => clearInterval(id)
   }, [open])
 
-  const level = battle?.level ?? fallback
+  const level = scenario.level
   const row = rowFor(level)
 
   /*
@@ -76,8 +74,7 @@ export function CampaignStatus({ mode, settings, onSettingsChange }: WidgetProps
     그대로 보인다 — 닫아 버리면 되돌아간 줄 모른다.
   */
   function pick(next: number) {
-    if (battle !== null) void setBattleLevel(next)
-    else onSettingsChange({ level: next })
+    scenario.set(next)
   }
 
   const { ref, size } = useBoardSize<HTMLDivElement>()
@@ -110,7 +107,7 @@ export function CampaignStatus({ mode, settings, onSettingsChange }: WidgetProps
         </li>
       </ul>
 
-      {battle === null && <span className="cst__solo">모험 밖 — 설정의 레벨</span>}
+      {!scenario.fromBattle && <span className="cst__solo">모험 밖 — 행낭의 레벨</span>}
 
       {/*
         ┌────────────────────────────────────────────────────────────────────┐

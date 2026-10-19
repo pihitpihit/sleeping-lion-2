@@ -1,7 +1,7 @@
 import { spanOf, type GridMetrics, type Placement } from '../grid'
 import type { Layout, Rotation } from '../layout'
 import { getWidgetDefinition } from '../widgets/registry'
-import type { SatchelMode } from '../widgets/types'
+import type { SatchelMode, ScenarioLevelSource } from '../widgets/types'
 import { WidgetFrame } from './WidgetFrame'
 
 interface Props {
@@ -15,6 +15,7 @@ interface Props {
   onRemove: (instanceId: string) => void
   onOpenSettings: (instanceId: string) => void
   onSettingsChange: (instanceId: string, next: unknown) => void
+  scenario: ScenarioLevelSource
   onRotate: (instanceId: string) => void
 }
 
@@ -34,6 +35,7 @@ export function WidgetBoard({
   onRemove,
   onOpenSettings,
   onSettingsChange,
+  scenario,
   onRotate,
 }: Props) {
   if (metrics.columns <= 0 || metrics.rows <= 0) return null
@@ -110,6 +112,7 @@ export function WidgetBoard({
             onRemove={() => onRemove(widget.instanceId)}
             onOpenSettings={() => onOpenSettings(widget.instanceId)}
             onSettingsChange={(next) => onSettingsChange(widget.instanceId, next)}
+            scenario={scenario}
             onRotate={() => onRotate(widget.instanceId)}
           />
         )

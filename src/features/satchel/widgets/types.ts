@@ -38,6 +38,22 @@ export interface WidgetProps {
    * 화면은 종전대로 `SatchelPage`가 맡는다.
    */
   onSettingsChange: (next: unknown) => void
+  /**
+   * 지금 판의 시나리오 레벨 — **어디서 온 값인지는 화면이 정해 넘긴다.**
+   *
+   * 모험에 앉았으면 판의 레벨이고(`0032`) 아니면 행낭 전체의 것이다. 캠페인 상태와
+   * 골드 카운터가 같은 값을 봐야 하므로 위젯마다 따로 정하지 않는다 — 한때 캠페인
+   * 상태 위젯이 제 설정에 들고 있어 **골드 카운터가 그 레벨을 볼 길이 없었다.**
+   */
+  scenario: ScenarioLevelSource
+}
+
+export interface ScenarioLevelSource {
+  level: number
+  /** 판의 레벨인가. 아니면 행낭에 적어 둔 혼자용 값이다. */
+  fromBattle: boolean
+  /** 고른다 — 앉았으면 판에 얹고, 아니면 행낭에 남긴다. */
+  set: (level: number) => void
 }
 
 export interface WidgetSettingsEditorProps {

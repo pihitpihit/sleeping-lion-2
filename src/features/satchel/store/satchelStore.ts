@@ -77,6 +77,8 @@ interface SatchelState {
   setToolbarPreference: (preference: ToolbarPreference) => void
   toggleWidgetTitles: () => void
   setWidgetSettings: (instanceId: string, next: unknown) => void
+  /** 모험 밖의 시나리오 레벨. 행낭 전체에 하나뿐이다(`SatchelSettings.scenarioLevel`). */
+  setScenarioLevel: (level: number) => void
   /** 시계 방향으로 한 칸 돌린다. */
   rotateWidget: (instanceId: string) => void
   addWidgetOfType: (definitionId: string) => void
@@ -395,6 +397,12 @@ export const useSatchelStore = create<SatchelState>((set, get) => ({
 
   toggleWidgetTitles: () => {
     const settings = { ...get().settings, showWidgetTitles: !get().settings.showWidgetTitles }
+    set({ settings: commit(settings, get().accountId) })
+  },
+
+  setScenarioLevel: (level) => {
+    if (get().settings.scenarioLevel === level) return
+    const settings = { ...get().settings, scenarioLevel: level }
     set({ settings: commit(settings, get().accountId) })
   },
 

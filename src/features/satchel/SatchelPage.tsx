@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { BattlePanel } from './battle/BattlePanel'
 import { useBattleStore } from './battle/battleStore'
 import { useBoardSize } from './useBoardSize'
@@ -66,6 +66,29 @@ export function SatchelPage() {
   const inBattle = useBattleStore((s) => s.battle !== null)
   const resumeBattle = useBattleStore((s) => s.resume)
   const enterSolo = useBattleStore((s) => s.enterSolo)
+
+  /*
+    ┌──────────────────────────────────────────────────────────────────────────┐
+    │ **시나리오 레벨을 어디서 가져올지는 여기 한 곳이 정한다.**                 │
+    └──────────────────────────────────────────────────────────────────────────┘
+
+    앉았으면 판의 레벨(`0032`), 아니면 행낭에 적어 둔 혼자용 값이다. 위젯마다
+    따로 정하면 캠페인 상태는 3을, 골드 카운터는 1을 말하는 일이 생긴다.
+  */
+  const battleLevel = useBattleStore((s) => s.battle?.level ?? null)
+  const setBattleLevel = useBattleStore((s) => s.setLevel)
+  const setScenarioLevel = useSatchelStore((s) => s.setScenarioLevel)
+  const scenario = useMemo(
+    () => ({
+      level: battleLevel ?? settings.scenarioLevel,
+      fromBattle: battleLevel !== null,
+      set: (level: number) => {
+        if (battleLevel !== null) void setBattleLevel(level)
+        else setScenarioLevel(level)
+      },
+    }),
+    [battleLevel, settings.scenarioLevel, setBattleLevel, setScenarioLevel],
+  )
 
   /**
    * 누구의 행낭인지 먼저 정한다.
@@ -191,6 +214,7 @@ export function SatchelPage() {
           onRemove={removeWidgetInstance}
           onOpenSettings={setSettingsTarget}
           onSettingsChange={setWidgetSettings}
+          scenario={scenario}
           onRotate={rotateWidget}
         />
 

@@ -1,6 +1,5 @@
 import { useRef, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import { slotKeyFor } from '../../roster'
-import { useBattleStore } from '../../battle/battleStore'
 import { rowFor } from '../../../rules/scenarioLevel'
 import { stepsFromDrag, TAP_SLOP_PX, toLocalDelta } from '../hpxp/hpxp'
 import type { WidgetProps } from '../types'
@@ -37,7 +36,7 @@ import './GoldCounter.css'
  * **캐릭터의 골드를 고치지 않는다.** 여기 센 것은 판이 끝나면 사람이 정산해
  * 시트에 옮긴다 — 축 ②는 캠페인을 고치지 않는다(SPEC 1장).
  */
-export function GoldCounter({ instanceId, mode, rotation, settings }: WidgetProps) {
+export function GoldCounter({ instanceId, mode, rotation, settings, scenario }: WidgetProps) {
   /**
    * 값이 담기는 열쇠.
    *
@@ -58,12 +57,11 @@ export function GoldCounter({ instanceId, mode, rotation, settings }: WidgetProp
     머리로 곱하던 수다. 환산값은 캠페인 상태 위젯과 같은 표에서 꺼낸다
     (`rules/scenarioLevel.ts`, 구현 결정 283).
 
-    **레벨은 앉은 판의 것만 쓴다.** 모험에 안 앉았으면 이 위젯은 레벨을 알 길이
-    없다 — 짐작해서 곱하면 사람이 그 수를 믿고 정산한다(구현 결정 115). 그때는
-    안 적는다.
+    레벨은 화면이 넘긴다(`scenario`) — 앉았으면 판의 것, 아니면 행낭의 것이라
+    **캠페인 상태 위젯이 말하는 레벨과 늘 같다.** 한때 앉은 판의 것만 써서 모험
+    밖에서는 아무것도 안 떴다(형님이 짚었다).
   */
-  const battleLevel = useBattleStore((s) => s.battle?.level ?? null)
-  const worth = battleLevel === null ? null : value * rowFor(battleLevel).goldPerCoin
+  const worth = value * rowFor(scenario.level).goldPerCoin
 
   /**
    * 끄는 동안의 상태.
@@ -160,7 +158,7 @@ export function GoldCounter({ instanceId, mode, rotation, settings }: WidgetProp
       aria-valuenow={value}
       aria-valuemin={MIN_GOLD}
       aria-valuemax={MAX_GOLD}
-      aria-valuetext={worth === null ? `주운 금화 ${value}` : `주운 금화 ${value}, 골드로 ${worth}`}
+      aria-valuetext={`주운 금화 ${value}, 골드로 ${worth}`}
       disabled={disabled}
       onPointerDown={begin}
       onPointerMove={move}
@@ -171,7 +169,7 @@ export function GoldCounter({ instanceId, mode, rotation, settings }: WidgetProp
       <Coin />
       <span className="gold__value">
         {value}
-        {worth !== null && <span className="gold__worth">{worth}</span>}
+        <span className="gold__worth">{worth}</span>
       </span>
     </button>
   )

@@ -74,22 +74,6 @@
   color: var(--sl-text-faint);
 }
 
-/* 설정의 레벨 손잡이. */
-.cstset {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  margin: 0.6rem 0;
-}
-
-.cstset__n {
-  min-width: 2rem;
-  text-align: center;
-  font-size: 1.8rem;
-  color: var(--sl-gold);
-}
-
 /*
   위젯 전체를 덮는 투명한 단추.
 

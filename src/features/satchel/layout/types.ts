@@ -82,6 +82,16 @@ export interface SatchelSettings {
    * 태블릿에서 방향이 따로 놀게 된다.
    */
   widgetRotations: Record<string, Rotation>
+  /**
+   * 모험 밖에서 쓰는 시나리오 레벨 — **행낭 전체에 하나뿐이다.**
+   *
+   * 한때 캠페인 상태 위젯이 제 설정에 들고 있었는데, 그러면 **골드 카운터처럼
+   * 같은 레벨로 셈해야 하는 위젯이 그 값을 볼 길이 없었다**(형님이 짚었다). 레벨은
+   * 상 위의 사실이라 원소·라운드와 같은 결로 하나만 둔다(구현 결정 23·32).
+   *
+   * 모험에 앉아 있으면 판의 레벨이 이긴다(`0032`) — 그 판단은 화면이 한 곳에서 한다.
+   */
+  scenarioLevel: number
 }
 
 /** 90도 단위. 임의 각도는 두지 않는다 — 상 둘레에 앉는 자리가 넷이다. */
@@ -114,6 +124,7 @@ export function emptySettings(): SatchelSettings {
     showWidgetTitles: true,
     widgetSettings: {},
     widgetRotations: {},
+    scenarioLevel: 1,
   }
 }
 
@@ -131,7 +142,8 @@ export function isEmptySettings(settings: SatchelSettings): boolean {
     settings.toolbarPosition === 'auto' &&
     settings.showWidgetTitles &&
     Object.keys(settings.widgetSettings).length === 0 &&
-    Object.keys(settings.widgetRotations).length === 0
+    Object.keys(settings.widgetRotations).length === 0 &&
+    settings.scenarioLevel === 1
   )
 }
 
