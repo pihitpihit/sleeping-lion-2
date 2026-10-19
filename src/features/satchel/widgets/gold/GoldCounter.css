@@ -50,6 +50,7 @@
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   /* **여기서 직접 건다.** 부모의 `.sl-numeral`에 기대면 이 파일이 나중에 실릴 때
@@ -67,6 +68,22 @@
   /* 세 자리까지 들어간다. 숫자가 커져도 금화 밖으로 나가지 않게 살짝 좁힌다. */
   letter-spacing: -0.02em;
   pointer-events: none;
+}
+
+/*
+  골드로 셈한 값. **파랗게 둔다**(형님이 정했다) — 금화 수와 한눈에 갈려야 하고,
+  금빛 바탕 위라 같은 갈색이면 둘이 한 덩어리로 읽힌다.
+
+  금화 수의 밑을 받치는 말이라 작게 둔다. 밝은 금빛 위에서 묻히지 않게 짙은
+  남색에 밝은 테를 두른다.
+*/
+.gold__worth {
+  margin-top: 1cqmin;
+  font-size: 0.5em;
+  color: #123a8c;
+  text-shadow:
+    0 0 2px rgb(255 240 190 / 90%),
+    0 1px 0 rgb(255 240 190 / 70%);
 }
 
 /* 플레이 모드가 아니면 만질 수 없다는 것이 보여야 한다. */
