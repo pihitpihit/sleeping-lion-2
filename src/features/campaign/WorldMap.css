@@ -71,12 +71,22 @@
   pointer-events: none;
 }
 
+/*
+  iOS는 누른 단추에 회색 둥근 상자(탭 강조)를 깔고, 누른 뒤에는 초점 테가 남는다 —
+  둘 다 「둥근 사각형」으로 보여 고른 빛을 가린다. 탭 강조는 걷고, 초점 테는 키보드로
+  옮겨 왔을 때(`:focus-visible`)만 남긴다.
+*/
 .wmap__sticker {
   position: absolute;
   padding: 0;
   background: none;
   border: 0;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wmap__sticker:focus:not(:focus-visible) {
+  outline: none;
 }
 
 .wmap__sticker img {
@@ -107,11 +117,39 @@
   opacity: 0.8;
 }
 
+/*
+  **누른 스티커는 테두리 상자가 아니라 넓게 번지는 빛으로 짚는다(형님이 정했다).**
+  둥근 사각형을 두르면 스티커의 윤곽과 따로 놀아 지도 위에 단추가 하나 얹힌 꼴이다.
+  그림자로 두르면 윤곽을 그대로 따라간다. 색은 청록과 흰빛 사이를 숨 쉬듯 오간다 —
+  상태 색(초록·금·잉걸)과 겹치지 않아 「지금 고른 것」으로만 읽힌다. 상태 색 위에
+  덮어쓰므로 고른 동안은 그 빛이 앞선다.
+*/
 .wmap__sticker--picked {
   z-index: 1;
-  outline: 2px solid var(--sl-gold-bright);
-  outline-offset: 2px;
-  border-radius: 4px;
+}
+
+.wmap__sticker--picked img {
+  animation: wmap-breathe 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes wmap-breathe {
+  from {
+    filter: drop-shadow(0 0 3px #22e5ff) drop-shadow(0 0 8px #22e5ff)
+      drop-shadow(0 0 16px #22e5ff);
+  }
+  to {
+    filter: drop-shadow(0 0 4px #ffffff) drop-shadow(0 0 11px #c9fbff)
+      drop-shadow(0 0 22px #ffffff);
+  }
+}
+
+/* 움직임을 줄여 달라고 한 기기에서는 숨 쉬지 않고 청록에 멎는다. */
+@media (prefers-reduced-motion: reduce) {
+  .wmap__sticker--picked img {
+    animation: none;
+    filter: drop-shadow(0 0 3px #22e5ff) drop-shadow(0 0 8px #22e5ff)
+      drop-shadow(0 0 16px #22e5ff);
+  }
 }
 
 /* 지도 위에 떠 있는 유일한 단추. 노치·둥근 모서리를 피해 안전영역 안에 선다. */
