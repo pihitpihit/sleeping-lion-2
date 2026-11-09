@@ -13,7 +13,6 @@ import {
   type Sticker,
 } from './worldMapSpots'
 import { mapUrls } from './worldMapNet'
-import './logview.css'
 import './WorldMap.css'
 
 /**
@@ -70,25 +69,31 @@ export function WorldMap({
   }, [names])
 
   return createPortal(
-    <div className="logview">
-      <WorldMapPanel stickers={stickers} urls={urls} failed={failed} onClose={onClose} />
-    </div>,
+    <WorldMapPanel stickers={stickers} urls={urls} failed={failed} onClose={onClose} />,
     document.body,
   )
 }
 
 /** 이 이상 움직였으면 누른 것이 아니라 끈 것이다. */
 const TAP_SLOP_PX = 6
+/** 두 번 누름으로 치는 사이. */
+const DOUBLE_TAP_MS = 300
 
 /**
  * 지도 그 자체 — 값만 받는다.
  *
- * **끌기와 벌리기를 직접 받는다**(`touch-action: none`). 브라우저에 끌기를 맡기면
- * 둘째 손가락이 닿기 전에 브라우저가 첫째를 가져가 벌리기가 안 잡힌다 — 둘을 한
- * 곳에서 셈해야 엉키지 않는다. 마우스 휠은 그대로 굴린다.
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **틀 없이 화면을 가득 채운다. 떠 있는 것은 우상단의 닫기 단추뿐이다.**    │
+ * └──────────────────────────────────────────────────────────────────────────┘
  *
- * 키울 때는 **가운데(벌리면 두 손가락 사이)를 붙든 채** 키운다 — 보던 자리가
- * 화면 밖으로 달아나지 않는다.
+ * 머리·범례·배율 단추를 두었다가 걷었다(형님이 정했다) — 지도가 화면의 주인이어야
+ * 한다. 처음에는 **화면을 덮는 크기**(cover)로 펴고 가운데를 보여 준다: 세로 폰이면
+ * 위아래가 꽉 차고 옆으로 끌어 본다. 스티커를 누르면 그때만 아래에 이름이 뜬다.
+ *
+ * **끌기와 벌리기를 직접 받는다**(`touch-action: none`). 브라우저에 끌기를 맡기면
+ * 둘째 손가락이 닿기 전에 브라우저가 첫째를 가져가 벌리기가 안 잡힌다. 단추가 없으니
+ * **두 번 누르면 한 단계 키우고**(끝에서는 처음 크기로), 트랙패드 벌리기(ctrl+휠)도
+ * 받는다. 키울 때는 그 자리를 붙든 채 키운다 — 보던 곳이 달아나지 않는다.
  */
 export function WorldMapPanel({
   stickers,
@@ -107,10 +112,14 @@ export function WorldMapPanel({
   const [size, setSize] = useState(initialSize)
   const [zoom, setZoom] = useState(1)
   const [picked, setPicked] = useState<number | null>(null)
+  /** 화면(지도 칸)의 크기. 덮는 크기를 셈하려면 알아야 한다. */
+  const [view, setView] = useState<{ w: number; h: number } | null>(null)
 
   const viewport = useRef<HTMLDivElement>(null)
   /** 키운 뒤 붙들 자리 — 지도 위의 비율과 그 자리가 화면 어디에 있었나. */
   const anchor = useRef<{ fx: number; fy: number; vx: number; vy: number } | null>(null)
+  const centered = useRef(false)
+  const lastTap = useRef<{ at: number; x: number; y: number } | null>(null)
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const gesture = useRef<{
     startX: number
@@ -121,6 +130,9 @@ export function WorldMapPanel({
     /** 손가락이 닿은 스티커. 지도가 포인터를 붙들므로 스티커는 클릭을 못 받는다. */
     on: number | null
   }>({ startX: 0, startY: 0, moved: false, pinchDist: null, pinchZoom: 1, on: null })
+
+  /** 배율 1에서의 지도 폭(px) — 화면을 남김없이 덮는 크기다. */
+  const base = size !== null && view !== null ? Math.max(view.w, (view.h * size.w) / size.h) : null
 
   /** 화면의 (vx, vy)를 붙든 채 배율을 바꾼다. */
   function zoomAt(next: number, vx: number, vy: number) {
@@ -136,21 +148,60 @@ export function WorldMapPanel({
     setZoom(z)
   }
 
-  function zoomCenter(dir: 1 | -1) {
+  /*
+    휠 리스너는 한 번 붙이고 그대로 두므로 그때의 함수를 붙들면 옛 배율로 셈한다 —
+    늘 지금 것을 보게 한 칸 건너 둔다.
+  */
+  const zoomAtRef = useRef(zoomAt)
+  const zoomRef = useRef(zoom)
+  useLayoutEffect(() => {
+    zoomAtRef.current = zoomAt
+    zoomRef.current = zoom
+  })
+
+  // 화면 크기를 따라간다 — 폰을 돌리면 덮는 크기가 바뀐다.
+  useEffect(() => {
     const el = viewport.current
     if (!el) return
-    zoomAt(stepZoom(zoom, dir), el.clientWidth / 2, el.clientHeight / 2)
-  }
+    const ro = new ResizeObserver(() => setView({ w: el.clientWidth, h: el.clientHeight }))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [urls])
+
+  // 트랙패드 벌리기는 ctrl+휠로 온다. 막으려면 수동 리스너여야 한다(React의 휠은 passive).
+  useEffect(() => {
+    const el = viewport.current
+    if (!el) return
+    const onWheel = (e: WheelEvent) => {
+      if (!e.ctrlKey) return
+      e.preventDefault()
+      const r = el.getBoundingClientRect()
+      zoomAtRef.current(
+        zoomRef.current * Math.exp(-e.deltaY / 200),
+        e.clientX - r.left,
+        e.clientY - r.top,
+      )
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [urls])
 
   // 배율이 바뀐 뒤 그려진 크기로 붙든 자리를 되돌린다 — 그리기 전에 맞춰야 튀지 않는다.
+  // 처음 크기가 정해지면 가운데를 보여 준다.
   useLayoutEffect(() => {
     const el = viewport.current
+    if (!el || base === null) return
     const a = anchor.current
-    if (!el || !a) return
-    el.scrollLeft = a.fx * el.scrollWidth - a.vx
-    el.scrollTop = a.fy * el.scrollHeight - a.vy
-    anchor.current = null
-  }, [zoom])
+    if (a) {
+      el.scrollLeft = a.fx * el.scrollWidth - a.vx
+      el.scrollTop = a.fy * el.scrollHeight - a.vy
+      anchor.current = null
+    } else if (!centered.current) {
+      el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2
+      el.scrollTop = (el.scrollHeight - el.clientHeight) / 2
+      centered.current = true
+    }
+  }, [zoom, base])
 
   function onDown(e: React.PointerEvent<HTMLDivElement>) {
     e.currentTarget.setPointerCapture(e.pointerId)
@@ -196,11 +247,27 @@ export function WorldMapPanel({
     if (pointers.current.size > 0) return
     const g = gesture.current
     g.pinchDist = null
+    if (e.type !== 'pointerup' || g.moved) return
+
     /*
       **누름은 여기서 가린다.** 지도가 포인터를 붙들고 있어 클릭이 스티커가 아니라
       지도로 간다 — 끌지 않고 뗐으면 닿았던 스티커를 고른다. 빈 데를 누르면 내린다.
+      잇달아 두 번 누르면 그 자리를 붙든 채 한 단계 키운다(끝이면 처음으로).
     */
-    if (e.type === 'pointerup' && !g.moved) pick(g.on)
+    const now = e.timeStamp
+    const prev = lastTap.current
+    if (
+      prev &&
+      now - prev.at < DOUBLE_TAP_MS &&
+      Math.hypot(e.clientX - prev.x, e.clientY - prev.y) < TAP_SLOP_PX * 4
+    ) {
+      lastTap.current = null
+      const r = viewport.current!.getBoundingClientRect()
+      zoomAt(zoom >= 4 ? 1 : stepZoom(zoom, 1), e.clientX - r.left, e.clientY - r.top)
+      return
+    }
+    lastTap.current = { at: now, x: e.clientX, y: e.clientY }
+    pick(g.on)
   }
 
   function pick(no: number | null) {
@@ -211,47 +278,13 @@ export function WorldMapPanel({
   const chosen = stickers.find((s) => s.no === picked) ?? null
 
   return (
-    <section className="logview__panel wmap" role="dialog" aria-modal="true" aria-label="세계 지도">
-      <header className="logview__head">
-        <h2 className="logview__title">세계 지도</h2>
-        <span className="wmap__zoom">
-          <button
-            type="button"
-            className="wmap__zbtn"
-            aria-label="줄이기"
-            disabled={zoom <= 1}
-            onClick={() => zoomCenter(-1)}
-          >
-            −
-          </button>
-          <button
-            type="button"
-            className="wmap__zbtn"
-            aria-label="키우기"
-            disabled={zoom >= 4}
-            onClick={() => zoomCenter(1)}
-          >
-            +
-          </button>
-        </span>
-        <button type="button" className="logview__close" aria-label="닫기" onClick={onClose}>
-          ×
-        </button>
-      </header>
-
-      <p className="wmap__legend">
-        <span className="wmap__key wmap__key--open">{STATE_LABEL.open}</span>
-        <span className="wmap__key wmap__key--done">{STATE_LABEL.done}</span>
-        <span className="wmap__key wmap__key--blocked">{STATE_LABEL.blocked}</span>
-        <span className="wmap__hint">스티커를 누르면 이름이 나온다.</span>
-      </p>
-
+    <section className="wmap" role="dialog" aria-modal="true" aria-label="세계 지도">
       {failed ? (
-        <p className="logview__empty">지도를 받지 못했다. 서버에 닿는지 확인한다.</p>
+        <p className="wmap__note">지도를 받지 못했다. 서버에 닿는지 확인한다.</p>
       ) : urls === null ? (
-        <p className="logview__empty">지도를 받는 중.</p>
+        <p className="wmap__note">지도를 받는 중.</p>
       ) : !mapUrl ? (
-        <p className="logview__empty">
+        <p className="wmap__note">
           지도 그림이 아직 없다. 공개 레포에 담지 않으므로 <a href="#/admin">주인장 화면</a>에서
           올린다.
         </p>
@@ -264,7 +297,10 @@ export function WorldMapPanel({
           onPointerUp={onUp}
           onPointerCancel={onUp}
         >
-          <div className="wmap__sheet" style={{ width: `${zoom * 100}%` }}>
+          <div
+            className="wmap__sheet"
+            style={{ width: base === null ? `${zoom * 100}%` : `${base * zoom}px` }}
+          >
             <img
               className="wmap__map"
               src={mapUrl}
@@ -299,19 +335,19 @@ export function WorldMapPanel({
         </div>
       )}
 
-      {/* 누른 스티커의 이름. 지도 위에 띄우면 손가락에 가린다 — 아래에 붙인다. */}
-      <p className="wmap__caption" aria-live="polite">
-        {chosen ? (
-          <>
-            <b className="sl-numeral">#{chosen.no}</b> {chosen.name}{' '}
-            <span className={`wmap__key wmap__key--${chosen.state}`}>
-              {STATE_LABEL[chosen.state]}
-            </span>
-          </>
-        ) : (
-          `붙은 스티커 ${stickers.length}장`
-        )}
-      </p>
+      <button type="button" className="wmap__close" aria-label="닫기" onClick={onClose}>
+        ×
+      </button>
+
+      {/* 누른 스티커의 이름 — 누를 때만 뜬다. 지도 위 손가락 밑이 아니라 아래에 띄운다. */}
+      {chosen && (
+        <p className="wmap__caption" aria-live="polite">
+          <b className="sl-numeral">#{chosen.no}</b> {chosen.name}{' '}
+          <span className={`wmap__key wmap__key--${chosen.state}`}>
+            {STATE_LABEL[chosen.state]}
+          </span>
+        </p>
+      )}
     </section>
   )
 }
