@@ -28,6 +28,7 @@ import './ClassDataEditor.css'
 export function ClassDataEditor() {
   const stored = useClassStore((s) => s.list)
   const load = useClassStore((s) => s.load)
+  const artUrls = useClassStore((s) => s.artUrls)
 
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
@@ -97,7 +98,7 @@ export function ClassDataEditor() {
       {stored.length > 0 && (
         <ul className="classdata__list">
           {stored.map((c) => {
-            const url = c.icon === null ? null : classIconUrl(c.icon)
+            const url = artUrls[c.id] ?? (c.icon === null ? null : classIconUrl(c.icon))
             return (
               <li key={c.id}>
                 {/* 그림이 없는 클래스는 이름 첫 글자로 대신한다 — 팩의 21쪽은

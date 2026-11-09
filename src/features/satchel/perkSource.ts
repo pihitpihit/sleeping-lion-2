@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { classIconUrl } from '../campaign/character'
 import { levelForXp } from '../campaign/character'
-import { classInfoOf, maxHpFor, useClassStore } from '../campaign/classStore'
+import { classIconSrc, classInfoOf, maxHpFor, useClassStore } from '../campaign/classStore'
 import { perkDeckChanges } from '../campaign/perks'
 import type { PerkDeckChange } from './widgets/deck/perks'
 import { useRosterStore } from './roster'
@@ -112,13 +112,30 @@ export function useCharacterStats(): Map<string, CharacterStats> {
 export function useCardOwner(characterId: string | null): CardOwner | null {
   const entries = useRosterStore((s) => s.entries)
   const classes = useClassStore((s) => s.list)
+  const artUrls = useClassStore((s) => s.artUrls)
 
   if (characterId === null) return null
   const entry = entries.find((e) => e.id === characterId)
   if (!entry) return null
 
   const info = classInfoOf(classes, entry.classId, entry.classIcon)
-  return ownerBadge(info?.icon ?? entry.classIcon, info?.name ?? '', entry.name)
+  return ownerBadge(
+    info?.icon ?? entry.classIcon,
+    info?.name ?? '',
+    entry.name,
+    classIconSrc(classes, artUrls, entry.classId, entry.classIcon),
+  )
+}
+
+/**
+ * 캐릭터 → 클래스 표식 그림의 주소. 행낭의 고르개들이 쓴다 — 축 ②가 클래스 표에
+ * 닿는 자리는 여기 하나다(구현 결정 142). 팩에 없는 클래스는 비공개 버킷의 그림
+ * (`0057`)이 온다.
+ */
+export function useClassIcons(): (classId: string | null, icon: number) => string | null {
+  const classes = useClassStore((s) => s.list)
+  const artUrls = useClassStore((s) => s.artUrls)
+  return (classId, icon) => classIconSrc(classes, artUrls, classId, icon)
 }
 
 /**
@@ -163,10 +180,16 @@ export function isLatinLetter(letter: string): boolean {
  * **그림이 없으면 첫 글자로 대신한다** — 사자의 턱 넷처럼 팩에 그림이 없는
  * 클래스가 있다(구현 결정 119). 클래스 이름도 없으면 캐릭터 이름을 쓴다.
  */
-export function ownerBadge(icon: number, className: string, characterName: string): CardOwner {
+export function ownerBadge(
+  icon: number,
+  className: string,
+  characterName: string,
+  /** 이미 고른 그림 주소(`classIconSrc`). 없으면 팩 그림을 아이콘 번호로 찾는다. */
+  iconUrl?: string | null,
+): CardOwner {
   const label = className || characterName
   return {
-    iconUrl: classIconUrl(icon),
+    iconUrl: iconUrl !== undefined ? iconUrl : classIconUrl(icon),
     letter: label.slice(0, 1),
     name: label,
   }

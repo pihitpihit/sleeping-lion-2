@@ -2,8 +2,7 @@ import { useEffect, useState, type CSSProperties } from 'react'
 import { useAuthStore } from '../auth/authStore'
 import type { Identity } from '../net/types'
 import { useJournalStore } from './campaignStore'
-import { classInfoOf, useClassStore } from './classStore'
-import { classIconUrl } from './character'
+import { classIconSrc, classInfoOf, useClassStore } from './classStore'
 import { LevelBadge } from './LevelBadge'
 import { graceShort } from './grace'
 import { Crew } from './Crew'
@@ -240,6 +239,7 @@ function MyCharacters({
 }) {
   const classes = useClassStore((s) => s.list)
   const loadClasses = useClassStore((s) => s.load)
+  const artUrls = useClassStore((s) => s.artUrls)
   useEffect(() => {
     void loadClasses()
   }, [loadClasses])
@@ -263,7 +263,7 @@ function MyCharacters({
         <ul className="journal__mine">
           {active.map((c) => {
             const info = classInfoOf(classes, c.classId, c.classIcon)
-            const iconUrl = classIconUrl(c.classIcon)
+            const iconUrl = classIconSrc(classes, artUrls, c.classId, c.classIcon)
             return (
               <li key={c.id} className="journal__row">
                 <a className="journal__char" href={`#/character/${c.id}`}>

@@ -3,9 +3,8 @@ import { useAuthStore } from '../auth/authStore'
 import { useJournalStore } from './campaignStore'
 import { fetchOrCreateFor } from './campaignNet'
 import { partyAdapter } from '../net'
-import { classIconUrl } from './character'
 import { CharacterSheet } from './CharacterSheet'
-import { classInfoOf, useClassStore } from './classStore'
+import { classIconSrc, classInfoOf, useClassStore } from './classStore'
 import { characterIdFromHash } from './journalRoute'
 import { useOneCharacterStore } from './oneCharacter'
 import { useScrolled } from './useScrolled'
@@ -92,6 +91,7 @@ export function CharacterPage() {
 
   const classes = useClassStore((s) => s.list)
   const loadClasses = useClassStore((s) => s.load)
+  const artUrls = useClassStore((s) => s.artUrls)
   useEffect(() => {
     void loadClasses()
   }, [loadClasses])
@@ -122,7 +122,12 @@ export function CharacterPage() {
     보이던 종전 모습이다.
   */
   const info = classInfoOf(classes, character?.classId ?? null, character?.classIcon ?? 0)
-  const iconUrl = classIconUrl(info?.icon ?? character?.classIcon ?? 0)
+  const iconUrl = classIconSrc(
+    classes,
+    artUrls,
+    character?.classId ?? null,
+    character?.classIcon ?? 0,
+  )
 
   return (
     <div className="journal">

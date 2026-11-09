@@ -24,6 +24,7 @@ export function Retirements({
   onEdit,
   onRemove,
   onShift,
+  iconOf,
 }: {
   rows: readonly Retirement[]
   editing: boolean
@@ -32,6 +33,11 @@ export function Retirements({
   onEdit: (id: string, edits: RetirementEdits) => void
   onRemove: (id: string) => void
   onShift: (id: string, delta: number) => void
+  /**
+   * 표식 그림을 고른다 — 팩에 없는 클래스는 비공개 버킷의 그림(`0057`). 줄은 그때의
+   * 클래스 이름을 베껴 들고 있으므로(구현 결정 518) 이름으로 찾는다. 없으면 팩 그림.
+   */
+  iconOf?: (row: Retirement) => string | null
 }) {
   const [openId, setOpenId] = useState<string | null>(null)
   const [asking, setAsking] = useState<Retirement | null>(null)
@@ -58,7 +64,7 @@ export function Retirements({
           <ol className="retire__rows">
             {rows.map((row, i) => {
               const open = editing && openId === row.id
-              const iconUrl = classIconUrl(row.classIcon)
+              const iconUrl = iconOf ? iconOf(row) : classIconUrl(row.classIcon)
               return (
                 <li key={row.id} className="retire__row">
                   <div className="retire__line">

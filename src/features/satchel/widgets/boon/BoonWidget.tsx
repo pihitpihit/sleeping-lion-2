@@ -2,11 +2,10 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { WidgetProps } from '../types'
 import { useRosterStore } from '../../roster'
-import { usePerkChanges } from '../../perkSource'
+import { useClassIcons, usePerkChanges } from '../../perkSource'
 import { useAttackDeckStore } from '../deck/deckStore'
 import { resolveComposition } from '../deck/perks'
 import { STANDARD_COMPOSITION } from '../deck/deck'
-import { classIconUrl } from '../../../campaign/character'
 import { MAX_AT_ONCE, boonLook, type BoonKind } from './boon'
 import './BoonWidget.css'
 
@@ -73,6 +72,7 @@ function BoonDialog({ kind, onClose }: { kind: BoonKind; onClose: () => void }) 
 
   const entries = useRosterStore((s) => s.entries)
   const loadRoster = useRosterStore((s) => s.load)
+  const iconOf = useClassIcons()
   const bestow = useAttackDeckStore((s) => s.bestow)
 
   /** 받는 덱. `null`이면 몬스터 덱이다 — 캐릭터가 아니라는 뜻으로 둔다. */
@@ -145,7 +145,7 @@ function BoonDialog({ kind, onClose }: { kind: BoonKind; onClose: () => void }) 
           </li>
 
           {alive.map((entry) => {
-            const iconUrl = classIconUrl(entry.classIcon)
+            const iconUrl = iconOf(entry.classId, entry.classIcon)
             return (
               <li key={entry.id}>
                 <button

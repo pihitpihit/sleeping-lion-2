@@ -25,6 +25,7 @@ import { Retirements } from './Retirements'
 import { useRetirementStore } from './retirementStore'
 import { useItineraryStore } from './itineraryStore'
 import { useScenarioStore } from './scenarioStore'
+import { classIconSrc, useClassStore } from './classStore'
 import { MissedPanel, ScenarioOutcomePrompt } from './ScenarioOutcome'
 import { MiniDialog } from './MiniDialog'
 import { missedOf, type Missed } from './scenarioLinks'
@@ -114,6 +115,9 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   const loadScenarios = useScenarioStore((s) => s.load)
   const setScenarioState = useScenarioStore((s) => s.set)
   const scenarioGraph = useScenarioStore((s) => s.graph)
+  /* 은퇴 표의 표식 — 팩에 없는 클래스는 비공개 버킷의 그림이다(`0057`). */
+  const classList = useClassStore((s) => s.list)
+  const classArt = useClassStore((s) => s.artUrls)
   const scenarioApply = useScenarioStore((s) => s.apply)
   const setScenarioAchievements = useScenarioStore((s) => s.setAchievements)
   /** 놓친 해금 팝업 — 열 때 한 번 셈해 둔다. 떠 있는 동안 바뀌면 고르던 것이 흔들린다. */
@@ -872,6 +876,14 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
             onEdit={(id, edits) => void editRetired(id, edits)}
             onRemove={(id) => void removeRetired(id)}
             onShift={(id, delta) => void shiftRetired(id, delta)}
+            iconOf={(row) =>
+              classIconSrc(
+                classList,
+                classArt,
+                classList.find((c) => c.name === row.className)?.id ?? null,
+                row.classIcon,
+              )
+            }
           />
           {retireError !== null && (
             <p className="sheet__error" role="alert">

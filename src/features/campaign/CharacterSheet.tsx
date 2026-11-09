@@ -6,7 +6,6 @@ import {
   MAX_CHECKMARKS,
   XP_STAR_URL,
   XP_THRESHOLDS,
-  classIconUrl,
   levelForXp,
   perkSlotCount,
   perksEarned,
@@ -14,7 +13,7 @@ import {
   xpToNextLevel,
 } from './character'
 import { DeckPreview } from './DeckPreview'
-import { classInfoOf, maxHpFor, useClassStore } from './classStore'
+import { classIconSrc, classInfoOf, maxHpFor, useClassStore } from './classStore'
 import { HandCards } from './HandCards'
 import { LevelBadge } from './LevelBadge'
 import { splitByShop, type Purchase } from './characterLog'
@@ -305,8 +304,6 @@ export function CharacterSheet({
       : `${shown.xp}/${nextMark} (${Math.round((shown.xp / nextMark) * 100)}%)`
   const slots = perkSlotCount(level, shown.checkmarks)
   const earned = perksEarned(level, shown.checkmarks)
-  // 클래스는 초안에 없다 — 바뀔 수 없으므로 레코드에서 그대로 읽는다.
-  const iconUrl = classIconUrl(character.classIcon)
 
   /**
    * 클래스 수치. 관리자가 넣어 두었으면 이름·핸드 사이즈·최대 체력이 온다.
@@ -316,6 +313,9 @@ export function CharacterSheet({
    */
   const classes = useClassStore((s) => s.list)
   const loadClasses = useClassStore((s) => s.load)
+  const artUrls = useClassStore((s) => s.artUrls)
+  // 클래스는 초안에 없다 — 바뀔 수 없으므로 레코드에서 그대로 읽는다.
+  const iconUrl = classIconSrc(classes, artUrls, character.classId, character.classIcon)
   useEffect(() => {
     void loadClasses()
   }, [loadClasses])
@@ -780,7 +780,12 @@ export function CharacterSheet({
           perks={rows.map((r) => r.perk)}
           checked={shown.perks}
           /* 카드 왼쪽 아래 홈에 앉을 표식. 실물에서 그 자리는 덱 주인의 것이다. */
-          owner={ownerBadge(info?.icon ?? character.classIcon, info?.name ?? '', character.name)}
+          owner={ownerBadge(
+            info?.icon ?? character.classIcon,
+            info?.name ?? '',
+            character.name,
+            iconUrl,
+          )}
         />
 
         {/* ------------------------------------------------------------------

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Identity } from '../net/types'
-import { classIconUrl, levelForXp } from './character'
+import { levelForXp } from './character'
+import { classIconSrc, useClassStore } from './classStore'
 import { useCharacterStore } from './characterStore'
 import { LevelBadge } from './LevelBadge'
 import { graceShort } from './grace'
@@ -36,6 +37,8 @@ interface Props {
  */
 export function Roster({ campaignId, me, readOnly = false }: Props) {
   const characters = useCharacterStore((s) => s.characters)
+  const classList = useClassStore((s) => s.list)
+  const classArt = useClassStore((s) => s.artUrls)
   const loaded = useCharacterStore((s) => s.loaded)
   const offline = useCharacterStore((s) => s.offline)
   const error = useCharacterStore((s) => s.error)
@@ -70,7 +73,7 @@ export function Roster({ campaignId, me, readOnly = false }: Props) {
       <ul className="roster__list">
         {shown.map((character) => {
           const mine = character.ownerId === me.userId
-          const iconUrl = classIconUrl(character.classIcon)
+          const iconUrl = classIconSrc(classList, classArt, character.classId, character.classIcon)
           return (
             <li key={character.id} className={character.retired ? 'roster__row--retired' : ''}>
               {/* 줄은 그 캐릭터로 가는 문이다 — 시트는 제 주소에 한 장뿐이다. */}

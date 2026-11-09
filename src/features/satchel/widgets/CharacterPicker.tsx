@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { classIconUrl } from '../../campaign/character'
 import { useRosterStore } from '../roster'
+import { useClassIcons } from '../perkSource'
 import './CharacterPicker.css'
 
 interface Props {
@@ -46,6 +46,7 @@ export function CharacterPicker({ value, onChange, detailOf, actionOf }: Props) 
   const entries = useRosterStore((s) => s.entries)
   const loaded = useRosterStore((s) => s.loaded)
   const load = useRosterStore((s) => s.load)
+  const iconOf = useClassIcons()
 
   useEffect(() => {
     void load()
@@ -82,7 +83,7 @@ export function CharacterPicker({ value, onChange, detailOf, actionOf }: Props) 
 
           {entries.map((entry) => {
             const on = entry.id === value
-            const iconUrl = classIconUrl(entry.classIcon)
+            const iconUrl = iconOf(entry.classId, entry.classIcon)
             const detail = detailOf?.(entry.id)
             /*
               **단추를 단추 안에 넣을 수 없다**(HTML이 허락하지 않는다). 줄을

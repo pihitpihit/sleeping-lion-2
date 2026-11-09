@@ -1,7 +1,7 @@
 import { create } from 'zustand'
-import { fetchClasses, type ClassInfo } from './classNet'
+import { fetchClassArt, fetchClasses, type ClassInfo } from './classNet'
 import { fetchClassPerks, type ClassPerk } from './perkNet'
-import { MAX_LEVEL, clampLevel } from './character'
+import { MAX_LEVEL, clampLevel, classIconUrl } from './character'
 
 /**
  * 클래스 수치 스토어.
@@ -22,6 +22,8 @@ interface ClassState {
   list: ClassInfo[]
   /** 클래스 id → 그 클래스의 특혜 줄들. `sort` 차례다. */
   perks: Record<string, ClassPerk[]>
+  /** 클래스 id → 팩에 없는 표식 그림의 주소(`0057`). 받은 것만 든다. */
+  artUrls: Record<string, string>
   loaded: boolean
   load: (force?: boolean) => Promise<void>
 }
@@ -38,12 +40,18 @@ function groupPerks(perks: readonly ClassPerk[]): Record<string, ClassPerk[]> {
 export const useClassStore = create<ClassState>((set, get) => ({
   list: [],
   perks: {},
+  artUrls: {},
   loaded: false,
 
   load: async (force = false) => {
     if (get().loaded && !force) return
     const [list, perks] = await Promise.all([fetchClasses(), fetchClassPerks()])
     set({ list, perks: groupPerks(perks), loaded: true })
+    // 그림은 뒤따른다 — 이름·수치가 먼저 서고 표식은 받는 대로 바뀐다.
+    // 다시 읽을 때는 옛 주소를 놓아 준다(안 놓으면 페이지가 살아 있는 동안 쌓인다).
+    const art = await fetchClassArt(list)
+    for (const url of Object.values(get().artUrls)) URL.revokeObjectURL(url)
+    set({ artUrls: art })
   },
 }))
 
@@ -75,4 +83,22 @@ export function classInfoOf(
 export function maxHpFor(info: ClassInfo | null, level: number): number | null {
   if (!info || info.hp.length !== MAX_LEVEL) return null
   return info.hp[clampLevel(level) - 1] ?? null
+}
+
+/**
+ * 클래스 표식 그림의 주소 — **어디서 그리든 이 함수 하나로 고른다.**
+ *
+ * 팩에 없는 클래스(사자의 턱 넷)는 비공개 버킷의 그림(`0057`), 팩에 있는 클래스는
+ * 팩의 그림, 둘 다 없으면 `null`(부르는 쪽이 첫 글자로 선다). 자리마다 따로 고르면
+ * 한 화면에서는 그림이고 다른 화면에서는 글자인 꼴이 난다.
+ */
+export function classIconSrc(
+  list: readonly ClassInfo[],
+  artUrls: Readonly<Record<string, string>>,
+  classId: string | null,
+  icon: number,
+): string | null {
+  const info = classInfoOf(list, classId, icon)
+  if (info && artUrls[info.id]) return artUrls[info.id]
+  return classIconUrl(info?.icon ?? icon)
 }

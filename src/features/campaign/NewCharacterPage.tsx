@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useAuthStore } from '../auth/authStore'
-import { XP_THRESHOLDS, classIconUrl } from './character'
+import { XP_THRESHOLDS } from './character'
 import { createCharacter, writeLog } from './characterNet'
 import { NAME_MAX, checkName, nameProblemText, tidyName } from './nameRules'
 import { choicesOf, type Choice } from './classChoices'
-import { useClassStore } from './classStore'
+import { classIconSrc, useClassStore } from './classStore'
 import { PerkText } from './PerkText'
 import { perkRowsOf } from './perks'
 import { HandCards } from './HandCards'
@@ -261,7 +261,9 @@ export function NewCharacterPage() {
  * 않는다(절대 원칙 1).
  */
 function ClassCard({ choice, perks }: { choice: Choice; perks: readonly ClassPerk[] }) {
-  const url = choice.icon === 0 ? null : classIconUrl(choice.icon)
+  const classes = useClassStore((s) => s.list)
+  const artUrls = useClassStore((s) => s.artUrls)
+  const url = classIconSrc(classes, artUrls, choice.classId, choice.icon)
   const rows = perkRowsOf(perks)
 
   return (

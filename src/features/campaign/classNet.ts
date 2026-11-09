@@ -34,6 +34,11 @@ export interface ClassInfo {
   hp: number[]
   /** 몇 번째로 보여줄지. 같으면 이름 순. */
   sort: number
+  /**
+   * 팩에 없는 클래스의 표식 그림 — 비공개 버킷의 파일 이름(`0057`). 없을 수 있다.
+   * 실물에서 딴 그림이라 공개 레포에 못 넣는다(절대 원칙 1-1).
+   */
+  art?: string | null
 }
 
 interface Row {
@@ -43,6 +48,7 @@ interface Row {
   hand_size: number | null
   hp: number[] | null
   sort: number | null
+  art?: string | null
 }
 
 /** 어디서 온 값이든 쓸 수 있는 모양으로. 서버가 준 것도 거른다. */
@@ -66,6 +72,7 @@ export function sanitizeClassInfo(raw: Partial<Row> & { id: string }): ClassInfo
     // 아홉 칸이 아니면 없는 것으로 친다. 반쯤 채워진 표는 잘못 읽히기만 한다.
     hp: hp.length === MAX_LEVEL ? hp.map((n) => Math.max(0, Math.trunc(n))) : [],
     sort: typeof raw.sort === 'number' && Number.isFinite(raw.sort) ? Math.trunc(raw.sort) : 0,
+    art: typeof raw.art === 'string' && raw.art !== '' ? raw.art : null,
   }
 }
 
@@ -75,7 +82,7 @@ export async function fetchClasses(): Promise<ClassInfo[]> {
   try {
     const { data, error } = await supabase()
       .from('character_classes')
-      .select('id, icon, name, hand_size, hp, sort')
+      .select('id, icon, name, hand_size, hp, sort, art')
       .order('sort', { ascending: true })
       .order('name', { ascending: true })
     if (error || !data) return []
@@ -118,4 +125,34 @@ export async function pushClasses(classes: readonly ClassDraft[]): Promise<void>
 export async function deleteClass(id: string): Promise<void> {
   const { error } = await supabase().from('character_classes').delete().eq('id', id)
   if (error) throw error
+}
+
+const ART_BUCKET = 'class-art'
+
+/**
+ * 표식 그림을 받아 이 페이지 안에서만 사는 주소로 바꾼다 — 클래스 id → 주소.
+ *
+ * **서명 주소가 아니라 받아 둔 덩어리의 주소다**(`URL.createObjectURL`). 서명 주소는
+ * 한 시간이면 죽어 행낭을 오래 펴 두면 그림이 깨지고, 남에게 넘기면 그동안 열린다.
+ * 받아 둔 것은 페이지가 살아 있는 동안 죽지 않고 밖에서 못 연다. 그림 넷이 다 해서
+ * 25KB 남짓이라 한 번에 받는다. **못 받은 것은 빠진다** — 그 클래스는 첫 글자로 선다.
+ */
+export async function fetchClassArt(
+  classes: readonly ClassInfo[],
+): Promise<Record<string, string>> {
+  if (!isSupabaseConfigured()) return {}
+  const out: Record<string, string> = {}
+  await Promise.all(
+    classes.map(async (c) => {
+      if (!c.art) return
+      try {
+        const { data, error } = await supabase().storage.from(ART_BUCKET).download(c.art)
+        if (error || !data) return
+        out[c.id] = URL.createObjectURL(data)
+      } catch {
+        // 삼킨다 — 그림이 없어도 클래스는 선다.
+      }
+    }),
+  )
+  return out
 }
