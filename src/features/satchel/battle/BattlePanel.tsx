@@ -150,7 +150,8 @@ export function BattlePanel({ onClose }: Props) {
             */}
             {battle.scenarioNo !== null && (
               <p className="battle__hint">
-                시나리오 결과(완료·실패)를 행적에 남기려면 <a href="#/adventure">모험에서 마친다</a>.
+                시나리오 결과(완료·실패)를 행적에 남기려면 <a href="#/adventure">모험에서 마친다</a>
+                .
               </p>
             )}
           </>

@@ -15,6 +15,8 @@ import { useItineraryStore } from '../campaign/itineraryStore'
 import { ScenarioPicker } from '../campaign/ScenarioPicker'
 import { MiniDialog } from '../campaign/MiniDialog'
 import { localDate } from '../campaign/itineraryOrder'
+import { scenarioName, type ScenarioGraph } from '../campaign/scenarioLinks'
+import { ScenarioOutcomePrompt, ScenarioOutlook } from '../campaign/ScenarioOutcome'
 import type { Scenario } from '../campaign/scenarioNet'
 import '../campaign/JournalPage.css'
 import './AdventurePage.css'
@@ -39,12 +41,6 @@ import './AdventurePage.css'
  * 모험·행적·상태를 세 군데에서 손으로 적던 것을 한 번으로 줄였다.
  */
 
-/** 목록 줄에 서는 시나리오 이름표. 목록을 못 읽었으면 번호만. */
-function scenarioLabel(no: number | null, list: readonly Scenario[]): string | null {
-  if (no === null) return null
-  const found = list.find((s) => s.no === no)
-  return found && found.name !== '' ? `#${no} ${found.name}` : `#${no}`
-}
 /** 판을 열었으면 상으로 간다 — 도구가 거기 있다. */
 function goToSatchel(): void {
   window.location.hash = '#/satchel'
@@ -70,6 +66,8 @@ export function AdventurePage() {
   const loadScenarios = useScenarioStore((s) => s.load)
   const ensureScenarioList = useScenarioStore((s) => s.ensureList)
   const setScenarioState = useScenarioStore((s) => s.set)
+  const scenarioGraph = useScenarioStore((s) => s.graph)
+  const markPending = useScenarioStore((s) => s.markPending)
 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -113,9 +111,20 @@ export function AdventurePage() {
   useEffect(() => {
     if (campaignId === null) return
     void loadCrew(campaignId)
-    // 고를 시나리오를 그 기록지의 상태와 함께 늘어놓는다 — 열린 것이 위로 온다.
+  }, [campaignId, loadCrew])
+
+  /*
+    고를 시나리오를 그 기록지의 상태와 함께 늘어놓는다 — 열린 것이 위로 온다.
+
+    **다른 파티의 모험을 마치면 스토어가 그 기록지로 넘어간다**(권함 팝업이 그
+    상태로 셈해야 한다). 팝업이 닫힌 뒤에 고르던 파티의 것으로 되돌아온다 — 안
+    그러면 고르개가 「읽는 중」에 멎는다.
+  */
+  const pending = useScenarioStore((s) => s.pending)
+  useEffect(() => {
+    if (campaignId === null || pending !== null || scenarioCampaign === campaignId) return
     void loadScenarios(campaignId)
-  }, [campaignId, loadCrew, loadScenarios])
+  }, [campaignId, pending, scenarioCampaign, loadScenarios])
 
   const roster = crew.filter((c) => !c.retired && c.deletedAt === null)
   const chosen = roster.filter((c) => picked.includes(c.id))
@@ -151,7 +160,10 @@ export function AdventurePage() {
     setBusy(true)
     setError(null)
     try {
-      await joinBattle({ id: battleId, partyId: party, openedBy: '', openedAt: 0, level, scenarioNo }, userId)
+      await joinBattle(
+        { id: battleId, partyId: party, openedBy: '', openedAt: 0, level, scenarioNo },
+        userId,
+      )
       goToSatchel()
     } catch (cause) {
       console.error('[adventure]', cause)
@@ -174,9 +186,16 @@ export function AdventurePage() {
       if (useBattleStore.getState().battle?.id === adventure.battleId) await leaveBattle(userId)
       // 기록지를 이미 펼쳐 둔 적이 있으면 옛 것을 들고 있다 — 다시 읽게 한다.
       if (written !== null) {
-        if (useScenarioStore.getState().campaignId === written) void loadScenarios(written, true)
         const itinerary = useItineraryStore.getState()
         if (itinerary.campaignId === written) void itinerary.load(written, true)
+        /*
+          완료면 무엇이 열리는지 권한다 — 그러려면 그 기록지의 상태가 있어야 한다.
+          다 읽은 뒤에 표를 세워야 팝업이 옛 상태로 셈하지 않는다.
+        */
+        if (outcome === 'done' || useScenarioStore.getState().campaignId === written) {
+          await loadScenarios(written, true)
+          if (outcome === 'done' && adventure.scenarioNo !== null) markPending(adventure.scenarioNo)
+        }
       }
       await loadAdventures()
     } catch (cause) {
@@ -301,6 +320,9 @@ export function AdventurePage() {
                     ) : (
                       <p className="adv__soon">시나리오 목록을 읽는 중.</p>
                     )}
+                    {scenarioNo !== null && (
+                      <ScenarioOutlook no={scenarioNo} graph={scenarioGraph} list={scenarios} />
+                    )}
 
                     <h2 className="adv__title">누가 앉는가</h2>
                     <ul className="adv__crew">
@@ -392,7 +414,8 @@ export function AdventurePage() {
                 <h2 className="adv__title">도는 모험</h2>
                 <ul className="adv__list">
                   {items.map((it) => {
-                    const label = scenarioLabel(it.scenarioNo, scenarios)
+                    const label =
+                      it.scenarioNo === null ? null : scenarioName(it.scenarioNo, scenarios)
                     return (
                       <li key={it.battleId} className="adv__row">
                         <span className="adv__where">
@@ -431,11 +454,14 @@ export function AdventurePage() {
       {finishing !== null && (
         <FinishDialog
           adventure={finishing}
-          label={scenarioLabel(finishing.scenarioNo, scenarios)}
+          list={scenarios}
+          graph={scenarioGraph}
           onFinish={(outcome) => void finish(finishing, outcome)}
           onCancel={() => setFinishing(null)}
         />
       )}
+
+      <ScenarioOutcomePrompt />
     </div>
   )
 }
@@ -451,28 +477,33 @@ export function AdventurePage() {
  */
 function FinishDialog({
   adventure,
-  label,
+  list,
+  graph,
   onFinish,
   onCancel,
 }: {
   adventure: Adventure
-  label: string | null
+  list: readonly Scenario[]
+  graph: ScenarioGraph | null
   onFinish: (outcome: Outcome) => void
   onCancel: () => void
 }) {
-  const known = adventure.scenarioNo !== null
+  const no = adventure.scenarioNo
+  const known = no !== null
   return (
     <MiniDialog title="모험을 마친다" label="모험의 결과 고르기">
       <p className="mini__body">
         {known ? (
           <>
-            <b>{label}</b> — 결과를 고른다. 행적에 오늘 날짜로 한 줄 남고, 완료면 시나리오가
-            완료가 된다. 판은 접힌다.
+            <b>{scenarioName(no, list)}</b> — 결과를 고른다. 행적에 오늘 날짜로 한 줄 남고, 완료면
+            시나리오가 완료가 된다. 판은 접힌다.
           </>
         ) : (
           <>시나리오를 안 고른 모험이라 남길 것이 없다. 판만 접는다.</>
         )}
       </p>
+      {/* 갈림길은 깨기 전에 알아야 한다 — 완료를 누르기 직전이 마지막 자리다. */}
+      {known && <ScenarioOutlook no={no} graph={graph} list={list} />}
       <div className="mini__acts">
         {known && (
           <>

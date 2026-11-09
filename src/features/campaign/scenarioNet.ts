@@ -1,5 +1,6 @@
 import { supabase } from '../auth/supabase'
 import { isStoredState, type StoredState } from './scenarioState'
+import { buildGraph, isLinkKind, type LinkKind, type ScenarioGraph } from './scenarioLinks'
 
 /**
  * 시나리오 목록과 캠페인별 상태(`0044`·`0045`).
@@ -80,5 +81,48 @@ export async function setScenarioState(
   const { error } = await client
     .from('campaign_scenarios')
     .upsert({ campaign_id: campaignId, no, state, updated_at: new Date().toISOString() })
+  if (error) throw error
+}
+
+/**
+ * 시나리오끼리의 연결과 선행(`0049`). **못 읽으면 `null`** — 비어 있는 그래프로 두면
+ * 「깨도 아무것도 안 열린다」로 읽힌다. 모르는 것과 없는 것은 다르다(구현 결정 141).
+ */
+export async function listScenarioGraph(): Promise<ScenarioGraph | null> {
+  const client = supabase()
+  const [links, requires] = await Promise.all([
+    client.from('scenario_links').select('from_no, to_no, kind'),
+    client.from('scenario_requires').select('no, grp, req'),
+  ])
+  if (links.error || requires.error) return null
+  const linkRows = (
+    (links.data ?? []) as unknown as { from_no: number; to_no: number; kind: string }[]
+  )
+    .filter(
+      (r) => typeof r.from_no === 'number' && typeof r.to_no === 'number' && isLinkKind(r.kind),
+    )
+    .map((r) => ({ from: r.from_no, to: r.to_no, kind: r.kind as LinkKind }))
+  // 표가 비었으면 아직 안 넣은 것이다 — 없는 것으로 친다.
+  if (linkRows.length === 0) return null
+  const reqRows = (
+    (requires.data ?? []) as unknown as { no: number; grp: number; req: number }[]
+  ).filter(
+    (r) => typeof r.no === 'number' && typeof r.grp === 'number' && typeof r.req === 'number',
+  )
+  return buildGraph(linkRows, reqRows)
+}
+
+/** 여러 상태를 한 번에 적는다. 권한 것을 적용할 때 쓴다 — 닫힘으로 되돌리는 일은 없다. */
+export async function setScenarioStates(
+  campaignId: string,
+  entries: readonly { no: number; state: StoredState }[],
+): Promise<void> {
+  if (entries.length === 0) return
+  const at = new Date().toISOString()
+  const { error } = await supabase()
+    .from('campaign_scenarios')
+    .upsert(
+      entries.map(({ no, state }) => ({ campaign_id: campaignId, no, state, updated_at: at })),
+    )
   if (error) throw error
 }

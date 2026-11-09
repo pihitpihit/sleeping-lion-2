@@ -43,7 +43,9 @@ interface RawRow {
 export async function listOpenAdventures(): Promise<Adventure[]> {
   const { data, error } = await supabase()
     .from('battles')
-    .select('id, party_id, opened_at, level, scenario_no, party:parties!battles_party_id_fkey (name)')
+    .select(
+      'id, party_id, opened_at, level, scenario_no, party:parties!battles_party_id_fkey (name)',
+    )
     .order('opened_at', { ascending: false })
   if (error) throw error
 

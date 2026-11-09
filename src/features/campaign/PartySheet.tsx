@@ -23,6 +23,7 @@ import { Retirements } from './Retirements'
 import { useRetirementStore } from './retirementStore'
 import { useItineraryStore } from './itineraryStore'
 import { useScenarioStore } from './scenarioStore'
+import { ScenarioOutcomePrompt } from './ScenarioOutcome'
 import { useTreasureStore } from './treasureStore'
 import { useUnlockStore } from './unlockStore'
 import { ConditionText } from './ConditionText'
@@ -879,6 +880,9 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
           onCancel={() => setAsking(false)}
         />
       )}
+
+      {/* 행적에서 시나리오를 완료로 바꾸면 무엇이 열리는지 권한다(`0049`). */}
+      <ScenarioOutcomePrompt />
     </div>
   )
 }

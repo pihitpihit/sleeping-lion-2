@@ -135,9 +135,7 @@ export async function findMyBattle(userId: string): Promise<BattleRow | null> {
   try {
     const { data, error } = await supabase()
       .from('battle_participants')
-      .select(
-        `battle:battles!battle_participants_battle_id_fkey(${BATTLE_COLUMNS})`,
-      )
+      .select(`battle:battles!battle_participants_battle_id_fkey(${BATTLE_COLUMNS})`)
       .eq('user_id', userId)
       .limit(1)
     if (error || !data || data.length === 0) return null

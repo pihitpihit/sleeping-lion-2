@@ -79,7 +79,9 @@ describe('바뀐 칸만 낸다', () => {
   it('배열은 알맹이로 견준다 — 사본이라고 바뀐 것이 아니다', () => {
     const c = fixture()
     expect(sheetDiff(c, { ...draftOf(c), perks: [1, 3] })).toEqual({})
-    expect(sheetDiff(c, { ...draftOf(c), items: [{ name: '가죽 장화', paid: null, base: null }] })).toEqual({})
+    expect(
+      sheetDiff(c, { ...draftOf(c), items: [{ name: '가죽 장화', paid: null, base: null }] }),
+    ).toEqual({})
   })
 
   it('퍽이 바뀌면 낸다', () => {
@@ -94,8 +96,19 @@ describe('바뀐 칸만 낸다', () => {
 
   it('아이템이 바뀌면 낸다', () => {
     const c = fixture()
-    expect(sheetDiff(c, { ...draftOf(c), items: [{ name: '가죽 장화', paid: null, base: null }, { name: '망토', paid: null, base: null }] })).toEqual({
-      items: [{ name: '가죽 장화', paid: null, base: null }, { name: '망토', paid: null, base: null }],
+    expect(
+      sheetDiff(c, {
+        ...draftOf(c),
+        items: [
+          { name: '가죽 장화', paid: null, base: null },
+          { name: '망토', paid: null, base: null },
+        ],
+      }),
+    ).toEqual({
+      items: [
+        { name: '가죽 장화', paid: null, base: null },
+        { name: '망토', paid: null, base: null },
+      ],
     })
   })
 })
@@ -103,7 +116,15 @@ describe('바뀐 칸만 낸다', () => {
 describe('울타리와 다듬기', () => {
   it('빈 아이템 줄은 걷는다', () => {
     const c = fixture({ items: [] })
-    expect(sheetDiff(c, { ...draftOf(c), items: [{ name: '  ', paid: null, base: null }, { name: '', paid: null, base: null }] })).toEqual({})
+    expect(
+      sheetDiff(c, {
+        ...draftOf(c),
+        items: [
+          { name: '  ', paid: null, base: null },
+          { name: '', paid: null, base: null },
+        ],
+      }),
+    ).toEqual({})
   })
 
   it('숫자는 울타리 안으로 들인다 — 화면이 아무거나 칠 수 있다', () => {
