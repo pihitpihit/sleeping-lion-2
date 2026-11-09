@@ -324,6 +324,7 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
             busy={itinBusy}
             onFinish={(scenario, outcome) => void finishScenario(scenario, outcome)}
             onShowOnMap={(no) => setOpenMap({ focus: no })}
+            found={campaign.treasures}
           />
           {/*
             놓친 해금 찾기 — 완료한 것 전체로 보면 아직 안 바뀐 열림·막힘을 골라 적용한다.
@@ -981,6 +982,7 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
           list={scenarios}
           states={scenarioStates}
           graph={scenarioGraph}
+          found={campaign.treasures}
           focus={openMap.focus}
           onClose={() => setOpenMap(null)}
         />

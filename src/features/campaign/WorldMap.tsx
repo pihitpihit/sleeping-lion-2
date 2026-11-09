@@ -16,6 +16,7 @@ import {
   type Sticker,
 } from './worldMapSpots'
 import { mapUrls } from './worldMapNet'
+import { remainingTreasures, treasureText } from './scenarioTreasures'
 import './WorldMap.css'
 
 /**
@@ -36,6 +37,7 @@ export function WorldMap({
   list,
   states,
   graph,
+  found = null,
   focus = null,
   onClose,
 }: {
@@ -43,6 +45,8 @@ export function WorldMap({
   states: Record<number, StoredState>
   /** 시나리오끼리의 연결. 못 읽었으면 `null` — 그때는 화살표가 없다. */
   graph: ScenarioGraph | null
+  /** 기록지가 찾은 보물 번호. 주면 이름표에 아직 안 찾은 보물을 적는다. */
+  found?: readonly number[] | null
   /** 이 시나리오의 스티커를 고른 채 그 자리를 가운데에 두고 연다. */
   focus?: number | null
   onClose: () => void
@@ -87,6 +91,11 @@ export function WorldMap({
       states={states}
       graph={graph}
       initialPicked={focus}
+      treasureOf={(no) => {
+        if (found === null) return ''
+        const s = list.find((x) => x.no === no)
+        return s ? treasureText(remainingTreasures(s, found)) : ''
+      }}
     />,
     document.body,
   )
@@ -136,6 +145,7 @@ export function WorldMapPanel({
   graph = null,
   initialSize = null,
   initialPicked = null,
+  treasureOf,
 }: {
   stickers: readonly Sticker[]
   urls: Record<string, string> | null
@@ -149,6 +159,8 @@ export function WorldMapPanel({
   initialSize?: { w: number; h: number } | null
   /** 처음부터 고른 스티커. 처음 펼 때 그 자리를 가운데에 둔다. */
   initialPicked?: number | null
+  /** 이름표에 붙일 보물 글(「보물 #38 남음」). 없으면 빈 글자. */
+  treasureOf?: (no: number) => string
 }) {
   const [size, setSize] = useState(initialSize)
   const [zoom, setZoom] = useState(1)
@@ -458,6 +470,9 @@ export function WorldMapPanel({
           <span className={`wmap__key wmap__key--${chosen.state}`}>
             {STATE_LABEL[chosen.state]}
           </span>
+          {treasureOf?.(chosen.no) && (
+            <span className="wmap__treasure"> · {treasureOf(chosen.no)}</span>
+          )}
         </p>
       )}
     </section>

@@ -32,6 +32,8 @@ export interface Scenario {
   readonly map?: MapSpot | null
   /** 처음부터 열려 있는 시나리오(`0053`). 모르면 `false`. */
   readonly initial?: boolean
+  /** 놓인 보물 번호(`0056`). 못 읽었으면 없다 — 「보물이 없다」와 다르다. */
+  readonly treasures?: readonly number[]
 }
 
 export interface MapSpot {
@@ -60,11 +62,26 @@ function spotOf(row: Row): MapSpot | null {
 }
 
 export async function listScenarios(): Promise<Scenario[]> {
-  const { data, error } = await supabase()
-    .from('scenarios')
-    .select('no, grid, name, map_x, map_y, map_w, map_h, initial')
-    .order('no', { ascending: true })
+  const client = supabase()
+  const [{ data, error }, placed] = await Promise.all([
+    client
+      .from('scenarios')
+      .select('no, grid, name, map_x, map_y, map_w, map_h, initial')
+      .order('no', { ascending: true }),
+    client.from('scenario_treasures').select('no, treasure'),
+  ])
   if (error) throw error
+  /* 보물 번호는 **못 읽어도 목록은 선다** — 그때는 칸을 비워 「모른다」로 둔다. */
+  const treasures = placed.error ? null : new Map<number, number[]>()
+  if (treasures) {
+    for (const r of (placed.data ?? []) as unknown as { no: unknown; treasure: unknown }[]) {
+      if (typeof r.no !== 'number' || typeof r.treasure !== 'number') continue
+      treasures.set(
+        r.no,
+        [...(treasures.get(r.no) ?? []), r.treasure].sort((a, b) => a - b),
+      )
+    }
+  }
   return ((data ?? []) as unknown as Row[])
     .filter((row): row is Row & { no: number } => typeof row.no === 'number')
     .map((row) => ({
@@ -73,6 +90,7 @@ export async function listScenarios(): Promise<Scenario[]> {
       name: typeof row.name === 'string' ? row.name : '',
       map: spotOf(row),
       initial: row.initial === true,
+      ...(treasures ? { treasures: treasures.get(Math.trunc(row.no)) ?? [] } : {}),
     }))
 }
 

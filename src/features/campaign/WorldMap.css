@@ -327,6 +327,10 @@
   border-color: var(--sl-ember);
 }
 
+.wmap__treasure {
+  color: var(--sl-gold);
+}
+
 .wmap__note {
   position: absolute;
   top: 50%;

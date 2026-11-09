@@ -83,4 +83,14 @@ describe('ScenarioBoard', () => {
     expect(html).not.toContain('scboard__tap')
     expect(html).toContain('scboard__done')
   })
+
+  it('찾은 보물을 주면 열린 카드마다 아직 안 찾은 보물을 적는다', () => {
+    const withTreasure = list.map((s) => (s.no === 202 ? { ...s, treasures: [301, 302] } : s))
+    const html = render({ list: withTreasure, found: [302] })
+    expect(html).toContain('보물 #301 남음')
+  })
+
+  it('놓인 보물이 없는 카드에는 아무것도 안 적는다', () => {
+    expect(render({ found: [] })).not.toContain('scboard__treasure')
+  })
 })

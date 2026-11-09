@@ -2,6 +2,7 @@ import { ScenarioOutlook } from './ScenarioOutcome'
 import type { ScenarioGraph } from './scenarioLinks'
 import type { Scenario } from './scenarioNet'
 import { STATE_LABEL, stateOf, type StoredState } from './scenarioState'
+import { remainingTreasures, treasureText } from './scenarioTreasures'
 import './ScenarioBoard.css'
 
 /**
@@ -32,6 +33,7 @@ export function ScenarioBoard({
   busy,
   onFinish,
   onShowOnMap,
+  found = null,
 }: {
   list: readonly Scenario[]
   states: Record<number, StoredState>
@@ -41,6 +43,8 @@ export function ScenarioBoard({
   onFinish: (scenario: Scenario, outcome: 'done' | 'failed') => void
   /** 카드를 누르면 세계 지도를 그 스티커 자리에 맞춰 연다. 없으면 카드가 안 눌린다. */
   onShowOnMap?: (no: number) => void
+  /** 기록지가 찾은 보물 번호. 주면 카드마다 아직 안 찾은 보물을 적는다. */
+  found?: readonly number[] | null
 }) {
   if (list.length === 0) {
     return <p className="scboard__empty">시나리오 목록이 아직 없다.</p>
@@ -119,6 +123,17 @@ export function ScenarioBoard({
                   </span>
                 )}
               </div>
+              {/*
+                아직 안 찾은 보물(형님이 정했다, `0056`). 놓인 보물이 없거나 표를 못
+                읽었으면 아무것도 안 적는다 — 「다 찾음」과 갈려야 한다.
+              */}
+              {found !== null && treasureText(remainingTreasures(s, found)) && (
+                <p
+                  className={`scboard__treasure${remainingTreasures(s, found)?.length === 0 ? ' scboard__treasure--done' : ''}`}
+                >
+                  {treasureText(remainingTreasures(s, found))}
+                </p>
+              )}
               <ScenarioOutlook no={s.no} graph={graph} list={list} />
             </li>
           ))}

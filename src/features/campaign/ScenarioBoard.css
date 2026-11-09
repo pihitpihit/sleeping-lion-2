@@ -177,3 +177,14 @@
 .scboard__missed:hover {
   border-color: var(--sl-gold);
 }
+
+/* 아직 안 찾은 보물 — 금빛 작은 글. 다 찾았으면 흐리게. */
+.scboard__treasure {
+  margin: 0.3rem 0 0;
+  font-size: 0.82rem;
+  color: var(--sl-gold);
+}
+
+.scboard__treasure--done {
+  color: var(--sl-text-faint);
+}

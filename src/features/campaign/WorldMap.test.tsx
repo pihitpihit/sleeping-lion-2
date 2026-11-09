@@ -133,4 +133,9 @@ describe('WorldMapPanel', () => {
     expect(html).not.toContain('wmap__arrow--out')
     expect(html).not.toContain('wmap__arrow--block')
   })
+
+  it('이름표에 아직 안 찾은 보물을 붙인다', () => {
+    const html = render({ initialPicked: 202, treasureOf: () => '보물 #301 남음' })
+    expect(html).toContain('보물 #301 남음')
+  })
 })
