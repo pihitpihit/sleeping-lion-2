@@ -29,6 +29,8 @@
 # 계열) — SPEC 5.2가 「판이 끝나면 어디에도 남지 않는다」고 못박은 것들이라
 # 백업에 남으면 그 약속이 깨진다.
 #
+# 저장소(Storage)의 그림도 뜬다 — 비공개 버킷에만 있어 여기 말고 사본이 없다.
+#
 # 계정은 `auth.users`에 있고 그쪽은 **되는 대로** 뜬다. 없어도 이 백업은 쓸모가
 # 있고(게임 데이터가 알맹이다), 있으면 되살릴 때 `owner_id`가 가리키는 사람을
 # 다시 세울 수 있다.
@@ -95,6 +97,45 @@ fi
 
 rm -f "$dir/pg_dump.log" "$dir/auth.log"
 
+# ── 저장소 그림. 되는 대로 — 그러나 못 뜨면 크게 적는다.
+#
+# 세계 지도(`0051`)와 사자의 턱 표식(`0057`)은 **비공개 버킷에만** 있다. 레포에도
+# DB에도 없다(실물·남의 그림이라 공개 레포에 못 넣는다) — 프로젝트가 날아가면
+# 같이 사라진다. 2026-11-09에 그것을 알고 붙였다.
+#
+# secret 키를 어디에도 두지 않으므로 받을 길은 **Supabase CLI의 로그인**뿐이다
+# (`npx supabase login`). 로그인이 없으면 이 칸만 빠지고 위의 값은 그대로 남는다.
+# 버킷 목록은 DB에서 읽는다 — 버킷이 늘면 저절로 따라온다. 받은 수가 표에 적힌
+# 수와 다르면 그 버킷은 반쯤 뜬 것이라 그렇게 적는다.
+#
+# 프로젝트 주소의 앞자리(ref)는 공개 값이다(배포 워크플로에 그대로 적혀 있다).
+REF=yuognmrpeepkbhphbgwj
+CLI=(npx -y supabase@3.1.0)
+storage_ok=1
+mkdir -p "$dir/storage"
+work=$(mktemp -d)   # CLI가 제 자리에 `supabase/`를 만든다 — 레포에 흘리지 않게 따로 돈다.
+while read -r bucket want; do
+  [ -z "$bucket" ] && continue
+  if (cd "$work" && "${CLI[@]}" storage cp -r "ss:///$bucket" "$dir/storage/$bucket"         --experimental --remote="$REF" --yes --agent yes -j 4 </dev/null >"$work/$bucket.log" 2>&1); then
+    got=$(find "$dir/storage/$bucket" -type f 2>/dev/null | wc -l | tr -d ' ')
+  else
+    got=0
+  fi
+  echo "storage/$bucket $got/$want" >>"$dir/STORAGE.txt"
+  if [ "$got" != "$want" ]; then
+    storage_ok=0
+    echo "  ::: 저장소 $bucket — $got/$want 장만 받았다" >&2
+    sed -n '1,5p' "$work/$bucket.log" >&2
+  fi
+done < <(psql "$URL" -At -F' ' -c \
+  "select b.id, count(o.id) from storage.buckets b left join storage.objects o on o.bucket_id = b.id group by b.id order by b.id")
+rm -rf "$work"
+if [ "$storage_ok" = 1 ]; then
+  echo "  저장소 그림도 떴다"
+else
+  echo "  ::: 저장소 그림이 다 오지 않았다 — \`npx supabase login\` 뒤에 다시 돌린다." >&2
+fi
+
 # 무엇이 담겼는지 한 줄로 남긴다. **표 이름과 줄 수만이다** — 값은 안 적는다.
 gzip -dc "$dir/public.sql.gz" \
   | awk '/^COPY /{t=$2} /^COPY /{c=0; next} /^\\\.$/{if(t!=""){print t, c; t=""}} t!=""{c++}' \
@@ -105,6 +146,7 @@ echo "떴다: $dir"
 du -h "$dir"/*.gz | sed 's/^/  /'
 echo "  ── 담긴 것"
 sed 's/^/  /' "$dir/MANIFEST.txt" 2>/dev/null || true
+sed 's/^/  /' "$dir/STORAGE.txt" 2>/dev/null || true
 
 # ── 오래된 것을 걷는다. 열넷이면 하루 한 번 떠도 두 주다.
 count=$(find "$OUT_ROOT" -maxdepth 1 -mindepth 1 -type d | wc -l | tr -d ' ')
