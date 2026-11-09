@@ -142,6 +142,103 @@
   border-color: var(--sl-gold) !important;
 }
 
+/* 잠겨 있으면 금빛을 거둔다 — 눌러도 안 되는 단추가 가장 밝으면 고장으로 읽힌다. */
+.battle__go:disabled {
+  opacity: 0.45;
+}
+
+/* --------------------------------------------------------------------------
+   판을 열 때 — 누가 앉는가 · 시나리오 레벨
+   -------------------------------------------------------------------------- */
+
+.battle__crew {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.battle__member {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.45rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.92rem;
+  color: var(--sl-text-muted);
+  text-align: left;
+  background: rgb(0 0 0 / 24%);
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.battle__member--on {
+  color: var(--sl-text);
+  border-color: var(--sl-gold);
+}
+
+.battle__membername {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.battle__owner {
+  color: var(--sl-text-faint);
+  font-size: 0.82rem;
+}
+
+.battle__memberlv {
+  flex-shrink: 0;
+  color: var(--sl-gold-dim);
+}
+
+.battle__member--on .battle__memberlv {
+  color: var(--sl-gold);
+}
+
+.battle__level {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.battle__caret {
+  width: 2.2rem;
+  height: 2.2rem;
+  font-family: inherit;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--sl-gold);
+  background: none;
+  border: 1px solid var(--sl-border);
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+
+.battle__caret:disabled {
+  color: var(--sl-text-faint);
+  cursor: default;
+}
+
+.battle__levelno {
+  min-width: 1.6rem;
+  font-size: 1.6rem;
+  text-align: center;
+  color: var(--sl-text);
+}
+
+.battle__levelnote {
+  font-size: 0.82rem;
+  color: var(--sl-text-faint);
+}
+
 /* 접는 것은 되돌릴 수 없다. 일어나는 것과 한눈에 갈려야 한다. */
 .battle__fold:not(:disabled):hover {
   color: var(--sl-ember) !important;

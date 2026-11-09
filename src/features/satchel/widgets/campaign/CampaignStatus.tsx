@@ -107,7 +107,7 @@ export function CampaignStatus({ mode, scenario }: WidgetProps) {
         </li>
       </ul>
 
-      {!scenario.fromBattle && <span className="cst__solo">모험 밖 — 행낭의 레벨</span>}
+      {!scenario.fromBattle && <span className="cst__solo">전투 밖 — 행낭의 레벨</span>}
 
       {/*
         ┌────────────────────────────────────────────────────────────────────┐

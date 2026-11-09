@@ -52,6 +52,13 @@ export interface RosterEntry {
   xp: number
   ownerId: string
   ownerName: string
+  /**
+   * 어느 파티에 들었나. 판을 열 때 그 파티의 캐릭터만 앉힐 수 있다(`open_adventure`).
+   * 파티에 안 들었으면 `null`.
+   */
+  partyId: string | null
+  /** 지우기 유예 중인가(`0022`). 판에 못 앉는다 — 서버가 거절한다. */
+  deleted: boolean
 }
 
 interface RosterState {
@@ -77,7 +84,9 @@ interface Row {
   xp: number | null
   owner_id: string
   retired: boolean
+  deleted_at: string | null
   owner: { display_name: string | null } | null
+  campaign: { party_id: string | null } | null
 }
 
 export const useRosterStore = create<RosterState>((set, get) => ({
@@ -94,7 +103,7 @@ export const useRosterStore = create<RosterState>((set, get) => ({
       const { data, error } = await supabase()
         .from('characters')
         .select(
-          'id, name, class_icon, class_id, perks, xp, owner_id, retired, owner:profiles!characters_owner_id_fkey(display_name)',
+          'id, name, class_icon, class_id, perks, xp, owner_id, retired, deleted_at, owner:profiles!characters_owner_id_fkey(display_name), campaign:campaigns!characters_campaign_id_fkey(party_id)',
         )
         .order('created_at', { ascending: true })
       if (error || !data) {
@@ -113,6 +122,8 @@ export const useRosterStore = create<RosterState>((set, get) => ({
           xp: typeof row.xp === 'number' && Number.isFinite(row.xp) ? Math.max(0, row.xp) : 0,
           ownerId: row.owner_id,
           ownerName: row.owner?.display_name ?? '',
+          partyId: typeof row.campaign?.party_id === 'string' ? row.campaign.party_id : null,
+          deleted: typeof row.deleted_at === 'string' && row.deleted_at !== '',
         }))
       set({ entries, loaded: true })
     } catch {

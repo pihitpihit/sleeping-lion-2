@@ -21,6 +21,7 @@ function render(over: Partial<Parameters<typeof Itinerary>[0]> = {}) {
       busy={false}
       scenarios={[]}
       states={{}}
+      graph={null}
       onState={() => {}}
       today="2026-09-13"
       onAdd={() => {}}

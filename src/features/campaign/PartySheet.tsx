@@ -24,6 +24,8 @@ import { useRetirementStore } from './retirementStore'
 import { useItineraryStore } from './itineraryStore'
 import { useScenarioStore } from './scenarioStore'
 import { ScenarioOutcomePrompt } from './ScenarioOutcome'
+import { ScenarioBoard } from './ScenarioBoard'
+import type { Scenario } from './scenarioNet'
 import { useTreasureStore } from './treasureStore'
 import { useUnlockStore } from './unlockStore'
 import { ConditionText } from './ConditionText'
@@ -106,6 +108,7 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   const scenarioStates = useScenarioStore((s) => s.states)
   const loadScenarios = useScenarioStore((s) => s.load)
   const setScenarioState = useScenarioStore((s) => s.set)
+  const scenarioGraph = useScenarioStore((s) => s.graph)
   useEffect(() => {
     void loadScenarios(campaign.id)
   }, [campaign.id, loadScenarios])
@@ -120,6 +123,24 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   useEffect(() => {
     void loadStops(campaign.id)
   }, [campaign.id, loadStops])
+
+  /**
+   * 시나리오를 마친다 — **행적에 오늘 날짜로 한 줄, 완료면 상태까지.**
+   *
+   * 행적을 먼저 적는다. 그것이 실패하면 상태를 안 바꾼다 — 완료로만 바뀌고 행적이
+   * 비면 「언제 깼나」를 되짚을 수 없다. 완료로 바뀌면 권함 팝업이 뜬다.
+   */
+  async function finishScenario(scenario: Scenario, outcome: 'done' | 'failed') {
+    await addStop({
+      at: today,
+      scenario: String(scenario.no),
+      code: scenario.grid,
+      place: scenario.name,
+      scenarioNo: scenario.no,
+    })
+    if (useItineraryStore.getState().error !== null) return
+    if (outcome === 'done') await setScenarioState(scenario.no, 'done')
+  }
 
   /*
     은퇴한 캐릭터(`0043`). 실물 책자의 그 표이며 **대부분의 줄은 서버가 베껴 둔다** —
@@ -278,6 +299,7 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
             busy={itinBusy}
             scenarios={scenarios}
             states={scenarioStates}
+            graph={scenarioGraph}
             onState={(no, state) => void setScenarioState(no, state)}
             today={today}
             onAdd={(stop) => void addStop(stop)}
@@ -290,6 +312,24 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
               {itinError}
             </p>
           )}
+        </section>
+
+        {/* --------------------------------------------------------------------
+          시나리오 — **다음에 어디로 갈 수 있는가**
+          --------------------------------------------------------------------
+          열린 것을 늘어놓고 깨면 무엇이 열리고 막히는지 곁에 적는다(`0049`).
+          완료·실패를 누르면 행적에 한 줄이 남는다 — 결과를 적는 자리가 여기다.
+          -------------------------------------------------------------------- */}
+        <section className="sheet__block">
+          <h2 className="sheet__label">시나리오</h2>
+          <ScenarioBoard
+            list={scenarios}
+            states={scenarioStates}
+            graph={scenarioGraph}
+            editing={editing}
+            busy={itinBusy}
+            onFinish={(scenario, outcome) => void finishScenario(scenario, outcome)}
+          />
         </section>
 
         {/* --------------------------------------------------------------------

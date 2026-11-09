@@ -1,0 +1,106 @@
+/* 기록지의 시나리오 칸 — 열린 것을 늘어놓고 깨면 무엇이 바뀌는지 곁에 적는다. */
+
+.scboard__tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  margin: 0 0 0.7rem;
+  font-size: 0.85rem;
+  color: var(--sl-text-muted);
+}
+
+.scboard__tally b {
+  font-weight: 400;
+  color: var(--sl-text);
+}
+
+.scboard__tally--blocked b {
+  color: var(--sl-ember);
+}
+
+.scboard__total {
+  color: var(--sl-text-faint);
+}
+
+.scboard__empty {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--sl-text-faint);
+}
+
+.scboard__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scboard__row {
+  padding: 0.55rem 0.7rem;
+  background: var(--sl-raised);
+  border: 1px solid var(--sl-border);
+  border-radius: 8px;
+}
+
+/* 번호·좌표·이름은 행적의 고르개와 같은 차례로 선다 — 같은 것이 두 모양이면 헷갈린다. */
+.scboard__line {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.scboard__no {
+  flex-shrink: 0;
+  color: var(--sl-gold);
+}
+
+.scboard__grid {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+  color: var(--sl-text-faint);
+}
+
+.scboard__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--sl-text);
+}
+
+.scboard__acts {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.35rem;
+}
+
+.scboard__done,
+.scboard__fail {
+  padding: 0.35rem 0.7rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* 완료는 상태 단추의 완료와 같은 금빛이다(구현 결정 535). */
+.scboard__done {
+  color: var(--sl-void);
+  background: var(--sl-gold);
+  border: 1px solid var(--sl-gold);
+}
+
+.scboard__fail {
+  color: var(--sl-text-muted);
+  background: none;
+  border: 1px solid var(--sl-border);
+}
+
+.scboard__done:disabled,
+.scboard__fail:disabled {
+  opacity: 0.45;
+  cursor: default;
+}

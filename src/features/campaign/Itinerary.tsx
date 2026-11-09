@@ -3,6 +3,7 @@ import { ConfirmDialog } from '../satchel/board/ConfirmDialog'
 import { isDate, stopLabel, type Stop } from './itineraryOrder'
 import { ScenarioPicker } from './ScenarioPicker'
 import type { Scenario } from './scenarioNet'
+import type { ScenarioGraph } from './scenarioLinks'
 import type { ScenarioState, StoredState } from './scenarioState'
 
 /**
@@ -24,6 +25,7 @@ export function Itinerary({
   busy,
   scenarios,
   states,
+  graph,
   onState,
   today,
   onAdd,
@@ -38,6 +40,8 @@ export function Itinerary({
   scenarios: readonly Scenario[]
   /** 이 기록지가 시나리오를 어떻게 보고 있는가. 없는 번호는 닫힘이다. */
   states: Record<number, StoredState>
+  /** 시나리오끼리의 연결(`0049`). 고른 시나리오를 깨면 무엇이 바뀌는지 적는다. */
+  graph: ScenarioGraph | null
   onState: (no: number, state: ScenarioState) => void
   /** 새 줄에 미리 넣을 날짜(`YYYY-MM-DD`). **렌더 중에 시각을 읽지 않는다**(구현 결정 12). */
   today: string
@@ -129,6 +133,7 @@ export function Itinerary({
                     busy={busy}
                     scenarios={scenarios}
                     states={states}
+                    graph={graph}
                     onState={onState}
                     submitLabel="고친 것 저장"
                     onSubmit={(next) => {
@@ -152,6 +157,7 @@ export function Itinerary({
             busy={busy}
             scenarios={scenarios}
             states={states}
+            graph={graph}
             onState={onState}
             submitLabel="행적에 더하기"
             onSubmit={(next) => {
@@ -201,6 +207,7 @@ function StopForm({
   busy,
   scenarios,
   states,
+  graph,
   onState,
   submitLabel,
   onSubmit,
@@ -211,6 +218,8 @@ function StopForm({
   busy: boolean
   scenarios: readonly Scenario[]
   states: Record<number, StoredState>
+  /** 시나리오끼리의 연결(`0049`). 고른 시나리오를 깨면 무엇이 바뀌는지 적는다. */
+  graph: ScenarioGraph | null
   onState: (no: number, state: ScenarioState) => void
   submitLabel: string
   onSubmit: (stop: Omit<Stop, 'id'>) => void
@@ -248,6 +257,7 @@ function StopForm({
           setCode(s.grid)
           setPlace(s.name)
         }}
+        graph={graph}
         onState={onState}
       />
 

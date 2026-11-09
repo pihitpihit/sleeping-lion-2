@@ -181,20 +181,14 @@
 }
 
 /*
-  넷이 되면서 칸 나누기가 단순해졌다 — **둘씩 두 줄이 딱 맞는다.**
+  **셋이 한 줄로 선다**(2026-11-09, 모험을 걷어 넷에서 셋이 되었다).
 
-  셋일 때는 홀로 남는 칸을 눕혀 띠처럼 세웠는데(2026-08-14), 넷이 되자 그 손질이
-  필요 없어져 걷었다. 아주 넓은 자리에서만 한 줄로 편다.
+  둘씩 두 줄로 두면 홀로 남는 칸이 구멍이 된다. 40rem이면 한 칸이 13rem쯤이라
+  본문 두세 줄이 들어간다 — 띠로 눕히는 손질(2026-08-14)보다 단순하다.
 */
 @media (min-width: 40rem) {
   .welcome__pillars {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 72rem) {
-  .welcome__pillars {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
@@ -426,7 +420,7 @@
   }
 
   .welcome__pillars {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     margin-top: 1.25rem;
   }
 
@@ -443,22 +437,4 @@
   .welcome__pillar-ordinal {
     font-size: 3.5rem;
   }
-}
-
-/*
-  모험 소식.
-
-  **하나면 어디서 도는지, 여럿이면 몇 개인지**만 적는다(`adventureNote`) — 카드
-  안에 이름을 늘어놓으면 무너진다. 이끼색으로 둔다: 금색은 「열기」가 이미 쓰고
-  있어 같은 색이면 두 가지가 같은 신호로 말한다(구현 결정 73과 같은 자리).
-*/
-.welcome__pillar-badge {
-  align-self: flex-start;
-  margin-bottom: 0.45rem;
-  padding: 0.2rem 0.55rem;
-  font-size: 0.76rem;
-  color: var(--sl-moss-bright);
-  background: rgb(126 162 60 / 12%);
-  border: 1px solid var(--sl-moss);
-  border-radius: 999px;
 }

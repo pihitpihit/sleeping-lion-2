@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { fold } from './searchFold'
 import type { Scenario } from './scenarioNet'
+import type { ScenarioGraph } from './scenarioLinks'
+import { ScenarioOutlook } from './ScenarioOutcome'
 import {
   STATES,
   STATE_HINT,
@@ -36,6 +38,7 @@ export function ScenarioPicker({
   picked,
   onPick,
   onState,
+  graph = null,
 }: {
   list: readonly Scenario[]
   states: Record<number, StoredState>
@@ -43,6 +46,8 @@ export function ScenarioPicker({
   picked: number | null
   onPick: (scenario: Scenario | null) => void
   onState: (no: number, state: ScenarioState) => void
+  /** 시나리오끼리의 연결(`0049`). 있으면 고른 것을 깨면 무엇이 바뀌는지 적는다. */
+  graph?: ScenarioGraph | null
 }) {
   const [query, setQuery] = useState('')
 
@@ -108,6 +113,9 @@ export function ScenarioPicker({
             </button>
           ))}
         </div>
+
+        {/* 갈림길은 깨기 전에 알아야 한다 — 고른 자리가 그것을 볼 첫 자리다. */}
+        <ScenarioOutlook no={chosen.no} graph={graph} list={list} />
       </div>
     )
   }

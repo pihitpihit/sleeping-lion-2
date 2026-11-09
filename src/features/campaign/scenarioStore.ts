@@ -34,8 +34,6 @@ interface ScenarioStoreState {
   pending: number | null
 
   load: (campaignId: string, force?: boolean) => Promise<void>
-  /** 목록만. 어느 기록지도 안 펼친 자리(모험 목록)에서 이름을 적으려고 쓴다. */
-  ensureList: () => Promise<void>
   /** 권한 것을 한 번에 적는다. 닫힘으로 되돌리는 일은 없다. */
   apply: (entries: readonly { no: number; state: StoredState }[]) => Promise<void>
   markPending: (no: number | null) => void
@@ -67,19 +65,6 @@ export const useScenarioStore = create<ScenarioStoreState>((set, get) => ({
     } catch (cause) {
       console.error('[scenarios]', cause)
       set({ loaded: true })
-    }
-  },
-
-  ensureList: async () => {
-    if (get().listed && get().graph !== null) return
-    try {
-      const [list, graph] = await Promise.all([
-        get().listed ? Promise.resolve(get().list) : listScenarios(),
-        get().graph !== null ? Promise.resolve(get().graph) : listScenarioGraph().catch(() => null),
-      ])
-      set({ list, listed: true, graph })
-    } catch (cause) {
-      console.error('[scenarios]', cause)
     }
   },
 
