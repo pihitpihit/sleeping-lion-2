@@ -151,3 +151,32 @@
   font-size: 0.78rem;
   color: var(--sl-text-faint);
 }
+
+/* 어느 시나리오인지는 파티 이름 다음으로 묻는 것이라 언제보다 먼저 선다. */
+.adv__scenario {
+  font-size: 0.85rem;
+  color: var(--sl-text-muted);
+}
+
+.adv__acts {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.4rem;
+}
+
+/* 마치기는 참여보다 한 톤 낮다 — 판을 접는 일이라 금빛을 나눠 갖지 않는다. */
+.adv__finish {
+  padding: 0.45rem 0.8rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--sl-text);
+  background: none;
+  border: 1px solid var(--sl-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.adv__finish:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

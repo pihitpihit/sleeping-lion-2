@@ -46,6 +46,18 @@ export function isDate(raw: unknown): raw is string {
 }
 
 /**
+ * 그 시각의 **이 기기 기준** 날짜(`YYYY-MM-DD`).
+ *
+ * `toISOString()`은 UTC라 한국에서 오전 9시 전에는 어제가 나온다 — 상에 앉은
+ * 사람의 오늘이 맞다.
+ */
+export function localDate(at: number): string {
+  const d = new Date(at)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+/**
  * 그 줄을 날짜에 맞는 자리로 옮긴다.
  *
  * **날짜가 없으면 아무 일도 안 한다** — 그 줄은 사람이 놓은 자리를 지킨다.

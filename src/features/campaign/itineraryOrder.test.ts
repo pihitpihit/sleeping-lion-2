@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { currentStop, isDate, move, placeByDate, stopLabel, type Stop } from './itineraryOrder'
+import {
+  currentStop,
+  isDate,
+  localDate,
+  move,
+  placeByDate,
+  stopLabel,
+  type Stop,
+} from './itineraryOrder'
 
 /*
   **차례가 틀리면 행적이 거짓말을 한다.** 위가 최신이고, 날짜를 적으면 그 줄만
@@ -122,5 +130,12 @@ describe('stopLabel', () => {
     expect(
       stopLabel({ id: '1', at: null, scenario: ' ', code: ' ', place: ' ', scenarioNo: null }),
     ).toBe('')
+  })
+})
+
+describe('localDate', () => {
+  it('이 기기의 날짜를 적는다 — 자정 직후도 그날이다', () => {
+    expect(localDate(new Date(2026, 10, 9, 0, 30).getTime())).toBe('2026-11-09')
+    expect(localDate(new Date(2026, 0, 5, 23, 59).getTime())).toBe('2026-01-05')
   })
 })

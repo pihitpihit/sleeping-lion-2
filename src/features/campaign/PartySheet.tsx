@@ -2,6 +2,7 @@ import { useEffect, useId, useState } from 'react'
 import { ConfirmDialog } from '../satchel/board/ConfirmDialog'
 import { PencilIcon } from './PencilIcon'
 import { draftOf, isDirty, partyDiff, type PartyDraft } from './partyDraft'
+import { localDate } from './itineraryOrder'
 import {
   MAX_REPUTATION,
   MIN_REPUTATION,
@@ -114,7 +115,7 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   const editStop = useItineraryStore((s) => s.edit)
   const removeStop = useItineraryStore((s) => s.remove)
   const shiftStop = useItineraryStore((s) => s.shift)
-  const [today] = useState(() => new Date().toISOString().slice(0, 10))
+  const [today] = useState(() => localDate(Date.now()))
   useEffect(() => {
     void loadStops(campaign.id)
   }, [campaign.id, loadStops])

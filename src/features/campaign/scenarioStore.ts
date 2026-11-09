@@ -19,6 +19,8 @@ interface ScenarioStoreState {
   error: string | null
 
   load: (campaignId: string, force?: boolean) => Promise<void>
+  /** 목록만. 어느 기록지도 안 펼친 자리(모험 목록)에서 이름을 적으려고 쓴다. */
+  ensureList: () => Promise<void>
   set: (no: number, state: ScenarioState) => Promise<void>
 }
 
@@ -44,6 +46,15 @@ export const useScenarioStore = create<ScenarioStoreState>((set, get) => ({
     } catch (cause) {
       console.error('[scenarios]', cause)
       set({ loaded: true })
+    }
+  },
+
+  ensureList: async () => {
+    if (get().listed) return
+    try {
+      set({ list: await listScenarios(), listed: true })
+    } catch (cause) {
+      console.error('[scenarios]', cause)
     }
   },
 

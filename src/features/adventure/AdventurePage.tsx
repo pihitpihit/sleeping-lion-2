@@ -9,6 +9,13 @@ import { useCharacterStore } from '../campaign/characterStore'
 import { levelForXp } from '../campaign/character'
 import { clampLevel, recommendedLevel } from '../rules/scenarioLevel'
 import { dedupeParties } from './parties'
+import { finishAdventure, type Adventure, type Outcome } from './adventureNet'
+import { useScenarioStore } from '../campaign/scenarioStore'
+import { useItineraryStore } from '../campaign/itineraryStore'
+import { ScenarioPicker } from '../campaign/ScenarioPicker'
+import { MiniDialog } from '../campaign/MiniDialog'
+import { localDate } from '../campaign/itineraryOrder'
+import type { Scenario } from '../campaign/scenarioNet'
 import '../campaign/JournalPage.css'
 import './AdventurePage.css'
 
@@ -26,10 +33,18 @@ import './AdventurePage.css'
  * 갈래는 둘뿐이다: **새로 시작하거나, 이미 도는 것에 끼거나.** 도는 것이 없으면
  * 참여 쪽은 잠긴다 — 눌러 봐야 빈 목록이 나오는 자리를 열어 두지 않는다.
  *
- * 모험 하나는 전투 세션 하나다(`battles`) — 판이 끝나면 어디에도 남지 않는다
- * (SPEC 5.4). 새 모험에 무엇을 적을지는 형님이 따로 정한다; 지금은 어느 파티의
- * 모험인지만 고른다.
+ * 모험 하나는 전투 세션 하나다(`battles`) — 판의 값은 끝나면 어디에도 남지 않는다
+ * (SPEC 5.4). **남는 것은 결과뿐이다**: 판을 열 때 시나리오를 고르고, 마칠 때
+ * 완료·실패를 고르면 행적 한 줄과 시나리오 상태가 기록지에 남는다(`0048`).
+ * 모험·행적·상태를 세 군데에서 손으로 적던 것을 한 번으로 줄였다.
  */
+
+/** 목록 줄에 서는 시나리오 이름표. 목록을 못 읽었으면 번호만. */
+function scenarioLabel(no: number | null, list: readonly Scenario[]): string | null {
+  if (no === null) return null
+  const found = list.find((s) => s.no === no)
+  return found && found.name !== '' ? `#${no} ${found.name}` : `#${no}`
+}
 /** 판을 열었으면 상으로 간다 — 도구가 거기 있다. */
 function goToSatchel(): void {
   window.location.hash = '#/satchel'
@@ -47,6 +62,14 @@ export function AdventurePage() {
 
   const openBattle = useBattleStore((s) => s.open)
   const joinBattle = useBattleStore((s) => s.join)
+  const leaveBattle = useBattleStore((s) => s.leave)
+
+  const scenarios = useScenarioStore((s) => s.list)
+  const scenarioStates = useScenarioStore((s) => s.states)
+  const scenarioCampaign = useScenarioStore((s) => s.campaignId)
+  const loadScenarios = useScenarioStore((s) => s.load)
+  const ensureScenarioList = useScenarioStore((s) => s.ensureList)
+  const setScenarioState = useScenarioStore((s) => s.set)
 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -57,6 +80,10 @@ export function AdventurePage() {
   const [picked, setPicked] = useState<string[]>([])
   /** 난이도로 얼마나 얹었는가. 권장 레벨에 더한다. */
   const [bump, setBump] = useState(0)
+  /** 이번 모험의 시나리오. **안 골라도 연다** — 목록을 못 읽는 자리도 있다(절대 원칙 3). */
+  const [scenarioNo, setScenarioNo] = useState<number | null>(null)
+  /** 마치려고 고른 모험. 결과를 묻는 팝업이 이것을 본다. */
+  const [finishing, setFinishing] = useState<Adventure | null>(null)
 
   const userId = session?.userId ?? null
 
@@ -64,7 +91,9 @@ export function AdventurePage() {
     if (userId === null) return
     void loadMine(userId)
     void loadAdventures()
-  }, [userId, loadMine, loadAdventures])
+    // 도는 모험 줄에 시나리오 이름을 적으려면 목록이 있어야 한다.
+    void ensureScenarioList()
+  }, [userId, loadMine, loadAdventures, ensureScenarioList])
 
   /*
     **파티에 든 캐릭터가 있어야 모험을 연다.** 판은 파티 단위로 열리므로
@@ -80,10 +109,13 @@ export function AdventurePage() {
   */
   const crew = useCharacterStore((s) => s.characters)
   const loadCrew = useCharacterStore((s) => s.load)
+  const campaignId = party?.campaignId ?? null
   useEffect(() => {
-    if (party === null) return
-    void loadCrew(party.campaignId)
-  }, [party, loadCrew])
+    if (campaignId === null) return
+    void loadCrew(campaignId)
+    // 고를 시나리오를 그 기록지의 상태와 함께 늘어놓는다 — 열린 것이 위로 온다.
+    void loadScenarios(campaignId)
+  }, [campaignId, loadCrew, loadScenarios])
 
   const roster = crew.filter((c) => !c.retired && c.deletedAt === null)
   const chosen = roster.filter((c) => picked.includes(c.id))
@@ -104,7 +136,7 @@ export function AdventurePage() {
     setBusy(true)
     setError(null)
     try {
-      await openBattle(partyId, picked, level)
+      await openBattle(partyId, picked, level, scenarioNo)
       // 판을 열었으면 상으로 간다 — 도구가 거기 있다.
       goToSatchel()
     } catch (cause) {
@@ -114,16 +146,43 @@ export function AdventurePage() {
     }
   }
 
-  async function join(battleId: string, party: string) {
+  async function join({ battleId, partyId: party, level, scenarioNo }: Adventure) {
     if (userId === null) return
     setBusy(true)
     setError(null)
     try {
-      await joinBattle({ id: battleId, partyId: party, openedBy: '', openedAt: 0, level: 1 }, userId)
+      await joinBattle({ id: battleId, partyId: party, openedBy: '', openedAt: 0, level, scenarioNo }, userId)
       goToSatchel()
     } catch (cause) {
       console.error('[adventure]', cause)
       setError('모험에 들지 못했다.')
+      setBusy(false)
+    }
+  }
+
+  /**
+   * 모험을 마친다. **판에 앉아 있던 것이면 내 계정 방으로 돌아간다** — 판이 사라졌는데
+   * 화면이 그 방을 붙들고 있으면 조작이 아무 데도 안 간다(구현 결정 84와 같은 자리).
+   */
+  async function finish(adventure: Adventure, outcome: Outcome) {
+    if (userId === null) return
+    setFinishing(null)
+    setBusy(true)
+    setError(null)
+    try {
+      const written = await finishAdventure(adventure.battleId, outcome, localDate(Date.now()))
+      if (useBattleStore.getState().battle?.id === adventure.battleId) await leaveBattle(userId)
+      // 기록지를 이미 펼쳐 둔 적이 있으면 옛 것을 들고 있다 — 다시 읽게 한다.
+      if (written !== null) {
+        if (useScenarioStore.getState().campaignId === written) void loadScenarios(written, true)
+        const itinerary = useItineraryStore.getState()
+        if (itinerary.campaignId === written) void itinerary.load(written, true)
+      }
+      await loadAdventures()
+    } catch (cause) {
+      console.error('[adventure]', cause)
+      setError('모험을 마치지 못했다.')
+    } finally {
       setBusy(false)
     }
   }
@@ -182,11 +241,11 @@ export function AdventurePage() {
                 disabled={items.length === 0}
                 onClick={() => setMode('join')}
               >
-                <span className="adv__choice-title">모험에 참여</span>
+                <span className="adv__choice-title">도는 모험</span>
                 <span className="adv__choice-sub">
                   {loaded && items.length === 0
                     ? '도는 모험이 없다'
-                    : `${items.length}개가 돌고 있다`}
+                    : `${items.length}개 — 참여하거나 마친다`}
                 </span>
               </button>
             </div>
@@ -200,7 +259,11 @@ export function AdventurePage() {
                       <button
                         type="button"
                         className={`adv__party${partyId === p.id ? ' adv__party--on' : ''}`}
-                        onClick={() => setPartyId(p.id)}
+                        onClick={() => {
+                          setPartyId(p.id)
+                          // 시나리오 상태는 기록지마다 다르다 — 고른 것을 들고 넘어가지 않는다.
+                          if (p.id !== partyId) setScenarioNo(null)
+                        }}
                       >
                         {p.name}
                       </button>
@@ -220,6 +283,25 @@ export function AdventurePage() {
                     ---------------------------------------------------------- */}
                 {party !== null && (
                   <>
+                    {/* ------------------------------------------------------
+                        어느 시나리오인가 — **마칠 때 행적과 상태가 여기서 나온다**
+                        ------------------------------------------------------
+                        행적의 고르개를 그대로 쓴다 — 같은 목록을 두 벌로 그리면
+                        어긋난다. 상태도 여기서 바로 고칠 수 있다(기록지에 반영).
+                        ------------------------------------------------------ */}
+                    <h2 className="adv__title">어느 시나리오인가</h2>
+                    {scenarioCampaign === party.campaignId ? (
+                      <ScenarioPicker
+                        list={scenarios}
+                        states={scenarioStates}
+                        picked={scenarioNo}
+                        onPick={(s) => setScenarioNo(s === null ? null : s.no)}
+                        onState={(no, state) => void setScenarioState(no, state)}
+                      />
+                    ) : (
+                      <p className="adv__soon">시나리오 목록을 읽는 중.</p>
+                    )}
+
                     <h2 className="adv__title">누가 앉는가</h2>
                     <ul className="adv__crew">
                       {roster.map((c) => {
@@ -309,28 +391,106 @@ export function AdventurePage() {
               <section className="adv__panel">
                 <h2 className="adv__title">도는 모험</h2>
                 <ul className="adv__list">
-                  {items.map((it) => (
-                    <li key={it.battleId} className="adv__row">
-                      <span className="adv__where">
-                        <b>{it.partyName}</b>
-                        <span className="adv__when">{whenText(it.openedAt, now)} 시작</span>
-                      </span>
-                      <button
-                        type="button"
-                        className="sheet__save"
-                        disabled={busy}
-                        onClick={() => void join(it.battleId, it.partyId)}
-                      >
-                        참여
-                      </button>
-                    </li>
-                  ))}
+                  {items.map((it) => {
+                    const label = scenarioLabel(it.scenarioNo, scenarios)
+                    return (
+                      <li key={it.battleId} className="adv__row">
+                        <span className="adv__where">
+                          <b>{it.partyName}</b>
+                          {label !== null && <span className="adv__scenario">{label}</span>}
+                          <span className="adv__when">{whenText(it.openedAt, now)} 시작</span>
+                        </span>
+                        <span className="adv__acts">
+                          <button
+                            type="button"
+                            className="adv__finish"
+                            disabled={busy}
+                            onClick={() => setFinishing(it)}
+                          >
+                            마치기
+                          </button>
+                          <button
+                            type="button"
+                            className="sheet__save"
+                            disabled={busy}
+                            onClick={() => void join(it)}
+                          >
+                            참여
+                          </button>
+                        </span>
+                      </li>
+                    )
+                  })}
                 </ul>
               </section>
             )}
           </>
         )}
       </div>
+
+      {finishing !== null && (
+        <FinishDialog
+          adventure={finishing}
+          label={scenarioLabel(finishing.scenarioNo, scenarios)}
+          onFinish={(outcome) => void finish(finishing, outcome)}
+          onCancel={() => setFinishing(null)}
+        />
+      )}
     </div>
+  )
+}
+
+/**
+ * 결과를 묻는 팝업.
+ *
+ * **완료 · 실패 · 기록 없이 접기 · 취소** — 갈래가 넷이라 `ConfirmDialog`를 못 쓴다
+ * (구현 결정 347). 시나리오를 안 고른 모험이면 남길 것이 없으므로 접기만 낸다.
+ *
+ * 뜸은 두지 않는다. 결과는 기록지에서 언제든 고칠 수 있는 값이다 — 판의 값이
+ * 사라지는 것은 판을 접는 단추가 이미 그렇다.
+ */
+function FinishDialog({
+  adventure,
+  label,
+  onFinish,
+  onCancel,
+}: {
+  adventure: Adventure
+  label: string | null
+  onFinish: (outcome: Outcome) => void
+  onCancel: () => void
+}) {
+  const known = adventure.scenarioNo !== null
+  return (
+    <MiniDialog title="모험을 마친다" label="모험의 결과 고르기">
+      <p className="mini__body">
+        {known ? (
+          <>
+            <b>{label}</b> — 결과를 고른다. 행적에 오늘 날짜로 한 줄 남고, 완료면 시나리오가
+            완료가 된다. 판은 접힌다.
+          </>
+        ) : (
+          <>시나리오를 안 고른 모험이라 남길 것이 없다. 판만 접는다.</>
+        )}
+      </p>
+      <div className="mini__acts">
+        {known && (
+          <>
+            <button type="button" className="mini__go" onClick={() => onFinish('done')}>
+              완료
+            </button>
+            <button type="button" className="mini__alt" onClick={() => onFinish('failed')}>
+              실패
+            </button>
+          </>
+        )}
+        <button type="button" className="mini__alt" onClick={() => onFinish(null)}>
+          {known ? '기록 없이 접기' : '접기'}
+        </button>
+        <button type="button" className="mini__cancel" onClick={onCancel}>
+          취소
+        </button>
+      </div>
+    </MiniDialog>
   )
 }

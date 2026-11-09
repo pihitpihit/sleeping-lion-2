@@ -56,7 +56,12 @@ interface BattleState {
    *
    * 지정된 캐릭터의 주인에게만 그 판이 보인다.
    */
-  open: (partyId: string, characterIds: readonly string[], level: number) => Promise<void>
+  open: (
+    partyId: string,
+    characterIds: readonly string[],
+    level: number,
+    scenarioNo: number | null,
+  ) => Promise<void>
   join: (battle: BattleRow, userId: string) => Promise<void>
   /**
    * 이 판의 난이도를 고친다 — **상 위의 모두에게 간다.**
@@ -186,10 +191,10 @@ export const useBattleStore = create<BattleState>((set, get) => ({
     set({ battle: mine, participants: await listParticipants(mine.id) })
   },
 
-  open: async (partyId, characterIds, level) => {
+  open: async (partyId, characterIds, level, scenarioNo) => {
     set({ busy: true, error: null })
     try {
-      const battleId = await openAdventure(partyId, characterIds, level)
+      const battleId = await openAdventure(partyId, characterIds, level, scenarioNo)
       const battle = await findBattleById(battleId)
       if (battle === null) throw new Error('연 판을 찾지 못했다.')
       /**

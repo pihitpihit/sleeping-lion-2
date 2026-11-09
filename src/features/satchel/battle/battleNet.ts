@@ -30,6 +30,8 @@ export interface BattleRow {
   openedAt: number
   /** 이 모험의 시나리오 레벨(`0032`). 참가자들의 레벨에서 셈해 난이도로 보정한 값이다. */
   level: number
+  /** 이 모험의 시나리오 번호(`0048`). 안 골랐으면 `null`. */
+  scenarioNo: number | null
 }
 
 export interface Participant {
@@ -51,6 +53,7 @@ interface RawBattle {
   opened_by: string
   opened_at: string
   level: number | null
+  scenario_no?: number | null
 }
 
 function toBattle(row: RawBattle): BattleRow {
@@ -60,10 +63,11 @@ function toBattle(row: RawBattle): BattleRow {
     openedBy: row.opened_by,
     openedAt: Date.parse(row.opened_at) || 0,
     level: typeof row.level === 'number' ? row.level : 1,
+    scenarioNo: typeof row.scenario_no === 'number' ? Math.trunc(row.scenario_no) : null,
   }
 }
 
-const BATTLE_COLUMNS = 'id, party_id, opened_by, opened_at, level'
+const BATTLE_COLUMNS = 'id, party_id, opened_by, opened_at, level, scenario_no'
 
 /**
  * 이 파티에 열려 있는 판. 없으면 `null`.
@@ -132,7 +136,7 @@ export async function findMyBattle(userId: string): Promise<BattleRow | null> {
     const { data, error } = await supabase()
       .from('battle_participants')
       .select(
-        'battle:battles!battle_participants_battle_id_fkey(id, party_id, opened_by, opened_at)',
+        `battle:battles!battle_participants_battle_id_fkey(${BATTLE_COLUMNS})`,
       )
       .eq('user_id', userId)
       .limit(1)
@@ -328,11 +332,13 @@ export async function openAdventure(
   partyId: string,
   characterIds: readonly string[],
   level: number,
+  scenarioNo: number | null,
 ): Promise<string> {
   const { data, error } = await supabase().rpc('open_adventure', {
     p_party: partyId,
     p_characters: characterIds,
     p_level: level,
+    p_scenario: scenarioNo,
   })
   if (error) throw error
   return typeof data === 'string' ? data : ''

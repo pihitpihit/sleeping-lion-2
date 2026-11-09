@@ -144,6 +144,15 @@ export function BattlePanel({ onClose }: Props) {
               일어나면 판은 남고 나만 빠진다. <strong>접으면 판이 사라진다</strong> — 값도 함께
               간다.
             </p>
+            {/*
+              결과를 남기는 길은 모험 화면 하나다 — 축 ②는 기록지를 고치지 않는다
+              (SPEC 1장). 여기서 접으면 아무것도 안 남으므로 그 길을 알려 준다.
+            */}
+            {battle.scenarioNo !== null && (
+              <p className="battle__hint">
+                시나리오 결과(완료·실패)를 행적에 남기려면 <a href="#/adventure">모험에서 마친다</a>.
+              </p>
+            )}
           </>
         ) : (
           <>
