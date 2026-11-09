@@ -5,6 +5,13 @@
   화면 높이를 다 쓰고 굴리는 것은 지도 칸 하나다. 넓은 화면에서는 더 넓게 편다.
 */
 .wmap {
+  /*
+    열림의 초록. 앱의 이끼색(`--sl-moss`)은 양피지 위에서 묻혀 셋을 그려 놓고 가장
+    또렷한 것을 골랐다 — 안쪽은 짙게, 바깥은 밝게 두 색으로 두른다.
+  */
+  --wmap-open: #2e9e3e;
+  --wmap-open-glow: #3ccf55;
+
   display: flex;
   flex-direction: column;
   max-width: 72rem;
@@ -69,6 +76,11 @@
   border: 2px solid var(--sl-text-muted);
 }
 
+.wmap__key--open::before {
+  border-color: var(--wmap-open-glow);
+  background: var(--wmap-open);
+}
+
 .wmap__key--done::before {
   border-color: var(--sl-gold);
   background: var(--sl-gold);
@@ -124,6 +136,15 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+/*
+  **열림은 초록으로 감싼다** — 지금 갈 수 있는 곳이 지도에서 가장 먼저 눈에 걸려야
+  한다(형님이 정했다). 세 겹으로 둘러 작은 배율에서도 보인다.
+*/
+.wmap__sticker--open img {
+  filter: drop-shadow(0 0 2px var(--wmap-open)) drop-shadow(0 0 2px var(--wmap-open))
+    drop-shadow(0 0 5px var(--wmap-open-glow));
 }
 
 /* 완료는 금빛으로 감싼다. 그림자로 두르므로 스티커의 윤곽을 그대로 따라간다. */
