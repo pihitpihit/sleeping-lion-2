@@ -46,8 +46,8 @@ describe('ScenarioReportPanel', () => {
       { no: 202, to: 'open' },
       { no: 203, to: 'blocked' },
     ])
-    expect(html).toContain('열었다')
-    expect(html).toContain('막았다')
+    expect(html).toContain('새로 열림')
+    expect(html).toContain('막힘')
     expect(html).toContain('#202 나')
     expect(html).toContain('되돌리기')
     // 이미 바꿨으므로 고를 상자가 없다.
@@ -56,7 +56,7 @@ describe('ScenarioReportPanel', () => {
 
   it('적지 못했으면 바꿨다고 하지 않고, 되돌리기도 안 낸다', () => {
     const html = report({ opens: [202] }, [])
-    expect(html).not.toContain('열었다')
+    expect(html).not.toContain('새로 열림')
     expect(html).not.toContain('되돌리기')
     expect(html).toContain('놓친 해금 찾기')
   })
@@ -99,7 +99,7 @@ describe('ScenarioReportPanel', () => {
 
   it('업적은 알리고 확인으로 닫는다', () => {
     const html = report({ gains: ['도주'] })
-    expect(html).toContain('얻음: 도주')
+    expect(html).toContain('업적 획득')
     expect(html).toContain('확인')
   })
 
@@ -124,20 +124,21 @@ describe('ScenarioReportPanel — 업적', () => {
       />,
     )
 
-  it('담았으면 담았다고 하고 되돌리기를 낸다', () => {
+  it('반영했으면 「업적 획득」만 적고 되돌리기를 낸다', () => {
     const html = render('applied')
-    expect(html).toContain('업적 담았다')
+    expect(html).toContain('업적 획득')
+    expect(html).not.toContain('반영하')
     expect(html).toContain('되돌리기')
   })
 
   it('편집 중이라 안 담았으면 그렇게 적고 되돌리기를 안 낸다', () => {
     const html = render('skipped')
-    expect(html).toContain('편집 중이라 담지 않았다')
+    expect(html).toContain('편집 중이라 기록지에는 아직 반영하지 않았다')
     expect(html).not.toContain('되돌리기')
   })
 
   it('못 담았으면 직접 담으라고 적는다', () => {
-    expect(render('failed')).toContain('담지 못했다')
+    expect(render('failed')).toContain('반영하지 못했다')
   })
 })
 

@@ -88,18 +88,27 @@ function OutcomeNotes({
         **업적은 저절로 담는다 — 편집 중이 아닐 때만**(형님이 정했다). 편집 중이면 업적
         칸이 초안에 있어 몰래 바꾸면 초안과 어긋난다(구현 결정 236) — 그때는 담으라고만 적는다.
       */}
-      {(outcome.gains.length > 0 || outcome.losses.length > 0) && (
-        <p className={ach === 'applied' ? 'scout__done' : 'scout__notes'}>
-          {ach === 'applied' && (
-            <span className="scout__legend scout__legend--open">업적 담았다</span>
-          )}
-          {ach !== 'applied' && '업적'}
-          {outcome.gains.length > 0 && <> — 얻음: {outcome.gains.join(', ')}</>}
-          {outcome.losses.length > 0 && <> — 잃음: {outcome.losses.join(', ')}</>}
-          {ach === 'skipped' && '. 편집 중이라 담지 않았다 — 저장한 뒤 업적 칸에 담는다.'}
-          {ach === 'failed' && '. 담지 못했다 — 업적 칸에 직접 담는다.'}
-          {ach === 'pending' && '. 담는 중.'}
-          {(ach === 'none' || ach === undefined) && '. 기록지의 업적 칸에 담는다.'}
+      {/* 실물 시트처럼 「업적 획득 / 업적 상실」로 적는다(형님이 정했다). */}
+      {outcome.gains.length > 0 && (
+        <p className="scout__done">
+          <span className="scout__legend scout__legend--open">업적 획득</span>{' '}
+          {outcome.gains.join(', ')}
+        </p>
+      )}
+      {outcome.losses.length > 0 && (
+        <p className="scout__done">
+          <span className="scout__legend scout__legend--blocked">업적 상실</span>{' '}
+          {outcome.losses.join(', ')}
+        </p>
+      )}
+      {/* 기록지에 담았으면 더 말할 것이 없다. 못 담았을 때만 까닭과 할 일을 적는다. */}
+      {(outcome.gains.length > 0 || outcome.losses.length > 0) && ach !== 'applied' && (
+        <p className="scout__notes">
+          {ach === 'skipped' &&
+            '편집 중이라 기록지에는 아직 반영하지 않았다. 저장한 뒤 업적 칸에 반영한다.'}
+          {ach === 'failed' && '기록지에 반영하지 못했다. 업적 칸에 직접 반영한다.'}
+          {ach === 'pending' && '기록지에 반영하는 중.'}
+          {(ach === 'none' || ach === undefined) && '기록지의 업적 칸에 반영한다.'}
         </p>
       )}
 
@@ -181,18 +190,16 @@ export function ScenarioReportPanel({
     <div className="scout">
       <p className="mini__body">
         <b>{scenarioName(no, list)}</b>을(를) 완료했다.
-        {applied.length > 0 && ' 그래서 아래처럼 바꿨다.'}
       </p>
 
       {opened.length > 0 && (
         <p className="scout__done">
-          <span className="scout__legend scout__legend--open">열었다</span> {names(opened, list)}
+          <span className="scout__legend scout__legend--open">새로 열림</span> {names(opened, list)}
         </p>
       )}
       {blocked.length > 0 && (
         <p className="scout__done">
-          <span className="scout__legend scout__legend--blocked">막았다</span>{' '}
-          {names(blocked, list)}
+          <span className="scout__legend scout__legend--blocked">막힘</span> {names(blocked, list)}
         </p>
       )}
       {failed && (
