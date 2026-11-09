@@ -16,6 +16,9 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_KEY?: string
 }
 
+/** 이번 빌드의 버전(`vite.config.ts`). 로컬에서는 `dev`. */
+declare const __APP_VERSION__: string
+
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }

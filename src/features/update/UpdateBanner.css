@@ -1,0 +1,50 @@
+/*
+  새 버전 알림 띠 — 화면 아래 가운데에 작게 뜬다. 지도(60)보다는 아래, 시트·행낭보다는
+  위다. 홈 막대를 피해 아래 안전영역만큼 띄운다.
+*/
+.update {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--sl-safe-bottom) + 0.8rem);
+  z-index: 55;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: calc(100% - 2rem);
+  padding: 0.4rem 0.45rem 0.4rem 1rem;
+  font-size: 0.9rem;
+  color: var(--sl-text);
+  background: rgb(20 17 13 / 94%);
+  border: 1px solid var(--sl-gold-dim);
+  border-radius: 999px;
+  box-shadow: 0 4px 18px rgb(0 0 0 / 50%);
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.update__go {
+  padding: 0.35rem 0.9rem;
+  font: inherit;
+  font-size: 0.88rem;
+  color: var(--sl-void);
+  background: var(--sl-gold);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.update__later {
+  width: 32px;
+  height: 32px;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--sl-text-muted);
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.update__later:hover {
+  color: var(--sl-text);
+}

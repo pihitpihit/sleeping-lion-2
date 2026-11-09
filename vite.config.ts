@@ -30,13 +30,37 @@ function noticePublicSectionsOnly(): Plugin {
   }
 }
 
+/**
+ * 이번 빌드의 버전 — 배포 커밋의 앞 일곱 자리. 로컬에서는 `dev`.
+ *
+ * 홈 화면에 얹은 웹앱은 주소창도 당겨서 새로고침도 없어 배포 뒤에도 옛 화면이 남는다.
+ * 같은 값을 번들(`__APP_VERSION__`)과 `version.json`에 함께 적어 두면, 앱이 서버의
+ * `version.json`을 읽어 제 것과 다른지 견줄 수 있다(`features/update`).
+ */
+const APP_VERSION = (process.env.GITHUB_SHA ?? '').slice(0, 7) || 'dev'
+
+function emitVersion(): Plugin {
+  return {
+    name: 'sl2:emit-version',
+    apply: 'build',
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'version.json',
+        source: JSON.stringify({ version: APP_VERSION }),
+      })
+    },
+  }
+}
+
 // 배포 대상에 따라 base 경로가 달라진다.
 //  - GitHub Pages 프로젝트 사이트: '/sleeping-lion-2/'  (워크플로에서 VITE_BASE로 주입)
 //  - 루트 도메인, 로컬 dev: '/'
 // 배포 대상이 확정되면 이 분기를 고정값으로 바꿔도 된다.
 export default defineConfig({
   base: process.env.VITE_BASE ?? '/',
-  plugins: [react(), noticePublicSectionsOnly()],
+  plugins: [react(), noticePublicSectionsOnly(), emitVersion()],
+  define: { __APP_VERSION__: JSON.stringify(APP_VERSION) },
   test: {
     // 검증 대상은 대부분 순수 함수(격자 계산, 배치 판정)이므로 DOM이 필요 없다.
     // 컴포넌트는 헤드리스 브라우저로 실물을 확인하는 편이 낫다.

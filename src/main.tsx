@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
+import { UpdateBanner } from './features/update/UpdateBanner'
 import { keepRuntime } from './features/satchel/runtime/keep'
 import './index.css'
 
@@ -36,5 +37,7 @@ if (!rootElement) throw new Error('#root 엘리먼트를 찾을 수 없습니다
 createRoot(rootElement).render(
   <StrictMode>
     <App />
+    {/* 화면 갈래와 따로 선다 — 어느 화면에 있든 새 버전이 나오면 알린다. */}
+    <UpdateBanner />
   </StrictMode>,
 )

@@ -1,4 +1,5 @@
 import { LOCALE, messages } from '../../i18n/messages'
+import { APP_VERSION, reloadFresh } from '../update/version'
 import { AccountStrip } from '../auth/AccountStrip'
 import { SignMedallion } from './SignMedallion'
 import './WelcomePage.css'
@@ -156,6 +157,18 @@ export function WelcomePage() {
           <a href="#/notice" className="welcome__link">
             출처와 라이선스
           </a>
+        </p>
+        {/*
+          **손으로 새로 불러오는 탈출구.** 홈 화면 웹앱에는 새로고침이 없다 — 알림 띠가
+          못 알아챈 때(신호가 없었다든지) 「뭔가 이상하다」 싶으면 여기를 누른다.
+          지금 돌고 있는 버전을 함께 적어 두면 무엇을 들고 있는지도 보인다.
+        */}
+        <p className="welcome__footer-fine">
+          버전 <span className="sl-numeral">{APP_VERSION}</span>
+          {' · '}
+          <button type="button" className="welcome__reload" onClick={() => reloadFresh()}>
+            새로 불러오기
+          </button>
         </p>
       </footer>
     </div>
