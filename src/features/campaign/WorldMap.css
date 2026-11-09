@@ -49,8 +49,19 @@
   cursor: grabbing;
 }
 
+/*
+  **줄여서 화면보다 작아지면 가운데에 선다.** 플렉스 항목의 `margin: auto`는 남는
+  자리를 사방으로 나눠 갖고, 화면보다 크면 0이 되어 끝까지 굴릴 수 있다 — 그냥
+  가운데 맞춤(`justify-content: center`)은 넘친 쪽 왼쪽·위를 굴려도 못 닿게 자른다.
+*/
+.wmap__viewport {
+  display: flex;
+}
+
 .wmap__sheet {
   position: relative;
+  flex: none;
+  margin: auto;
 }
 
 .wmap__map {

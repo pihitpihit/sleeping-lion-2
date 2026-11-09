@@ -73,12 +73,29 @@ export function placement(
   }
 }
 
-/** 지도를 키우는 단계. 1은 화면 폭에 맞춘 크기다. */
+/** 지도를 키우는 단계. 1은 화면을 덮는 크기다 — 그 아래로는 손가락으로만 `fitZoom`까지 오므린다. */
 export const ZOOMS = [1, 1.5, 2, 3, 4] as const
 
-/** 손가락 둘로 벌린 만큼 키운다 — 단계 밖으로는 안 나간다. */
-export function clampZoom(z: number): number {
-  return Math.min(ZOOMS[ZOOMS.length - 1], Math.max(ZOOMS[0], z))
+/**
+ * 지도가 화면 안에 통째로 드는 배율 — 오므려 줄일 수 있는 바닥이다(형님이 정했다).
+ *
+ * 배율 1은 화면을 **덮는** 크기라 지도 한쪽이 늘 화면 밖에 있다. 통째로 보려면 그보다
+ * 작아져야 하고, 그 값은 화면과 그림의 비에서 나온다 — 덮는 폭과 드는 폭의 비다.
+ * 비가 같으면 1이다.
+ */
+export function fitZoom(view: { w: number; h: number }, map: { w: number; h: number }): number {
+  const ratio = map.w / map.h
+  const cover = Math.max(view.w, view.h * ratio)
+  const contain = Math.min(view.w, view.h * ratio)
+  return cover > 0 ? Math.min(1, contain / cover) : 1
+}
+
+/**
+ * 손가락 둘로 벌리거나 오므린 만큼 바꾼다 — 위로는 마지막 단계, 아래로는 `min`(지도가
+ * 통째로 드는 배율)을 안 넘는다.
+ */
+export function clampZoom(z: number, min: number = ZOOMS[0]): number {
+  return Math.min(ZOOMS[ZOOMS.length - 1], Math.max(min, z))
 }
 
 /** 단추로 한 단계 키우거나 줄인다. 손가락으로 사이 값이 됐으면 가까운 다음 단계로. */

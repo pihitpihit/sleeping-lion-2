@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   MAP_FILE,
   clampZoom,
+  fitZoom,
   isMapFile,
   placement,
   stepZoom,
@@ -73,5 +74,19 @@ describe('배율', () => {
     expect(clampZoom(0.5)).toBe(1)
     expect(clampZoom(2.3)).toBe(2.3)
     expect(clampZoom(9)).toBe(4)
+  })
+
+  it('바닥을 넘기면 그 아래로 오므릴 수 있다', () => {
+    expect(clampZoom(0.5, 0.4)).toBe(0.5)
+    expect(clampZoom(0.2, 0.4)).toBe(0.4)
+  })
+
+  it('통째로 드는 배율은 덮는 폭과 드는 폭의 비다', () => {
+    // 2:1 그림을 1:2 화면에 — 덮으면 폭 400, 들이면 폭 100.
+    expect(fitZoom({ w: 100, h: 200 }, { w: 400, h: 200 })).toBe(0.25)
+    // 화면이 더 납작하면 반대쪽이 병목이다 — 덮으면 400, 들이면 100(높이 50에 맞춰).
+    expect(fitZoom({ w: 400, h: 50 }, { w: 200, h: 100 })).toBe(0.25)
+    // 비가 같으면 줄일 것이 없다.
+    expect(fitZoom({ w: 300, h: 150 }, { w: 200, h: 100 })).toBe(1)
   })
 })

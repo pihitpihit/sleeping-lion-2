@@ -6,6 +6,7 @@ import { STATE_LABEL, type StoredState } from './scenarioState'
 import {
   MAP_FILE,
   clampZoom,
+  fitZoom,
   placement,
   stepZoom,
   stickerFile,
@@ -134,10 +135,13 @@ export function WorldMapPanel({
   /** 배율 1에서의 지도 폭(px) — 화면을 남김없이 덮는 크기다. */
   const base = size !== null && view !== null ? Math.max(view.w, (view.h * size.w) / size.h) : null
 
+  /** 오므릴 수 있는 바닥 — 지도가 화면 안에 통째로 드는 배율. */
+  const minZoom = size !== null && view !== null ? fitZoom(view, size) : 1
+
   /** 화면의 (vx, vy)를 붙든 채 배율을 바꾼다. */
   function zoomAt(next: number, vx: number, vy: number) {
     const el = viewport.current
-    const z = clampZoom(next)
+    const z = clampZoom(next, minZoom)
     if (!el || z === zoom) return
     anchor.current = {
       fx: (el.scrollLeft + vx) / el.scrollWidth,
