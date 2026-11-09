@@ -36,12 +36,15 @@ export function WorldMap({
   list,
   states,
   graph,
+  focus = null,
   onClose,
 }: {
   list: readonly Scenario[]
   states: Record<number, StoredState>
   /** 시나리오끼리의 연결. 못 읽었으면 `null` — 그때는 화살표가 없다. */
   graph: ScenarioGraph | null
+  /** 이 시나리오의 스티커를 고른 채 그 자리를 가운데에 두고 연다. */
+  focus?: number | null
   onClose: () => void
 }) {
   useScrollLock()
@@ -83,6 +86,7 @@ export function WorldMap({
       spots={spotsOf(list)}
       states={states}
       graph={graph}
+      initialPicked={focus}
     />,
     document.body,
   )
@@ -140,7 +144,7 @@ export function WorldMapPanel({
   graph?: ScenarioGraph | null
   /** 지도 그림의 크기. 보통은 그림이 불러진 뒤 스스로 알려 준다 — 시험에서만 넘긴다. */
   initialSize?: { w: number; h: number } | null
-  /** 처음부터 고른 스티커 — 시험에서만 넘긴다. */
+  /** 처음부터 고른 스티커. 처음 펼 때 그 자리를 가운데에 둔다. */
   initialPicked?: number | null
 }) {
   const [size, setSize] = useState(initialSize)
@@ -234,11 +238,15 @@ export function WorldMapPanel({
       el.scrollTop = a.fy * el.scrollHeight - a.vy
       anchor.current = null
     } else if (!centered.current) {
-      el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2
-      el.scrollTop = (el.scrollHeight - el.clientHeight) / 2
+      // 고르고 연 스티커가 있으면 그 자리를, 없으면 지도 가운데를 보인다.
+      const at = stickers.find((s) => s.no === initialPicked)?.spot
+      const fx = at && size ? (at.x + at.w / 2) / size.w : 0.5
+      const fy = at && size ? (at.y + at.h / 2) / size.h : 0.5
+      el.scrollLeft = fx * el.scrollWidth - el.clientWidth / 2
+      el.scrollTop = fy * el.scrollHeight - el.clientHeight / 2
       centered.current = true
     }
-  }, [zoom, base])
+  }, [zoom, base, initialPicked, size, stickers])
 
   function onDown(e: React.PointerEvent<HTMLDivElement>) {
     e.currentTarget.setPointerCapture(e.pointerId)

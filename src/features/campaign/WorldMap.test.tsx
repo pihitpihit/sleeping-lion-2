@@ -114,4 +114,10 @@ describe('WorldMapPanel', () => {
   it('서버에 못 닿으면 그 사실만 적는다', () => {
     expect(render({ failed: true, urls: null })).toContain('지도를 받지 못했다')
   })
+
+  it('고르고 열면 그 스티커가 고른 채로 선다', () => {
+    const html = render({ initialPicked: 202 })
+    expect(html).toMatch(/wmap__sticker--picked[^"]*" style="left:30%/)
+    expect(html).toContain('wmap__caption')
+  })
 })

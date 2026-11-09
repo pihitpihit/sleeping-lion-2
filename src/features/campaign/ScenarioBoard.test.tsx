@@ -72,4 +72,15 @@ describe('ScenarioBoard', () => {
   it('목록이 없어도 선다', () => {
     expect(render({ list: [] })).toContain('시나리오 목록이 아직 없다')
   })
+
+  it('지도로 가는 손잡이가 있으면 카드마다 문을 덮는다', () => {
+    const html = render({ onShowOnMap: () => {} })
+    expect(html).toContain('aria-label="#202 나 지도에서 보기"')
+  })
+
+  it('편집 중에는 문을 안 덮는다 — 완료·실패 단추를 가린다', () => {
+    const html = render({ onShowOnMap: () => {}, editing: true })
+    expect(html).not.toContain('scboard__tap')
+    expect(html).toContain('scboard__done')
+  })
 })

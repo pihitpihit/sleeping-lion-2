@@ -31,6 +31,7 @@ export function ScenarioBoard({
   editing,
   busy,
   onFinish,
+  onShowOnMap,
 }: {
   list: readonly Scenario[]
   states: Record<number, StoredState>
@@ -38,6 +39,8 @@ export function ScenarioBoard({
   editing: boolean
   busy: boolean
   onFinish: (scenario: Scenario, outcome: 'done' | 'failed') => void
+  /** 카드를 누르면 세계 지도를 그 스티커 자리에 맞춰 연다. 없으면 카드가 안 눌린다. */
+  onShowOnMap?: (no: number) => void
 }) {
   if (list.length === 0) {
     return <p className="scboard__empty">시나리오 목록이 아직 없다.</p>
@@ -71,7 +74,24 @@ export function ScenarioBoard({
       ) : (
         <ul className="scboard__rows">
           {open.map((s) => (
-            <li key={s.no} className="scboard__row">
+            <li
+              key={s.no}
+              className={`scboard__row${onShowOnMap && !editing ? ' scboard__row--tap' : ''}`}
+            >
+              {/*
+                **카드 전체가 지도로 가는 문이다**(형님이 정했다) — 그 스티커를 고른 채
+                그 자리로 연다. 카드 안에 글덩이가 있어 단추로 감쌀 수 없으므로 투명한
+                단추를 위에 덮는다(구현 결정 486과 같은 손질). **편집 중에는 안 덮는다**:
+                완료·실패 단추를 가린다.
+              */}
+              {onShowOnMap && !editing && (
+                <button
+                  type="button"
+                  className="scboard__tap"
+                  aria-label={`#${s.no} ${s.name} 지도에서 보기`}
+                  onClick={() => onShowOnMap(s.no)}
+                />
+              )}
               <div className="scboard__line">
                 <span className="scboard__no sl-numeral">#{s.no}</span>
                 <span className="scboard__grid sl-numeral">{s.grid}</span>

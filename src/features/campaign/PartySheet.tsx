@@ -176,7 +176,8 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   const [asking, setAsking] = useState(false)
   /** 보물 색인 팝업이 떠 있는가. */
   const [openTreasures, setOpenTreasures] = useState(false)
-  const [openMap, setOpenMap] = useState(false)
+  /** 세계 지도가 떠 있는가 — 카드에서 열었으면 맞춰 보일 시나리오 번호를 든다. */
+  const [openMap, setOpenMap] = useState<{ focus: number | null } | null>(null)
 
   /**
    * 지금 편집 중인가.
@@ -292,11 +293,12 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
             {/* 해금한 시나리오에 스티커가 붙은 세계 지도(`0051`). 보물 칸의 단추와 같은 자리다. */}
             <button
               type="button"
-              className="tre__more"
+              className="scboard__map"
               aria-label="세계 지도 보기"
-              onClick={() => setOpenMap(true)}
+              onClick={() => setOpenMap({ focus: null })}
             >
               <MapIcon />
+              지도
             </button>
           </div>
           <ScenarioBoard
@@ -306,6 +308,7 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
             editing={editing}
             busy={itinBusy}
             onFinish={(scenario, outcome) => void finishScenario(scenario, outcome)}
+            onShowOnMap={(no) => setOpenMap({ focus: no })}
           />
         </section>
 
@@ -940,7 +943,8 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
           list={scenarios}
           states={scenarioStates}
           graph={scenarioGraph}
-          onClose={() => setOpenMap(false)}
+          focus={openMap.focus}
+          onClose={() => setOpenMap(null)}
         />
       )}
 
