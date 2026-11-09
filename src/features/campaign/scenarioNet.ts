@@ -18,18 +18,41 @@ export interface Scenario {
   /** 세계 지도의 칸. */
   readonly grid: string
   readonly name: string
+  /**
+   * 세계 지도에서 스티커가 붙는 자리(`0051`). 지도 그림의 픽셀이며 왼쪽 위가
+   * (0, 0)이다. 모르면 `null` — 그 시나리오는 지도에 안 나온다.
+   */
+  readonly map?: MapSpot | null
+}
+
+export interface MapSpot {
+  readonly x: number
+  readonly y: number
+  readonly w: number
+  readonly h: number
 }
 
 interface Row {
   no: number | null
   grid: string | null
   name: string | null
+  map_x: number | null
+  map_y: number | null
+  map_w: number | null
+  map_h: number | null
+}
+
+function spotOf(row: Row): MapSpot | null {
+  const { map_x: x, map_y: y, map_w: w, map_h: h } = row
+  if (![x, y, w, h].every((v) => typeof v === 'number' && Number.isFinite(v))) return null
+  if ((w as number) <= 0 || (h as number) <= 0) return null
+  return { x: x as number, y: y as number, w: w as number, h: h as number }
 }
 
 export async function listScenarios(): Promise<Scenario[]> {
   const { data, error } = await supabase()
     .from('scenarios')
-    .select('no, grid, name')
+    .select('no, grid, name, map_x, map_y, map_w, map_h')
     .order('no', { ascending: true })
   if (error) throw error
   return ((data ?? []) as unknown as Row[])
@@ -38,6 +61,7 @@ export async function listScenarios(): Promise<Scenario[]> {
       no: Math.trunc(row.no),
       grid: typeof row.grid === 'string' ? row.grid : '',
       name: typeof row.name === 'string' ? row.name : '',
+      map: spotOf(row),
     }))
 }
 

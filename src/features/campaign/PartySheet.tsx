@@ -17,6 +17,8 @@ import { writeCampaignLog } from './campaignNet'
 import { LogView } from './LogView'
 import { AchievementPicker } from './AchievementPicker'
 import { ListIcon } from './ListIcon'
+import { MapIcon } from './MapIcon'
+import { WorldMap } from './WorldMap'
 import { TreasureView } from './TreasureView'
 import { Itinerary } from './Itinerary'
 import { Retirements } from './Retirements'
@@ -174,6 +176,7 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   const [asking, setAsking] = useState(false)
   /** 보물 색인 팝업이 떠 있는가. */
   const [openTreasures, setOpenTreasures] = useState(false)
+  const [openMap, setOpenMap] = useState(false)
 
   /**
    * 지금 편집 중인가.
@@ -321,7 +324,18 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
           완료·실패를 누르면 행적에 한 줄이 남는다 — 결과를 적는 자리가 여기다.
           -------------------------------------------------------------------- */}
         <section className="sheet__block">
-          <h2 className="sheet__label">시나리오</h2>
+          <div className="tre__head">
+            <h2 className="sheet__label">시나리오</h2>
+            {/* 해금한 시나리오에 스티커가 붙은 세계 지도(`0051`). 보물 칸의 단추와 같은 자리다. */}
+            <button
+              type="button"
+              className="tre__more"
+              aria-label="세계 지도 보기"
+              onClick={() => setOpenMap(true)}
+            >
+              <MapIcon />
+            </button>
+          </div>
           <ScenarioBoard
             list={scenarios}
             states={scenarioStates}
@@ -919,6 +933,10 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
           onConfirm={stopEditing}
           onCancel={() => setAsking(false)}
         />
+      )}
+
+      {openMap && (
+        <WorldMap list={scenarios} states={scenarioStates} onClose={() => setOpenMap(false)} />
       )}
 
       {/* 행적에서 시나리오를 완료로 바꾸면 무엇이 열리는지 권한다(`0049`). */}

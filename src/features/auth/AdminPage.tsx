@@ -3,6 +3,7 @@ import { ClassDataEditor } from '../campaign/ClassDataEditor'
 import { ClassPerkEditor } from '../campaign/ClassPerkEditor'
 import { TreasureEditor } from '../campaign/TreasureEditor'
 import { UnlockEditor } from '../campaign/UnlockEditor'
+import { MapUploader } from '../campaign/MapUploader'
 import { approveUser, listPendingUsers, useApprovalStore, type PendingUser } from './approval'
 import './PendingPage.css'
 
@@ -142,6 +143,8 @@ export function AdminPage() {
       <UnlockEditor />
 
       <TreasureEditor />
+
+      <MapUploader />
     </main>
   )
 }
