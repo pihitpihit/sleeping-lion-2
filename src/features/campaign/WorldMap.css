@@ -20,11 +20,18 @@
 /*
   **끌기와 벌리기를 직접 받는다** — 브라우저에 맡기면 둘째 손가락이 닿기 전에
   첫째를 가져가 벌리기가 안 잡힌다(`WorldMapPanel`). 휠은 그대로 구른다.
-  노치 자리까지 지도가 깔린다 — 화면을 가득 채우는 것이 요점이다.
+  **다이나믹 아일랜드(노치) 자리는 비운다**(형님이 정했다) — 그 밑에 깔린 지도는
+  가려져 안 보이고 스티커가 거기 숨으면 누를 수도 없다. 폰을 눕히면 아일랜드가
+  옆으로 가므로 좌우 안전영역도 함께 비운다. 아래는 홈 막대뿐이라 끝까지 깐다.
+  비운 자리는 `.wmap`의 바탕색이 메운다. 크기가 줄면 `ResizeObserver`가 덮는
+  크기를 다시 셈한다.
 */
 .wmap__viewport {
   position: absolute;
-  inset: 0;
+  top: var(--sl-safe-top);
+  right: var(--sl-safe-right);
+  bottom: 0;
+  left: var(--sl-safe-left);
   overflow: auto;
   overscroll-behavior: contain;
   touch-action: none;

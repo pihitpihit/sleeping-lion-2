@@ -15,6 +15,7 @@ import { PartySheet } from './PartySheet'
 import { Roster } from './Roster'
 import { backHref, readJournalRoute } from './journalRoute'
 import { useScrolled } from './useScrolled'
+import { PartyBookIcon } from './PartyBookIcon'
 import './JournalPage.css'
 
 /**
@@ -264,7 +265,7 @@ function MyCharacters({
             const info = classInfoOf(classes, c.classId, c.classIcon)
             const iconUrl = classIconUrl(c.classIcon)
             return (
-              <li key={c.id}>
+              <li key={c.id} className="journal__row">
                 <a className="journal__char" href={`#/character/${c.id}`}>
                   {/* 양피지 원반. 아이콘 색을 건드리지 않는다(구현 결정 41). */}
                   <span
@@ -303,6 +304,25 @@ function MyCharacters({
                     <LevelBadge level={c.level} />
                   </span>
                 </a>
+
+                {/*
+                  든 파티의 기록지로 곧장 가는 문(형님이 정했다). 링크 안에 링크를
+                  못 넣으므로 줄의 곁에 나란히 선다 — 테는 `<li>`가 두른다. **파티가
+                  없어도 자리를 비워 둔다**: 문이 떴다 사라지면 왕관 자리가 줄마다
+                  어긋난다(구현 결정 601과 같은 결).
+                */}
+                {c.partyId ? (
+                  <a
+                    className="journal__char-door"
+                    href={`#/journal/${c.partyId}`}
+                    aria-label={`${c.partyName ?? '파티'} 기록지로`}
+                    title={`${c.partyName ?? '파티'} 기록지로`}
+                  >
+                    <PartyBookIcon />
+                  </a>
+                ) : (
+                  <span className="journal__char-door journal__char-door--none" aria-hidden="true" />
+                )}
               </li>
             )
           })}

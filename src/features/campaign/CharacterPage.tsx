@@ -9,6 +9,7 @@ import { classInfoOf, useClassStore } from './classStore'
 import { characterIdFromHash } from './journalRoute'
 import { useOneCharacterStore } from './oneCharacter'
 import { useScrolled } from './useScrolled'
+import { PartyBookIcon } from './PartyBookIcon'
 import './JournalPage.css'
 
 /**
@@ -184,16 +185,7 @@ export function CharacterPage() {
               aria-label={`${partyName || '파티'} 기록지로`}
               title={`${partyName || '파티'} 기록지로`}
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path
-                  d="M12 6.6C10.1 5.3 7.7 4.7 4.6 4.7v12.6c3.1 0 5.5.6 7.4 1.9 1.9-1.3 4.3-1.9 7.4-1.9V4.7c-3.1 0-5.5.6-7.4 1.9Z"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinejoin="round"
-                />
-                <path d="M12 6.6v12.6" fill="none" stroke="currentColor" strokeWidth="1.6" />
-              </svg>
+              <PartyBookIcon />
             </a>
           )}
         </div>

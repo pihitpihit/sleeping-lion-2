@@ -113,7 +113,7 @@ describe('기록지의 짜임 — 한 장의 종이', () => {
     // 단이 먼저 열리고 띠는 그 뒤에 온다.
     expect(bar).toBeGreaterThan(col)
     /*
-      칸은 열하나 — 이름·행적·시나리오·평판 줄·번영도·파티 업적·전역 업적·개봉 조건·
+      칸은 열하나 — 이름·시나리오·행적·평판 줄·번영도·파티 업적·전역 업적·개봉 조건·
       보물·은퇴한 캐릭터·메모.
       **떡갈나무는 B봉투가 열려야 나온다**(`0033`) — 표가 비어 있으면 안 세어진다.
       **개봉 조건은 표가 비어 있어도 선다** — 왜 비었는지 적어 주어야 「UI가 안
@@ -122,6 +122,15 @@ describe('기록지의 짜임 — 한 장의 종이', () => {
     expect((html.match(/class="sheet__block/g) ?? []).length).toBe(11)
     // 단이 닫힌 뒤에 띠가 서는지: 띠 앞쪽에 칸이 다 들어 있다.
     expect((html.slice(col, bar).match(/class="sheet__block/g) ?? []).length).toBe(11)
+  })
+
+  // 시나리오가 먼저, 행적이 그다음이다 — 다음에 어디로 갈지가 지나온 길보다 먼저 묻힌다.
+  it('시나리오 칸 다음에 행적 칸이 온다', () => {
+    const html = render(fixture())
+    const scen = html.indexOf('>시나리오</h2>')
+    const itin = html.indexOf('>행적</h2>')
+    expect(scen).toBeGreaterThan(-1)
+    expect(itin).toBeGreaterThan(scen)
   })
 
   /*

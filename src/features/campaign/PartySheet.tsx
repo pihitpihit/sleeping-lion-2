@@ -281,6 +281,35 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
         </section>
 
         {/* --------------------------------------------------------------------
+          시나리오 — **다음에 어디로 갈 수 있는가**
+          --------------------------------------------------------------------
+          열린 것을 늘어놓고 깨면 무엇이 열리고 막히는지 곁에 적는다(`0049`).
+          완료·실패를 누르면 행적에 한 줄이 남는다 — 결과를 적는 자리가 여기다.
+          -------------------------------------------------------------------- */}
+        <section className="sheet__block">
+          <div className="tre__head">
+            <h2 className="sheet__label">시나리오</h2>
+            {/* 해금한 시나리오에 스티커가 붙은 세계 지도(`0051`). 보물 칸의 단추와 같은 자리다. */}
+            <button
+              type="button"
+              className="tre__more"
+              aria-label="세계 지도 보기"
+              onClick={() => setOpenMap(true)}
+            >
+              <MapIcon />
+            </button>
+          </div>
+          <ScenarioBoard
+            list={scenarios}
+            states={scenarioStates}
+            graph={scenarioGraph}
+            editing={editing}
+            busy={itinBusy}
+            onFinish={(scenario, outcome) => void finishScenario(scenario, outcome)}
+          />
+        </section>
+
+        {/* --------------------------------------------------------------------
           행적 — **「머무는 곳」 한 칸을 대신한다**(2026-09-13, 형님이 정했다)
           --------------------------------------------------------------------
           ┌──────────────────────────────────────────────────────────────────┐
@@ -315,35 +344,6 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
               {itinError}
             </p>
           )}
-        </section>
-
-        {/* --------------------------------------------------------------------
-          시나리오 — **다음에 어디로 갈 수 있는가**
-          --------------------------------------------------------------------
-          열린 것을 늘어놓고 깨면 무엇이 열리고 막히는지 곁에 적는다(`0049`).
-          완료·실패를 누르면 행적에 한 줄이 남는다 — 결과를 적는 자리가 여기다.
-          -------------------------------------------------------------------- */}
-        <section className="sheet__block">
-          <div className="tre__head">
-            <h2 className="sheet__label">시나리오</h2>
-            {/* 해금한 시나리오에 스티커가 붙은 세계 지도(`0051`). 보물 칸의 단추와 같은 자리다. */}
-            <button
-              type="button"
-              className="tre__more"
-              aria-label="세계 지도 보기"
-              onClick={() => setOpenMap(true)}
-            >
-              <MapIcon />
-            </button>
-          </div>
-          <ScenarioBoard
-            list={scenarios}
-            states={scenarioStates}
-            graph={scenarioGraph}
-            editing={editing}
-            busy={itinBusy}
-            onFinish={(scenario, outcome) => void finishScenario(scenario, outcome)}
-          />
         </section>
 
         {/* --------------------------------------------------------------------
