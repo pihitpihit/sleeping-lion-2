@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
+  achievementHave,
+  achievementVerdict,
   arrowsOf,
+  buildAchievementData,
   buildGraph,
   hasOutcome,
   missingRequires,
@@ -183,5 +186,78 @@ describe('arrowsOf', () => {
 
   it('연결을 모르면 아무것도 없다', () => {
     expect(arrowsOf(null, 302, {}, false)).toEqual({ out: [], in: [], blocks: [] })
+  })
+})
+
+/*
+  업적 조건·보상(`0055`). 업적 이름과 열쇠는 지어낸 것이다(구현 결정 532).
+  401을 깨면 전역 업적 g-flee를 얻는다. 402는 g-flee가 **없어야** 한다.
+  403은 파티 업적 p-plan이 있어야 한다. 404는 g-loop를 세 번 이뤄야 한다.
+*/
+describe('업적 조건', () => {
+  const ach = buildAchievementData(
+    [
+      { no: 402, alt: 0, scope: 'global', code: 'g-flee', negate: true, count: 1 },
+      { no: 403, alt: 0, scope: 'party', code: 'p-plan', negate: false, count: 1 },
+      { no: 404, alt: 0, scope: 'global', code: 'g-loop', negate: false, count: 3 },
+    ],
+    [
+      { no: 401, scope: 'global', code: 'g-flee', lose: false },
+      { no: 401, scope: 'party', code: 'p-plan', lose: true },
+    ],
+    [
+      { scope: 'global', code: 'g-flee', name: '도주' },
+      { scope: 'party', code: 'p-plan', name: '계 획' },
+      { scope: 'global', code: 'g-loop', name: '되풀이' },
+    ],
+  )
+  const g = buildGraph(
+    [
+      { from: 401, to: 402, kind: 'unlocks' },
+      { from: 401, to: 403, kind: 'unlocks' },
+      { from: 401, to: 404, kind: 'unlocks' },
+    ],
+    [],
+    ach,
+  )
+
+  it('기록지의 이름을 열쇠로 옮긴다 — 공백이 달라도 같은 업적, 모르는 이름은 빠진다', () => {
+    const have = achievementHave(g, ['계획', '손으로 적은 것'], { 되풀이: 2 })
+    expect([...have.party]).toEqual(['p-plan'])
+    expect(have.global.get('g-loop')).toBe(2)
+  })
+
+  it('없어야 하는 전역 업적을 가졌으면 영영 막힌다', () => {
+    const have = achievementHave(g, [], { 도주: 1 })
+    expect(achievementVerdict(g, 402, have).kind).toBe('blocked')
+  })
+
+  it('횟수가 모자라면 기다린다', () => {
+    const have = achievementHave(g, [], { 되풀이: 2 })
+    expect(achievementVerdict(g, 404, have).kind).toBe('missing')
+    expect(achievementVerdict(g, 404, achievementHave(g, [], { 되풀이: 3 })).kind).toBe('ok')
+  })
+
+  it('깨서 얻는 업적까지 셈한다 — 얻은 업적이 막고, 잃은 업적 때문에 못 연다', () => {
+    const have = achievementHave(g, ['계획'], { 되풀이: 3 })
+    const o = outcomeOf(g, 401, { 401: 'done' }, have)
+    // 402는 401이 주는 「도주」 때문에 막힌다.
+    expect(o.blocks).toEqual([402])
+    // 403은 401이 「계획」을 가져가서 못 연다 — 기다림으로 적는다.
+    expect(o.opens).toEqual([404])
+    expect(o.waiting.map((w) => w.no)).toEqual([403])
+    expect(o.gains).toEqual(['도주'])
+    expect(o.losses).toEqual(['계 획'])
+  })
+
+  it('얻은 업적이 이미 열린 것을 막으면 막힘으로 권한다', () => {
+    const have = achievementHave(g, [], {})
+    const o = outcomeOf(g, 401, { 401: 'done', 402: 'open' }, have)
+    expect(o.blocks).toEqual([402])
+  })
+
+  it('업적을 안 주면 연결만 본다', () => {
+    const o = outcomeOf(g, 401, { 401: 'done' })
+    expect(o.opens).toEqual([402, 403, 404])
   })
 })

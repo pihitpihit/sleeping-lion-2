@@ -1,6 +1,13 @@
 import { supabase } from '../auth/supabase'
 import { isStoredState, type StoredState } from './scenarioState'
-import { buildGraph, isLinkKind, type LinkKind, type ScenarioGraph } from './scenarioLinks'
+import {
+  buildAchievementData,
+  buildGraph,
+  isLinkKind,
+  type AchievementScope,
+  type LinkKind,
+  type ScenarioGraph,
+} from './scenarioLinks'
 
 /**
  * 시나리오 목록과 캠페인별 상태(`0044`·`0045`).
@@ -118,9 +125,12 @@ export async function setScenarioState(
  */
 export async function listScenarioGraph(): Promise<ScenarioGraph | null> {
   const client = supabase()
-  const [links, requires] = await Promise.all([
+  const [links, requires, achReqs, achRewards, achNames] = await Promise.all([
     client.from('scenario_links').select('from_no, to_no, kind'),
     client.from('scenario_requires').select('no, grp, req'),
+    client.from('scenario_achievement_reqs').select('no, alt, scope, code, negate, count'),
+    client.from('scenario_achievement_rewards').select('no, scope, code, lose'),
+    client.from('achievements').select('scope, code, name').not('code', 'is', null),
   ])
   if (links.error || requires.error) return null
   const linkRows = (
@@ -137,7 +147,52 @@ export async function listScenarioGraph(): Promise<ScenarioGraph | null> {
   ).filter(
     (r) => typeof r.no === 'number' && typeof r.grp === 'number' && typeof r.req === 'number',
   )
-  return buildGraph(linkRows, reqRows)
+  /*
+    업적 조건·보상(`0055`)은 **못 읽어도 연결은 그대로 쓴다** — 비워 두면 업적을 안 볼
+    뿐 연결로 셈하던 것은 그대로다. 「모른다」를 그래프 전체로 번지게 하지 않는다.
+  */
+  const isScope = (v: unknown): v is AchievementScope => v === 'global' || v === 'party'
+  const ach =
+    achReqs.error || achRewards.error || achNames.error
+      ? undefined
+      : buildAchievementData(
+          ((achReqs.data ?? []) as unknown as Record<string, unknown>[])
+            .filter(
+              (r) =>
+                typeof r.no === 'number' &&
+                typeof r.alt === 'number' &&
+                isScope(r.scope) &&
+                typeof r.code === 'string',
+            )
+            .map((r) => ({
+              no: r.no as number,
+              alt: r.alt as number,
+              scope: r.scope as AchievementScope,
+              code: r.code as string,
+              negate: r.negate === true,
+              count: typeof r.count === 'number' && r.count > 0 ? r.count : 1,
+            })),
+          ((achRewards.data ?? []) as unknown as Record<string, unknown>[])
+            .filter(
+              (r) => typeof r.no === 'number' && isScope(r.scope) && typeof r.code === 'string',
+            )
+            .map((r) => ({
+              no: r.no as number,
+              scope: r.scope as AchievementScope,
+              code: r.code as string,
+              lose: r.lose === true,
+            })),
+          ((achNames.data ?? []) as unknown as Record<string, unknown>[])
+            .filter(
+              (r) => isScope(r.scope) && typeof r.code === 'string' && typeof r.name === 'string',
+            )
+            .map((r) => ({
+              scope: r.scope as AchievementScope,
+              code: r.code as string,
+              name: r.name as string,
+            })),
+        )
+  return buildGraph(linkRows, reqRows, ach)
 }
 
 /** 여러 상태를 한 번에 적는다. 권한 것을 적용할 때 쓴다 — 닫힘으로 되돌리는 일은 없다. */

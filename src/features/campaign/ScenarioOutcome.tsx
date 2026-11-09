@@ -2,10 +2,13 @@ import { useEffect, useState } from 'react'
 import { MiniDialog } from './MiniDialog'
 import { useScenarioStore } from './scenarioStore'
 import {
+  achievementHave,
+  achievementReqText,
   hasOutcome,
   linksOf,
   outcomeOf,
   scenarioName,
+  type AchievementReq,
   type Outcome,
   type ScenarioGraph,
 } from './scenarioLinks'
@@ -38,16 +41,28 @@ function missingText(missing: readonly (readonly number[])[]): string {
   return missing.map((g) => g.map((n) => `#${n}`).join('·')).join(' 또는 ')
 }
 
+/** 모자란 업적 조건. 묶음끼리는 「또는」, 묶음 안은 「와」. */
+function achMissingText(
+  graph: ScenarioGraph | null,
+  missing: readonly (readonly AchievementReq[])[],
+): string {
+  if (graph === null) return ''
+  return missing.map((g) => g.map((r) => achievementReqText(graph, r)).join('·')).join(' 또는 ')
+}
+
 export function ScenarioOutcomePanel({
   no,
   list,
   outcome,
+  graph = null,
   onApply,
   onClose,
 }: {
   no: number
   list: readonly Scenario[]
   outcome: Outcome
+  /** 업적 조건의 이름을 찾는 데만 쓴다. */
+  graph?: ScenarioGraph | null
   onApply: (entries: { no: number; state: StoredState }[]) => void
   onClose: () => void
 }) {
@@ -128,10 +143,24 @@ export function ScenarioOutcomePanel({
         <ul className="scout__notes">
           {outcome.waiting.map((w) => (
             <li key={w.no}>
-              {scenarioName(w.no, list)} — 열리려면 {missingText(w.missing)}도 완료해야 한다.
+              {scenarioName(w.no, list)} — {waitingText(graph, w)}
             </li>
           ))}
         </ul>
+      )}
+
+      {/*
+        **업적은 알려 주기만 한다.** 기록지의 업적 칸은 편집 모드의 초안으로 고치는
+        자리라(구현 결정 236) 여기서 몰래 바꾸면 초안과 어긋난다 — 무엇을 담을지 적어 두고
+        담는 것은 사람이 한다.
+      */}
+      {(outcome.gains.length > 0 || outcome.losses.length > 0) && (
+        <p className="scout__notes">
+          업적
+          {outcome.gains.length > 0 && <> — 얻음: {outcome.gains.join(', ')}</>}
+          {outcome.losses.length > 0 && <> — 잃음: {outcome.losses.join(', ')}</>}. 기록지의 업적
+          칸에 담는다.
+        </p>
       )}
 
       {outcome.links.length > 0 && (
@@ -139,17 +168,26 @@ export function ScenarioOutcomePanel({
       )}
 
       <div className="mini__acts">
-        <button
-          type="button"
-          className="mini__go"
-          disabled={entries.length === 0}
-          onClick={() => onApply(entries)}
-        >
-          적용
-        </button>
-        <button type="button" className="mini__cancel" onClick={onClose}>
-          나중에
-        </button>
+        {/* 바꿀 것이 없고 알릴 것만 있으면 확인 하나로 닫는다. */}
+        {hasChoices(outcome) ? (
+          <>
+            <button
+              type="button"
+              className="mini__go"
+              disabled={entries.length === 0}
+              onClick={() => onApply(entries)}
+            >
+              적용
+            </button>
+            <button type="button" className="mini__cancel" onClick={onClose}>
+              나중에
+            </button>
+          </>
+        ) : (
+          <button type="button" className="mini__go" onClick={onClose}>
+            확인
+          </button>
+        )}
       </div>
     </div>
   )
@@ -161,7 +199,27 @@ export function ScenarioOutcomePanel({
  * 기록지가 띄운다 — 행적의 상태 단추로 바꿔도, 시나리오 칸의 완료로 바꿔도 같은
  * 팝업이다. 두 벌로 그리면 어긋난다. **권할 것이 없으면 아무것도 안 띄우고 조용히 비운다.**
  */
-export function ScenarioOutcomePrompt() {
+/** 기다리는 까닭 — 선행과 업적 가운데 모자란 것만 적는다. */
+function waitingText(graph: ScenarioGraph | null, w: Outcome['waiting'][number]): string {
+  const scen = w.missing.length > 0 ? missingText(w.missing) : ''
+  const ach = w.achMissing && w.achMissing.length > 0 ? achMissingText(graph, w.achMissing) : ''
+  if (scen && ach) return `열리려면 ${scen}도 완료하고 업적이 맞아야 한다 — ${ach}.`
+  if (ach) return `열리려면 업적이 맞아야 한다 — ${ach}.`
+  return `열리려면 ${scen}도 완료해야 한다.`
+}
+
+function hasChoices(outcome: Outcome): boolean {
+  return outcome.opens.length > 0 || outcome.blocks.length > 0 || outcome.choose.length > 0
+}
+
+export function ScenarioOutcomePrompt({
+  achievements = null,
+  globalAchievements = null,
+}: {
+  /** 기록지에 저장된 파티 업적(이름). 주면 업적 조건까지 본다. */
+  achievements?: readonly string[] | null
+  globalAchievements?: Readonly<Record<string, number>> | null
+} = {}) {
   const pending = useScenarioStore((s) => s.pending)
   const graph = useScenarioStore((s) => s.graph)
   const states = useScenarioStore((s) => s.states)
@@ -169,7 +227,12 @@ export function ScenarioOutcomePrompt() {
   const apply = useScenarioStore((s) => s.apply)
   const markPending = useScenarioStore((s) => s.markPending)
 
-  const outcome = pending !== null && graph !== null ? outcomeOf(graph, pending, states) : null
+  const have =
+    graph !== null && achievements !== null && globalAchievements !== null
+      ? achievementHave(graph, achievements, globalAchievements)
+      : null
+  const outcome =
+    pending !== null && graph !== null ? outcomeOf(graph, pending, states, have) : null
   const show = outcome !== null && hasOutcome(outcome)
 
   useEffect(() => {
@@ -185,6 +248,7 @@ export function ScenarioOutcomePrompt() {
         no={pending}
         list={list}
         outcome={outcome}
+        graph={graph}
         onApply={(entries) => {
           markPending(null)
           void apply(entries)

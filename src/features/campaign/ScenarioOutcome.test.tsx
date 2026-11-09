@@ -15,7 +15,15 @@ const list = [
   { no: 203, grid: 'A-3', name: '다' },
 ]
 
-const none: Outcome = { opens: [], blocks: [], choose: [], waiting: [], links: [] }
+const none: Outcome = {
+  opens: [],
+  blocks: [],
+  choose: [],
+  waiting: [],
+  links: [],
+  gains: [],
+  losses: [],
+}
 
 function panel(outcome: Partial<Outcome>) {
   return renderToStaticMarkup(
@@ -30,6 +38,41 @@ function panel(outcome: Partial<Outcome>) {
 }
 
 describe('ScenarioOutcomePanel', () => {
+  it('업적이 모자라면 무엇이 맞아야 하는지 적는다', () => {
+    const g = buildGraph([], [], {
+      reqs: new Map(),
+      rewards: new Map(),
+      names: new Map([['global:g-flee', '도주']]),
+    })
+    const html = renderToStaticMarkup(
+      <ScenarioOutcomePanel
+        no={201}
+        list={list}
+        graph={g}
+        outcome={{
+          ...none,
+          waiting: [
+            {
+              no: 203,
+              missing: [],
+              achMissing: [[{ scope: 'global', code: 'g-flee', negate: true, count: 1 }]],
+            },
+          ],
+        }}
+        onApply={() => {}}
+        onClose={() => {}}
+      />,
+    )
+    expect(html).toContain('열리려면 업적이 맞아야 한다 — 「도주」 없음.')
+  })
+
+  it('업적만 바뀌면 고를 것 없이 알리고 확인으로 닫는다', () => {
+    const html = panel({ gains: ['도주'] })
+    expect(html).toContain('얻음: 도주')
+    expect(html).toContain('확인')
+    expect(html).not.toContain('적용')
+  })
+
   it('열기와 막기는 처음부터 켜 둔다', () => {
     const html = panel({ opens: [202], blocks: [203] })
     expect(html.match(/type="checkbox" checked=""/g)?.length).toBe(2)

@@ -32,7 +32,36 @@ export interface ScenarioGraph {
   readonly unlockedBy: ReadonlyMap<number, readonly number[]>
   /** 번호 → 선행 묶음들. 묶음 안은 모두, 묶음끼리는 하나라도. */
   readonly requires: ReadonlyMap<number, readonly (readonly number[])[]>
+  /** 업적 조건·보상과 열쇠↔이름(`0054`·`0055`). 못 읽었으면 비어 있다. */
+  readonly ach: AchievementData
 }
+
+export type AchievementScope = 'global' | 'party'
+
+export interface AchievementReq {
+  readonly scope: AchievementScope
+  readonly code: string
+  /** 이 업적이 **없어야** 한다. */
+  readonly negate: boolean
+  /** 되풀이해 이루는 전역 업적의 횟수. */
+  readonly count: number
+}
+
+export interface AchievementReward {
+  readonly scope: AchievementScope
+  readonly code: string
+  readonly lose: boolean
+}
+
+export interface AchievementData {
+  /** 번호 → 조건 묶음들. 묶음 안은 모두, 묶음끼리는 하나라도. */
+  readonly reqs: ReadonlyMap<number, readonly (readonly AchievementReq[])[]>
+  readonly rewards: ReadonlyMap<number, readonly AchievementReward[]>
+  /** `scope:code` → 우리 목록의 이름. */
+  readonly names: ReadonlyMap<string, string>
+}
+
+const NO_ACH: AchievementData = { reqs: new Map(), rewards: new Map(), names: new Map() }
 
 const EMPTY: Readonly<Record<LinkKind, readonly number[]>> = {
   unlocks: [],
@@ -48,6 +77,7 @@ export function isLinkKind(raw: unknown): raw is LinkKind {
 export function buildGraph(
   links: readonly ScenarioLink[],
   requires: readonly { no: number; grp: number; req: number }[],
+  ach: AchievementData = NO_ACH,
 ): ScenarioGraph {
   const out = new Map<number, Record<LinkKind, number[]>>()
   const unlockedBy = new Map<number, number[]>()
@@ -80,7 +110,131 @@ export function buildGraph(
     )
   }
 
-  return { out, unlockedBy, requires: req }
+  return { out, unlockedBy, requires: req, ach }
+}
+
+/** 표에서 읽은 줄로 업적 자료를 묶는다. 묶음 번호 차례로 세운다. */
+export function buildAchievementData(
+  reqs: readonly ({ no: number; alt: number } & AchievementReq)[],
+  rewards: readonly ({ no: number } & AchievementReward)[],
+  names: readonly { scope: AchievementScope; code: string; name: string }[],
+): AchievementData {
+  const byNo = new Map<number, Map<number, AchievementReq[]>>()
+  for (const { no, alt, scope, code, negate, count } of reqs) {
+    const alts = byNo.get(no) ?? new Map<number, AchievementReq[]>()
+    const group = alts.get(alt) ?? []
+    group.push({ scope, code, negate, count })
+    alts.set(alt, group)
+    byNo.set(no, alts)
+  }
+  const reqMap = new Map<number, AchievementReq[][]>()
+  for (const [no, alts] of byNo) {
+    reqMap.set(
+      no,
+      [...alts.entries()].sort(([a], [b]) => a - b).map(([, g]) => g),
+    )
+  }
+  const rewardMap = new Map<number, AchievementReward[]>()
+  for (const { no, scope, code, lose } of rewards) {
+    const list = rewardMap.get(no) ?? []
+    list.push({ scope, code, lose })
+    rewardMap.set(no, list)
+  }
+  return {
+    reqs: reqMap,
+    rewards: rewardMap,
+    names: new Map(names.map((n) => [`${n.scope}:${n.code}`, n.name])),
+  }
+}
+
+/** 파티가 가진 업적 — 열쇠로. 전역 업적은 몇 번 이뤘는지까지. */
+export interface AchievementHave {
+  readonly party: ReadonlySet<string>
+  readonly global: ReadonlyMap<string, number>
+}
+
+/** 이름 견주기 — 공백·대소문자·자모 갈림을 접는다(`searchFold`와 같은 눈). */
+function foldName(name: string): string {
+  return name.replace(/\s+/g, '').normalize('NFC').toLowerCase()
+}
+
+/**
+ * 기록지에 이름으로 담긴 업적을 열쇠로 옮긴다. **열쇠가 없는 이름(사람이 새로 적은
+ * 업적)은 셈에서 빠진다** — 시나리오 조건이 가리킬 수 없는 것이라 빠져도 같다.
+ */
+export function achievementHave(
+  graph: ScenarioGraph,
+  party: readonly string[],
+  global: Readonly<Record<string, number>>,
+): AchievementHave {
+  const byName = new Map<string, string>()
+  for (const [key, name] of graph.ach.names) byName.set(foldName(name), key)
+  const codeOf = (scope: AchievementScope, name: string) => {
+    const key = byName.get(foldName(name))
+    return key?.startsWith(`${scope}:`) ? key.slice(scope.length + 1) : null
+  }
+  const partySet = new Set<string>()
+  for (const name of party) {
+    const code = codeOf('party', name)
+    if (code) partySet.add(code)
+  }
+  const globalMap = new Map<string, number>()
+  for (const [name, n] of Object.entries(global)) {
+    const code = codeOf('global', name)
+    if (code && n > 0) globalMap.set(code, n)
+  }
+  return { party: partySet, global: globalMap }
+}
+
+/** 이 시나리오를 깨면 업적이 어떻게 되는가 — 얻을 것은 얻고 잃을 것은 잃은 뒤. */
+function afterRewards(graph: ScenarioGraph, no: number, have: AchievementHave): AchievementHave {
+  const rewards = graph.ach.rewards.get(no)
+  if (!rewards) return have
+  const party = new Set(have.party)
+  const global = new Map(have.global)
+  for (const r of rewards) {
+    if (r.scope === 'party') {
+      if (r.lose) party.delete(r.code)
+      else party.add(r.code)
+    } else if (r.lose) global.delete(r.code)
+    else global.set(r.code, (global.get(r.code) ?? 0) + 1)
+  }
+  return { party, global }
+}
+
+function holds(req: AchievementReq, have: AchievementHave): boolean {
+  const n =
+    req.scope === 'party' ? (have.party.has(req.code) ? 1 : 0) : (have.global.get(req.code) ?? 0)
+  return req.negate ? n === 0 : n >= req.count
+}
+
+/** 업적 조건을 보면 이 시나리오가 어떤가. */
+export type AchievementVerdict =
+  | { readonly kind: 'ok' }
+  /** 가진 전역 업적이 「없어야 한다」에 걸린다 — 전역 업적은 잃지 않으므로 영영 못 한다. */
+  | { readonly kind: 'blocked' }
+  /** 아직 모자라다 — 묶음마다 걸리는 조건. */
+  | { readonly kind: 'missing'; readonly missing: readonly (readonly AchievementReq[])[] }
+
+export function achievementVerdict(
+  graph: ScenarioGraph,
+  no: number,
+  have: AchievementHave,
+): AchievementVerdict {
+  const alts = graph.ach.reqs.get(no)
+  if (!alts || alts.length === 0) return { kind: 'ok' }
+  const failing = alts.map((g) => g.filter((r) => !holds(r, have)))
+  if (failing.some((g) => g.length === 0)) return { kind: 'ok' }
+  const dead = (g: readonly AchievementReq[]) => g.some((r) => r.negate && r.scope === 'global')
+  if (failing.every(dead)) return { kind: 'blocked' }
+  return { kind: 'missing', missing: failing.filter((g) => !dead(g)) }
+}
+
+/** 업적 조건 하나를 사람의 말로 — 「상인 도주」 없음, 「오염 종식」 ×3. */
+export function achievementReqText(graph: ScenarioGraph, req: AchievementReq): string {
+  const name = graph.ach.names.get(`${req.scope}:${req.code}`) ?? req.code
+  if (req.negate) return `「${name}」 없음`
+  return req.count > 1 ? `「${name}」 ×${req.count}` : `「${name}」`
 }
 
 export function linksOf(
@@ -119,11 +273,16 @@ export interface Outcome {
   readonly blocks: readonly number[]
   /** 이 가운데 하나를 골라 연다. 닫힌 것만. */
   readonly choose: readonly number[]
-  /** 열어 주긴 했는데 선행이 모자라 아직 못 여는 것. */
+  /** 열어 주긴 했는데 선행이나 업적이 모자라 아직 못 여는 것. */
   readonly waiting: readonly {
     readonly no: number
     readonly missing: readonly (readonly number[])[]
+    /** 모자란 업적 조건 — 묶음끼리는 「또는」. */
+    readonly achMissing?: readonly (readonly AchievementReq[])[]
   }[]
+  /** 이것을 깨면 얻는 업적·잃는 업적의 이름. 기록지에 담는 것은 사람이 한다. */
+  readonly gains: readonly string[]
+  readonly losses: readonly string[]
   /** 곧바로 이어 갈 수 있는 것. 이미 완료한 것은 뺀다. */
   readonly links: readonly number[]
 }
@@ -152,10 +311,16 @@ export function outcomeOf(
   graph: ScenarioGraph,
   no: number,
   states: Record<number, StoredState>,
+  /**
+   * 파티가 지금 가진 업적. **주면 업적 조건까지 본다** — 이 시나리오의 보상을 받은
+   * 뒤의 것으로 셈한다(#8을 깨 얻는 업적이 #9를 막는 것처럼). 안 주면 연결만 본다.
+   */
+  have: AchievementHave | null = null,
 ): Outcome {
   const done = doneSet(states)
   done.add(no)
   const mine = linksOf(graph, no)
+  const after = have === null ? null : afterRewards(graph, no, have)
 
   /* 이것이 열어 주는 것 + 이것을 선행으로 갖는 것(그것을 열어 준 것은 이미 완료). */
   const candidates = new Set<number>(mine.unlocks)
@@ -164,30 +329,76 @@ export function outcomeOf(
   }
 
   const opens: number[] = []
-  const waiting: { no: number; missing: number[][] }[] = []
+  const achBlocks: number[] = []
+  const waiting: Outcome['waiting'][number][] = []
   for (const target of [...candidates].sort((a, b) => a - b)) {
     if (target === no || stateOf(states, target) !== 'closed') continue
     const unlocked = (graph.unlockedBy.get(target) ?? []).some((by) => done.has(by))
     if (!unlocked) continue
     if (blockedBy(graph, target, done)) continue
     const missing = missingRequires(graph, target, done)
-    if (missing.length === 0) opens.push(target)
-    else if (mine.unlocks.includes(target)) waiting.push({ no: target, missing })
+    const verdict: AchievementVerdict =
+      after === null ? { kind: 'ok' } : achievementVerdict(graph, target, after)
+    if (verdict.kind === 'blocked') {
+      // 열렸지만 가진 업적이 「없어야 한다」에 걸려 영영 못 한다 — 막힘으로 권한다.
+      achBlocks.push(target)
+    } else if (missing.length === 0 && verdict.kind === 'ok') {
+      opens.push(target)
+    } else if (mine.unlocks.includes(target)) {
+      waiting.push({
+        no: target,
+        missing,
+        ...(verdict.kind === 'missing' ? { achMissing: verdict.missing } : {}),
+      })
+    }
   }
 
-  const blocks = mine.blocks.filter((t) => {
-    const s = stateOf(states, t)
-    return s !== 'done' && s !== 'blocked'
-  })
+  /*
+    **얻은 업적이 이미 열린 것을 막을 수도 있다.** 열려 있는 것 가운데 이 보상 전에는
+    괜찮았는데 보상 뒤에 영영 못 하게 된 것을 막힘으로 권한다.
+  */
+  if (have !== null && after !== null) {
+    for (const [s, state] of Object.entries(states)) {
+      const target = Number(s)
+      if (state !== 'open' || target === no) continue
+      if (
+        achievementVerdict(graph, target, after).kind === 'blocked' &&
+        achievementVerdict(graph, target, have).kind !== 'blocked'
+      ) {
+        achBlocks.push(target)
+      }
+    }
+  }
+
+  const blocks = [
+    ...new Set([
+      ...mine.blocks.filter((t) => {
+        const s = stateOf(states, t)
+        return s !== 'done' && s !== 'blocked'
+      }),
+      ...achBlocks,
+    ]),
+  ].sort((a, b) => a - b)
   const choose = mine.choose.filter((t) => stateOf(states, t) === 'closed')
   const links = mine.links.filter((t) => stateOf(states, t) !== 'done')
 
-  return { opens, blocks, choose, waiting, links }
+  const nameOf = (r: AchievementReward) => graph.ach.names.get(`${r.scope}:${r.code}`) ?? r.code
+  const rewards = graph.ach.rewards.get(no) ?? []
+  const gains = rewards.filter((r) => !r.lose).map(nameOf)
+  const losses = rewards.filter((r) => r.lose).map(nameOf)
+
+  return { opens, blocks, choose, waiting, links, gains, losses }
 }
 
 /** 권할 것이 하나라도 있는가. 바꿀 것이 없으면 팝업을 안 띄운다. */
 export function hasOutcome(outcome: Outcome): boolean {
-  return outcome.opens.length > 0 || outcome.blocks.length > 0 || outcome.choose.length > 0
+  return (
+    outcome.opens.length > 0 ||
+    outcome.blocks.length > 0 ||
+    outcome.choose.length > 0 ||
+    outcome.gains.length > 0 ||
+    outcome.losses.length > 0
+  )
 }
 
 /** 번호에 이름을 붙인다. 목록에 없으면 번호만 — 목록을 못 읽는 자리도 있다. */

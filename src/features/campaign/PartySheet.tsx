@@ -949,7 +949,11 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
       )}
 
       {/* 행적에서 시나리오를 완료로 바꾸면 무엇이 열리는지 권한다(`0049`). */}
-      <ScenarioOutcomePrompt />
+      {/* 업적은 저장된 기록지의 것으로 본다 — 고치는 중인 초안은 아직 사실이 아니다. */}
+      <ScenarioOutcomePrompt
+        achievements={campaign.achievements}
+        globalAchievements={campaign.globalAchievements}
+      />
     </div>
   )
 }
