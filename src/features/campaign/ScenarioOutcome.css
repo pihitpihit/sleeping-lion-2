@@ -48,6 +48,13 @@
   cursor: pointer;
 }
 
+/* 저절로 바꾼 것 — 한 줄에 갈래 이름과 시나리오들. */
+.scout__done {
+  margin: 0 0 0.6rem;
+  font-size: 0.9rem;
+  color: var(--sl-text);
+}
+
 .scout__notes {
   margin: 0 0 0.8rem;
   padding: 0;

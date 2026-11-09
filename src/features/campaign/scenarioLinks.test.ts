@@ -6,6 +6,7 @@ import {
   buildAchievementData,
   buildGraph,
   hasOutcome,
+  missedOf,
   missingRequires,
   outcomeOf,
   type ScenarioLink,
@@ -259,5 +260,67 @@ describe('업적 조건', () => {
   it('업적을 안 주면 연결만 본다', () => {
     const o = outcomeOf(g, 401, { 401: 'done' })
     expect(o.opens).toEqual([402, 403, 404])
+  })
+})
+
+describe('missedOf', () => {
+  /* 501이 502·503을 연다. 504는 501이 막는다. 505는 501·506을 다 깨야 한다. 501이 507·508 중 하나를 고르게 한다. */
+  const g = buildGraph(
+    [
+      { from: 501, to: 502, kind: 'unlocks' },
+      { from: 501, to: 503, kind: 'unlocks' },
+      { from: 501, to: 504, kind: 'blocks' },
+      { from: 501, to: 505, kind: 'unlocks' },
+      { from: 501, to: 507, kind: 'choose' },
+      { from: 501, to: 508, kind: 'choose' },
+    ],
+    [
+      { no: 505, grp: 0, req: 501 },
+      { no: 505, grp: 0, req: 506 },
+    ],
+  )
+  const all = [501, 502, 503, 504, 505, 506, 507, 508]
+
+  it('완료한 것이 연 곳 중 닫힌 것을 열림으로, 막는 곳을 막힘으로 찾는다', () => {
+    const m = missedOf(g, { 501: 'done', 503: 'open', 504: 'open' }, null, all)
+    expect(m.opens).toEqual([502])
+    expect(m.blocks).toEqual([504])
+  })
+
+  it('선행이 모자라면 열지 않는다', () => {
+    expect(missedOf(g, { 501: 'done' }, null, all).opens).not.toContain(505)
+    expect(missedOf(g, { 501: 'done', 506: 'done' }, null, all).opens).toContain(505)
+  })
+
+  it('아직 아무것도 안 고른 갈림길을 알린다 — 하나라도 골랐으면 안 알린다', () => {
+    expect(missedOf(g, { 501: 'done' }, null, all).choose).toEqual([
+      { from: 501, options: [507, 508] },
+    ])
+    expect(missedOf(g, { 501: 'done', 508: 'open' }, null, all).choose).toEqual([])
+  })
+
+  it('완료·막힘은 건드리지 않는다', () => {
+    const m = missedOf(g, { 501: 'done', 502: 'done', 504: 'blocked' }, null, all)
+    expect(m.opens).not.toContain(502)
+    expect(m.blocks).toEqual([])
+  })
+})
+
+describe('열었지만 이미 막힌 것', () => {
+  /* 601이 602를 연다. 603(이미 완료)이 602를 막는다. */
+  const g = buildGraph(
+    [
+      { from: 601, to: 602, kind: 'unlocks' },
+      { from: 603, to: 602, kind: 'blocks' },
+    ],
+    [],
+  )
+
+  it('완료한 것이 막고 있으면 열지 않고 막힘으로 적는다 — 놓친 해금 찾기와 같은 말', () => {
+    const states = { 601: 'done', 603: 'done' } as const
+    const o = outcomeOf(g, 601, states)
+    expect(o.opens).toEqual([])
+    expect(o.blocks).toEqual([602])
+    expect(missedOf(g, states, null, [601, 602, 603]).blocks).toEqual([602])
   })
 })

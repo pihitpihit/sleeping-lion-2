@@ -25,7 +25,9 @@ import { Retirements } from './Retirements'
 import { useRetirementStore } from './retirementStore'
 import { useItineraryStore } from './itineraryStore'
 import { useScenarioStore } from './scenarioStore'
-import { ScenarioOutcomePrompt } from './ScenarioOutcome'
+import { MissedPanel, ScenarioOutcomePrompt } from './ScenarioOutcome'
+import { MiniDialog } from './MiniDialog'
+import { missedOf, type Missed } from './scenarioLinks'
 import { ScenarioBoard } from './ScenarioBoard'
 import type { Scenario } from './scenarioNet'
 import { useTreasureStore } from './treasureStore'
@@ -111,6 +113,18 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
   const loadScenarios = useScenarioStore((s) => s.load)
   const setScenarioState = useScenarioStore((s) => s.set)
   const scenarioGraph = useScenarioStore((s) => s.graph)
+  const scenarioApply = useScenarioStore((s) => s.apply)
+  const setScenarioAchievements = useScenarioStore((s) => s.setAchievements)
+  /** 놓친 해금 팝업 — 열 때 한 번 셈해 둔다. 떠 있는 동안 바뀌면 고르던 것이 흔들린다. */
+  const [missed, setMissed] = useState<Missed | null>(null)
+
+  /*
+    완료하면 업적 조건까지 셈해 저절로 연다(`scenarioStore.set`). 업적은 **저장된**
+    기록지의 것으로 본다 — 고치는 중인 초안은 아직 사실이 아니다.
+  */
+  useEffect(() => {
+    setScenarioAchievements(campaign.achievements, campaign.globalAchievements)
+  }, [campaign.achievements, campaign.globalAchievements, setScenarioAchievements])
   useEffect(() => {
     void loadScenarios(campaign.id)
   }, [campaign.id, loadScenarios])
@@ -310,6 +324,29 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
             onFinish={(scenario, outcome) => void finishScenario(scenario, outcome)}
             onShowOnMap={(no) => setOpenMap({ focus: no })}
           />
+          {/*
+            놓친 해금 찾기 — 완료한 것 전체로 보면 아직 안 바뀐 열림·막힘을 골라 적용한다.
+            상태를 바꾸는 단추라 편집 중에만 낸다(구현 결정 659와 같은 결). 연결을 못
+            읽었으면 셈할 것이 없어 안 낸다.
+          */}
+          {editing && scenarioGraph !== null && (
+            <button
+              type="button"
+              className="scboard__missed"
+              onClick={() =>
+                setMissed(
+                  missedOf(
+                    scenarioGraph,
+                    scenarioStates,
+                    useScenarioStore.getState().have(),
+                    scenarios.map((s) => s.no),
+                  ),
+                )
+              }
+            >
+              놓친 해금 찾기
+            </button>
+          )}
         </section>
 
         {/* --------------------------------------------------------------------
@@ -949,11 +986,21 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
       )}
 
       {/* 행적에서 시나리오를 완료로 바꾸면 무엇이 열리는지 권한다(`0049`). */}
-      {/* 업적은 저장된 기록지의 것으로 본다 — 고치는 중인 초안은 아직 사실이 아니다. */}
-      <ScenarioOutcomePrompt
-        achievements={campaign.achievements}
-        globalAchievements={campaign.globalAchievements}
-      />
+      <ScenarioOutcomePrompt />
+
+      {missed !== null && (
+        <MiniDialog title="놓친 해금" label="완료한 시나리오로 아직 안 바뀐 것">
+          <MissedPanel
+            missed={missed}
+            list={scenarios}
+            onApply={(entries) => {
+              setMissed(null)
+              void scenarioApply(entries)
+            }}
+            onClose={() => setMissed(null)}
+          />
+        </MiniDialog>
+      )}
     </div>
   )
 }

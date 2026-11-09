@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { ScenarioOutcomePanel, ScenarioOutlook } from './ScenarioOutcome'
-import { buildGraph, type Outcome } from './scenarioLinks'
+import { MissedPanel, ScenarioOutlook, ScenarioReportPanel } from './ScenarioOutcome'
+import { buildGraph, type Missed, type Outcome } from './scenarioLinks'
 
 /*
   알맹이와 미리 보기는 값만 받으므로 서버 렌더로 확인된다(구현 결정 194).
@@ -25,19 +25,47 @@ const none: Outcome = {
   losses: [],
 }
 
-function panel(outcome: Partial<Outcome>) {
+function report(outcome: Partial<Outcome>, applied: { no: number; to: 'open' | 'blocked' }[] = []) {
   return renderToStaticMarkup(
-    <ScenarioOutcomePanel
+    <ScenarioReportPanel
       no={201}
       list={list}
       outcome={{ ...none, ...outcome }}
-      onApply={() => {}}
+      applied={applied}
+      onChoose={() => {}}
+      onUndo={() => {}}
       onClose={() => {}}
     />,
   )
 }
 
-describe('ScenarioOutcomePanel', () => {
+describe('ScenarioReportPanel', () => {
+  it('저절로 바꾼 것을 적고 되돌리기를 낸다', () => {
+    const html = report({ opens: [202], blocks: [203] }, [
+      { no: 202, to: 'open' },
+      { no: 203, to: 'blocked' },
+    ])
+    expect(html).toContain('열었다')
+    expect(html).toContain('막았다')
+    expect(html).toContain('#202 나')
+    expect(html).toContain('되돌리기')
+    // 이미 바꿨으므로 고를 상자가 없다.
+    expect(html).not.toContain('type="checkbox"')
+  })
+
+  it('적지 못했으면 바꿨다고 하지 않고, 되돌리기도 안 낸다', () => {
+    const html = report({ opens: [202] }, [])
+    expect(html).not.toContain('열었다')
+    expect(html).not.toContain('되돌리기')
+    expect(html).toContain('놓친 해금 찾기')
+  })
+
+  it('고르기는 저절로 안 열고 아무것도 안 골라 둔다 — 고르기 전에는 여는 단추가 잠긴다', () => {
+    const html = report({ choose: [202, 203] })
+    expect(html).not.toMatch(/type="radio"[^>]*checked/)
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>고른 것 열기/)
+  })
+
   it('업적이 모자라면 무엇이 맞아야 하는지 적는다', () => {
     const g = buildGraph([], [], {
       reqs: new Map(),
@@ -45,10 +73,11 @@ describe('ScenarioOutcomePanel', () => {
       names: new Map([['global:g-flee', '도주']]),
     })
     const html = renderToStaticMarkup(
-      <ScenarioOutcomePanel
+      <ScenarioReportPanel
         no={201}
         list={list}
         graph={g}
+        applied={[]}
         outcome={{
           ...none,
           waiting: [
@@ -59,37 +88,50 @@ describe('ScenarioOutcomePanel', () => {
             },
           ],
         }}
-        onApply={() => {}}
+        onChoose={() => {}}
+        onUndo={() => {}}
         onClose={() => {}}
       />,
     )
     expect(html).toContain('열리려면 업적이 맞아야 한다 — 「도주」 없음.')
   })
 
-  it('업적만 바뀌면 고를 것 없이 알리고 확인으로 닫는다', () => {
-    const html = panel({ gains: ['도주'] })
+  it('업적은 알리고 확인으로 닫는다', () => {
+    const html = report({ gains: ['도주'] })
     expect(html).toContain('얻음: 도주')
     expect(html).toContain('확인')
-    expect(html).not.toContain('적용')
-  })
-
-  it('열기와 막기는 처음부터 켜 둔다', () => {
-    const html = panel({ opens: [202], blocks: [203] })
-    expect(html.match(/type="checkbox" checked=""/g)?.length).toBe(2)
-    expect(html).toContain('#202 나')
-    expect(html).toContain('#203 다')
-  })
-
-  it('고르기는 아무것도 안 골라 두고, 그것만 있으면 적용이 잠긴다', () => {
-    const html = panel({ choose: [202, 203] })
-    expect(html).toContain('type="radio"')
-    expect(html).not.toMatch(/type="radio"[^>]*checked/)
-    expect(html).toMatch(/<button[^>]*disabled=""[^>]*>적용/)
   })
 
   it('선행이 모자란 것은 무엇이 모자란지 적는다', () => {
-    const html = panel({ opens: [202], waiting: [{ no: 203, missing: [[201, 202], [204]] }] })
+    const html = report({ waiting: [{ no: 203, missing: [[201, 202], [204]] }] })
     expect(html).toContain('#201·#202 또는 #204도 완료해야 한다')
+  })
+})
+
+describe('MissedPanel', () => {
+  const missedPanel = (m: Partial<Missed>) =>
+    renderToStaticMarkup(
+      <MissedPanel
+        missed={{ opens: [], blocks: [], choose: [], ...m }}
+        list={list}
+        onApply={() => {}}
+        onClose={() => {}}
+      />,
+    )
+
+  it('열림·막힘은 처음부터 켜 둔다', () => {
+    const html = missedPanel({ opens: [202], blocks: [203] })
+    expect(html.match(/type="checkbox" checked=""/g)?.length).toBe(2)
+  })
+
+  it('갈림길은 고른 시나리오마다 따로 묻고 아무것도 안 골라 둔다', () => {
+    const html = missedPanel({ choose: [{ from: 201, options: [202, 203] }] })
+    expect(html).toContain('#201 가에서 하나를 골라 연다')
+    expect(html).not.toMatch(/type="radio"[^>]*checked/)
+  })
+
+  it('놓친 것이 없으면 그렇게 적는다', () => {
+    expect(missedPanel({})).toContain('놓친 것이 없다')
   })
 })
 

@@ -160,3 +160,20 @@
   opacity: 0.45;
   cursor: default;
 }
+
+/* 놓친 해금 찾기 — 편집 중에만 서는 보조 단추. 완료·실패보다 한 톤 낮게 테만 두른다. */
+.scboard__missed {
+  margin-top: 0.7rem;
+  padding: 0.45rem 0.9rem;
+  font: inherit;
+  font-size: 0.88rem;
+  color: var(--sl-gold);
+  background: none;
+  border: 1px solid var(--sl-gold-dim);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.scboard__missed:hover {
+  border-color: var(--sl-gold);
+}

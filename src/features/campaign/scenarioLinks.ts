@@ -335,7 +335,14 @@ export function outcomeOf(
     if (target === no || stateOf(states, target) !== 'closed') continue
     const unlocked = (graph.unlockedBy.get(target) ?? []).some((by) => done.has(by))
     if (!unlocked) continue
-    if (blockedBy(graph, target, done)) continue
+    /*
+      열어 줬지만 완료한 것이 막고 있으면 막힘으로 적는다 — 그냥 넘기면 닫힌 채로 남아
+      「놓친 해금 찾기」가 나중에 막힘으로 찾아낸다(두 셈이 다른 말을 하면 안 된다).
+    */
+    if (blockedBy(graph, target, done)) {
+      achBlocks.push(target)
+      continue
+    }
     const missing = missingRequires(graph, target, done)
     const verdict: AchievementVerdict =
       after === null ? { kind: 'ok' } : achievementVerdict(graph, target, after)
@@ -475,4 +482,61 @@ export function arrowsOf(
   }
 
   return out.length + into.length + blocks.length === 0 ? NO_ARROWS : { out, in: into, blocks }
+}
+
+/** 놓친 해금 — 완료한 것 전체로 보면 이미 바뀌었어야 하는 것. */
+export interface Missed {
+  /** 닫혀 있지만 열렸어야 하는 것. */
+  readonly opens: readonly number[]
+  /** 닫혀 있거나 열려 있지만 막혔어야 하는 것. */
+  readonly blocks: readonly number[]
+  /** 하나를 골라 열어야 하는데 아직 아무것도 안 고른 갈림길 — 고른 시나리오 → 고를 것들. */
+  readonly choose: readonly { readonly from: number; readonly options: readonly number[] }[]
+}
+
+/**
+ * 놓친 해금 찾기(형님이 정했다). 권함 팝업은 **완료로 바뀌는 순간에만** 뜨므로 그 전에
+ * 적어 둔 완료는 한 번도 권함을 거치지 않았다 — 실제로 열림 넷·막힘 둘이 빠져 있었다.
+ * 완료한 것 전체를 한꺼번에 보고 빠진 것을 찾는다.
+ *
+ * `outcomeOf`와 같은 셈이다: 완료한 것 중 하나가 열어 주었고 선행을 갖췄고 업적이
+ * 맞으면 열림, 완료한 것이 막거나 가진 전역 업적이 「없어야 함」에 걸리면 막힘.
+ * **완료·막힘은 건드리지 않는다** — 손으로 적어 둔 것을 뒤집지 않는다.
+ */
+export function missedOf(
+  graph: ScenarioGraph,
+  states: Record<number, StoredState>,
+  have: AchievementHave | null,
+  all: readonly number[],
+): Missed {
+  const done = doneSet(states)
+  const opens: number[] = []
+  const blocks: number[] = []
+  for (const target of [...all].sort((a, b) => a - b)) {
+    const state = stateOf(states, target)
+    if (state === 'done' || state === 'blocked') continue
+    const achBlocked = have !== null && achievementVerdict(graph, target, have).kind === 'blocked'
+    if (state === 'open') {
+      if (blockedBy(graph, target, done) || achBlocked) blocks.push(target)
+      continue
+    }
+    const unlocked = (graph.unlockedBy.get(target) ?? []).some((by) => done.has(by))
+    if (!unlocked) continue
+    if (blockedBy(graph, target, done) || achBlocked) {
+      blocks.push(target)
+      continue
+    }
+    if (missingRequires(graph, target, done).length > 0) continue
+    if (have !== null && achievementVerdict(graph, target, have).kind !== 'ok') continue
+    opens.push(target)
+  }
+
+  const choose: { from: number; options: number[] }[] = []
+  for (const from of [...done].sort((a, b) => a - b)) {
+    const options = linksOf(graph, from).choose
+    if (options.length > 0 && options.every((n) => stateOf(states, n) === 'closed')) {
+      choose.push({ from, options: [...options] })
+    }
+  }
+  return { opens, blocks, choose }
 }
