@@ -145,17 +145,14 @@ describe('arrowsOf', () => {
     [],
   )
 
-  it('안 깼으면 깨면 열릴 곳·막힐 곳을 연결 그대로 다 긋는다 — 카드와 같은 말', () => {
-    const a = arrowsOf(g, 301, { 301: 'open' }, true)
+  it('안 깼으면 나가는 것이 하나도 없다 — 열림도 막힘도', () => {
+    const a = arrowsOf(g, 301, { 301: 'open', 302: 'open', 307: 'blocked' }, true)
     expect(a.out).toEqual([])
-    expect(a.will).toEqual([302, 303, 304])
-    expect(a.blocks).toEqual([307, 308])
+    expect(a.blocks).toEqual([])
   })
 
-  it('깼으면 실제로 막힌 것만, 깨면 열림은 없다', () => {
-    const a = arrowsOf(g, 301, { 301: 'done', 307: 'blocked' }, true)
-    expect(a.will).toEqual([])
-    expect(a.blocks).toEqual([307])
+  it('깼으면 실제로 막힌 것만 막힘으로 나간다', () => {
+    expect(arrowsOf(g, 301, { 301: 'done', 307: 'blocked' }, true).blocks).toEqual([307])
   })
 
   it('완료한 것은 실제로 열린 곳으로만 나간다 — 안 고른 갈래·이어서 하기는 빠진다', () => {
@@ -185,6 +182,6 @@ describe('arrowsOf', () => {
   })
 
   it('연결을 모르면 아무것도 없다', () => {
-    expect(arrowsOf(null, 302, {}, false)).toEqual({ out: [], in: [], will: [], blocks: [] })
+    expect(arrowsOf(null, 302, {}, false)).toEqual({ out: [], in: [], blocks: [] })
   })
 })

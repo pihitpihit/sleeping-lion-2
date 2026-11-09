@@ -92,8 +92,8 @@ export function WorldMap({
   )
 }
 
-type ArrowDir = 'out' | 'will' | 'block' | 'in'
-const ARROW_DIRS: readonly ArrowDir[] = ['out', 'will', 'block', 'in']
+type ArrowDir = 'out' | 'block' | 'in'
+const ARROW_DIRS: readonly ArrowDir[] = ['out', 'block', 'in']
 
 const NO_SPOTS: ReadonlyMap<number, MapSpot> = new Map()
 const NO_STATES: Record<number, StoredState> = {}
@@ -328,8 +328,7 @@ export function WorldMapPanel({
   /*
     누른 스티커의 화살표(형님이 정했다).
       * 완료면 깨서 연 곳으로 **나가는 파란 점선**
-      * 안 깼으면 깨면 열릴 곳으로 **나가는 옅은 파란 점선**(촘촘한 점)
-      * 막는 곳으로 **나가는 주황 점선, 촉 대신 막대**
+      * 완료면 깨서 막힌 곳으로 **나가는 주황 점선, 촉 대신 막대**
       * 시작 시나리오가 아니면 열어 준 곳에서 **들어오는 빨간 점선**
     시작 시나리오는 들어올 곳이 없어 보랏빛으로 숨 쉰다(CSS). 자리를 모르는 끝은 안 긋는다.
   */
@@ -343,7 +342,6 @@ export function WorldMapPanel({
       if (d) lines.push({ key: `${dir}${other}`, d, dir })
     }
     for (const to of arrows.out) push('out', to, true)
-    for (const to of arrows.will) push('will', to, true)
     for (const to of arrows.blocks) push('block', to, true)
     for (const from of arrows.in) push('in', from, false)
   }

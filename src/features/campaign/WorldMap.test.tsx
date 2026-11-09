@@ -121,7 +121,7 @@ describe('WorldMapPanel', () => {
     expect(html).toContain('wmap__caption')
   })
 
-  it('안 깬 것을 누르면 깨면 열릴 곳·막힐 곳으로 긋는다', () => {
+  it('안 깬 것에서는 아무것도 나가지 않는다 — 깨면 열림·막힘은 카드가 적는다', () => {
     const g = buildGraph(
       [
         { from: 202, to: 203, kind: 'unlocks' },
@@ -130,7 +130,7 @@ describe('WorldMapPanel', () => {
       [],
     )
     const html = render({ initialPicked: 202, graph: g, states: { 202: 'open' } })
-    expect((html.match(/wmap__arrow--will/g) ?? []).length).toBe(1)
-    expect((html.match(/wmap__arrow--block/g) ?? []).length).toBe(1)
+    expect(html).not.toContain('wmap__arrow--out')
+    expect(html).not.toContain('wmap__arrow--block')
   })
 })
