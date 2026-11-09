@@ -199,9 +199,47 @@
   stroke: #ff3b3b;
 }
 
-/* 촉은 채운 세모다. 색은 마커가 들고 속의 세모가 물려받는다. */
+/*
+  **깨면 열릴 곳은 같은 파랑을 옅게, 촘촘한 점으로** — 아직 일어나지 않은 일이라
+  실제로 열린 것(굵은 점선)과 갈려야 한다. 같은 색 계열이라 「여는 길」로 한 벌로 읽힌다.
+*/
+.wmap__arrow--will .wmap__arrow-line {
+  stroke: #8cc0ff;
+  stroke-dasharray: 4 18;
+}
+
+.wmap__arrow--will .wmap__arrow-halo {
+  stroke-dasharray: 4 18;
+}
+
+/* 점의 주기(22)에 맞춰 흐른다 — 안 맞으면 한 바퀴 돌 때마다 점이 튄다. */
+.wmap__arrow--will .wmap__arrow-line,
+.wmap__arrow--will .wmap__arrow-halo {
+  animation-name: wmap-march-dots;
+}
+
+@keyframes wmap-march-dots {
+  to {
+    stroke-dashoffset: -44;
+  }
+}
+
+/* 막는 곳은 주황 — 들어오는 빨강과 갈리고, 촉 대신 막대를 단다. */
+.wmap__arrow--block .wmap__arrow-line {
+  stroke: #ff9f1a;
+}
+
+/* 촉은 채운 세모(막힘은 막대)다. 색은 마커가 들고 속의 도형이 물려받는다. */
 .wmap__head--out {
   fill: #3d8bff;
+}
+
+.wmap__head--will {
+  fill: #8cc0ff;
+}
+
+.wmap__head--block {
+  fill: #ff9f1a;
 }
 
 .wmap__head--in {

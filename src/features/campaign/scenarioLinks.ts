@@ -199,13 +199,19 @@ export function scenarioName(
   return found && found.name !== '' ? `#${no} ${found.name}` : `#${no}`
 }
 
-/** 세계 지도에서 누른 스티커에 그릴 화살표 — 어디를 열었나(나감)·어디서 열렸나(들어옴). */
+/** 세계 지도에서 누른 스티커에 그릴 화살표. */
 export interface MapArrows {
+  /** 깨서 실제로 열린 곳(완료한 것만). */
   readonly out: readonly number[]
+  /** 이것을 열어 준 곳. */
   readonly in: readonly number[]
+  /** 깨면 열릴 곳 — 아직 안 깬 것만. 시나리오 칸의 「깨면 열림·하나 고름」과 같다. */
+  readonly will: readonly number[]
+  /** 막는 곳 — 안 깼으면 「깨면 막힘」, 깼으면 실제로 막힌 것. */
+  readonly blocks: readonly number[]
 }
 
-const NO_ARROWS: MapArrows = { out: [], in: [] }
+const NO_ARROWS: MapArrows = { out: [], in: [], will: [], blocks: [] }
 
 /**
  * 누른 시나리오의 화살표(형님이 정했다).
@@ -216,6 +222,11 @@ const NO_ARROWS: MapArrows = { out: [], in: [] }
  * * **들어옴은 시작 시나리오가 아닐 때** — 이 시나리오를 열어 줄 수 있는 것들이다.
  *   그중 완료한 것이 있으면 그것만 긋는다: 실제로 열어 준 쪽이다. 하나도 없으면
  *   (손으로 열어 둔 것) 열어 줄 수 있는 것을 다 긋는다 — 어디서 오는 길인지는 보인다.
+ *
+ * * **깨면 열림·막힘은 아직 안 깬 것에** — 시나리오 칸의 카드가 적는 것과 같은 것을
+ *   지도에도 긋는다(형님이 짚었다: 카드에는 있는데 지도에 없었다). 그래서 거르지 않고
+ *   연결 그대로 다 긋는다 — 카드와 지도가 다른 말을 하면 안 된다.
+ * * **깼으면 막힘은 실제로 막힌 것만** — 나감과 같은 결이다.
  *
  * `links`(이어서 하기)는 여는 것이 아니라 잇지 않는다.
  */
@@ -231,12 +242,14 @@ export function arrowsOf(
     ...(row?.choose ?? []),
   ]
 
-  const out =
-    stateOf(states, no) === 'done'
-      ? [...new Set(opens(graph.out.get(no)))]
-          .filter((to) => to !== no && stateOf(states, to) !== 'closed')
-          .sort((a, b) => a - b)
-      : []
+  const isDone = stateOf(states, no) === 'done'
+  const targets = [...new Set(opens(graph.out.get(no)))]
+    .filter((to) => to !== no)
+    .sort((a, b) => a - b)
+  const out = isDone ? targets.filter((to) => stateOf(states, to) !== 'closed') : []
+  const will = isDone ? [] : targets
+  const blockList = [...(graph.out.get(no)?.blocks ?? [])].filter((to) => to !== no)
+  const blocks = isDone ? blockList.filter((to) => stateOf(states, to) === 'blocked') : blockList
 
   let into: number[] = []
   if (!initial) {
@@ -249,5 +262,7 @@ export function arrowsOf(
     into = done.length > 0 ? done : sources
   }
 
-  return out.length === 0 && into.length === 0 ? NO_ARROWS : { out, in: into }
+  return out.length + into.length + will.length + blocks.length === 0
+    ? NO_ARROWS
+    : { out, in: into, will, blocks }
 }

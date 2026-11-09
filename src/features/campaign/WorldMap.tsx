@@ -92,6 +92,9 @@ export function WorldMap({
   )
 }
 
+type ArrowDir = 'out' | 'will' | 'block' | 'in'
+const ARROW_DIRS: readonly ArrowDir[] = ['out', 'will', 'block', 'in']
+
 const NO_SPOTS: ReadonlyMap<number, MapSpot> = new Map()
 const NO_STATES: Record<number, StoredState> = {}
 
@@ -323,23 +326,26 @@ export function WorldMapPanel({
   const chosen = stickers.find((s) => s.no === picked) ?? null
 
   /*
-    누른 스티커의 화살표(형님이 정했다). 완료면 깨서 연 곳으로 **나가는 파란 점선**,
-    시작 시나리오가 아니면 열어 준 곳에서 **들어오는 빨간 점선**. 시작 시나리오는
-    들어올 곳이 없어 보랏빛으로 숨 쉰다(CSS). 자리를 모르는 끝은 긋지 않는다.
+    누른 스티커의 화살표(형님이 정했다).
+      * 완료면 깨서 연 곳으로 **나가는 파란 점선**
+      * 안 깼으면 깨면 열릴 곳으로 **나가는 옅은 파란 점선**(촘촘한 점)
+      * 막는 곳으로 **나가는 주황 점선, 촉 대신 막대**
+      * 시작 시나리오가 아니면 열어 준 곳에서 **들어오는 빨간 점선**
+    시작 시나리오는 들어올 곳이 없어 보랏빛으로 숨 쉰다(CSS). 자리를 모르는 끝은 안 긋는다.
   */
   const arrows = chosen ? arrowsOf(graph, chosen.no, states, chosen.initial) : null
-  const lines: { key: string; d: string; dir: 'out' | 'in' }[] = []
+  const lines: { key: string; d: string; dir: ArrowDir }[] = []
   if (chosen && arrows) {
-    for (const to of arrows.out) {
-      const spot = spots.get(to)
-      const d = spot ? arrowPath(chosen.spot, spot) : ''
-      if (d) lines.push({ key: `o${to}`, d, dir: 'out' })
+    const push = (dir: ArrowDir, other: number, outward: boolean) => {
+      const spot = spots.get(other)
+      if (!spot) return
+      const d = outward ? arrowPath(chosen.spot, spot) : arrowPath(spot, chosen.spot)
+      if (d) lines.push({ key: `${dir}${other}`, d, dir })
     }
-    for (const from of arrows.in) {
-      const spot = spots.get(from)
-      const d = spot ? arrowPath(spot, chosen.spot) : ''
-      if (d) lines.push({ key: `i${from}`, d, dir: 'in' })
-    }
+    for (const to of arrows.out) push('out', to, true)
+    for (const to of arrows.will) push('will', to, true)
+    for (const to of arrows.blocks) push('block', to, true)
+    for (const from of arrows.in) push('in', from, false)
   }
 
   return (
@@ -409,7 +415,7 @@ export function WorldMapPanel({
                 focusable="false"
               >
                 <defs>
-                  {(['out', 'in'] as const).map((dir) => (
+                  {ARROW_DIRS.map((dir) => (
                     <marker
                       key={dir}
                       id={`wmap-head-${dir}`}
@@ -422,7 +428,8 @@ export function WorldMapPanel({
                       markerHeight="54"
                       orient="auto"
                     >
-                      <path d="M0 0L10 5L0 10z" />
+                      {/* 막힘은 촉이 아니라 가로막는 막대다 — 「여기서 끊긴다」. */}
+                      <path d={dir === 'block' ? 'M5 0H10V10H5z' : 'M0 0L10 5L0 10z'} />
                     </marker>
                   ))}
                 </defs>
