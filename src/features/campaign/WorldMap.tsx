@@ -1,10 +1,12 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useScrollLock } from './useScrollLock'
-import type { Scenario } from './scenarioNet'
+import type { MapSpot, Scenario } from './scenarioNet'
+import { arrowsOf, type ScenarioGraph } from './scenarioLinks'
 import { STATE_LABEL, type StoredState } from './scenarioState'
 import {
   MAP_FILE,
+  arrowPath,
   clampZoom,
   fitZoom,
   placement,
@@ -33,10 +35,13 @@ import './WorldMap.css'
 export function WorldMap({
   list,
   states,
+  graph,
   onClose,
 }: {
   list: readonly Scenario[]
   states: Record<number, StoredState>
+  /** 시나리오끼리의 연결. 못 읽었으면 `null` — 그때는 화살표가 없다. */
+  graph: ScenarioGraph | null
   onClose: () => void
 }) {
   useScrollLock()
@@ -70,9 +75,27 @@ export function WorldMap({
   }, [names])
 
   return createPortal(
-    <WorldMapPanel stickers={stickers} urls={urls} failed={failed} onClose={onClose} />,
+    <WorldMapPanel
+      stickers={stickers}
+      urls={urls}
+      failed={failed}
+      onClose={onClose}
+      spots={spotsOf(list)}
+      states={states}
+      graph={graph}
+    />,
     document.body,
   )
+}
+
+const NO_SPOTS: ReadonlyMap<number, MapSpot> = new Map()
+const NO_STATES: Record<number, StoredState> = {}
+
+/** 번호 → 지도 자리. **닫힌 것도 든다** — 화살표는 스티커가 없는 동그라미로도 간다. */
+function spotsOf(list: readonly Scenario[]): ReadonlyMap<number, MapSpot> {
+  const out = new Map<number, MapSpot>()
+  for (const s of list) if (s.map) out.set(s.no, s.map)
+  return out
 }
 
 /** 이 이상 움직였으면 누른 것이 아니라 끈 것이다. */
@@ -101,18 +124,28 @@ export function WorldMapPanel({
   urls,
   failed,
   onClose,
+  spots = NO_SPOTS,
+  states = NO_STATES,
+  graph = null,
   initialSize = null,
+  initialPicked = null,
 }: {
   stickers: readonly Sticker[]
   urls: Record<string, string> | null
   failed: boolean
   onClose: () => void
+  /** 화살표의 끝을 찾을 자리 — 닫힌 시나리오까지 든다. */
+  spots?: ReadonlyMap<number, MapSpot>
+  states?: Record<number, StoredState>
+  graph?: ScenarioGraph | null
   /** 지도 그림의 크기. 보통은 그림이 불러진 뒤 스스로 알려 준다 — 시험에서만 넘긴다. */
   initialSize?: { w: number; h: number } | null
+  /** 처음부터 고른 스티커 — 시험에서만 넘긴다. */
+  initialPicked?: number | null
 }) {
   const [size, setSize] = useState(initialSize)
   const [zoom, setZoom] = useState(1)
-  const [picked, setPicked] = useState<number | null>(null)
+  const [picked, setPicked] = useState<number | null>(initialPicked)
   /** 화면(지도 칸)의 크기. 덮는 크기를 셈하려면 알아야 한다. */
   const [view, setView] = useState<{ w: number; h: number } | null>(null)
 
@@ -281,6 +314,26 @@ export function WorldMapPanel({
   const mapUrl = urls?.[MAP_FILE]
   const chosen = stickers.find((s) => s.no === picked) ?? null
 
+  /*
+    누른 스티커의 화살표(형님이 정했다). 완료면 깨서 연 곳으로 **나가는 파란 점선**,
+    시작 시나리오가 아니면 열어 준 곳에서 **들어오는 빨간 점선**. 시작 시나리오는
+    들어올 곳이 없어 보랏빛으로 숨 쉰다(CSS). 자리를 모르는 끝은 긋지 않는다.
+  */
+  const arrows = chosen ? arrowsOf(graph, chosen.no, states, chosen.initial) : null
+  const lines: { key: string; d: string; dir: 'out' | 'in' }[] = []
+  if (chosen && arrows) {
+    for (const to of arrows.out) {
+      const spot = spots.get(to)
+      const d = spot ? arrowPath(chosen.spot, spot) : ''
+      if (d) lines.push({ key: `o${to}`, d, dir: 'out' })
+    }
+    for (const from of arrows.in) {
+      const spot = spots.get(from)
+      const d = spot ? arrowPath(spot, chosen.spot) : ''
+      if (d) lines.push({ key: `i${from}`, d, dir: 'in' })
+    }
+  }
+
   return (
     <section className="wmap" role="dialog" aria-modal="true" aria-label="세계 지도">
       {failed ? (
@@ -322,7 +375,7 @@ export function WorldMapPanel({
                   <button
                     key={s.no}
                     type="button"
-                    className={`wmap__sticker wmap__sticker--${s.state}${picked === s.no ? ' wmap__sticker--picked' : ''}`}
+                    className={`wmap__sticker wmap__sticker--${s.state}${picked === s.no ? ` wmap__sticker--picked${s.initial ? ' wmap__sticker--start' : ''}` : ''}`}
                     style={placement(s.spot, size.w, size.h)}
                     data-no={s.no}
                     aria-label={`#${s.no} ${s.name} — ${STATE_LABEL[s.state]}`}
@@ -335,6 +388,48 @@ export function WorldMapPanel({
                   </button>
                 )
               })}
+            {/*
+              화살표 판 — 지도와 같은 `viewBox`라 지도 픽셀로 그린 길이 키우든 줄이든
+              제자리에 선다. 스티커 위에 얹되 손가락은 안 받는다.
+            */}
+            {size !== null && lines.length > 0 && (
+              <svg
+                className="wmap__arrows"
+                viewBox={`0 0 ${size.w} ${size.h}`}
+                preserveAspectRatio="none"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <defs>
+                  {(['out', 'in'] as const).map((dir) => (
+                    <marker
+                      key={dir}
+                      id={`wmap-head-${dir}`}
+                      className={`wmap__head wmap__head--${dir}`}
+                      viewBox="0 0 10 10"
+                      refX="8"
+                      refY="5"
+                      markerUnits="userSpaceOnUse"
+                      markerWidth="54"
+                      markerHeight="54"
+                      orient="auto"
+                    >
+                      <path d="M0 0L10 5L0 10z" />
+                    </marker>
+                  ))}
+                </defs>
+                {lines.map((l) => (
+                  <g key={l.key} className={`wmap__arrow wmap__arrow--${l.dir}`}>
+                    <path className="wmap__arrow-halo" d={l.d} />
+                    <path
+                      className="wmap__arrow-line"
+                      d={l.d}
+                      markerEnd={`url(#wmap-head-${l.dir})`}
+                    />
+                  </g>
+                ))}
+              </svg>
+            )}
           </div>
         </div>
       )}

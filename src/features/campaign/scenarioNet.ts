@@ -23,6 +23,8 @@ export interface Scenario {
    * (0, 0)이다. 모르면 `null` — 그 시나리오는 지도에 안 나온다.
    */
   readonly map?: MapSpot | null
+  /** 처음부터 열려 있는 시나리오(`0053`). 모르면 `false`. */
+  readonly initial?: boolean
 }
 
 export interface MapSpot {
@@ -40,6 +42,7 @@ interface Row {
   map_y: number | null
   map_w: number | null
   map_h: number | null
+  initial: boolean | null
 }
 
 function spotOf(row: Row): MapSpot | null {
@@ -52,7 +55,7 @@ function spotOf(row: Row): MapSpot | null {
 export async function listScenarios(): Promise<Scenario[]> {
   const { data, error } = await supabase()
     .from('scenarios')
-    .select('no, grid, name, map_x, map_y, map_w, map_h')
+    .select('no, grid, name, map_x, map_y, map_w, map_h, initial')
     .order('no', { ascending: true })
   if (error) throw error
   return ((data ?? []) as unknown as Row[])
@@ -62,6 +65,7 @@ export async function listScenarios(): Promise<Scenario[]> {
       grid: typeof row.grid === 'string' ? row.grid : '',
       name: typeof row.name === 'string' ? row.name : '',
       map: spotOf(row),
+      initial: row.initial === true,
     }))
 }
 

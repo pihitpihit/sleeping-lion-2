@@ -198,3 +198,56 @@ export function scenarioName(
   const found = list.find((s) => s.no === no)
   return found && found.name !== '' ? `#${no} ${found.name}` : `#${no}`
 }
+
+/** 세계 지도에서 누른 스티커에 그릴 화살표 — 어디를 열었나(나감)·어디서 열렸나(들어옴). */
+export interface MapArrows {
+  readonly out: readonly number[]
+  readonly in: readonly number[]
+}
+
+const NO_ARROWS: MapArrows = { out: [], in: [] }
+
+/**
+ * 누른 시나리오의 화살표(형님이 정했다).
+ *
+ * * **나감은 완료한 것만** — 깨서 실제로 열린 곳이다. 열기·고르기가 가리키는 곳 중
+ *   지금 닫혀 있지 않은 것만 잇는다: 아직 안 연 곳(권함을 안 받았거나 고르기에서 안
+ *   고른 곳)으로 그으면 「이것 때문에 열렸다」가 거짓이 된다.
+ * * **들어옴은 시작 시나리오가 아닐 때** — 이 시나리오를 열어 줄 수 있는 것들이다.
+ *   그중 완료한 것이 있으면 그것만 긋는다: 실제로 열어 준 쪽이다. 하나도 없으면
+ *   (손으로 열어 둔 것) 열어 줄 수 있는 것을 다 긋는다 — 어디서 오는 길인지는 보인다.
+ *
+ * `links`(이어서 하기)는 여는 것이 아니라 잇지 않는다.
+ */
+export function arrowsOf(
+  graph: ScenarioGraph | null,
+  no: number,
+  states: Record<number, StoredState>,
+  initial: boolean,
+): MapArrows {
+  if (graph === null) return NO_ARROWS
+  const opens = (row: Readonly<Record<LinkKind, readonly number[]>> | undefined) => [
+    ...(row?.unlocks ?? []),
+    ...(row?.choose ?? []),
+  ]
+
+  const out =
+    stateOf(states, no) === 'done'
+      ? [...new Set(opens(graph.out.get(no)))]
+          .filter((to) => to !== no && stateOf(states, to) !== 'closed')
+          .sort((a, b) => a - b)
+      : []
+
+  let into: number[] = []
+  if (!initial) {
+    const sources: number[] = []
+    for (const [from, row] of graph.out) {
+      if (from !== no && opens(row).includes(no)) sources.push(from)
+    }
+    sources.sort((a, b) => a - b)
+    const done = sources.filter((from) => stateOf(states, from) === 'done')
+    into = done.length > 0 ? done : sources
+  }
+
+  return out.length === 0 && into.length === 0 ? NO_ARROWS : { out, in: into }
+}

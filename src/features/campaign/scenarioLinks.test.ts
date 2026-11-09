@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  arrowsOf,
   buildGraph,
   hasOutcome,
   missingRequires,
@@ -126,5 +127,49 @@ describe('missingRequires', () => {
 
   it('선행이 없으면 모자란 것도 없다', () => {
     expect(missingRequires(graph, 203, new Set())).toEqual([])
+  })
+})
+
+describe('arrowsOf', () => {
+  /* 지어낸 연결: 301이 302를 열고 303·304 중 하나를 고르게 한다. 305도 302를 연다. */
+  const g = buildGraph(
+    [
+      { from: 301, to: 302, kind: 'unlocks' },
+      { from: 301, to: 303, kind: 'choose' },
+      { from: 301, to: 304, kind: 'choose' },
+      { from: 301, to: 306, kind: 'links' },
+      { from: 305, to: 302, kind: 'unlocks' },
+    ],
+    [],
+  )
+
+  it('완료한 것은 실제로 열린 곳으로만 나간다 — 안 고른 갈래·이어서 하기는 빠진다', () => {
+    const a = arrowsOf(g, 301, { 301: 'done', 302: 'open', 303: 'done', 306: 'open' }, true)
+    expect(a.out).toEqual([302, 303])
+    expect(a.in).toEqual([])
+  })
+
+  it('완료하지 않았으면 나가는 것이 없다', () => {
+    expect(arrowsOf(g, 301, { 302: 'open' }, true).out).toEqual([])
+  })
+
+  it('열어 준 것 중 완료한 쪽만 들어온다', () => {
+    expect(arrowsOf(g, 302, { 301: 'done', 302: 'open' }, false).in).toEqual([301])
+  })
+
+  it('완료한 쪽이 없으면 열어 줄 수 있는 것을 다 긋는다', () => {
+    expect(arrowsOf(g, 302, { 302: 'open' }, false).in).toEqual([301, 305])
+  })
+
+  it('고르기로 열린 것도 들어온다', () => {
+    expect(arrowsOf(g, 304, { 301: 'done', 304: 'open' }, false).in).toEqual([301])
+  })
+
+  it('시작 시나리오는 들어오는 것이 없다', () => {
+    expect(arrowsOf(g, 302, { 301: 'done' }, true).in).toEqual([])
+  })
+
+  it('연결을 모르면 아무것도 없다', () => {
+    expect(arrowsOf(null, 302, {}, false)).toEqual({ out: [], in: [] })
   })
 })

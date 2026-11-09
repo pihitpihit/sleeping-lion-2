@@ -321,7 +321,10 @@ function MyCharacters({
                     <PartyBookIcon />
                   </a>
                 ) : (
-                  <span className="journal__char-door journal__char-door--none" aria-hidden="true" />
+                  <span
+                    className="journal__char-door journal__char-door--none"
+                    aria-hidden="true"
+                  />
                 )}
               </li>
             )

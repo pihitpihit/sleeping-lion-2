@@ -37,6 +37,8 @@ export interface Sticker {
   readonly name: string
   readonly state: Exclude<ReturnType<typeof stateOf>, 'closed'>
   readonly spot: MapSpot
+  /** 처음부터 열려 있는 시나리오(`0053`). 들어올 곳이 없어 화살표 대신 보랏빛으로 짚는다. */
+  readonly initial: boolean
 }
 
 /** 지도에 붙일 스티커. 번호 차례 — 겹치면 뒤 번호가 위에 온다. */
@@ -48,7 +50,7 @@ export function stickersFor(
   for (const s of list) {
     const state = stateOf(states, s.no)
     if (state === 'closed' || !s.map) continue
-    out.push({ no: s.no, name: s.name, state, spot: s.map })
+    out.push({ no: s.no, name: s.name, state, spot: s.map, initial: s.initial === true })
   }
   return out.sort((a, b) => a.no - b.no)
 }
@@ -102,4 +104,41 @@ export function clampZoom(z: number, min: number = ZOOMS[0]): number {
 export function stepZoom(z: number, dir: 1 | -1): number {
   if (dir > 0) return ZOOMS.find((v) => v > z + 1e-6) ?? ZOOMS[ZOOMS.length - 1]
   return [...ZOOMS].reverse().find((v) => v < z - 1e-6) ?? ZOOMS[0]
+}
+
+/**
+ * 두 스티커를 잇는 화살표의 길(SVG `d`). 지도 그림의 픽셀로 셈한다 — 화살표를 그리는
+ * 판이 지도와 같은 `viewBox`라 키우든 줄이든 같은 자리에 선다.
+ *
+ * **휜 길이다.** 가는 쪽의 왼편으로 휜다 — 한 스티커에서 여럿이 나가거나 오가는 둘이
+ * 있을 때 곧은 선은 한 줄로 포개진다. 오가는 둘은 서로 다른 쪽으로 휜다.
+ *
+ * **스티커 가장자리에서 끊되, 휜 방향으로 끊는다.** 양끝을 짧은 변의 절반만큼 물리는데
+ * 곧은 선을 따라 물리면 **붙어 있는 두 스티커 사이에는 남는 길이 없다** — 그려 보니
+ * 화살촉만 겹쳐 보였다. 끝에서의 접선(조절점 쪽)을 따라 물리고, 가까울수록 크게 휘게
+ * 두면 붙은 둘 사이에도 위로 넘어가는 아치가 선다.
+ */
+export function arrowPath(from: MapSpot, to: MapSpot): string {
+  const ax = from.x + from.w / 2
+  const ay = from.y + from.h / 2
+  const bx = to.x + to.w / 2
+  const by = to.y + to.h / 2
+  const dist = Math.hypot(bx - ax, by - ay)
+  if (dist === 0) return ''
+  const ux = (bx - ax) / dist
+  const uy = (by - ay) / dist
+  const r1 = Math.min(from.w, from.h) / 2
+  const r2 = Math.min(to.w, to.h) / 2
+  // 멀면 길이의 12%, 가까우면 두 반지름을 합친 것보다 더 — 아치가 스티커를 넘어가게.
+  const bend = Math.max(dist * 0.12, (r1 + r2) * 1.2)
+  const cx = (ax + bx) / 2 + uy * bend
+  const cy = (ay + by) / 2 - ux * bend
+  const toward = (px: number, py: number, r: number) => {
+    const d = Math.hypot(cx - px, cy - py)
+    return [px + ((cx - px) / d) * r, py + ((cy - py) / d) * r]
+  }
+  const [sx, sy] = toward(ax, ay, r1)
+  const [ex, ey] = toward(bx, by, r2)
+  const f = (v: number) => Math.round(v * 10) / 10
+  return `M${f(sx)} ${f(sy)}Q${f(cx)} ${f(cy)} ${f(ex)} ${f(ey)}`
 }

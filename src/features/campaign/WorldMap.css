@@ -129,26 +129,110 @@
 }
 
 .wmap__sticker--picked img {
-  animation: wmap-breathe 1.6s ease-in-out infinite alternate;
+  /* 1.6초에서 1.3배 빠르게(형님이 정했다). */
+  animation: wmap-breathe 1.23s ease-in-out infinite alternate;
 }
 
 @keyframes wmap-breathe {
   from {
-    filter: drop-shadow(0 0 3px #22e5ff) drop-shadow(0 0 8px #22e5ff)
-      drop-shadow(0 0 16px #22e5ff);
+    filter: drop-shadow(0 0 3px #22e5ff) drop-shadow(0 0 8px #22e5ff) drop-shadow(0 0 16px #22e5ff);
   }
   to {
-    filter: drop-shadow(0 0 4px #ffffff) drop-shadow(0 0 11px #c9fbff)
-      drop-shadow(0 0 22px #ffffff);
+    filter: drop-shadow(0 0 4px #ffffff) drop-shadow(0 0 11px #c9fbff) drop-shadow(0 0 22px #ffffff);
   }
 }
 
-/* 움직임을 줄여 달라고 한 기기에서는 숨 쉬지 않고 청록에 멎는다. */
+/*
+  **시작 시나리오는 보랏빛으로 숨 쉰다**(형님이 정했다) — 들어오는 화살표가 없는
+  자리라 「여기서 시작했다」를 색이 대신 말한다. 박자는 청록과 같다.
+*/
+.wmap__sticker--start img {
+  animation-name: wmap-breathe-start;
+}
+
+@keyframes wmap-breathe-start {
+  from {
+    filter: drop-shadow(0 0 3px #a24bff) drop-shadow(0 0 8px #a24bff) drop-shadow(0 0 16px #a24bff);
+  }
+  to {
+    filter: drop-shadow(0 0 4px #e6c8ff) drop-shadow(0 0 11px #c58cff) drop-shadow(0 0 22px #e6c8ff);
+  }
+}
+
+/*
+  화살표. 길은 지도 픽셀로 그린다(지도 폭 2958 남짓에 스티커가 190 안팎) — 키우면
+  함께 굵어진다. **어두운 밑줄을 한 겹 깐다**: 양피지와 물감이 밝아 점선만으로는 묻힌다.
+  점선이 화살 쪽으로 흘러 어느 쪽으로 가는지 촉을 안 봐도 읽힌다.
+*/
+.wmap__arrows {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.wmap__arrow-halo,
+.wmap__arrow-line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-dasharray: 34 22;
+  animation: wmap-march 0.9s linear infinite;
+}
+
+.wmap__arrow-halo {
+  stroke: rgb(10 8 6 / 55%);
+  stroke-width: 20;
+}
+
+.wmap__arrow-line {
+  stroke-width: 11;
+}
+
+.wmap__arrow--out .wmap__arrow-line {
+  stroke: #3d8bff;
+}
+
+.wmap__arrow--in .wmap__arrow-line {
+  stroke: #ff3b3b;
+}
+
+/* 촉은 채운 세모다. 색은 마커가 들고 속의 세모가 물려받는다. */
+.wmap__head--out {
+  fill: #3d8bff;
+}
+
+.wmap__head--in {
+  fill: #ff3b3b;
+}
+
+.wmap__head path {
+  stroke: rgb(10 8 6 / 55%);
+  stroke-width: 1;
+}
+
+@keyframes wmap-march {
+  to {
+    stroke-dashoffset: -56;
+  }
+}
+
+/* 움직임을 줄여 달라고 한 기기에서는 숨 쉬지 않고 멎는다 — 점선도 흐르지 않는다. */
 @media (prefers-reduced-motion: reduce) {
   .wmap__sticker--picked img {
     animation: none;
-    filter: drop-shadow(0 0 3px #22e5ff) drop-shadow(0 0 8px #22e5ff)
-      drop-shadow(0 0 16px #22e5ff);
+    filter: drop-shadow(0 0 3px #22e5ff) drop-shadow(0 0 8px #22e5ff) drop-shadow(0 0 16px #22e5ff);
+  }
+
+  .wmap__sticker--start img {
+    filter: drop-shadow(0 0 3px #a24bff) drop-shadow(0 0 8px #a24bff) drop-shadow(0 0 16px #a24bff);
+  }
+
+  .wmap__arrow-halo,
+  .wmap__arrow-line {
+    animation: none;
   }
 }
 

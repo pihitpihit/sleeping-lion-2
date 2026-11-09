@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   MAP_FILE,
+  arrowPath,
   clampZoom,
   fitZoom,
   isMapFile,
@@ -88,5 +89,27 @@ describe('배율', () => {
     expect(fitZoom({ w: 400, h: 50 }, { w: 200, h: 100 })).toBe(0.25)
     // 비가 같으면 줄일 것이 없다.
     expect(fitZoom({ w: 300, h: 150 }, { w: 200, h: 100 })).toBe(1)
+  })
+})
+
+describe('arrowPath', () => {
+  it('가는 쪽의 왼편으로 휘고, 양끝은 휜 방향으로 짧은 변의 절반만큼 물린다', () => {
+    // 가운데 (10, 10) → (210, 10), 반지름 10씩. 휨은 길이의 12% = 24 → 조절점 (110, −14).
+    const d = arrowPath({ x: 0, y: 0, w: 20, h: 20 }, { x: 200, y: 0, w: 20, h: 20 })
+    expect(d).toBe('M19.7 7.7Q110 -14 200.3 7.7')
+  })
+
+  it('붙어 있는 둘 사이에도 길이 남는다 — 위로 넘어가는 아치가 된다', () => {
+    // 가운데 사이 20인데 반지름 합도 20 — 곧게 물리면 남는 것이 없다.
+    const d = arrowPath({ x: 0, y: 0, w: 20, h: 20 }, { x: 20, y: 0, w: 20, h: 20 })
+    const [, sx, sy, , , ex, ey] = d.match(/M(\S+) (\S+)Q(\S+) (\S+) (\S+) (\S+)/)!.map(Number)
+    expect(ex - sx).toBeGreaterThan(0)
+    // 양끝이 스티커 위쪽 가장자리로 올라간다.
+    expect(sy).toBeLessThan(10)
+    expect(ey).toBeLessThan(10)
+  })
+
+  it('같은 자리면 긋지 않는다', () => {
+    expect(arrowPath({ x: 0, y: 0, w: 20, h: 20 }, { x: 0, y: 0, w: 20, h: 20 })).toBe('')
   })
 })

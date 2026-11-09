@@ -936,7 +936,12 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
       )}
 
       {openMap && (
-        <WorldMap list={scenarios} states={scenarioStates} onClose={() => setOpenMap(false)} />
+        <WorldMap
+          list={scenarios}
+          states={scenarioStates}
+          graph={scenarioGraph}
+          onClose={() => setOpenMap(false)}
+        />
       )}
 
       {/* 행적에서 시나리오를 완료로 바꾸면 무엇이 열리는지 권한다(`0049`). */}
