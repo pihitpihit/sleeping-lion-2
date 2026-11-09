@@ -195,7 +195,7 @@ export function JournalPage() {
             key={current.campaign.id}
             campaign={current.campaign}
             readOnly={offline}
-            onEdit={(edits) => void edit(edits)}
+            onEdit={edit}
           />
 
           <div className="paper__col">

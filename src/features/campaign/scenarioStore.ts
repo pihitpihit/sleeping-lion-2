@@ -21,6 +21,13 @@ import {
 export interface DoneReport {
   readonly no: number
   readonly outcome: Outcome
+  /**
+   * 업적 보상을 기록지에 담았는가. `pending`이면 화면이 담고(`ScenarioOutcomePrompt`)
+   * 결과를 적는다. 편집 중이면 초안과 어긋나므로 안 담는다(`skipped`).
+   */
+  readonly ach: 'none' | 'pending' | 'applied' | 'skipped' | 'failed'
+  /** 담기 전의 업적 — 되돌릴 때 쓴다. */
+  readonly achBefore?: { party: readonly string[]; global: Readonly<Record<string, number>> }
   readonly applied: readonly {
     readonly no: number
     readonly to: StoredState
@@ -59,6 +66,8 @@ interface ScenarioStoreState {
   /** 완료하면서 저절로 바꾼 것을 되돌린다. */
   undoReport: () => Promise<void>
   clearReport: () => void
+  /** 업적을 담은 결과를 적는다. */
+  markReportAch: (ach: DoneReport['ach'], before?: DoneReport['achBefore']) => void
   setAchievements: (party: readonly string[], global: Readonly<Record<string, number>>) => void
   /** 지금 가진 업적 — 열쇠로. 업적이나 연결을 모르면 `null`. */
   have: () => AchievementHave | null
@@ -135,6 +144,9 @@ export const useScenarioStore = create<ScenarioStoreState>((set, get) => ({
 
   clearReport: () => set({ report: null }),
 
+  markReportAch: (ach, before) =>
+    set((s) => (s.report ? { report: { ...s.report, ach, achBefore: before } } : {})),
+
   setAchievements: (party, global) => set({ achievements: { party, global } }),
 
   have: () => {
@@ -186,6 +198,10 @@ export const useScenarioStore = create<ScenarioStoreState>((set, get) => ({
     // 적기에 실패하면 `apply`가 되돌린다 — 그때 「바꿨다」고 알리면 거짓이다.
     const now = get().states
     const applied = planned.every((e) => now[e.no] === e.to) ? planned : []
-    if (hasOutcome(outcome)) set({ report: { no, outcome, applied } })
+    if (hasOutcome(outcome)) {
+      set({
+        report: { no, outcome, applied, ach: outcome.achRewards.length > 0 ? 'pending' : 'none' },
+      })
+    }
   },
 }))

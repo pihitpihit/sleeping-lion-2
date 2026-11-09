@@ -46,7 +46,8 @@ interface JournalState {
   close: () => void
   /** 파티를 세우면 기록지도 함께 생긴다. 만든 파티의 id를 돌려준다. */
   addParty: (name: string, me: Identity) => Promise<string | null>
-  edit: (edits: CampaignEdits) => Promise<void>
+  /** 고친다. 서버에 남았으면 `true` — 못 남겼으면 되돌리고 `false`. */
+  edit: (edits: CampaignEdits) => Promise<boolean>
   leave: (partyId: string, me: Identity) => Promise<void>
   clearError: () => void
 }
@@ -184,11 +185,11 @@ export const useJournalStore = create<JournalState>((set, get) => ({
 
   edit: async (edits) => {
     const current = get().current
-    if (!current?.campaign) return
+    if (!current?.campaign) return false
 
     if (get().offline) {
       set({ error: '서버에 닿지 못해 지금은 고칠 수 없다. 연결되면 다시 하라.' })
-      return
+      return false
     }
 
     // 손이 먼저 움직인 것처럼 보이게 화면부터 바꾼다. 서버가 돌려준 값이 뒤따라 덮는다.
@@ -207,6 +208,7 @@ export const useJournalStore = create<JournalState>((set, get) => ({
           e.party.id === saved.partyId ? { ...e, campaign: saved } : e,
         ),
       }))
+      return true
     } catch (cause) {
       // 되돌린다. 적었는데 안 남은 채로 남아 있는 것이 제일 나쁘다.
       set((s) => ({
@@ -214,6 +216,7 @@ export const useJournalStore = create<JournalState>((set, get) => ({
         error: messageOf(cause),
         offline: looksOffline(cause),
       }))
+      return false
     }
   },
 

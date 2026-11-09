@@ -147,6 +147,48 @@ export function buildAchievementData(
   }
 }
 
+/** 이름으로 담긴 업적 보상 — 기록지는 업적을 이름으로 담는다. */
+export interface NamedReward {
+  readonly scope: AchievementScope
+  readonly name: string
+  readonly lose: boolean
+}
+
+/**
+ * 기록지의 업적에 보상을 얹는다. **이미 가진 파티 업적은 또 넣지 않는다** — 파티
+ * 업적은 켰다/껐다이고, 전역 업적만 횟수다(`0028`). 잃는 전역 업적은 줄을 지운다.
+ * 이름은 공백·대소문자를 접어 견준다 — 손으로 적은 이름과 목록 이름이 띄어쓰기만
+ * 달라도 같은 업적이다.
+ */
+export function applyAchievementRewards(
+  party: readonly string[],
+  global: Readonly<Record<string, number>>,
+  rewards: readonly NamedReward[],
+): { party: string[]; global: Record<string, number> } {
+  const nextParty = [...party]
+  const nextGlobal = { ...global }
+  const findParty = (name: string) => nextParty.findIndex((n) => foldName(n) === foldName(name))
+  const globalKey = (name: string) =>
+    Object.keys(nextGlobal).find((n) => foldName(n) === foldName(name))
+  for (const r of rewards) {
+    if (r.scope === 'party') {
+      const i = findParty(r.name)
+      if (r.lose) {
+        if (i >= 0) nextParty.splice(i, 1)
+      } else if (i < 0) nextParty.push(r.name)
+    } else {
+      const key = globalKey(r.name)
+      if (r.lose) {
+        if (key !== undefined) delete nextGlobal[key]
+      } else {
+        const k = key ?? r.name
+        nextGlobal[k] = (nextGlobal[k] ?? 0) + 1
+      }
+    }
+  }
+  return { party: nextParty, global: nextGlobal }
+}
+
 /** 파티가 가진 업적 — 열쇠로. 전역 업적은 몇 번 이뤘는지까지. */
 export interface AchievementHave {
   readonly party: ReadonlySet<string>
@@ -280,9 +322,11 @@ export interface Outcome {
     /** 모자란 업적 조건 — 묶음끼리는 「또는」. */
     readonly achMissing?: readonly (readonly AchievementReq[])[]
   }[]
-  /** 이것을 깨면 얻는 업적·잃는 업적의 이름. 기록지에 담는 것은 사람이 한다. */
+  /** 이것을 깨면 얻는 업적·잃는 업적의 이름. */
   readonly gains: readonly string[]
   readonly losses: readonly string[]
+  /** 같은 것을 갈래까지 — 기록지에 담을 때 쓴다(`applyAchievementRewards`). */
+  readonly achRewards: readonly NamedReward[]
   /** 곧바로 이어 갈 수 있는 것. 이미 완료한 것은 뺀다. */
   readonly links: readonly number[]
 }
@@ -393,8 +437,9 @@ export function outcomeOf(
   const rewards = graph.ach.rewards.get(no) ?? []
   const gains = rewards.filter((r) => !r.lose).map(nameOf)
   const losses = rewards.filter((r) => r.lose).map(nameOf)
+  const achRewards = rewards.map((r) => ({ scope: r.scope, name: nameOf(r), lose: r.lose }))
 
-  return { opens, blocks, choose, waiting, links, gains, losses }
+  return { opens, blocks, choose, waiting, links, gains, losses, achRewards }
 }
 
 /** 권할 것이 하나라도 있는가. 바꿀 것이 없으면 팝업을 안 띄운다. */

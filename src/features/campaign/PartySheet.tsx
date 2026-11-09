@@ -40,7 +40,8 @@ import { markClass, moveOf } from './sheetDraft'
 
 interface Props {
   campaign: Campaign
-  onEdit: (edits: CampaignEdits) => void
+  /** 고친다. 서버에 남았는지 돌려줄 수 있다 — 업적을 저절로 담을 때 결과를 알린다. */
+  onEdit: (edits: CampaignEdits) => void | Promise<boolean>
   /**
    * 서버에 못 닿아 **거울을 보여주는 중**인가.
    *
@@ -986,7 +987,27 @@ export function PartySheet({ campaign, onEdit, readOnly = false }: Props) {
       )}
 
       {/* 행적에서 시나리오를 완료로 바꾸면 무엇이 열리는지 권한다(`0049`). */}
-      <ScenarioOutcomePrompt />
+      <ScenarioOutcomePrompt
+        editing={editing || readOnly}
+        achievements={{ party: campaign.achievements, global: campaign.globalAchievements }}
+        onAchievements={async (next) => {
+          const edits = { achievements: next.party, globalAchievements: next.global }
+          const ok = (await onEdit(edits)) !== false
+          // 시나리오를 깨서 담은 것이다 — 로그에 「시나리오 정산」으로 남긴다.
+          if (ok && userId !== null) {
+            void writeCampaignLog(
+              campaign.id,
+              userId,
+              'scenario',
+              campaignChangesOf(
+                campaign as unknown as Record<string, unknown>,
+                edits as unknown as Record<string, unknown>,
+              ),
+            )
+          }
+          return ok
+        }}
+      />
 
       {missed !== null && (
         <MiniDialog title="놓친 해금" label="완료한 시나리오로 아직 안 바뀐 것">

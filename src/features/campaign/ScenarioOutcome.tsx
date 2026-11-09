@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { MiniDialog } from './MiniDialog'
-import { useScenarioStore } from './scenarioStore'
+import { useScenarioStore, type DoneReport } from './scenarioStore'
 import {
   achievementReqText,
+  applyAchievementRewards,
   linksOf,
   scenarioName,
   type AchievementReq,
@@ -63,10 +64,13 @@ function OutcomeNotes({
   outcome,
   list,
   graph,
+  ach = 'none',
 }: {
   outcome: Pick<Outcome, 'waiting' | 'gains' | 'losses' | 'links'>
   list: readonly Scenario[]
   graph: ScenarioGraph | null
+  /** 업적을 기록지에 담았는가 — 담았으면 「담았다」, 아니면 담으라고 적는다. */
+  ach?: DoneReport['ach']
 }) {
   return (
     <>
@@ -81,16 +85,21 @@ function OutcomeNotes({
       )}
 
       {/*
-        **업적은 알려 주기만 한다.** 기록지의 업적 칸은 편집 모드의 초안으로 고치는
-        자리라(구현 결정 236) 여기서 몰래 바꾸면 초안과 어긋난다 — 무엇을 담을지 적어 두고
-        담는 것은 사람이 한다.
+        **업적은 저절로 담는다 — 편집 중이 아닐 때만**(형님이 정했다). 편집 중이면 업적
+        칸이 초안에 있어 몰래 바꾸면 초안과 어긋난다(구현 결정 236) — 그때는 담으라고만 적는다.
       */}
       {(outcome.gains.length > 0 || outcome.losses.length > 0) && (
-        <p className="scout__notes">
-          업적
+        <p className={ach === 'applied' ? 'scout__done' : 'scout__notes'}>
+          {ach === 'applied' && (
+            <span className="scout__legend scout__legend--open">업적 담았다</span>
+          )}
+          {ach !== 'applied' && '업적'}
           {outcome.gains.length > 0 && <> — 얻음: {outcome.gains.join(', ')}</>}
-          {outcome.losses.length > 0 && <> — 잃음: {outcome.losses.join(', ')}</>}. 기록지의 업적
-          칸에 담는다.
+          {outcome.losses.length > 0 && <> — 잃음: {outcome.losses.join(', ')}</>}
+          {ach === 'skipped' && '. 편집 중이라 담지 않았다 — 저장한 뒤 업적 칸에 담는다.'}
+          {ach === 'failed' && '. 담지 못했다 — 업적 칸에 직접 담는다.'}
+          {ach === 'pending' && '. 담는 중.'}
+          {(ach === 'none' || ach === undefined) && '. 기록지의 업적 칸에 담는다.'}
         </p>
       )}
 
@@ -146,6 +155,7 @@ export function ScenarioReportPanel({
   list,
   outcome,
   applied,
+  ach = 'none',
   graph = null,
   onChoose,
   onUndo,
@@ -155,6 +165,7 @@ export function ScenarioReportPanel({
   list: readonly Scenario[]
   outcome: Outcome
   applied: readonly { no: number; to: StoredState }[]
+  ach?: DoneReport['ach']
   graph?: ScenarioGraph | null
   onChoose: (no: number) => void
   onUndo: () => void
@@ -200,7 +211,7 @@ export function ScenarioReportPanel({
         />
       )}
 
-      <OutcomeNotes outcome={outcome} list={list} graph={graph} />
+      <OutcomeNotes outcome={outcome} list={list} graph={graph} ach={ach} />
 
       <div className="mini__acts">
         {outcome.choose.length > 0 && (
@@ -213,7 +224,7 @@ export function ScenarioReportPanel({
             고른 것 열기
           </button>
         )}
-        {applied.length > 0 && (
+        {(applied.length > 0 || ach === 'applied') && (
           <button type="button" className="mini__cancel" onClick={onUndo}>
             되돌리기
           </button>
@@ -236,13 +247,43 @@ export function ScenarioReportPanel({
  * 기록지가 띄운다 — 행적의 상태 단추로 바꿔도, 시나리오 칸의 완료로 바꿔도 같은
  * 팝업이다. 두 벌로 그리면 어긋난다. 바꾸는 일은 스토어가 이미 했다(`scenarioStore.set`).
  */
-export function ScenarioOutcomePrompt() {
+export function ScenarioOutcomePrompt({
+  editing = false,
+  achievements = null,
+  onAchievements,
+}: {
+  /** 기록지를 고치는 중인가 — 그때는 업적을 담지 않는다(초안과 어긋난다). */
+  editing?: boolean
+  /** 기록지에 저장된 업적. 없으면 업적을 담지 않는다. */
+  achievements?: { party: readonly string[]; global: Readonly<Record<string, number>> } | null
+  /** 업적을 기록지에 담는다. 서버에 남았으면 `true`. */
+  onAchievements?: (next: { party: string[]; global: Record<string, number> }) => Promise<boolean>
+} = {}) {
   const report = useScenarioStore((s) => s.report)
   const graph = useScenarioStore((s) => s.graph)
   const list = useScenarioStore((s) => s.list)
   const apply = useScenarioStore((s) => s.apply)
   const undoReport = useScenarioStore((s) => s.undoReport)
   const clearReport = useScenarioStore((s) => s.clearReport)
+  const markReportAch = useScenarioStore((s) => s.markReportAch)
+
+  /*
+    업적 보상을 기록지에 담는다 — 한 보고에 한 번만. 담는 동안 기록지가 다시 그려져도
+    두 번 담지 않게 보고를 붙들어 둔다.
+  */
+  const handled = useRef<DoneReport | null>(null)
+  useEffect(() => {
+    if (report === null || report.ach !== 'pending' || handled.current === report) return
+    if (achievements === null || !onAchievements) return
+    handled.current = report
+    if (editing) {
+      markReportAch('skipped')
+      return
+    }
+    const before = { party: [...achievements.party], global: { ...achievements.global } }
+    const next = applyAchievementRewards(before.party, before.global, report.outcome.achRewards)
+    void onAchievements(next).then((ok) => markReportAch(ok ? 'applied' : 'failed', before))
+  }, [report, editing, achievements, onAchievements, markReportAch])
 
   if (report === null) return null
 
@@ -254,12 +295,22 @@ export function ScenarioOutcomePrompt() {
         list={list}
         outcome={report.outcome}
         applied={report.applied}
+        ach={report.ach}
         graph={graph}
         onChoose={(n) => {
           clearReport()
           void apply([{ no: n, state: 'open' }])
         }}
-        onUndo={() => void undoReport()}
+        onUndo={() => {
+          // 업적도 담기 전으로 — 담은 것이 있을 때만.
+          if (report.ach === 'applied' && report.achBefore && onAchievements) {
+            void onAchievements({
+              party: [...report.achBefore.party],
+              global: { ...report.achBefore.global },
+            })
+          }
+          void undoReport()
+        }}
         onClose={clearReport}
       />
     </MiniDialog>

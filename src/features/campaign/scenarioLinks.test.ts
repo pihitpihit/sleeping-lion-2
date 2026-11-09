@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   achievementHave,
   achievementVerdict,
+  applyAchievementRewards,
   arrowsOf,
   buildAchievementData,
   buildGraph,
@@ -322,5 +323,36 @@ describe('열었지만 이미 막힌 것', () => {
     expect(o.opens).toEqual([])
     expect(o.blocks).toEqual([602])
     expect(missedOf(g, states, null, [601, 602, 603]).blocks).toEqual([602])
+  })
+})
+
+describe('applyAchievementRewards', () => {
+  it('파티 업적은 없으면 넣고, 잃으면 뺀다 — 띄어쓰기만 다른 것은 같은 업적', () => {
+    const r = applyAchievementRewards(['첫걸음', '계획'], {}, [
+      { scope: 'party', name: '첫 걸음', lose: false },
+      { scope: 'party', name: '새것', lose: false },
+      { scope: 'party', name: '계 획', lose: true },
+    ])
+    expect(r.party).toEqual(['첫걸음', '새것'])
+  })
+
+  it('전역 업적은 횟수를 올리고, 잃으면 줄을 지운다', () => {
+    const r = applyAchievementRewards([], { 되풀이: 2, 사라짐: 1 }, [
+      { scope: 'global', name: '되풀이', lose: false },
+      { scope: 'global', name: '처음', lose: false },
+      { scope: 'global', name: '사라짐', lose: true },
+    ])
+    expect(r.global).toEqual({ 되풀이: 3, 처음: 1 })
+  })
+
+  it('받은 것을 고치지 않는다', () => {
+    const party = ['가']
+    const global = { 나: 1 }
+    applyAchievementRewards(party, global, [
+      { scope: 'party', name: '다', lose: false },
+      { scope: 'global', name: '나', lose: false },
+    ])
+    expect(party).toEqual(['가'])
+    expect(global).toEqual({ 나: 1 })
   })
 })

@@ -23,6 +23,7 @@ const none: Outcome = {
   links: [],
   gains: [],
   losses: [],
+  achRewards: [],
 }
 
 function report(outcome: Partial<Outcome>, applied: { no: number; to: 'open' | 'blocked' }[] = []) {
@@ -105,6 +106,38 @@ describe('ScenarioReportPanel', () => {
   it('선행이 모자란 것은 무엇이 모자란지 적는다', () => {
     const html = report({ waiting: [{ no: 203, missing: [[201, 202], [204]] }] })
     expect(html).toContain('#201·#202 또는 #204도 완료해야 한다')
+  })
+})
+
+describe('ScenarioReportPanel — 업적', () => {
+  const render = (ach: 'applied' | 'skipped' | 'failed') =>
+    renderToStaticMarkup(
+      <ScenarioReportPanel
+        no={201}
+        list={list}
+        outcome={{ ...none, gains: ['도주'] }}
+        applied={[]}
+        ach={ach}
+        onChoose={() => {}}
+        onUndo={() => {}}
+        onClose={() => {}}
+      />,
+    )
+
+  it('담았으면 담았다고 하고 되돌리기를 낸다', () => {
+    const html = render('applied')
+    expect(html).toContain('업적 담았다')
+    expect(html).toContain('되돌리기')
+  })
+
+  it('편집 중이라 안 담았으면 그렇게 적고 되돌리기를 안 낸다', () => {
+    const html = render('skipped')
+    expect(html).toContain('편집 중이라 담지 않았다')
+    expect(html).not.toContain('되돌리기')
+  })
+
+  it('못 담았으면 직접 담으라고 적는다', () => {
+    expect(render('failed')).toContain('담지 못했다')
   })
 })
 
