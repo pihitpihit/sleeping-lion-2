@@ -142,3 +142,102 @@ export function arrowPath(from: MapSpot, to: MapSpot): string {
   const f = (v: number) => Math.round(v * 10) / 10
   return `M${f(sx)} ${f(sy)}Q${f(cx)} ${f(cy)} ${f(ex)} ${f(ey)}`
 }
+
+/** 화면 위의 상자 — 이름표를 앉힐 수 있는 자리. */
+export interface Box {
+  readonly left: number
+  readonly top: number
+  readonly right: number
+  readonly bottom: number
+}
+
+export interface TagSpot {
+  /** 이름표 가운데의 화면 좌표. */
+  readonly x: number
+  readonly y: number
+  /**
+   * 노드가 화면 밖이면 그쪽 방향(라디안, 화면 좌표 — 0이 오른쪽, π/2가 아래). 안이면 `null`.
+   * 이름표가 화살촉 하나를 그 방향으로 돌려 단다.
+   */
+  readonly away: number | null
+}
+
+/**
+ * 화살표 끝 노드의 이름표를 어디에 앉히나(형님이 정했다).
+ *
+ * ┌──────────────────────────────────────────────────────────────────────────┐
+ * │ **노드가 화면 안이면 그 밑에, 밖이면 그쪽 방향의 화면 테두리에.**         │
+ * └──────────────────────────────────────────────────────────────────────────┘
+ *
+ * 밖일 때는 `from`(고른 스티커, 없으면 화면 가운데)에서 노드로 그은 선이 테두리에 닿는
+ * 자리다 — 화살표가 화면을 벗어나는 자리 가까이에 붙고, 손가락으로 그쪽을 끌면 노드가
+ * 나온다. 화면 가운데를 기준으로 삼았더니 화살표는 오른쪽으로 나가는데 이름표는 위에
+ * 붙는 일이 있었다. `box`는 이름표 가운데가 갈 수 있는 자리이고(이름표 반 폭만큼
+ * 물려 넘긴다), `view`는 화면 그 자체다. `below`는 노드 가운데에서 이름표까지 내릴
+ * 거리다(스티커 반 높이 + 틈).
+ */
+export function tagSpot(
+  node: { x: number; y: number },
+  below: number,
+  view: { w: number; h: number },
+  box: Box,
+  from: { x: number; y: number } | null = null,
+): TagSpot {
+  const clamp = (v: number, lo: number, hi: number) =>
+    lo > hi ? (lo + hi) / 2 : Math.min(hi, Math.max(lo, v))
+  const inside = node.x >= 0 && node.x <= view.w && node.y >= 0 && node.y <= view.h
+  if (inside) {
+    return {
+      x: clamp(node.x, box.left, box.right),
+      y: clamp(node.y + below, box.top, box.bottom),
+      away: null,
+    }
+  }
+  // 출발점(상자 안으로 당긴다)에서 노드로 — 상자 변에 처음 닿는 자리.
+  const cx = clamp(from?.x ?? (box.left + box.right) / 2, box.left, box.right)
+  const cy = clamp(from?.y ?? (box.top + box.bottom) / 2, box.top, box.bottom)
+  const dx = node.x - cx
+  const dy = node.y - cy
+  const tx = dx > 0 ? (box.right - cx) / dx : dx < 0 ? (box.left - cx) / dx : Infinity
+  const ty = dy > 0 ? (box.bottom - cy) / dy : dy < 0 ? (box.top - cy) / dy : Infinity
+  const t = Math.max(0, Math.min(tx, ty, 1))
+  return {
+    x: clamp(cx + dx * t, box.left, box.right),
+    y: clamp(cy + dy * t, box.top, box.bottom),
+    away: Math.atan2(node.y - cy, node.x - cx),
+  }
+}
+
+/**
+ * 겹친 이름표를 아래로(끝에 닿으면 위로) 밀어 갈라 놓는다 — 테두리에 몰리면 한자리에
+ * 포개진다. 들어온 차례를 지키고 자리만 고친다.
+ */
+export function spreadTags<T extends { x: number; y: number; w: number }>(
+  tags: readonly T[],
+  height: number,
+  box: Box,
+): T[] {
+  const out = tags.map((t) => ({ ...t }))
+  const order = out.map((_, i) => i).sort((a, b) => out[a].y - out[b].y)
+  const placed: number[] = []
+  for (const i of order) {
+    const t = out[i]
+    // 부딪힌 이름표 바로 밑(위)으로 옮기고, 거기서 또 부딪히면 거듭한다.
+    const hit = (y: number) =>
+      placed.find((j) => {
+        const o = out[j]
+        return Math.abs(o.x - t.x) < (o.w + t.w) / 2 && Math.abs(o.y - y) < height - 1e-6
+      })
+    const slide = (dir: 1 | -1) => {
+      let y = t.y
+      for (let n = 0, j = hit(y); n <= tags.length && j !== undefined; n++, j = hit(y))
+        y = out[j].y + dir * height
+      return y
+    }
+    let y = slide(1)
+    if (y > box.bottom) y = slide(-1)
+    t.y = y
+    placed.push(i)
+  }
+  return out
+}

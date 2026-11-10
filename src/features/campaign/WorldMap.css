@@ -341,3 +341,72 @@
   color: var(--sl-text-faint);
   transform: translateY(-50%);
 }
+
+/*
+  **화살표 끝의 이름표(형님이 정했다).** 지도 판이 아니라 화면 위에 얹어 배율과
+  무관하게 같은 크기로 읽힌다. 노드가 화면 안이면 스티커 밑에, 밖이면 그쪽 테두리에
+  붙고 작은 촉이 그 방향을 가리킨다(`tagSpot`). 누르면 그 노드로 간다.
+  판은 보는 창(`.wmap__viewport`)과 같은 자리라 화면 좌표가 그대로 맞는다. 판은
+  손가락을 안 받고 이름표만 받는다 — 지도를 끄는 손을 막지 않는다.
+*/
+.wmap__tags {
+  position: absolute;
+  top: var(--sl-safe-top);
+  right: var(--sl-safe-right);
+  bottom: 0;
+  left: var(--sl-safe-left);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.wmap__tag {
+  --wmap-tag: var(--sl-text);
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: 26px;
+  padding: 0 0.6rem;
+  font-size: 0.8rem;
+  line-height: 1;
+  color: var(--sl-text);
+  white-space: nowrap;
+  background: rgb(14 12 9 / 85%);
+  border: 1.5px solid var(--wmap-tag);
+  border-radius: 999px;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 45%);
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wmap__tag b {
+  font-weight: 400;
+  color: var(--wmap-tag);
+}
+
+/* 화살표와 같은 색 — 어느 갈래의 끝인지 선을 따라가지 않아도 읽힌다. */
+.wmap__tag--out {
+  --wmap-tag: #5c9dff;
+}
+
+.wmap__tag--in {
+  --wmap-tag: #ff5a5a;
+}
+
+.wmap__tag--block {
+  --wmap-tag: #ffad3a;
+}
+
+/* 화면 밖 노드 쪽을 가리키는 화살. 9px짜리 세모는 돌리면 어느 쪽인지 안 읽혀 선 화살로 그린다. */
+.wmap__tag-away {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: var(--wmap-tag);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}

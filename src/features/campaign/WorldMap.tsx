@@ -10,7 +10,9 @@ import {
   clampZoom,
   fitZoom,
   placement,
+  spreadTags,
   stepZoom,
+  tagSpot,
   stickerFile,
   stickersFor,
   type Sticker,
@@ -88,6 +90,7 @@ export function WorldMap({
       failed={failed}
       onClose={onClose}
       spots={spotsOf(list)}
+      names={namesOf(list)}
       states={states}
       graph={graph}
       initialPicked={focus}
@@ -105,6 +108,7 @@ type ArrowDir = 'out' | 'block' | 'in'
 const ARROW_DIRS: readonly ArrowDir[] = ['out', 'block', 'in']
 
 const NO_SPOTS: ReadonlyMap<number, MapSpot> = new Map()
+const NO_NAMES: ReadonlyMap<number, string> = new Map()
 const NO_STATES: Record<number, StoredState> = {}
 
 /** 번호 → 지도 자리. **닫힌 것도 든다** — 화살표는 스티커가 없는 동그라미로도 간다. */
@@ -112,6 +116,27 @@ function spotsOf(list: readonly Scenario[]): ReadonlyMap<number, MapSpot> {
   const out = new Map<number, MapSpot>()
   for (const s of list) if (s.map) out.set(s.no, s.map)
   return out
+}
+
+/** 번호 → 이름. 화살표 끝의 이름표에 쓴다 — 닫힌 것도 든다. */
+function namesOf(list: readonly Scenario[]): ReadonlyMap<number, string> {
+  return new Map(list.map((s) => [s.no, s.name]))
+}
+
+/** 화살표 끝 이름표의 키(px). 겹친 것을 가를 때 이만큼씩 민다. */
+const TAG_H = 26
+const TAG_GAP = 4
+/** 화면 끝에서 물리는 거리. 위는 닫기 단추, 아래는 고른 스티커의 이름이 차지한다. */
+const TAG_INSET = { side: 8, top: 64, bottom: 92 }
+
+/**
+ * 이름표의 폭을 어림한다 — 그리기 전에 테두리에서 얼마나 물릴지 알아야 한다. 한글은
+ * 넓고 숫자·라틴은 좁다(0.8rem 기준). 조금 넉넉하게 잡는다: 모자라면 화면 밖으로 샌다.
+ */
+function tagWidth(text: string): number {
+  let w = 34
+  for (const ch of text) w += ch.charCodeAt(0) > 0x2e80 ? 13 : 7.5
+  return w
 }
 
 /** 이 이상 움직였으면 누른 것이 아니라 끈 것이다. */
@@ -141,6 +166,7 @@ export function WorldMapPanel({
   failed,
   onClose,
   spots = NO_SPOTS,
+  names = NO_NAMES,
   states = NO_STATES,
   graph = null,
   initialSize = null,
@@ -153,6 +179,8 @@ export function WorldMapPanel({
   onClose: () => void
   /** 화살표의 끝을 찾을 자리 — 닫힌 시나리오까지 든다. */
   spots?: ReadonlyMap<number, MapSpot>
+  /** 화살표 끝의 이름표에 적을 이름 — 닫힌 시나리오까지 든다. */
+  names?: ReadonlyMap<number, string>
   states?: Record<number, StoredState>
   graph?: ScenarioGraph | null
   /** 지도 그림의 크기. 보통은 그림이 불러진 뒤 스스로 알려 준다 — 시험에서만 넘긴다. */
@@ -169,6 +197,28 @@ export function WorldMapPanel({
   const [view, setView] = useState<{ w: number; h: number } | null>(null)
 
   const viewport = useRef<HTMLDivElement>(null)
+  const sheet = useRef<HTMLDivElement>(null)
+  /**
+   * 지도 판이 화면의 어디에 얼마만 하게 서 있나 — 이름표를 화면 좌표로 앉히려면
+   * 알아야 한다. 굴리거나 키울 때마다 잰다 — 브라우저가 굴림 소식을 한 프레임에 한
+   * 번만 주므로 따로 늦출 것이 없다.
+   */
+  const [cam, setCam] = useState<{ x: number; y: number; w: number } | null>(null)
+  function measure() {
+    const el = viewport.current
+    const sh = sheet.current
+    if (!el || !sh) return
+    const next = {
+      x: sh.offsetLeft - el.scrollLeft,
+      y: sh.offsetTop - el.scrollTop,
+      w: sh.offsetWidth,
+    }
+    setCam((cur) => (cur && cur.x === next.x && cur.y === next.y && cur.w === next.w ? cur : next))
+  }
+  const measureRef = useRef(measure)
+  useLayoutEffect(() => {
+    measureRef.current = measure
+  })
   /** 키운 뒤 붙들 자리 — 지도 위의 비율과 그 자리가 화면 어디에 있었나. */
   const anchor = useRef<{ fx: number; fy: number; vx: number; vy: number } | null>(null)
   const centered = useRef(false)
@@ -224,6 +274,15 @@ export function WorldMapPanel({
     return () => ro.disconnect()
   }, [urls])
 
+  // 판이 커지거나 줄면(배율·화면 크기) 다시 잰다. 굴린 것은 `onScroll`이 잰다.
+  useEffect(() => {
+    const sh = sheet.current
+    if (!sh) return
+    const ro = new ResizeObserver(() => measureRef.current())
+    ro.observe(sh)
+    return () => ro.disconnect()
+  }, [urls])
+
   // 트랙패드 벌리기는 ctrl+휠로 온다. 막으려면 수동 리스너여야 한다(React의 휠은 passive).
   useEffect(() => {
     const el = viewport.current
@@ -261,6 +320,8 @@ export function WorldMapPanel({
       el.scrollTop = fy * el.scrollHeight - el.clientHeight / 2
       centered.current = true
     }
+    // 굴림 소식은 늦게 오므로(혹은 자리가 같아 안 오므로) 옮긴 자리를 바로 잰다.
+    measureRef.current()
   }, [zoom, base, initialPicked, size, stickers])
 
   function onDown(e: React.PointerEvent<HTMLDivElement>) {
@@ -334,6 +395,25 @@ export function WorldMapPanel({
     setPicked((cur) => (no === null || cur === no ? null : no))
   }
 
+  /**
+   * 이름표를 누르면 그 노드로 간다 — 스티커가 있으면 고르고, 그 자리를 화면 가운데로
+   * 미끄러뜨린다. 닫힌 시나리오는 스티커가 없어 고를 것이 없으므로 지금 고른 것을 그대로
+   * 둔다: 화살표가 남아 어디서 이어진 곳인지 계속 보인다.
+   */
+  function go(no: number) {
+    const el = viewport.current
+    const sh = sheet.current
+    const spot = spots.get(no)
+    if (stickers.some((s) => s.no === no)) setPicked(no)
+    if (!el || !sh || !spot || !size) return
+    const k = sh.offsetWidth / size.w
+    el.scrollTo({
+      left: sh.offsetLeft + (spot.x + spot.w / 2) * k - el.clientWidth / 2,
+      top: sh.offsetTop + (spot.y + spot.h / 2) * k - el.clientHeight / 2,
+      behavior: 'smooth',
+    })
+  }
+
   const mapUrl = urls?.[MAP_FILE]
   const chosen = stickers.find((s) => s.no === picked) ?? null
 
@@ -346,17 +426,64 @@ export function WorldMapPanel({
   */
   const arrows = chosen ? arrowsOf(graph, chosen.no, states, chosen.initial) : null
   const lines: { key: string; d: string; dir: ArrowDir }[] = []
+  /** 화살표의 다른 끝 — 이름표를 단다. 한 노드가 두 갈래에 걸려도 하나만. */
+  const ends = new Map<number, ArrowDir>()
   if (chosen && arrows) {
     const push = (dir: ArrowDir, other: number, outward: boolean) => {
       const spot = spots.get(other)
       if (!spot) return
       const d = outward ? arrowPath(chosen.spot, spot) : arrowPath(spot, chosen.spot)
-      if (d) lines.push({ key: `${dir}${other}`, d, dir })
+      if (!d) return
+      lines.push({ key: `${dir}${other}`, d, dir })
+      if (!ends.has(other)) ends.set(other, dir)
     }
     for (const to of arrows.out) push('out', to, true)
     for (const to of arrows.blocks) push('block', to, true)
     for (const from of arrows.in) push('in', from, false)
   }
+
+  /*
+    화살표 끝의 이름표(형님이 정했다). 지도 판 안이 아니라 **화면 위에** 얹는다 — 지도를
+    키우든 줄이든 같은 크기로 읽혀야 하고, 노드가 화면 밖이면 테두리에 붙어야 한다.
+  */
+  const tags: {
+    no: number
+    dir: ArrowDir
+    x: number
+    y: number
+    w: number
+    away: number | null
+  }[] = []
+  if (chosen && cam && view && size && ends.size > 0) {
+    const k = cam.w / size.w
+    for (const [no, dir] of ends) {
+      const spot = spots.get(no)!
+      const w = tagWidth(`#${no} ${names.get(no) ?? ''}`)
+      const box = {
+        left: TAG_INSET.side + w / 2,
+        right: view.w - TAG_INSET.side - w / 2,
+        top: TAG_INSET.top + TAG_H / 2,
+        bottom: view.h - TAG_INSET.bottom - TAG_H / 2,
+      }
+      const at = tagSpot(
+        { x: cam.x + (spot.x + spot.w / 2) * k, y: cam.y + (spot.y + spot.h / 2) * k },
+        (spot.h / 2) * k + TAG_GAP + TAG_H / 2,
+        view,
+        box,
+        {
+          x: cam.x + (chosen.spot.x + chosen.spot.w / 2) * k,
+          y: cam.y + (chosen.spot.y + chosen.spot.h / 2) * k,
+        },
+      )
+      tags.push({ no, dir, w, ...at })
+    }
+  }
+  const spread = spreadTags(tags, TAG_H + TAG_GAP, {
+    left: 0,
+    top: 0,
+    right: view?.w ?? 0,
+    bottom: (view?.h ?? 0) - TAG_INSET.bottom,
+  })
 
   return (
     <section className="wmap" role="dialog" aria-modal="true" aria-label="세계 지도">
@@ -377,8 +504,10 @@ export function WorldMapPanel({
           onPointerMove={onMove}
           onPointerUp={onUp}
           onPointerCancel={onUp}
+          onScroll={measure}
         >
           <div
+            ref={sheet}
             className="wmap__sheet"
             style={{ width: base === null ? `${zoom * 100}%` : `${base * zoom}px` }}
           >
@@ -456,6 +585,35 @@ export function WorldMapPanel({
               </svg>
             )}
           </div>
+        </div>
+      )}
+
+      {spread.length > 0 && (
+        <div className="wmap__tags">
+          {spread.map((t) => (
+            <button
+              key={t.no}
+              type="button"
+              className={`wmap__tag wmap__tag--${t.dir}`}
+              style={{ left: t.x, top: t.y }}
+              aria-label={`#${t.no} ${names.get(t.no) ?? ''}(으)로 가기`}
+              onClick={() => go(t.no)}
+            >
+              {t.away !== null && (
+                <svg
+                  className="wmap__tag-away"
+                  viewBox="0 0 10 10"
+                  style={{ transform: `rotate(${t.away}rad)` }}
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M1 5H8M5 1.5L8.6 5L5 8.5" />
+                </svg>
+              )}
+              <b className="sl-numeral">#{t.no}</b>
+              <span className="wmap__tag-text">{names.get(t.no)}</span>
+            </button>
+          ))}
         </div>
       )}
 

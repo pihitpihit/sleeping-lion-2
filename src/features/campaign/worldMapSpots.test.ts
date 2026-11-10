@@ -6,9 +6,11 @@ import {
   fitZoom,
   isMapFile,
   placement,
+  spreadTags,
   stepZoom,
   stickerFile,
   stickersFor,
+  tagSpot,
 } from './worldMapSpots'
 
 /*
@@ -111,5 +113,73 @@ describe('arrowPath', () => {
 
   it('같은 자리면 긋지 않는다', () => {
     expect(arrowPath({ x: 0, y: 0, w: 20, h: 20 }, { x: 0, y: 0, w: 20, h: 20 })).toBe('')
+  })
+})
+
+describe('tagSpot', () => {
+  const view = { w: 400, h: 800 }
+  const box = { left: 50, right: 350, top: 70, bottom: 700 }
+
+  it('화면 안의 노드는 그 밑에 단다', () => {
+    expect(tagSpot({ x: 200, y: 300 }, 40, view, box)).toEqual({ x: 200, y: 340, away: null })
+  })
+
+  it('화면 안이라도 테두리 가까이면 상자 안으로 당긴다', () => {
+    expect(tagSpot({ x: 10, y: 790 }, 40, view, box)).toEqual({ x: 50, y: 700, away: null })
+  })
+
+  it('오른쪽 밖의 노드는 오른쪽 테두리에, 그쪽을 가리켜 단다', () => {
+    const t = tagSpot({ x: 2000, y: 385 }, 40, view, box)
+    expect(t.x).toBe(350)
+    expect(t.y).toBeCloseTo(385)
+    expect(t.away).toBeCloseTo(0)
+  })
+
+  it('위 밖의 노드는 위 테두리에 — 가운데에서 노드로 그은 선이 닿는 자리', () => {
+    const t = tagSpot({ x: 200 + 315, y: 385 - 315 * 10 }, 40, view, box)
+    expect(t.y).toBe(70)
+    expect(t.x).toBeCloseTo(200 + 31.5)
+    expect(t.away!).toBeLessThan(0)
+  })
+
+  it('출발점을 주면 거기서 그은 선을 따른다 — 화살표가 화면을 벗어나는 자리 가까이', () => {
+    const t = tagSpot({ x: 2000, y: 100 }, 40, view, box, { x: 300, y: 100 })
+    expect(t.x).toBe(350)
+    expect(t.y).toBeCloseTo(100)
+  })
+
+  it('구석 밖이면 먼저 닿는 변에 선다', () => {
+    const t = tagSpot({ x: -5000, y: 5000 }, 40, view, box)
+    expect(t.x).toBe(50)
+    expect(t.y).toBeLessThanOrEqual(700)
+  })
+})
+
+describe('spreadTags', () => {
+  const box = { left: 0, top: 0, right: 400, bottom: 800 }
+
+  it('겹친 것만 아래로 민다', () => {
+    const got = spreadTags(
+      [
+        { x: 100, y: 100, w: 80 },
+        { x: 110, y: 105, w: 80 },
+        { x: 300, y: 100, w: 80 },
+      ],
+      30,
+      box,
+    )
+    expect(got.map((t) => t.y)).toEqual([100, 130, 100])
+  })
+
+  it('바닥을 넘으면 위로 민다', () => {
+    const got = spreadTags(
+      [
+        { x: 100, y: 790, w: 80 },
+        { x: 100, y: 790, w: 80 },
+      ],
+      30,
+      box,
+    )
+    expect(got.map((t) => t.y)).toEqual([790, 760])
   })
 })
