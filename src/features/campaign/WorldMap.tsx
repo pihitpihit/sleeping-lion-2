@@ -232,7 +232,9 @@ export function WorldMapPanel({
     pinchZoom: number
     /** 손가락이 닿은 스티커. 지도가 포인터를 붙들므로 스티커는 클릭을 못 받는다. */
     on: number | null
-  }>({ startX: 0, startY: 0, moved: false, pinchDist: null, pinchZoom: 1, on: null })
+    /** 손가락이 닿은 이름표. 끌지 않고 떼면 그 노드로 간다. */
+    tag: number | null
+  }>({ startX: 0, startY: 0, moved: false, pinchDist: null, pinchZoom: 1, on: null, tag: null })
 
   /** 배율 1에서의 지도 폭(px) — 화면을 남김없이 덮는 크기다. */
   const base = size !== null && view !== null ? Math.max(view.w, (view.h * size.w) / size.h) : null
@@ -324,8 +326,13 @@ export function WorldMapPanel({
     measureRef.current()
   }, [zoom, base, initialPicked, size, stickers])
 
-  function onDown(e: React.PointerEvent<HTMLDivElement>) {
-    e.currentTarget.setPointerCapture(e.pointerId)
+  /*
+    이름표는 지도 판 바깥(화면 위)에 얹혀 있어 손가락이 지도에 안 닿는다. 그래서
+    이름표에서 시작한 손가락도 **지도가 붙든다** — 끌면 지도가 끌리고, 끌지 않고
+    떼면 그 노드로 간다.
+  */
+  function onDown(e: React.PointerEvent<HTMLElement>) {
+    ;(viewport.current ?? e.currentTarget).setPointerCapture(e.pointerId)
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY })
     const g = gesture.current
     if (pointers.current.size === 1) {
@@ -335,6 +342,8 @@ export function WorldMapPanel({
       g.pinchDist = null
       const hit = (e.target as HTMLElement).closest<HTMLElement>('[data-no]')
       g.on = hit ? Number(hit.dataset.no) : null
+      const tag = (e.target as HTMLElement).closest<HTMLElement>('[data-tag]')
+      g.tag = tag ? Number(tag.dataset.tag) : null
     } else if (pointers.current.size === 2) {
       const [a, b] = [...pointers.current.values()]
       g.pinchDist = Math.hypot(a.x - b.x, a.y - b.y)
@@ -369,6 +378,11 @@ export function WorldMapPanel({
     const g = gesture.current
     g.pinchDist = null
     if (e.type !== 'pointerup' || g.moved) return
+    if (g.tag !== null) {
+      lastTap.current = null
+      go(g.tag)
+      return
+    }
 
     /*
       **누름은 여기서 가린다.** 지도가 포인터를 붙들고 있어 클릭이 스티커가 아니라
@@ -596,8 +610,13 @@ export function WorldMapPanel({
               type="button"
               className={`wmap__tag wmap__tag--${t.dir}`}
               style={{ left: t.x, top: t.y }}
+              data-tag={t.no}
               aria-label={`#${t.no} ${names.get(t.no) ?? ''}(으)로 가기`}
-              onClick={() => go(t.no)}
+              onPointerDown={onDown}
+              // 키보드로 누른 것만 여기서 받는다(`detail`이 0). 손가락은 `onUp`이 받는다.
+              onClick={(e) => {
+                if (e.detail === 0) go(t.no)
+              }}
             >
               {t.away !== null && (
                 <svg

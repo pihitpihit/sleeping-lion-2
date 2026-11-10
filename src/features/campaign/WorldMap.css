@@ -378,6 +378,8 @@
   transform: translate(-50%, -50%);
   pointer-events: auto;
   cursor: pointer;
+  /* 이름표에서 시작한 손가락도 지도를 끈다 — 브라우저가 가져가지 않게 한다. */
+  touch-action: none;
   -webkit-tap-highlight-color: transparent;
 }
 
