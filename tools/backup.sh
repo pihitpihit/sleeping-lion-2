@@ -20,6 +20,10 @@
 #
 #   ./tools/backup.sh
 #
+# 이 맥에서는 launchd가 하루 한 번(12:30) 돌린다 —
+# `~/Library/LaunchAgents/com.pihit.sl2.backup.plist`, 기록은
+# `~/.config/sleeping-lion-2/logs/`. 잠들어 있던 날은 깨어날 때 돈다.
+#
 # ── 무엇을 뜨는가
 #
 # `public` 스키마의 **값만** 뜬다. 표와 정책은 마이그레이션이 이미 들고 있으므로
